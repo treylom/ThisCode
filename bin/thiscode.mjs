@@ -7,6 +7,8 @@ import { loadState, saveState, mergeAnswer, resumeSummary } from '../scripts/lib
 import { SCRIPT, nextQuestion, isInScope } from '../scripts/lib/questions.mjs';
 import { injectMarkerBlock, backupFile } from '../scripts/lib/apply.mjs';
 import { applyCodexSync } from '../scripts/lib/codexsync.mjs';
+import { loadManifest } from '../scripts/lib/manifest.mjs';
+import { runManifest } from '../scripts/lib/manifest-runner.mjs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -31,12 +33,24 @@ const effDefault = q => (q.id === 'harness' && q.default === 'auto') ? detectedH
 
 if (has('--resume')) console.log(resumeSummary(state));
 
-console.log(`🔍 OS=${env.os} Node=${env.node} git=${env.tools.git} codex=${env.tools.codex} claude=${env.tools.claude}`);
-console.log(msg('placement_explain', register));
-const rec = recommendPhases({
-  note_count: 0, python: env.tools.python, obsidian_cli: false,
+const steps = loadManifest();
+const runCtx = { os: env.os, mode };
+const actions = {
+  detect: () => console.log(`🔍 OS=${env.os} Node=${env.node} git=${env.tools.git} codex=${env.tools.codex} claude=${env.tools.claude}`),
+  guide: (s) => { if (s.id === 'wsl_first') console.log(msg('wsl_recommend_reason', register)); },
+  prompt: () => { /* handled by the interactive/non-interactive loop below */ },
+  apply: () => { /* handled by the --apply block below */ },
+};
+const verifiers = {
+  detected: () => Boolean(env.os),
+  ack: () => true,
+  answered: () => true,
+  'marker-present': () => true,
+};
+runManifest(steps.filter(s => ['detect','guide'].includes(s.action)), {
+  ctx: runCtx, actions, verifiers, emit: (r) => console.log('• ' + r),
 });
-console.log(`📊 현재=${rec.current.join(',')} 권장=${rec.recommended.join(',')} 나중=${rec.later.join(',')}`);
+console.log(msg('placement_explain', register));
 
 const hasAnswers = args.some(a => a.startsWith('--answers='));
 const interactive = !nonInteractive && process.stdin.isTTY === true;

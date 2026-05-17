@@ -64,3 +64,11 @@ test('non-TTY --apply without --yes errors friendly (exit 2), does not hang', ()
   assert.match(stderr, /--yes|미리보기|check/);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('--check prints step reasons (friendly, plain) and WSL note shape exists', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tc-'));
+  const out = execFileSync(process.execPath, [BIN, '--check'], { cwd: dir, encoding: 'utf8', stdio: ['pipe','pipe','pipe'], input: '' });
+  assert.match(out, /확인해요|이유|왜/);          // reason text emitted (friendly)
+  assert.match(out, /점검만|check/i);
+  rmSync(dir, { recursive: true, force: true });
+});
