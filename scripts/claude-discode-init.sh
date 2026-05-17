@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# LEGACY fallback. Prefer the Node entry (cross-platform, zero shell):
+#   npx github:treylom/ThisCode init        # or: node bin/thiscode.mjs
+if command -v node >/dev/null 2>&1; then
+  exec node "$(dirname "$0")/../bin/thiscode.mjs" "$@"
+fi
+echo "[thiscode] Node not found — running legacy bash path (deprecated)" >&2
+set -e
 # thiscode init — env detect + Phase 추천 + y/n wizard
 set -e
 

@@ -11,3 +11,6 @@ benchmark/results/tier?-*.tmp.json
 
 # Logs
 *.log
+
+.thiscode-init-state.json
+*.thiscode.bak
