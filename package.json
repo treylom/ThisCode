@@ -49,7 +49,7 @@
     "thiscode": "bin/thiscode.mjs"
   },
   "scripts": {
-    "test": "node --test 'tests/**/*.mjs'",
+    "test": "node scripts/run-tests.mjs",
     "validate": "bash scripts/validate-agents.sh",
     "index": "node scripts/generate-agents-index.mjs --apply",
     "index:check": "node scripts/check-agents-index.mjs",
