@@ -1,0 +1,17 @@
+name: install smoke
+on: [push, pull_request]
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm test
+      - run: node bin/thiscode.mjs --check --non-interactive
+      - name: assert --check wrote nothing
+        run: git diff --exit-code
