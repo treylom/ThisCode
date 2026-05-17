@@ -11,6 +11,13 @@ import { runManifest } from '../scripts/lib/manifest-runner.mjs';
 import { join } from 'node:path';
 import { homedir } from 'node:os';
 
+const makeVerifiers = (env) => ({
+  detected: () => Boolean(env.os),
+  ack: () => true,
+  answered: () => true,
+  'marker-present': () => true,
+});
+
 const args = process.argv.slice(2);
 
 if (args[0] === 'doctor') {
@@ -18,12 +25,7 @@ if (args[0] === 'doctor') {
   const { detectEnv } = await import('../scripts/lib/detect.mjs');
   const e = detectEnv();
   const steps = loadManifest();
-  const verifiers = {
-    detected: () => Boolean(e.os),
-    ack: () => true,
-    answered: () => true,
-    'marker-present': () => true,
-  };
+  const verifiers = makeVerifiers(e);
   let allOk = true;
   console.log('🩺 thiscode doctor — verify replay (설치가 실제로 됐는지 같은 기준으로 재검사)');
   for (const s of steps.slice().sort((a, b) => a.order - b.order)) {
@@ -63,12 +65,7 @@ const actions = {
   prompt: () => { /* handled by the interactive/non-interactive loop below */ },
   apply: () => { /* handled by the --apply block below */ },
 };
-const verifiers = {
-  detected: () => Boolean(env.os),
-  ack: () => true,
-  answered: () => true,
-  'marker-present': () => true,
-};
+const verifiers = makeVerifiers(env);
 runManifest(steps.filter(s => ['detect','guide'].includes(s.action)), {
   ctx: runCtx, actions, verifiers, emit: (r) => console.log('• ' + r),
 });
