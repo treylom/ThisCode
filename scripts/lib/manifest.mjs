@@ -1,5 +1,5 @@
 // scripts/lib/manifest.mjs — declarative ordered install manifest loader (zero-dep, JSON).
-// Schema/contract is LOCKED identical to ThisCodex scripts/lib/manifest.mjs (spec §1 shared engine).
+// Step field set is LOCKED identical to ThisCodex (cross-repo shared schema); validator is intentionally minimal (boolean) vs ThisCodex strict (throws).
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';
