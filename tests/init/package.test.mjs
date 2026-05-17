@@ -16,8 +16,8 @@ test('contributors include Codex', () => {
   assert.match(blob, /Codex/i);
 });
 
-test('npm test runs node --test', () => {
-  assert.match(pkg.scripts.test || '', /node --test/);
+test('test script uses node --test', () => {
+  assert.equal(pkg.scripts.test, 'node scripts/run-tests.mjs');
 });
 
 test('bin/ shipped in files[]', () => {
