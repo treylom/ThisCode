@@ -38,8 +38,16 @@ const rec = recommendPhases({
 });
 console.log(`📊 현재=${rec.current.join(',')} 권장=${rec.recommended.join(',')} 나중=${rec.later.join(',')}`);
 
-// Non-interactive: apply defaults for every in-scope, unanswered question (nothing skipped)
-if (nonInteractive) {
+const hasAnswers = args.some(a => a.startsWith('--answers='));
+const interactive = !nonInteractive && process.stdin.isTTY === true;
+
+if (mode === 'apply' && !interactive && !nonInteractive && !has('--yes') && !hasAnswers) {
+  console.error(msg('apply_needs_consent', register));
+  process.exit(2);
+}
+
+if (!interactive) {
+  // Deterministic: fill every in-scope unanswered question with its (resolved) default. No readline.
   let ctx = { os: env.os, answers: state.answers };
   let q;
   while ((q = nextQuestion(ctx, state.completed_steps))) {
