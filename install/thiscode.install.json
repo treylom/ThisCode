@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "steps": [
+    { "id": "detect_env", "order": 10, "when": "always", "action": "detect",
+      "reason": "OS·도구(Node/git/codex/claude)를 먼저 확인해요 — 그래야 맞는 안내를 드려요.",
+      "safety": "none", "verify": { "type": "detected", "key": "os" },
+      "on_fail": { "next_command": "node bin/thiscode.mjs --check" } },
+    { "id": "wsl_first", "order": 20, "when": "os == 'win'", "action": "guide",
+      "reason": "Windows 에서는 WSL(윈도우 속 리눅스) 설치를 먼저 권장해요 — 봇 실행기가 WSL 에서 더 안정적이라서요.",
+      "safety": "none", "verify": { "type": "ack", "key": "wsl_recommend" },
+      "on_fail": { "next_command": "wsl --install   (설치 후 WSL 안에서 ThisCode 다시 실행)" } },
+    { "id": "ask_script", "order": 40, "when": "always", "action": "prompt",
+      "reason": "어떤 도구용으로·어떻게 설치할지 단계별로 여쭤봐요. 모든 질문엔 이유가 붙어요.",
+      "safety": "none", "verify": { "type": "answered", "key": "apply_confirm" },
+      "on_fail": { "next_command": "node bin/thiscode.mjs --check   (먼저 미리보기)" } },
+    { "id": "apply_placement", "order": 80, "when": "mode == 'apply'", "action": "apply",
+      "reason": "도구가 스킬을 찾는 폴더에 규칙 포인터를 넣어요(변경 전 백업).",
+      "safety": "dry-run-only", "verify": { "type": "marker-present", "key": "CLAUDE.md" },
+      "on_fail": { "next_command": "node bin/thiscode.mjs --apply --yes" } }
+  ]
+}
