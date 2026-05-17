@@ -36,8 +36,8 @@ ThisCode 가 skill 의 **단일 기준 출처(SoT)** 입니다. Codex 에서 쓰
 SoT 를 `~/.agents/skills/` 로 단방향 sync 합니다(복사본은 편집 ❌):
 
 ```bash
-bash ~/.claude/plugins/thiscode/scripts/sync-skills-to-codex.sh --check   # 미리보기 + 호환성
-bash ~/.claude/plugins/thiscode/scripts/sync-skills-to-codex.sh --apply   # ~/.agents/skills/ 로 복사
+node bin/thiscode.mjs --check    # 미리보기(무변경) — Codex 호환성 포함
+node bin/thiscode.mjs --apply    # ~/.agents/skills/ 로 sync (harness=codex/both 선택 시)
 ```
 
 검증: 새 Codex 세션 또는 `codex exec` 의 active skill 목록에 KM 이 뜨는지

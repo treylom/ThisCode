@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# LEGACY. Superseded by the Node installer (cross-platform, zero shell):
+#   node bin/thiscode.mjs --apply   # handles Codex skill sync (harness=codex/both)
+if command -v node >/dev/null 2>&1; then
+  exec node "$(dirname "$0")/../bin/thiscode.mjs" "$@"
+fi
+echo "[thiscode] Node not found — legacy bash sync (deprecated)" >&2
+set -euo pipefail
 # sync-skills-to-codex.sh — thiscode
 # Expose ThisCode skills (knowledge-manager family etc.) to a Codex CLI agent.
 #
