@@ -21,7 +21,13 @@
   },
   "license": "MIT",
   "author": "tofukyung",
+  "contributors": [
+    "Claude (Anthropic Claude Code) <noreply@anthropic.com>",
+    "tofukyung (재경)",
+    "Codex (OpenAI Codex CLI / 손석희 reviewer) <noreply@openai.com>"
+  ],
   "files": [
+    "bin/",
     "contracts/",
     "scripts/",
     "skills/",
@@ -40,9 +46,10 @@
     "install.sh"
   ],
   "bin": {
-    "thiscode-km-version": "scripts/km-version.sh"
+    "thiscode": "bin/thiscode.mjs"
   },
   "scripts": {
+    "test": "node --test tests/",
     "validate": "bash scripts/validate-agents.sh",
     "index": "node scripts/generate-agents-index.mjs --apply",
     "index:check": "node scripts/check-agents-index.mjs",
