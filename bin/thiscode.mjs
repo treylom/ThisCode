@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // bin/thiscode.mjs — ThisCode Node single-bin installer. Node ≥18, zero shell.
 import { detectEnv } from '../scripts/lib/detect.mjs';
-import { recommendPhases } from '../scripts/lib/recommend.mjs';
 import { msg } from '../scripts/lib/i18n.mjs';
 import { loadState, saveState, mergeAnswer, resumeSummary } from '../scripts/lib/state.mjs';
 import { SCRIPT, nextQuestion, isInScope } from '../scripts/lib/questions.mjs';
