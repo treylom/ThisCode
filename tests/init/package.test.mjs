@@ -20,6 +20,6 @@ test('npm test runs node --test', () => {
   assert.match(pkg.scripts.test || '', /node --test/);
 });
 
-test('bin/ and lib shipped in files[]', () => {
+test('bin/ shipped in files[]', () => {
   assert.ok(pkg.files.includes('bin/'));
 });
