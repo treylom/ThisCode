@@ -21,6 +21,14 @@ const env = detectEnv();
 let state = loadState(repoRoot);
 const register = toneArg || state.answers.tone || 'plain';
 
+// Resolve the 'auto' harness sentinel from detected tools (DA-review fix 2026-05-17):
+// questions.mjs harness default 'auto' is NOT in choices[claude,codex,both] — it must
+// be resolved by tool detection, else codexsync gate + Q3c–f Codex subtree stay dead
+// in non-interactive (and the displayed interactive default would be the invalid 'auto').
+const detectedHarness = env.tools.codex && env.tools.claude ? 'both'
+  : env.tools.codex ? 'codex' : 'claude';
+const effDefault = q => (q.id === 'harness' && q.default === 'auto') ? detectedHarness : q.default;
+
 if (has('--resume')) console.log(resumeSummary(state));
 
 console.log(`🔍 OS=${env.os} Node=${env.node} git=${env.tools.git} codex=${env.tools.codex} claude=${env.tools.claude}`);
@@ -35,7 +43,7 @@ if (nonInteractive) {
   let ctx = { os: env.os, answers: state.answers };
   let q;
   while ((q = nextQuestion(ctx, state.completed_steps))) {
-    state = mergeAnswer(state, q.id, state.answers[q.id] ?? q.default);
+    state = mergeAnswer(state, q.id, state.answers[q.id] ?? effDefault(q));
     ctx = { os: env.os, answers: state.answers };
   }
 } else {
@@ -43,7 +51,8 @@ if (nonInteractive) {
   let ctx = { os: env.os, answers: state.answers };
   let q;
   while ((q = nextQuestion(ctx, state.completed_steps))) {
-    const a = (await rl.question(`${q.ask} [${q.choices.join('/')}] (기본 ${q.default}): `)).trim() || q.default;
+    const d = effDefault(q);
+    const a = (await rl.question(`${q.ask} [${q.choices.join('/')}] (기본 ${d}): `)).trim() || d;
     state = mergeAnswer(state, q.id, a);
     ctx = { os: env.os, answers: state.answers };
   }

@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, readdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,15 @@ test('--apply --non-interactive creates state file + injects', () => {
   const dir = mkdtempSync(join(tmpdir(), 'tc-'));
   run(['--apply', '--non-interactive'], dir);
   assert.ok(readdirSync(dir).includes('.thiscode-init-state.json'));
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('--apply backs up a pre-existing CLAUDE.md before mutating it', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tc-'));
+  writeFileSync(join(dir, 'CLAUDE.md'), '# pre-existing user content\n');
+  run(['--apply', '--non-interactive'], dir);
+  const entries = readdirSync(dir);
+  assert.ok(entries.includes('CLAUDE.md.thiscode.bak'), 'backup .thiscode.bak created before write');
   rmSync(dir, { recursive: true, force: true });
 });
 

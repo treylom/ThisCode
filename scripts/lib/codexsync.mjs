@@ -26,9 +26,11 @@ export function planCodexSync(srcSkillsDir, destDir) {
 }
 
 export function applyCodexSync(srcSkillsDir, destDir) {
+  const plan = planCodexSync(srcSkillsDir, destDir);
+  if (plan.length === 0) return [];        // DA-review fix: no empty ~/.agents/skills dir on zero-plan
   mkdirSync(destDir, { recursive: true });
   const done = [];
-  for (const { skill, from, to } of planCodexSync(srcSkillsDir, destDir)) {
+  for (const { skill, from, to } of plan) {
     cpSync(from, to, { recursive: true });
     done.push(skill);
   }
