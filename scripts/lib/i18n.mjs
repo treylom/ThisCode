@@ -25,6 +25,10 @@ export const MESSAGES = {
     plain: '바꾸기 전에 원본을 백업해 둘게요.',
     dev: 'pre-write backup 수행.',
   },
+  apply_needs_consent: {
+    plain: '비대화형 환경에서는 --apply 에 동의가 필요해요. 먼저 미리보기:  node bin/thiscode.mjs --check\n적용:  node bin/thiscode.mjs --apply --yes',
+    dev: 'non-TTY --apply requires explicit consent. Preview: --check. Apply: --apply --yes',
+  },
 };
 
 export function msg(key, register = 'plain') {

@@ -41,3 +41,34 @@ test('--tone=dev switches register', () => {
   assert.match(out, /무변경 진단|register/i);
   rmSync(dir, { recursive: true, force: true });
 });
+
+test('non-TTY --check exits 0 without hanging (no readline)', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tc-'));
+  // stdin piped + immediately closed = non-TTY, no input available
+  const out = execFileSync(process.execPath, [BIN, '--check'], {
+    cwd: dir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], input: '',
+  });
+  assert.match(out, /점검만|check/i);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('non-TTY --apply without --yes errors friendly (exit 2), does not hang', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tc-'));
+  let code = 0, stderr = '';
+  try {
+    execFileSync(process.execPath, [BIN, '--apply'], {
+      cwd: dir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], input: '',
+    });
+  } catch (e) { code = e.status; stderr = String(e.stderr || ''); }
+  assert.equal(code, 2);
+  assert.match(stderr, /--yes|미리보기|check/);
+  rmSync(dir, { recursive: true, force: true });
+});
+
+test('--check prints step reasons (friendly, plain) and WSL note shape exists', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'tc-'));
+  const out = execFileSync(process.execPath, [BIN, '--check'], { cwd: dir, encoding: 'utf8', stdio: ['pipe','pipe','pipe'], input: '' });
+  assert.match(out, /확인해요|이유|왜/);          // reason text emitted (friendly)
+  assert.match(out, /점검만|check/i);
+  rmSync(dir, { recursive: true, force: true });
+});

@@ -29,6 +29,7 @@
   "files": [
     "bin/",
     "contracts/",
+    "install/",
     "scripts/",
     "skills/",
     "commands/",
