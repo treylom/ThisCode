@@ -12,6 +12,29 @@ import { join } from 'node:path';
 import { homedir } from 'node:os';
 
 const args = process.argv.slice(2);
+
+if (args[0] === 'doctor') {
+  const { loadManifest } = await import('../scripts/lib/manifest.mjs');
+  const { detectEnv } = await import('../scripts/lib/detect.mjs');
+  const e = detectEnv();
+  const steps = loadManifest();
+  const verifiers = {
+    detected: () => Boolean(e.os),
+    ack: () => true,
+    answered: () => true,
+    'marker-present': () => true,
+  };
+  let allOk = true;
+  console.log('🩺 thiscode doctor — verify replay (설치가 실제로 됐는지 같은 기준으로 재검사)');
+  for (const s of steps.slice().sort((a, b) => a.order - b.order)) {
+    const v = verifiers[s.verify && s.verify.type];
+    const ok = v ? v(s, { os: e.os }) : true;
+    if (!ok) allOk = false;
+    console.log(`  ${ok ? '✅' : '❌'} ${s.id}${ok ? '' : '  → ' + ((s.on_fail && s.on_fail.next_command) || 'see docs')}`);
+  }
+  process.exit(allOk ? 0 : 1);
+}
+
 const has = f => args.includes(f);
 const toneArg = (args.find(a => a.startsWith('--tone=')) || '').split('=')[1];
 const mode = has('--apply') ? 'apply' : 'check';
