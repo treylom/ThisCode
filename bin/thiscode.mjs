@@ -6,7 +6,9 @@ import { msg } from '../scripts/lib/i18n.mjs';
 import { loadState, saveState, mergeAnswer, resumeSummary } from '../scripts/lib/state.mjs';
 import { SCRIPT, nextQuestion, isInScope } from '../scripts/lib/questions.mjs';
 import { injectMarkerBlock, backupFile } from '../scripts/lib/apply.mjs';
+import { applyCodexSync } from '../scripts/lib/codexsync.mjs';
 import { join } from 'node:path';
+import { homedir } from 'node:os';
 
 const args = process.argv.slice(2);
 const has = f => args.includes(f);
@@ -60,5 +62,10 @@ backupFile(target);
 injectMarkerBlock(target,
   '## ThisCode rules-system pointer\nSee `rules/INDEX.md` — situational rule router (progressive disclosure).');
 saveState(repoRoot, state);
+if (['codex','both'].includes(state.answers.harness) && state.answers.codex_skill_layer !== 'repo') {
+  const dest = join(homedir(), '.agents', 'skills');
+  const synced = applyCodexSync(join(repoRoot, 'skills'), dest);
+  console.log(`🔁 Codex skill sync → ${dest} (${synced.join(', ')})`);
+}
 console.log('✅ apply 완료. state: .thiscode-init-state.json');
 process.exit(0);
