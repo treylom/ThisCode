@@ -251,7 +251,7 @@ thiscode/
 │   ├── marketplace.json                   # thiscode-marketplace
 │   └── plugin.json
 ├── commands/                              # Slash commands (incl. /thiscode:init)
-├── skills/                                # 12 skill (v2.2 vault-mirror policy)
+├── skills/                                # skill dirs (v2.2 vault-mirror policy)
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 lines)
 │   ├── knowledge-manager-at/              # Agent Teams variant (1189 lines)
 │   ├── knowledge-manager-lite/            # Lite single-agent (530 lines)

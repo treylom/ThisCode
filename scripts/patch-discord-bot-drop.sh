@@ -18,6 +18,9 @@
 #        PATCH_TARGET=<file> bash …            (explicit target — tests)
 # Recipe / context: ThisCode docs/08-debug-노하우.md J-2.
 set -uo pipefail
+# fail-open contract: an unset HOME under `set -u` must NOT abort. Default it
+# empty → candidate paths just won't exist → "not found, skip" → exit 0.
+HOME="${HOME:-}"
 MARKER="thiscode-j2-guard"
 
 TARGET="${PATCH_TARGET:-}"

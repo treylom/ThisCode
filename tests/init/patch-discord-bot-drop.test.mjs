@@ -103,3 +103,19 @@ test('target missing → skip, exit 0 (never bricks /self-update)', () => {
   assert.match(r.stdout + r.stderr, /not found|skip/i);
   rmSync(dir, { recursive: true, force: true });
 });
+
+// Codex review AREA 3: fail-open must hold even with PATCH_TARGET unset AND
+// HOME unset under `set -u` (no unbound-variable abort).
+test('PATCH_TARGET unset + HOME unset → fail-open exit 0, no set -u crash', () => {
+  const r = spawnSync('bash', [SCRIPT], {
+    env: { PATH: process.env.PATH }, // no PATCH_TARGET, no HOME
+    encoding: 'utf8',
+  });
+  assert.equal(r.status, 0, 'must stay fail-open (exit 0) with HOME unset');
+  assert.doesNotMatch(
+    (r.stderr ?? '') + (r.stdout ?? ''),
+    /unbound variable|HOME: parameter|set -u/i,
+    'must not abort on unbound HOME',
+  );
+  assert.match((r.stdout ?? '') + (r.stderr ?? ''), /not found|skip/i);
+});
