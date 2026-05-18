@@ -162,9 +162,30 @@ claude
 
 ---
 
+## (옵션) Stop 디버그 surface 훅
+
+`hooks/stop-debug-surface.sh` 는 **opt-in** Stop 훅 — 세션 종료 시 cwd git repo 에
+미커밋 source/test 파일이 있으면 stderr 로 한 줄 알림(디버그 작업 미저장 방지).
+
+⚠️ **fail-OPEN 설계**: 이 훅은 **항상 exit 0**, **절대 세션 종료를 막지 않음**
+(기존 `stop-pending-task-check.sh` 의 fail-CLOSED/exit 2 와 의도적으로 대비 —
+디버그 체크가 봇을 종료 불가 상태로 가두지 않게). 정보 표출 전용.
+
+기본 미등록. 원하면 `~/.claude/settings.json` 의 `hooks.Stop[]` 에 추가:
+
+```json
+{ "matcher": "", "hooks": [
+  { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/stop-debug-surface.sh'" }
+] }
+```
+
+`stop-pending-task-check.sh` 와 공존 가능(대체 아님 — 둘 다 Stop 배열에 append).
+
+---
+
 ## 관련 자원
 
-- hooks 본문: [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../hooks/regression-self-check.sh)
+- hooks 본문: [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../hooks/regression-self-check.sh) / [stop-debug-surface.sh](../hooks/stop-debug-surface.sh) (opt-in)
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - 첫 봇 생성: [create-bot.md](create-bot.md)
 - 메인 wizard: [start.md](start.md)
