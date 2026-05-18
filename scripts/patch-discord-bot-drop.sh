@@ -67,7 +67,23 @@ new, n = pat.subn(repl, src, count=1)
 if n != 1:
     sys.stderr.write("[j2-patch] internal: replacement count != 1\n")
     sys.exit(3)
-open(path, "w", encoding="utf-8").write(new)
+# Atomic write: a mid-write crash must never leave server.ts truncated.
+# Write a sibling temp file, fsync, then os.replace (atomic on same fs).
+import os, tempfile
+d = os.path.dirname(path) or "."
+fd, tmp = tempfile.mkstemp(prefix=".j2-", dir=d)
+try:
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        fh.write(new)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(tmp, path)
+except Exception:
+    try:
+        os.unlink(tmp)
+    except OSError:
+        pass
+    raise
 PY
 rc=$?
 if [ "$rc" -ne 0 ]; then
