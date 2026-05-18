@@ -82,10 +82,15 @@ if [ "$ARGUMENTS" = "pull" ]; then
   git pull --ff-only
   echo "업데이트 완료. 새 commit:"
   git log --oneline HEAD~"$BEHIND".."$HEAD"
+  # J-2 재적용: 다봇 통신용 discord 플러그인 패치는 외부 플러그인이라
+  # 업데이트로 덮어써질 수 있음. idempotent·fail-open(절대 self-update 안 깸).
+  bash "$TARGET/scripts/patch-discord-bot-drop.sh" 2>&1 || true
 fi
 ```
 
 ⚠️ `pull --ff-only` 사용 — diverged 일 때 안전 실패. local 수정 보존.
+J-2 재적용 스크립트는 idempotent(이미 패치면 no-op) + fail-open(실패해도 exit 0)
+이라 self-update 체인을 깨지 않는다. 상세·opt-in SessionStart 등록 = docs/08-debug-노하우.md J-2.
 
 ---
 
