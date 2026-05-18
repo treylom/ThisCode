@@ -64,6 +64,24 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 /thiscode:init
 ```
 
+> **Plugin-marketplace path: verified working.** ThisCode ships a valid
+> `.claude-plugin/marketplace.json` + `plugin.json`, and `claude plugin
+> marketplace add` is a real Claude Code CLI command — so the marketplace path
+> is **a supported install path, verified working end-to-end** (a real WSL run
+> via `/plugin marketplace add treylom/ThisCode` → `/plugin install
+> thiscode@thiscode-marketplace` → `/reload-plugins` loaded *5 plugins · 23
+> skills · 8 agents · 4 hooks*):
+>
+> ```
+> /plugin marketplace add treylom/ThisCode
+> /plugin install thiscode@thiscode-marketplace
+> ```
+>
+> The `git clone` + wizard above (or `/thiscode:init`) is an equally supported
+> alternative — prefer it when you want a writable clone (e.g. for
+> `/thiscode:self-update`). (Codex side: the equivalent `codex plugin` path is
+> **verified broken** on codex 0.130 — different harness — see ThisCodex.)
+
 The wizard detects your vault state / installed tools / resource limits, then recommends an **8-Phase progressive journey**:
 
 - **Phase 1–2**: immediate (ripgrep + obsidian-cli)

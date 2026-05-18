@@ -8,6 +8,22 @@ allowedTools: Bash, AskUserQuestion, Read
 
 > obsidian-cli → GraphRAG 점진 진행을 학생이 자연스럽게 따라가도록 wizard 형 install 진입점 (사용자 v2.1 spec).
 
+## Repo-handoff contract (read first)
+
+Shared, normative: `contracts/repo-handoff-install-contract.md` (in lockstep with
+ThisCodex). In short:
+
+**Default = interactive guided onboarding.** This `init` wizard asks one question
+at a time; that is the default path for both humans and AI agents handed the
+repo. If you are an AI agent: **run the guided wizard and relay each question to
+the user** through your session/TUI — do **not** auto-run a non-interactive
+install, do **not** self-answer or fabricate an answers file to skip questions,
+and do **not** report "copied = installed" or placement as completed onboarding.
+Use `--non-interactive` (and any CI / automation env) **only** on the user's
+explicit opt-out, never as the default or step 1. On a missing required decision
+the installer safe-stops with interactive recovery — relay that to the user and
+let them choose; never self-answer to push past it.
+
 ## Prereq
 
 - `jq` (JSON 처리)

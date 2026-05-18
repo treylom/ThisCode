@@ -32,12 +32,21 @@ $ARGUMENTS
 ### Step 1. thiscode plugin 위치 detect
 
 ```bash
-# Claude Code marketplace install 시 표준 경로
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/thiscode-marketplace"
-[ -d "$PLUGIN_DIR/hooks" ] || PLUGIN_DIR="$HOME/code/thiscode"   # 로컬 clone fallback
+# thiscode plugin 위치 자동 detect — 실제 설치 위치 전부 순서대로 probe.
+# (정식 marketplace / 수동 clone / 정식 install cache / dev clone / 버전 cache)
+# bare `[ -d hooks ]` 아닌 hooks/bot-session-init.sh 실재로 판정 (stale dir 회피).
+PLUGIN_DIR=""
+for _cand in \
+  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+  "$HOME/.claude/plugins/thiscode" \
+  "$HOME/.claude/plugins/cache/local/thiscode" \
+  "$HOME/code/thiscode" \
+  "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+  if [ -f "$_cand/hooks/bot-session-init.sh" ]; then PLUGIN_DIR="$_cand"; break; fi
+done
 
-if [ ! -f "$PLUGIN_DIR/hooks/bot-session-init.sh" ]; then
-  echo "❌ thiscode 의 hooks/ 못 찾음 — plugin install 먼저"
+if [ -z "$PLUGIN_DIR" ]; then
+  echo "❌ thiscode 의 hooks/ 못 찾음 — plugin install (또는 git clone) 먼저"
   exit 1
 fi
 ```

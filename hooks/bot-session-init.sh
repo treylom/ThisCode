@@ -34,7 +34,20 @@ if [ -z "$BOT" ]; then
   if [ -z "${DISCORD_STATE_DIR:-}" ]; then
     exit 0
   fi
-  BOT=$(basename "$DISCORD_STATE_DIR" | sed 's/^discord-//')
+  _state_base=$(basename "$DISCORD_STATE_DIR")
+  case "$_state_base" in
+    discord)
+      # 순정 discord 플러그인 dir (per-bot suffix 없음) = per-bot 세션 아님.
+      # discord-discord/soul.md MISSING 오주입 대신 무음 종료 (L26 철학 동일).
+      exit 0
+      ;;
+    discord-*)
+      BOT=${_state_base#discord-}
+      ;;
+    *)
+      BOT=$_state_base
+      ;;
+  esac
 fi
 
 if [ -z "$BOT" ]; then
@@ -43,19 +56,26 @@ fi
 
 SOUL_FILE="$HOME/.claude/channels/discord-${BOT}/soul.md"
 
-# WD → Claude Code projects 경로 인코딩 (/ 와 _ 를 - 로 치환)
-WD_ENCODED=$(echo "$PWD" | sed 's|/|-|g; s|_|-|g')
+# WD → Claude Code projects 경로 인코딩.
+# Claude Code 는 비영숫자 전부를 - 로 치환 (공백·_·.·한글 포함). 예:
+#   /home/me/My_App/v1.0  →  -home-me-My-App-v1-0
+#   (`/`·`_`·`.`·공백 → -, 기존 `-` 는 유지)
+# 구 `s|/|-|g; s|_|-|g` 는 공백·.·한글 미치환 → 네이티브 memory 위치와 분기.
+WD_ENCODED=$(echo "$PWD" | sed 's|[^a-zA-Z0-9]|-|g')
 MEM_DIR="$HOME/.claude/projects/${WD_ENCODED}/memory"
 MEM_INDEX="$MEM_DIR/MEMORY.md"
 
 # 공유 메모리 인덱스 detect (사용자 환경별 분기)
 #   1. CLAUDE_DISCODE_VAULT 환경변수 (vault 사용자 설정)
 #   2. $HOME/.thiscode/shared-memory/ (vault 없는 사용자 default)
+#   3. $PWD/shared-memory/ (claude-discode workspace-local 관행 — env 없을 때)
 SHARED_INDEX=""
 if [ -n "${CLAUDE_DISCODE_VAULT:-}" ] && [ -f "${CLAUDE_DISCODE_VAULT}/.claude-memory/shared/SHARED-INDEX.md" ]; then
   SHARED_INDEX="${CLAUDE_DISCODE_VAULT}/.claude-memory/shared/SHARED-INDEX.md"
 elif [ -f "$HOME/.thiscode/shared-memory/SHARED-INDEX.md" ]; then
   SHARED_INDEX="$HOME/.thiscode/shared-memory/SHARED-INDEX.md"
+elif [ -f "$PWD/shared-memory/SHARED-INDEX.md" ]; then
+  SHARED_INDEX="$PWD/shared-memory/SHARED-INDEX.md"
 fi
 
 SECTIONS=""

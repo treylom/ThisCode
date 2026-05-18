@@ -52,6 +52,11 @@ command -v tmux git curl node claude     # 의존 도구 확인
    - Bot Permissions: Send Messages, Read Messages, Read Message History, Add Reactions, Attach Files, Embed Links
 4. 생성된 URL 로 봇을 본인 Discord 서버 또는 DM 가능 채널에 초대
 
+> ⚠️ **다봇 셋업 시 — 봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 애플리케이션이라
+> OAuth 초대도 **봇 앱마다 따로** 해야 합니다. 신규 봇 초대를 빠뜨리면 그 봇만 무반응
+> (Discord 는 같은 서버 공유 봇하고만 DM 가능). 무반응 진단 순서 →
+> [docs/08-debug-노하우.md J-3](../docs/08-debug-노하우.md).
+
 ### Step 3-4. 봇 디렉토리 + soul.md 자동 셋업 (자동화 권장)
 
 본 두 step 은 `/thiscode:create-bot` 슬래시가 일괄 처리합니다 (대화형). 수동으로 하고 싶을 때만 아래 manual 흐름 참고.
