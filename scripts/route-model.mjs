@@ -14,7 +14,7 @@ const PROVIDER = process.env.CLAUDE_DISCODE_LLM_PROVIDER || "claude";
 
 const MAP = {
   claude: { simple: "haiku", medium: "sonnet", complex: "opus" },
-  codex: { simple: "gpt-5.5", medium: "gpt-5.5-codex", complex: "gpt-5.5-opus" },
+  codex: { simple: "gpt-5.5", medium: "gpt-5.5-codex", complex: "gpt-5.5-codex-spark" },
 };
 
 function classify(q) {
@@ -33,7 +33,7 @@ function classify(q) {
 if (override) {
   // override 자체가 claude 모델명 → provider 변환
   if (PROVIDER === "codex") {
-    const reverse = { haiku: "gpt-5.5", sonnet: "gpt-5.5-codex", opus: "gpt-5.5-opus" };
+    const reverse = { haiku: "gpt-5.5", sonnet: "gpt-5.5-codex", opus: "gpt-5.5-codex-spark" };
     console.log(reverse[override] || override);
   } else {
     console.log(override);

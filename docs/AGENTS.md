@@ -92,17 +92,17 @@ benchmark:
 3. `npm run index` — `agents.yaml` index 갱신
 4. PR 생성 — `.github/workflows/validate-agents.yml` 가 자동 검증
 
-## v2.0 신규 — `thiscode-model-router`
+## `thiscode-model-router`
 
 검색 결과 받은 후 응답 생성 시 task complexity 따라 LLM 모델 선택:
 
 - 단순 query → Haiku (Claude) / gpt-5.5 (Codex)
 - 중간 query → Sonnet / gpt-5.5-codex
-- 종합 query → Opus[1m] / gpt-5.5-opus
+- 종합 query → Opus[1m] / gpt-5.5-codex-spark
 
 `scripts/route-model.mjs` heuristic. user override `--model haiku|sonnet|opus`.
 
-## Tier 순서 (v2.0 정정)
+## Tier 순서
 
 | Tier | Method | 이유 |
 |---|---|---|

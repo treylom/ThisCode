@@ -19,7 +19,7 @@
 
 #align(center)[
   #v(1.5em)
-  #text(size: 24pt, weight: "bold")[thiscode v2.0 매뉴얼]
+  #text(size: 24pt, weight: "bold")[thiscode 매뉴얼]
   #v(0.3em)
   #text(size: 14pt, fill: rgb("#555"))[설치 + 핵심 기능 8 sections]
   #v(1em)
@@ -31,7 +31,7 @@
     ]
   ]
   #v(0.5em)
-  #text(size: 9pt, fill: rgb("#888"))[2026-05-13 작성 | v2.0]
+  #text(size: 9pt, fill: rgb("#888"))[v1.0 통합 첫 출시]
 ]
 
 #pagebreak()
@@ -66,7 +66,7 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 
 자세한 분기 가이드: SETUP-BEGINNER.md
 
-= 4-Tier Search (v2.0 정정)
+= 4-Tier Search
 
 #table(
   columns: (auto, 1fr, auto, auto, auto),
@@ -92,7 +92,7 @@ dispatcher 가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallbac
 
 #pagebreak()
 
-= LLM 모델 routing (v2.0 신규)
+= LLM 모델 routing
 
 검색 결과 후 응답 생성 시 task complexity 따라 모델 자동 선택:
 
@@ -104,7 +104,7 @@ dispatcher 가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallbac
   [Task], [Claude], [Codex], [예시],
   [단순], [Haiku], [gpt-5.5], ["NuriFlow ARR"],
   [중간], [Sonnet], [gpt-5.5-codex], ["Q1 보고서 핵심 3가지 요약"],
-  [종합], [Opus[1m]], [gpt-5.5-opus], ["ARR 와 팀 size 상관관계 추론"],
+  [종합], [Opus[1m]], [gpt-5.5-codex-spark], ["ARR 와 팀 size 상관관계 추론"],
 )
 
 `scripts/route-model.mjs` heuristic (query length + 키워드). user override `--model haiku|sonnet|opus`.

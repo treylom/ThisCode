@@ -4,7 +4,7 @@
 
 > Claude Code + Discord 봇 + codex 호출 통합 플러그인 — 개인 vault 자동화 + 멀티에이전트 운영
 >
-> 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[최근 변경](docs/RECENT-CHANGES.md)** (설치 시 읽기 — AI가 자동 반영할 최신 변경 요약) · 📖 **[시작 안내서 (PDF)](docs/시작안내서/ThisCode-ThisCodex-시작안내서.pdf)** (초보자·한/영) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
+> 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[최근 변경](docs/RECENT-CHANGES.md)** (설치 시 읽기 — AI가 자동 반영할 최신 변경 요약) · 📖 **[시작 안내서 (PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.pdf)** (초보자·한/영 병기) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
 
 ![ThisCode 핵심 그림 — 구조화된 옵시디언 볼트, 작업 디렉토리별 적합한 봇, 디스코드로 운영, 봇끼리 협업](assets/core-mental-model.png)
 
@@ -16,7 +16,7 @@ WSL / Linux / macOS 어디서든 `bash install.sh` 한 줄로 Claude Code + tmux
 
 > **시작 전 권고:** (1) 옵시디언 **폴더 구조**부터 잡으세요; (2) 메모리·내부검색을 제대로 쓰려면 **옵시디언 설치** 권장. **옵시디언 없이?** 단순 연결용 디스코드 봇만 띄울 수도 있지만, 그 경우 볼트 메모리·내부 검색 품질은 **보장되지 않습니다**.
 
-## 🛠️ v2.3 Zero-config 설치 (NEW — 2026-05-13)
+## 🛠️ Zero-config 설치
 
 **Prerequisite:** Claude Code CLI 이미 install + auth 의무 (https://claude.ai/code). `install.sh` 의 `install-superpowers.sh` step 안 `claude` CLI 호출.
 
@@ -38,11 +38,11 @@ bash scripts/install.sh --apply
 
 Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
 
-**Windows 사용자:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) 는 install.sh 안 detect 되며 WSL 사용 안내. PowerShell port = v2.4 후속 cycle.
+**Windows 사용자:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) 는 install.sh 안 detect 되며 WSL 사용 안내. PowerShell port = 후속 cycle 예정.
 
 **Dependency provenance:** 16 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero).
 
-## 🚀 Quickstart (vault-first, v2.1)
+## 🚀 Quickstart (vault-first)
 
 ```bash
 # 1. thiscode 설치 (Claude Code plugin)
@@ -80,23 +80,15 @@ VAULT=~/path/to/your/vault bash benchmark/runners/run-all.sh
 python3 benchmark/report-generator.py --print-only
 ```
 
-기대 범위 (참고용 — 실제 수치는 vault 크기 / 컨텐츠 / hardware 에 따라 다름):
-
-| Tier | Method | latency_ms (P50) | recall@5 | cost_tokens | setup_time_min | kg_depth (avg) |
-|------|--------|-------------------|----------|-------------|----------------|----------------|
-| 1 | GraphRAG | 1500-3000 | 0.80-0.95 | ~2400 | 25 | 3-5 |
-| 2 | vault-search MCP | 500-1000 | 0.60-0.80 | ~800 | 10 | 0 |
-| 3 | Obsidian CLI | 200-500 | 0.50-0.70 | 0 | 5 | 0 |
-| 4 | ripgrep | 30-100 | 0.30-0.50 | 0 | 0 | 0 |
+수치는 vault 크기·컨텐츠·hardware 에 따라 크게 다릅니다 — v1.0 은 고정 벤치 수치 대신
+러너와 측정 방법론을 동봉합니다. 위 스크립트를 본인 vault 에 돌려서 의미 있는 수치 확보.
 
 > 측정 방법 + 해석 가이드 + 본인 vault fixture 작성: [docs/BENCHMARK.md](docs/BENCHMARK.md)
-> CI 자동 측정 결과 (Tier 4 ripgrep + sample fixture only): [benchmark/results/](benchmark/results/)
->
-> 본 표 의 수치는 다양한 vault 측정 데이터 합산 추정. CI 가 측정한 sample 결과는 strawman — 본인 vault 에서 의미 있는 수치 확인.
+> CI 자동 측정 결과(sample fixture, Tier 4 ripgrep): [benchmark/results/](benchmark/results/)
 
 ---
 
-## 🧠 LLM 모델 routing (v2.0 신규)
+## 🧠 LLM 모델 routing
 
 thiscode 는 검색 결과 받은 후 응답 생성 시 task complexity 따라 모델을 자동 선택:
 
@@ -104,11 +96,11 @@ thiscode 는 검색 결과 받은 후 응답 생성 시 task complexity 따라 �
 |---|---|---|
 | 단순 (factual lookup) | Haiku | gpt-5.5 |
 | 중간 (요약 / 분류) | Sonnet | gpt-5.5-codex |
-| 종합 (multi-doc 추론) | Opus[1m] | gpt-5.5-opus |
+| 종합 (multi-doc 추론) | Opus[1m] | gpt-5.5-codex-spark |
 
 `scripts/route-model.mjs` heuristic — query length / 키워드 기반. user override `--model haiku|sonnet|opus`.
 
-**Tier 순서 (v2.0 정정):** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). 정확도 우선 fallback.
+**Tier 순서:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). 정확도 우선 fallback.
 
 ## 📚 용어 모르겠으면? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -175,7 +167,7 @@ thiscode 가 packaging 한 우리 vault 운영 노하우:
 - [06-claude-code-server.md](docs/06-claude-code-server.md) — **Claude Code 서버 기능** (`claude -p` 헤드리스 + MCP server + tmux session vs headless 분리 패턴)
 - [08-debug-노하우.md](docs/08-debug-노하우.md) — **디버깅 24+ 카테고리** (Workflow / Code Review / Vault Path / 회의 protocol / Security / Time / LLM Prompt / Schedule / Plugins / External Apps / Cross-bot SoP)
 - (예정) `05-meeting-thread-protocol.md` — 회의 신설 SOURCE FACT cross-check + Discord REST API thread + audience direct mention + 3-channel 병행 보고
-- (예정) `07-codex-호출-layer.md` — `/tofu-at-codex` v2.2 + codex-exec-bridge 패턴 + Hermes 호환 subprocess plugin
+- (예정) `07-codex-호출-layer.md` — `/tofu-at-codex` + codex-exec-bridge 패턴 + Hermes 호환 subprocess plugin
 
 ### Step 2. Claude Code 인증
 
@@ -225,13 +217,13 @@ wizard 가 단계별 안내:
 thiscode/
 ├── install.sh                            # 환경 자동 detect + 10-step 자동화
 ├── README.md                              # 영문판 (default, 글로벌 사용자 대비)
-├── README.ko.md                           # 본 파일 (한국어, v2.1 vault-first)
+├── README.ko.md                           # 본 파일 (한국어, vault-first)
 ├── LICENSE                                # MIT
 ├── CODEX_REVIEW.md                        # Codex 1차 adversarial review
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v0.1.0
+│   └── plugin.json                        # thiscode v1.0
 ├── commands/                              # 슬래시 7종
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── install-hooks.md                   # SessionStart + UserPromptSubmit hook merge
@@ -240,7 +232,7 @@ thiscode/
 │   ├── open-meeting.md
 │   ├── codex-check.md
 │   └── self-update.md
-├── skills/                                # 12 skill (v2.2 vault-mirror 정책)
+├── skills/                                # 12 skill (vault-mirror 정책)
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 줄)
 │   ├── knowledge-manager-at/              # Agent Teams 변종 (1189 줄)
 │   ├── knowledge-manager-lite/            # Lite 단일 에이전트 (530 줄)
@@ -249,7 +241,7 @@ thiscode/
 │   ├── search/                            # 4-Tier vault search
 │   ├── search-lite/                       # 3-Tier (GraphRAG 의존 없음)
 │   ├── codex-exec-bridge/                 # vault skill mirror (폴더)
-│   ├── init/                              # v2.1 wizard skill
+│   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin 설치 wizard
 │   ├── meetings/                          # 회의실 4-file protocol
 │   └── shared-memory/                     # 4-tier 메모리 정책
@@ -348,7 +340,7 @@ git push
 
 봇에 다시 DM → 새 코드 발급.
 
-### GraphRAG 서버가 안 뜨는 경우 (v2.3 — vendor 의존 + ~/.cache venv)
+### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 
 ```bash
 bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
@@ -356,7 +348,7 @@ bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8
 bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup uvicorn
 ```
 
-`--apply` 의 동작 (v2.3):
+`--apply` 의 동작:
 - venv 위치 = `~/.cache/thiscode/graphrag/venv` (writable home cache)
 - vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (vault SoT 와 동등 박제, 21 file)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
