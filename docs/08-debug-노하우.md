@@ -15,7 +15,7 @@
 | **G** | Output Sync | typst-report Windows vault 복사 |
 | **H** | LLM Prompt | negative instruction word leak |
 | **I** | Schedule / Email | gws CLI 우선 (MCP fallback) |
-| **J** | Plugins | codex CC plugin, Hermes 호환 |
+| **J** | Plugins | codex CC plugin, Hermes 호환, discord 봇간통신 drop, 봇별 OAuth 초대 |
 | **K** | External Apps | 카카오톡 FOCUS_FAIL, NotificationCenter overlay, 한글 입력 깨짐 |
 | **L** | Cross-bot SoP | Lead cross-check, dual DA cross-check |
 
@@ -144,6 +144,52 @@ Calendar MCP 헤드리스 OAuth 실패 + Gmail MCP 검색 인덱스 지연 사�
 ### J-1. plugin update 시 hook patch 회귀
 
 봇 간 mention 통신이 plugin 안에 들어 있을 때, plugin update 한 번이면 그 채널이 silently 끊김. 사용자가 인지 못 하면 "왜 봇끼리 답이 없지" 디버깅 무한루프.
+
+### J-2. discord MCP `msg.author.bot` 전면 drop → 봇간통신 불가 (2026-05-18 WSL 핸드오프)
+
+**증상**: 다봇 협업 채널에서 서로의 메시지를 못 읽음. access.json allowlist 에 봇 ID 전부 등재돼 있어도 무응답.
+
+**근본 원인** (코드 확정, 추측 ❌): 공식 discord 플러그인 `…/external_plugins/discord/server.ts` (≈L806):
+```js
+client.on('messageCreate', msg => {
+  if (msg.author.bot) return   // gate() allowlist 검사 전에 봇 메시지 전부 폐기
+  handleInbound(msg)...
+```
+봇 발신 메시지는 `gate()` 도달 전 폐기 → allowlist 무관 (single-axis "allowlist 문제" 가설 기각, 코드 read 로 확정).
+
+**해결 recipe**: blanket drop → 3-가드 교체.
+- `msg.author.id === client.user?.id` → 차단 (자기-루프 hard guard, 유지 필수)
+- `msg.webhookId` → 차단 (스팸 surface 유지)
+- `msg.author.bot && DM` → 차단 (봇 페어링 코드 spew 방지)
+- 그 외 그룹 채널 타봇 메시지 → 통과 → 기존 `gate()` 의 채널 allowlist + `requireMention` 이 스코프 (멘션 시에만 wake = 루프 브레이크)
+
+**⚠️ 재적용 노트 (J-1 의 실현 사례)**: 이 파일은 `~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/server.ts` = **ThisCode 레포 밖 공식 플러그인**. plugin update / `/plugin marketplace update` 시 **덮어쓰임** → 끊기면 J-2 패치 재적용 필요.
+
+**영구 재적용 layer (구현됨, 2026-05-19)**: `scripts/patch-discord-bot-drop.sh` 가 위 3-가드를 **idempotent** 하게 재적용한다. 안전속성: 편집 전 `.thiscode-j2.bak-<ts>` 백업 / marker `thiscode-j2-guard` 로 재실행 시 no-op / **정확 취약라인만** 치환(upstream shape 바뀌면 맹목 편집 없이 stderr 경고) / **fail-open**(항상 exit 0 — self-update 체인 안 깸).
+- 자동: `/thiscode:self-update pull` Step 4 가 update 직후 자동 호출.
+- opt-in 상시: 플러그인이 자주 갱신되는 다봇 환경은 SessionStart hook 에 등록 권장 —
+  `~/.claude/settings.json` 의 `hooks.SessionStart[].hooks[]` 에
+  `{"type":"command","command":"bash <PLUGIN_DIR>/scripts/patch-discord-bot-drop.sh"}` 추가.
+  (외부 플러그인 코드를 자동 편집하므로 **opt-in** — 단봇 사용자는 불요 시 미등록.)
+- 수동: `bash <PLUGIN_DIR>/scripts/patch-discord-bot-drop.sh` (테스트는 `PATCH_TARGET=<file>` override).
+- 패치 후 = 기존대로 MCP 게이트웨이(전봇) 재시작해야 반영(핫리로드 아님).
+
+**검증 상태**: `bun server.ts` 핫리로드 아님 → 패치는 MCP 게이트웨이(전봇) 재시작 후 반영. 재시작·봇간 @멘션 수신 = 사용자 라이브 테스트 (verification-before-completion: 재시작 전 "해결됨" 단정 보류).
+
+### J-3. 봇별 OAuth 초대 누락 = 무반응 1순위 원인 (2026-05-18 WSL 핸드오프)
+
+**증상**: 신규 봇 무반응. 로컬 설정(토큰·access.json·soul.md)은 다른 정상 봇과 동일한데 인바운드 0건.
+
+**근본 원인**: Discord 는 "사용자와 같은 서버를 공유하는 봇하고만 DM 가능". **봇마다 별도 Discord 애플리케이션 → OAuth 초대도 봇별로 따로** 필요. 다봇 셋업에서 신규 봇 초대를 빠뜨리면 그 봇만 메시지 미도달. (로컬은 처음부터 정상이므로 토큰·코드 디버깅은 시간낭비 — 초대부터 확인.)
+
+**무반응 진단 순서** (토큰 비노출, 읽기전용 API — 사용자 사전 승인 후):
+```bash
+TOKEN=$(grep -m1 DISCORD_BOT_TOKEN "$BOT_DIR/.env" | cut -d= -f2-)
+curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me            # 200 = 봇 토큰 정상 (어느 봇인지 확인)
+curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me/guilds     # 소속 서버 0개 = 미초대 (= 근본원인)
+curl -s -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/channels/<CHANNEL_ID> # 200 = 해당 채널 접근 가능
+```
+`/users/@me/guilds` 가 빈 배열 = **서버 미초대 확정** → create-bot/start 의 OAuth URL 로 재초대 → 봇 패널 `tmux respawn-pane -k` 재시작(새 guild 인식). 그래도 무반응이면 2순위 = 봇 앱 Gateway Intent(Message Content) 미설정.
 
 ---
 

@@ -17,16 +17,28 @@ $ARGUMENTS
 ### Step 1. 로컬 plugin 위치 detect
 
 ```bash
-# Claude Code marketplace install 시 표준 경로
-PLUGIN_DIR="$HOME/.claude/plugins/marketplaces/thiscode-marketplace"
-# 또는 사용자 로컬 clone 위치
-LOCAL_CLONE="$HOME/code/thiscode"
+# thiscode 설치 위치 자동 detect — self-update 는 git 갱신 대상이므로
+# .git 보유 clone 우선. 실제 설치 위치 전부 순서대로 probe.
+TARGET=""
+for _cand in \
+  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+  "$HOME/.claude/plugins/thiscode" \
+  "$HOME/.claude/plugins/cache/local/thiscode" \
+  "$HOME/code/thiscode"; do
+  if [ -d "$_cand/.git" ]; then TARGET="$_cand"; break; fi
+done
 
-if [ -d "$PLUGIN_DIR" ]; then
-  TARGET="$PLUGIN_DIR"
-elif [ -d "$LOCAL_CLONE" ]; then
-  TARGET="$LOCAL_CLONE"
-else
+if [ -z "$TARGET" ]; then
+  # git clone 아닌 cache-only 설치: 자체 git 갱신 불가 → 안내
+  for _cand in \
+    "$HOME/.claude/plugins/thiscode" \
+    "$HOME/.claude/plugins/cache/local/thiscode" \
+    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+    if [ -d "$_cand" ]; then
+      echo "thiscode 발견($_cand) 이나 git clone 아님 — '/plugin marketplace update' 또는 재설치 필요"
+      exit 1
+    fi
+  done
   echo "thiscode 미설치"
   exit 1
 fi
@@ -70,10 +82,15 @@ if [ "$ARGUMENTS" = "pull" ]; then
   git pull --ff-only
   echo "업데이트 완료. 새 commit:"
   git log --oneline HEAD~"$BEHIND".."$HEAD"
+  # J-2 재적용: 다봇 통신용 discord 플러그인 패치는 외부 플러그인이라
+  # 업데이트로 덮어써질 수 있음. idempotent·fail-open(절대 self-update 안 깸).
+  bash "$TARGET/scripts/patch-discord-bot-drop.sh" 2>&1 || true
 fi
 ```
 
 ⚠️ `pull --ff-only` 사용 — diverged 일 때 안전 실패. local 수정 보존.
+J-2 재적용 스크립트는 idempotent(이미 패치면 no-op) + fail-open(실패해도 exit 0)
+이라 self-update 체인을 깨지 않는다. 상세·opt-in SessionStart 등록 = docs/08-debug-노하우.md J-2.
 
 ---
 

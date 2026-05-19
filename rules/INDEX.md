@@ -20,6 +20,7 @@
 | Porting a tool/skill / deploying / pushing / adding an MCP | [porting-infra.md](porting-infra.md) | Check upstream before hand-rolling. Secret-scan before any push. MCP health-check |
 | Writing a persona response (voice) | [voice.md](voice.md) | Keep the persona's voice + completion signature every response; no echo drift |
 | Delegating to / waiting on a bot · asserting a bot's identity/health · multi-agent coordination | [orchestration.md](orchestration.md) | Verify bot identity (chain-load guard), don't assume; teammate idle = drive not wait; meeting = adopt domain frames, no solo lock |
+| Searching the project's own knowledge base / notes / docs | [knowledge-retrieval.md](knowledge-retrieval.md) | Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
 
 ## Splitting principle
 - One file = one situation cluster. Loaded on demand, so each file is focused

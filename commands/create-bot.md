@@ -46,6 +46,10 @@ chmod 700 "$BOT_DIR"
    - Bot Permissions: Send Messages / Read Messages / Read Message History / Add Reactions / Attach Files / Embed Links
 4. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대
 
+> ⚠️ **봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 앱이라 OAuth 초대도 봇 앱마다
+> 따로. 다봇 셋업에서 신규 봇 초대를 빠뜨리면 그 봇만 무반응 (로컬 설정은 정상인데
+> 인바운드 0건이면 1순위 = 미초대). 진단: [docs/08-debug-노하우.md J-3](../docs/08-debug-노하우.md).
+
 ### Step 4. 봇 토큰 입력 (AskUserQuestion + .env 저장)
 
 agent 가 사용자에게 토큰 입력 요청. 다음 위치 저장:
@@ -77,6 +81,23 @@ agent 가 다음 5 template 중 사용자 선택 안내:
 - `<역할>` / `<어휘>` / `<시그니처>` 등 — AskUserQuestion 으로 받아 채우기
 
 ```bash
+# thiscode plugin 위치 detect (templates/ 보유 위치) — PLUGIN_DIR 미설정 시.
+# install-hooks.md 와 동일 후보 순서 (finding A 재발방지: 한 곳만 detect 하지 말 것).
+if [ -z "${PLUGIN_DIR:-}" ] || [ ! -d "$PLUGIN_DIR/templates" ]; then
+  for _cand in \
+    "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+    "$HOME/.claude/plugins/thiscode" \
+    "$HOME/.claude/plugins/cache/local/thiscode" \
+    "$HOME/code/thiscode" \
+    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+    if [ -d "$_cand/templates" ]; then PLUGIN_DIR="$_cand"; break; fi
+  done
+fi
+if [ -z "${PLUGIN_DIR:-}" ]; then
+  echo "❌ thiscode templates/ 못 찾음 — plugin install (또는 git clone) 먼저"
+  exit 1
+fi
+
 TEMPLATE="$PLUGIN_DIR/templates/soul-${SOUL_TYPE}.md"
 [ -f "$TEMPLATE" ] || TEMPLATE="$PLUGIN_DIR/templates/soul-general-assistant.md"
 
