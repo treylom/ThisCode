@@ -36,3 +36,12 @@ test('loadManifest sorts steps by order', () => {
   assert.deepEqual(steps.map(s => s.order), [10, 20, 40, 80], 'steps sorted by order');
   rmSync(tmpDir, { recursive: true, force: true });
 });
+
+test('manifest interviews for progress reporting cadence', () => {
+  const steps = loadManifest();
+  const step = steps.find(s => s.id === 'progress_report_cadence');
+  assert.ok(step, 'progress_report_cadence missing');
+  assert.equal(step.action, 'prompt');
+  assert.equal(step.verify.key, 'progress_report_cadence');
+  assert.match(step.reason, /progress|report/i);
+});
