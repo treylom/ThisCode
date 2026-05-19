@@ -4,7 +4,7 @@
 > `soul.md`/memory bloats context → recall drops ("the bot can't keep it all in
 > mind"). Only this INDEX is always loaded; **when a trigger matches, Read that
 > one rule file then** and apply it. Rule bodies live in `rules/<topic>.md`.
-> Full convention + the Codex-bot variant: [rules-system.md](https://github.com/treylom/ThisCodex/blob/master/docs/rules-system.md) (canonical, in the ThisCodex companion repo).
+> Full convention + the Claude Code / Codex variants: [rules-system.md](../docs/rules-system.md) (shipped in this repo; the ThisCodex companion ships the matching copy).
 >
 > **How to use (self-check every turn)**: scan the trigger table below → if a
 > row matches the current situation, Read that row's rule file → apply it. No

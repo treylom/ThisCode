@@ -24,10 +24,20 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 5. Ask `progress_report_cadence`: `per_task`, `1m`, `3m`, `5m`, `off`, or
    `custom`. `per_task` means a meaningful subtask or milestone completion,
    not every raw model turn boundary.
-6. When aliases are generated, tell the user to `source` the generated alias
+6. Wire hooks: run `/thiscode:install-hooks` (safe `jq` merge into
+   `~/.claude/settings.json`, existing hooks preserved). This registers the
+   SessionStart helper (injects `soul.md` persona + working-dir memory index +
+   the situational rules router `rules/INDEX.md`) and the active-meeting Stop
+   reread (`hooks/meeting-stop-reread.sh`). Confirm SessionStart and Stop hooks
+   are registered with the install-hooks verify step. Without this, recent
+   rule / meeting-protocol behavior does not auto-apply.
+7. Read `docs/RECENT-CHANGES.md` and apply anything not yet reflected — it is
+   the newest-first digest of contract/behavior changes a fresh install must
+   adopt (e.g. the Stop-hook output contract).
+8. When aliases are generated, tell the user to `source` the generated alias
    script/block; only add it to a shell rc file if they explicitly want it
    permanent.
-7. Finish with `thiscode doctor` or the nearest available verify command.
+9. Finish with `thiscode doctor` or the nearest available verify command.
 
 ## Guardrails
 
