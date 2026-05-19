@@ -143,7 +143,7 @@ surface owns a distinct concern. Do not copy rules into `CLAUDE.md` or `soul.md`
 | `AGENTS.md` | Codex (see [ThisCodex](https://github.com/treylom/ThisCodex)) | same role, Codex side | §1 below |
 | `GEMINI.md` | Gemini CLI | same role, Gemini side | §1 below |
 | `soul.md` | all (SessionStart inject) | persona, voice, signatures, model | §2 → `templates/` |
-| `rules/` | all (on-demand) | situational operating rules | §3 → [rules-system.md](https://github.com/treylom/ThisCodex/blob/master/docs/rules-system.md) |
+| `rules/` | all (on-demand) | situational operating rules | §3 → [rules-system.md](rules-system.md) |
 
 ## §1 — CLAUDE.md / AGENTS.md / GEMINI.md (the meta file)
 
@@ -205,10 +205,10 @@ table at the top of every template is what makes it stick.
 
 ## §3 — rules/ (progressive-disclosure operating rules)
 
-Full convention (problem, pattern, how-to-add, Codex variant):
-**[rules-system.md](https://github.com/treylom/ThisCodex/blob/master/docs/rules-system.md)**
-— the canonical copy lives in the ThisCodex companion repo. Read it once; do
-not duplicate it here.
+Full convention (problem, pattern, how-to-add, Claude Code + Codex variants):
+**[rules-system.md](rules-system.md)** — shipped in this repo (the Codex
+companion [ThisCodex](https://github.com/treylom/ThisCodex) ships the matching
+copy). Read it once; do not duplicate it here.
 
 회의 스레드·채널·대화기록 보관 거버넌스: [05-meeting-thread-protocol.md](05-meeting-thread-protocol.md) (정책 SoT = vault rules/channel-governance.md — 새 주제=새 스레드 / 보관=최종 산출만 / 기기간=멀티버스).
 
@@ -459,8 +459,8 @@ A. Do only the three steps in "In one minute" first. Skip §1-§6 detail until s
 harness 가 실제 노출하는 모델 id 로.
 
 ### §3 rules/
-전체 컨벤션 = [rules-system.md](https://github.com/treylom/ThisCodex/blob/master/docs/rules-system.md)
-(정본은 ThisCodex 동반 레포에 있음, 중복 작성 금지). 매 턴 INDEX 트리거 표
+전체 컨벤션 = [rules-system.md](rules-system.md)
+(본 레포에 동봉 — Codex 동반 레포 ThisCodex 도 동일 사본 동봉, 중복 작성 금지). 매 턴 INDEX 트리거 표
 스캔 → 매칭 행 파일 그때 Read → 적용.
 충돌 우선순위 = **사용자 명시 지시 > rule 파일 > inline 기본**.
 

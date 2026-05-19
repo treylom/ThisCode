@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,6 +23,8 @@ test('--apply --non-interactive creates state file + injects', () => {
   const dir = mkdtempSync(join(tmpdir(), 'tc-'));
   run(['--apply', '--non-interactive'], dir);
   assert.ok(readdirSync(dir).includes('.thiscode-init-state.json'));
+  const state = JSON.parse(readFileSync(join(dir, '.thiscode-init-state.json'), 'utf8'));
+  assert.equal(state.answers.progress_report_cadence, 'per_task');
   rmSync(dir, { recursive: true, force: true });
 });
 

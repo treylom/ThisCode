@@ -7,7 +7,7 @@ test('SCRIPT covers every spec §6.A id, in order', () => {
   const ids = SCRIPT.map(q => q.id);
   for (const id of ['tone','os_confirm','wsl_recommend','harness','codex_auth','codex_skill_layer',
     'codex_marketplace','codex_config','vault','bot_topology','bot_detail','daemon_guide',
-    'codex_runner','codex_launch_compat','codex_yolo','apply_confirm']) {
+    'codex_runner','codex_launch_compat','codex_yolo','progress_report_cadence','apply_confirm']) {
     assert.ok(ids.includes(id), `missing question: ${id}`);
   }
 });

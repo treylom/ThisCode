@@ -22,7 +22,7 @@
 #
 # 봇 이름 자동 detect:
 #   1. 명시 인자: `bot-session-init.sh <bot-name>`
-#   2. DISCORD_STATE_DIR 환경변수 (e.g. ~/.claude/channels/discord-karpathy → karpathy)
+#   2. DISCORD_STATE_DIR 환경변수 (e.g. ~/.claude/channels/discord-reviewer → reviewer)
 #   3. 둘 다 없으면 무음 종료 (일반 개발 세션 — dev 간섭 방지)
 
 set -uo pipefail
@@ -121,6 +121,47 @@ if [ -n "$SHARED_INDEX" ]; then
 ${SHARED_CONTENT}
 
 위 인덱스 따라 fetch. 모든 봇·머신 공유 사실은 이 디렉토리.
+
+"
+fi
+
+# --- 3.5) Active meeting + progressive rules router (optional) ---
+# Generic distribution contract: derive from env/BOT_WD/PWD, never from a
+# maintainer-only vault path. Missing files are a graceful no-op.
+MEETING_DIR="${MEETING_PROTOCOL_DIR:-}"
+if [ -z "$MEETING_DIR" ] && [ -n "${BOT_WD:-}" ]; then
+  MEETING_DIR="${BOT_WD}/meetings"
+fi
+if [ -z "$MEETING_DIR" ]; then
+  MEETING_DIR="${PWD}/meetings"
+fi
+ACTIVE_MEETING="${MEETING_ACTIVE_FILE:-${MEETING_DIR}/ACTIVE.md}"
+if [ -f "$ACTIVE_MEETING" ]; then
+  MEETING_CONTENT=$(cat "$ACTIVE_MEETING")
+  SECTIONS+="=== active meeting protocol (${ACTIVE_MEETING}) ===
+
+${MEETING_CONTENT}
+
+Use meeting-protocol.md for dispatch verification, KST timestamps, and progress-file updates.
+
+"
+fi
+
+RULES_DIR="${RULES_DIR:-}"
+if [ -z "$RULES_DIR" ] && [ -n "${BOT_WD:-}" ]; then
+  RULES_DIR="${BOT_WD}/rules"
+fi
+if [ -z "$RULES_DIR" ]; then
+  RULES_DIR="${PWD}/rules"
+fi
+RULES_INDEX="${RULES_DIR}/INDEX.md"
+if [ -f "$RULES_INDEX" ]; then
+  RULES_CONTENT=$(cat "$RULES_INDEX")
+  SECTIONS+="=== progressive rules INDEX (${RULES_INDEX}) ===
+
+${RULES_CONTENT}
+
+Load rules/meeting-protocol.md when coordinating meetings or dispatch verification.
 
 "
 fi

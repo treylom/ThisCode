@@ -4,7 +4,7 @@
 > `soul.md`/memory bloats context → recall drops ("the bot can't keep it all in
 > mind"). Only this INDEX is always loaded; **when a trigger matches, Read that
 > one rule file then** and apply it. Rule bodies live in `rules/<topic>.md`.
-> Full convention + the Codex-bot variant: [rules-system.md](https://github.com/treylom/ThisCodex/blob/master/docs/rules-system.md) (canonical, in the ThisCodex companion repo).
+> Full convention + the Claude Code / Codex variants: [rules-system.md](../docs/rules-system.md) (shipped in this repo; the ThisCodex companion ships the matching copy).
 >
 > **How to use (self-check every turn)**: scan the trigger table below → if a
 > row matches the current situation, Read that row's rule file → apply it. No
@@ -20,6 +20,7 @@
 | Porting a tool/skill / deploying / pushing / adding an MCP | [porting-infra.md](porting-infra.md) | Check upstream before hand-rolling. Secret-scan before any push. MCP health-check |
 | Writing a persona response (voice) | [voice.md](voice.md) | Keep the persona's voice + completion signature every response; no echo drift |
 | Delegating to / waiting on a bot · asserting a bot's identity/health · multi-agent coordination | [orchestration.md](orchestration.md) | Verify bot identity (chain-load guard), don't assume; teammate idle = drive not wait; meeting = adopt domain frames, no solo lock |
+| Coordinating an active meeting / dispatch verification / Stop while meeting active | [meeting-protocol.md](meeting-protocol.md) | SessionStart injects active meeting + rules INDEX; verify dispatch execution; KST progress rows; Stop rereads active meeting |
 | Searching the project's own knowledge base / notes / docs | [knowledge-retrieval.md](knowledge-retrieval.md) | Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
 
 ## Splitting principle

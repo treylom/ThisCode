@@ -18,6 +18,7 @@ export const SCRIPT = [
   { id:'codex_runner', ask:'Codex runner 파일 만들까', choices:['launchd','systemd','tmux','guide'], default:'guide', scope:c=>hasCodex(c.answers)&&c.answers.daemon_guide==='yes' },
   { id:'codex_launch_compat', ask:'기존 launch.sh 처리', choices:['legacy','thiscodex_shell','node_runner'], default:'node_runner', scope:c=>hasCodex(c.answers)&&c.answers.daemon_guide==='yes' },
   { id:'codex_yolo', ask:'Codex bridge 권한 모드', choices:['safe','yolo_hint','sentinel_hint'], default:'safe', scope:c=>hasCodex(c.answers)&&c.answers.daemon_guide==='yes' },
+  { id:'progress_report_cadence', ask:'진행상황 보고 주기', choices:['per_task','1m','3m','5m','off','custom'], default:'per_task', scope:()=>true },
   { id:'apply_confirm', ask:'지금 적용할까', choices:['apply','check_only'], default:'check_only', scope:()=>true },
 ];
 export function isInScope(q, ctx) {
