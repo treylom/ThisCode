@@ -2,7 +2,7 @@
 
 > Claude Code + Discord 봇 + codex 호출 통합 플러그인 — 개인 vault 자동화 + 멀티에이전트 운영
 >
-> 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
+> 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[최근 변경](docs/RECENT-CHANGES.md)** (설치 시 읽기 — AI가 자동 반영할 최신 변경 요약) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
 
 ![ThisCode 핵심 그림 — 구조화된 옵시디언 볼트, 작업 디렉토리별 적합한 봇, 디스코드로 운영, 봇끼리 협업](assets/core-mental-model.png)
 
@@ -146,7 +146,7 @@ cd ~/code/thiscode && bash install.sh
 
 플러그인 install 후 자동 인식되는 슬래시 7종:
 - `/thiscode:start` — 메인 wizard (환경 인식 + 봇 셋업 + 첫 대화)
-- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit hook merge (~/.claude/settings.json 안전 병합, 기존 hook 보존)
+- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop(활성 회의 재독)** hook merge (~/.claude/settings.json 안전 병합, 기존 hook 보존). SessionStart 가 soul.md + 메모리 + `rules/INDEX.md` 주입, Stop 훅이 최근 규칙/회의 변경을 자동 반영하는 경로 — [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md) 참조
 - `/thiscode:create-bot` — 신규 봇 디렉토리 + .env + soul.md template 자동 셋업
 - `/thiscode:add-bot` — 추가 봇 1개 신설
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
@@ -156,7 +156,7 @@ cd ~/code/thiscode && bash install.sh
 순정 Claude Code 부트스트랩 (hook + 봇 없는 상태):
 
 ```
-1. /thiscode:install-hooks   # SessionStart + UserPromptSubmit hook 등록
+1. /thiscode:install-hooks   # SessionStart + UserPromptSubmit + Stop(회의 재독) hook 등록
 2. /thiscode:create-bot      # 첫 봇 디렉토리 + soul.md 셋업
 3. /thiscode:start           # 메인 wizard (Discord 페어링 + 첫 대화 검증)
 4. /thiscode:codex-check     # Codex CLI 활성 확인 (선택)

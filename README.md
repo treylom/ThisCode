@@ -2,7 +2,7 @@
 
 > Claude Code + Discord bot + Codex CLI bridge plugin — personal vault automation + multi-agent ops.
 >
-> 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
+> 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
 
 ![ThisCode core idea — a structured Obsidian vault, the right bot per working directory, driven from Discord, bots collaborating](assets/core-mental-model.png)
 
@@ -175,7 +175,7 @@ Plugin slash commands auto-detected after install:
 
 - `/thiscode:init` — **v2.1 wizard** (env detect + 8-Phase recommend)
 - `/thiscode:start` — main wizard (env detect + bot setup + first conversation)
-- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit hook safe-merge into `~/.claude/settings.json`
+- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hook safe-merge into `~/.claude/settings.json` (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md))
 - `/thiscode:create-bot` — new bot directory + .env + soul.md template
 - `/thiscode:add-bot` — add one additional bot
 - `/thiscode:open-meeting` — create a meeting folder (multi-bot 4-file standard)
@@ -185,7 +185,7 @@ Plugin slash commands auto-detected after install:
 Pristine Claude Code bootstrap (no hooks, no bots yet):
 
 ```
-1. /thiscode:install-hooks   # Register SessionStart + UserPromptSubmit hooks
+1. /thiscode:install-hooks   # Register SessionStart + UserPromptSubmit + Stop (meeting reread) hooks
 2. /thiscode:create-bot      # First bot directory + soul.md setup
 3. /thiscode:start           # Main wizard (Discord pairing + first conversation)
 4. /thiscode:codex-check     # Verify Codex CLI active (optional)
