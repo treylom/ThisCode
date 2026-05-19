@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="ThisCode symbol mark — Tofu">
+  <title>ThisCode — Tofu symbol mark</title>
+  <!-- Palette: 두부/beige, consistent with the project's tofu motif and the
+       typst beginner-guide tokens (warm beige page · creamy tofu · soft brown). -->
+  <rect width="256" height="256" rx="44" fill="#F3EAD7"/>
+  <!-- soft contact shadow -->
+  <ellipse cx="128" cy="196" rx="74" ry="16" fill="#E2D4B6" opacity="0.55"/>
+  <!-- tofu block: front face + a gentle top bevel for a soft 2.5D cube -->
+  <g stroke="#6E5B43" stroke-width="6" stroke-linejoin="round">
+    <path d="M64 96 L128 70 L192 96 L128 122 Z" fill="#FFFDF4"/>
+    <path d="M64 96 L64 178 Q64 190 76 190 L116 190 L116 116 Z" fill="#FBF6EA"/>
+    <path d="M192 96 L192 178 Q192 190 180 190 L140 190 L140 116 Z" fill="#F1E7D0"/>
+    <path d="M116 116 L128 122 L140 116 L140 190 L116 190 Z" fill="#FBF6EA"/>
+  </g>
+  <!-- face: calm, friendly, minimal -->
+  <g fill="#5E4D38">
+    <circle cx="95" cy="150" r="7"/>
+    <circle cx="161" cy="150" r="7"/>
+    <path d="M108 168 Q128 182 148 168" fill="none" stroke="#5E4D38" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <!-- idea spark: the "thinking helper" cue -->
+  <g fill="#C99A5B">
+    <path d="M196 58 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 Z"/>
+  </g>
+</svg>

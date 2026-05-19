@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="ThisCodex symbol mark — Tofu (code variant)">
+  <title>ThisCodex — Tofu symbol mark (code variant)</title>
+  <!-- Same Tofu character as ThisCode; the only difference is the chest mark
+       (a code bracket) signalling the Codex code-verification side. -->
+  <rect width="256" height="256" rx="44" fill="#F3EAD7"/>
+  <ellipse cx="128" cy="196" rx="74" ry="16" fill="#E2D4B6" opacity="0.55"/>
+  <g stroke="#6E5B43" stroke-width="6" stroke-linejoin="round">
+    <path d="M64 96 L128 70 L192 96 L128 122 Z" fill="#FFFDF4"/>
+    <path d="M64 96 L64 178 Q64 190 76 190 L116 190 L116 116 Z" fill="#FBF6EA"/>
+    <path d="M192 96 L192 178 Q192 190 180 190 L140 190 L140 116 Z" fill="#F1E7D0"/>
+    <path d="M116 116 L128 122 L140 116 L140 190 L116 190 Z" fill="#FBF6EA"/>
+  </g>
+  <g fill="#5E4D38">
+    <circle cx="95" cy="146" r="7"/>
+    <circle cx="161" cy="146" r="7"/>
+  </g>
+  <!-- code bracket "</>" on the body = the Codex variant marker -->
+  <g fill="none" stroke="#C99A5B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M112 162 L102 172 L112 182"/>
+    <path d="M144 162 L154 172 L144 182"/>
+    <path d="M132 158 L124 186"/>
+  </g>
+  <g fill="#C99A5B">
+    <path d="M196 58 l5 13 13 5 -13 5 -5 13 -5 -13 -13 -5 13 -5 Z"/>
+  </g>
+</svg>
