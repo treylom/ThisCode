@@ -67,9 +67,13 @@ test('meeting Stop hook only continues for bot active-meeting non-recursive stop
   });
   assert.equal(yes.status, 0);
   const payload = JSON.parse(yes.stdout);
-  assert.equal(payload.continue, true);
-  assert.match(payload.reason, /active meeting/i);
-  assert.match(payload.hookSpecificOutput.additionalContext, /ACTIVE\.md/);
+  // Stop has NO hookSpecificOutput variant — emitting it fails Claude Code's
+  // hook-output schema validation. The only valid block+inject primitive is
+  // {decision:"block", reason:<text>}. This is the assertion that would have
+  // caught the regression which shipped the invalid shape green.
+  assert.ok(!('hookSpecificOutput' in payload), 'Stop hook must not emit hookSpecificOutput');
+  assert.equal(payload.decision, 'block');
+  assert.match(payload.reason, /active meeting|reread|ACTIVE\.md/i);
 
   const recursive = spawnSync('bash', [STOP_HOOK], {
     cwd,

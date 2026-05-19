@@ -26,8 +26,10 @@ bot's progress, or stopping while an active meeting is open.
 ## 4. Stop-hook reread
 - A Stop hook may request continuation only when all are true: bot session,
   active meeting file exists, and no recursive Stop hook is active.
-- All other cases allow stop. The hook must emit actionable context, not block
-  with a vague warning.
+- All other cases allow stop (empty stdout + exit 0). When it does request
+  continuation it must use the Stop block-with-reason primitive
+  (`{"decision":"block","reason":<actionable text>}`) — the Stop event has no
+  hookSpecificOutput variant — never a vague warning.
 
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.

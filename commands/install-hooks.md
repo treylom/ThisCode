@@ -203,7 +203,7 @@ claude
 ## 관련 자원
 
 - hooks 본문: [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../hooks/regression-self-check.sh) / [stop-debug-surface.sh](../hooks/stop-debug-surface.sh) (opt-in)
-- active meeting Stop reread(선택): [../hooks/meeting-stop-reread.sh](../hooks/meeting-stop-reread.sh) — bot session + active meeting + non-recursive Stop 일 때만 `continue:true`, 그 외 fail-open.
+- active meeting Stop reread(선택): [../hooks/meeting-stop-reread.sh](../hooks/meeting-stop-reread.sh) — bot session + active meeting + non-recursive Stop 일 때만 `{"decision":"block","reason":<재독 지시>}` (Stop 엔 hookSpecificOutput 변형 없음), 그 외 fail-open(빈 stdout + exit 0).
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - 첫 봇 생성: [create-bot.md](create-bot.md)
 - 메인 wizard: [start.md](start.md)

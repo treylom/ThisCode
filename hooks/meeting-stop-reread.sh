@@ -2,10 +2,13 @@
 # meeting-stop-reread.sh — Stop hook for active meeting reread (fail-open)
 #
 # Safety invariant:
-# - continue:true only when this is a bot session, an active meeting file exists,
-#   and the hook is not already recursive.
-# - Everything else allows stop silently.
+# - Emits {"decision":"block","reason":...} ONLY when this is a bot session, an
+#   active meeting file exists, and the hook is not already recursive.
+#   Stop has NO hookSpecificOutput variant — that shape fails Claude Code's
+#   hook-output schema; decision:block+reason is the only valid block+inject.
+# - Everything else allows stop silently: empty stdout + exit 0.
 # - Paths derive from env/BOT_WD/PWD. No maintainer-machine hardcoding.
+# - A non-Claude-Code Stop runner must map this contract itself (fail-open).
 set -uo pipefail
 
 input="$(cat 2>/dev/null || true)"
@@ -52,12 +55,9 @@ context = (
     "Before stopping, reread the active meeting state, update progress if needed, "
     "and report blocked/partial/completion status through the channel."
 )
+# Stop event: only decision:block + reason is valid (no hookSpecificOutput).
 print(json.dumps({
-    "continue": True,
-    "reason": "active meeting reread required before Stop",
-    "hookSpecificOutput": {
-        "hookEventName": "Stop",
-        "additionalContext": context,
-    },
+    "decision": "block",
+    "reason": context,
 }, ensure_ascii=False))
 PY
