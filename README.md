@@ -4,7 +4,7 @@
 
 > Claude Code + Discord bot + Codex CLI bridge plugin — personal vault automation + multi-agent ops.
 >
-> 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📖 **[시작 안내서 (PDF)](docs/시작안내서/ThisCode-ThisCodex-시작안내서.pdf)** (초보자·한/영) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
+> 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📖 **[Getting started guide (PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.pdf)** (beginner · KR/EN bilingual) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
 
 ![ThisCode core idea — a structured Obsidian vault, the right bot per working directory, driven from Discord, bots collaborating](assets/core-mental-model.png)
 
@@ -16,7 +16,7 @@
 
 > **Before you start (recommended):** (1) lay out your Obsidian **folder structure** first; (2) **install Obsidian** for full memory + internal-search. **No Obsidian?** You can still wire a plain Discord bot for connectivity only — but vault memory and internal-search quality are **not guaranteed** without it.
 
-## 🛠️ v2.3 Zero-config Install (NEW — 2026-05-13)
+## 🛠️ Zero-config Install
 
 **Prerequisite:** Claude Code CLI already installed + authenticated (https://claude.ai/code). `install.sh` 의 `install-superpowers.sh` step 안 `claude` CLI 호출.
 
@@ -38,11 +38,11 @@ bash scripts/install.sh --apply
 
 After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
 
-**Windows users:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) is detected by `install.sh` and instructed to use WSL. PowerShell port is planned for v2.4 cycle.
+**Windows users:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) is detected by `install.sh` and instructed to use WSL. PowerShell port is planned for a future cycle.
 
 **Dependency provenance:** full attribution matrix (16 entries — Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero).
 
-**Lessons learned (v2.3.x cycle, 9 shared memory entries):** 본 cycle 의 학습 정착은 vault `AI_Second_Brain/.claude-memory/shared/feedback_*` 안 보존:
+**Lessons learned (consolidated into the v1.0 first integrated release):** 본 cycle 의 학습 정착은 vault `AI_Second_Brain/.claude-memory/shared/feedback_*` 안 보존:
 - `feedback_no_student_term` — learner / 사용자 / 수강자 terminology
 - `feedback_autonomy_mode_no_option_questions` — 자율 cycle 옵션 confirm 묻기 zero
 - `feedback_no_turn_marker_continuous_execution` — turn 마감 발화 zero, 연속 실행
@@ -53,7 +53,7 @@ After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers 
 - `feedback_sonnet_codex_debate_opus_synthesis` — sonnet ↔ codex multi-round debate → opus 종합 mechanism
 - `feedback_no_user_decision_zone_autonomous` — 자율 cycle 안 "사용자 결정 영역" 분류 zero (autonomy 3rd 강화)
 
-## 🚀 Quickstart (vault-first, v2.1)
+## 🚀 Quickstart (vault-first)
 
 ```bash
 # 1. Install thiscode as a Claude Code plugin
@@ -110,20 +110,15 @@ VAULT=~/path/to/your/vault bash benchmark/runners/run-all.sh
 python3 benchmark/report-generator.py --print-only
 ```
 
-Expected envelope (reference only — your numbers will differ):
+Numbers vary widely by vault size, content, and hardware — v1.0 ships the
+runner and methodology rather than fixed benchmark figures. Run the script
+above against your own vault to get meaningful numbers.
 
-| Tier | Method | latency_ms (P50) | recall@5 | cost_tokens | setup_time_min | kg_depth (avg) |
-|------|--------|-------------------|----------|-------------|----------------|----------------|
-| 1 | GraphRAG | 1500–3000 | 0.80–0.95 | ~2400 | 25 | 3–5 |
-| 2 | vault-search MCP | 500–1000 | 0.60–0.80 | ~800 | 10 | 0 |
-| 3 | Obsidian CLI | 200–500 | 0.50–0.70 | 0 | 5 | 0 |
-| 4 | ripgrep | 30–100 | 0.30–0.50 | 0 | 0 | 0 |
-
-> Method / interpretation / your-own-fixture guide: [docs/BENCHMARK.md](docs/BENCHMARK.md). CI auto-runs Tier 4 ripgrep + sample fixture: [benchmark/results/](benchmark/results/). The table above is an aggregate strawman — measure against your vault for meaningful numbers.
+> Method / interpretation / your-own-fixture guide: [docs/BENCHMARK.md](docs/BENCHMARK.md). CI auto-runs Tier 4 ripgrep + sample fixture: [benchmark/results/](benchmark/results/).
 
 ---
 
-## 🧠 LLM model routing (v2.0)
+## 🧠 LLM model routing
 
 After retrieval, thiscode picks a model by task complexity:
 
@@ -131,11 +126,11 @@ After retrieval, thiscode picks a model by task complexity:
 |---|---|---|
 | Simple (factual lookup) | Haiku | gpt-5.5 |
 | Medium (summary / classification) | Sonnet | gpt-5.5-codex |
-| Synthesis (multi-doc reasoning) | Opus[1m] | gpt-5.5-opus |
+| Synthesis (multi-doc reasoning) | Opus[1m] | gpt-5.5-codex-spark |
 
 `scripts/route-model.mjs` heuristic — query length + keyword classifier. User override: `--model haiku|sonnet|opus`.
 
-**Tier order (v2.0 correction):** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). Accuracy-first fallback.
+**Tier order:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). Accuracy-first fallback.
 
 ## 📚 Lost on terms? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -175,7 +170,7 @@ cd ~/code/thiscode && bash install.sh
 
 Plugin slash commands auto-detected after install:
 
-- `/thiscode:init` — **v2.1 wizard** (env detect + 8-Phase recommend)
+- `/thiscode:init` — **onboarding wizard** (env detect + 8-Phase recommend)
 - `/thiscode:start` — main wizard (env detect + bot setup + first conversation)
 - `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hook safe-merge into `~/.claude/settings.json` (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md))
 - `/thiscode:create-bot` — new bot directory + .env + soul.md template
@@ -253,7 +248,7 @@ thiscode/
 │   ├── marketplace.json                   # thiscode-marketplace
 │   └── plugin.json
 ├── commands/                              # Slash commands (incl. /thiscode:init)
-├── skills/                                # skill dirs (v2.2 vault-mirror policy)
+├── skills/                                # skill dirs (vault-mirror policy)
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 lines)
 │   ├── knowledge-manager-at/              # Agent Teams variant (1189 lines)
 │   ├── knowledge-manager-lite/            # Lite single-agent (530 lines)
@@ -262,7 +257,7 @@ thiscode/
 │   ├── search/                            # 4-Tier vault search
 │   ├── search-lite/                       # 3-Tier (no GraphRAG)
 │   ├── codex-exec-bridge/                 # vault skill mirror (folder)
-│   ├── init/                              # v2.1 wizard skill
+│   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin install wizard
 │   ├── meetings/                          # 4-file meeting protocol
 │   └── shared-memory/                     # 4-tier memory policy
@@ -270,8 +265,8 @@ thiscode/
 ├── templates/                             # 5 soul.md personas
 ├── configs/                               # tmux.conf.local
 ├── benchmark/                             # 4-Tier benchmark (run-all.sh + fixtures)
-├── contracts/                             # search-fallback-4tier.md (v2.0.3)
-├── schemas/                               # agent-spec.json (Custom Hybrid v1.0, v2.1)
+├── contracts/                             # search-fallback-4tier.md
+├── schemas/                               # agent-spec.json (Custom Hybrid v1.0)
 ├── scripts/                               # install-graphrag.sh / install-obsidian-cli.sh / route-model.mjs
 └── docs/                                  # SETUP / SETUP-BEGINNER / AGENTS / GLOSSARY / BENCHMARK / ARCHITECTURE / MANUAL
 ```
@@ -357,7 +352,7 @@ If your bot's responses don't reflect the persona, the SessionStart hook is like
 
 This safely merges the bot-session-init.sh hook into `~/.claude/settings.json` while preserving any existing hooks.
 
-### GraphRAG server won't start (v2.3 — vendor 의존 + ~/.cache venv)
+### GraphRAG server won't start (vendor 의존 + ~/.cache venv)
 
 ```bash
 bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
@@ -365,7 +360,7 @@ bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8
 bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup uvicorn
 ```
 
-The `--apply` mode (v2.3):
+The `--apply` mode:
 - venv 위치 = `~/.cache/thiscode/graphrag/venv` (writable home cache)
 - vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (vault SoT 와 동등 박제, 21 file)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
@@ -384,11 +379,11 @@ The `--apply` mode (v2.3):
 
 ### Skills (agentskills.io-standard)
 
-- `init` — v2.1 onboarding wizard (env detect + 8-Phase recommend)
+- `init` — onboarding wizard (env detect + 8-Phase recommend)
 - `bootstrap` — installer wizard helper
 - `shared-memory` — 4-tier memory policy + Read-before-Edit
 - `meetings` — 4-file meeting protocol + SOURCE FACT cross-check + Discord REST API threads
-- `codex-exec-bridge` — Codex CLI subprocess + `/tofu-at-codex` v2.2 reference
+- `codex-exec-bridge` — Codex CLI subprocess + `/tofu-at-codex` reference
 - `knowledge-manager-at` — km-at Mode R preflight (read-only diagnostics + dry-run apply)
 
 ### Codex CLI bridge
@@ -401,7 +396,7 @@ thiscode includes Codex CLI as a first-class bridge layer:
 
 ### Custom Hybrid v1.0 agent spec
 
-`schemas/agent-spec.json` defines a per-agent contract registry combining agentskills.io base + Hermes `provides_*` + thiscode classroom policy + dynamic gates + benchmark integration. v2.1 adds `tier: core` (init wizard) and `phases:` for km-at Mode R preflight workflow.
+`schemas/agent-spec.json` defines a per-agent contract registry combining agentskills.io base + Hermes `provides_*` + thiscode classroom policy + dynamic gates + benchmark integration. v1.0 adds `tier: core` (init wizard) and `phases:` for km-at Mode R preflight workflow.
 
 ---
 
