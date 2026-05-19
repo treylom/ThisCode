@@ -12,7 +12,7 @@ $ARGUMENTS
 
 ---
 
-## 등록할 hooks 3개
+## 등록할 hooks 4개
 
 1. **SessionStart** → `bot-session-init.sh`
    - soul.md (페르소나) 자동 inject
@@ -24,6 +24,10 @@ $ARGUMENTS
 
 3. **UserPromptSubmit** → `regression-self-check.sh`
    - 4-gate self-check (Discord reply / 단정 표현 / single-grep / skill invoke) 매 응답 전 환기
+
+4. **Stop** → `meeting-stop-reread.sh`
+   - active meeting 이 열려 있는 봇 세션이면 종료 전 회의 state 재독을 요청
+   - active meeting 없음 / 일반 개발 세션 / 재귀 Stop = fail-open allow-stop
 
 ---
 
@@ -94,6 +98,18 @@ PATCH=$(cat <<EOF
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_DIR/hooks/meeting-stop-reread.sh'",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }
@@ -101,7 +117,7 @@ EOF
 )
 
 # 기존 hook 보존 + thiscode hook append
-jq -s '.[0] * .[1] | .hooks.SessionStart = ((.[0].hooks.SessionStart // []) + (.[1].hooks.SessionStart // []) | unique_by(.hooks[0].command)) | .hooks.UserPromptSubmit = ((.[0].hooks.UserPromptSubmit // []) + (.[1].hooks.UserPromptSubmit // []) | unique_by(.hooks[0].command))' \
+jq -s '.[0] * .[1] | .hooks.SessionStart = ((.[0].hooks.SessionStart // []) + (.[1].hooks.SessionStart // []) | unique_by(.hooks[0].command)) | .hooks.UserPromptSubmit = ((.[0].hooks.UserPromptSubmit // []) + (.[1].hooks.UserPromptSubmit // []) | unique_by(.hooks[0].command)) | .hooks.Stop = ((.[0].hooks.Stop // []) + (.[1].hooks.Stop // []) | unique_by(.hooks[0].command))' \
   "$SETTINGS" <(echo "$PATCH") > "$SETTINGS.tmp"
 mv "$SETTINGS.tmp" "$SETTINGS"
 ```
@@ -132,6 +148,7 @@ with open("'"$SETTINGS"'") as f: d = json.load(f)
 hooks = d.get("hooks", {})
 print("SessionStart hooks:", len(hooks.get("SessionStart", [])))
 print("UserPromptSubmit hooks:", len(hooks.get("UserPromptSubmit", [])))
+print("Stop hooks:", len(hooks.get("Stop", [])))
 '
 ```
 
@@ -186,6 +203,7 @@ claude
 ## 관련 자원
 
 - hooks 본문: [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../hooks/regression-self-check.sh) / [stop-debug-surface.sh](../hooks/stop-debug-surface.sh) (opt-in)
+- active meeting Stop reread(선택): [../hooks/meeting-stop-reread.sh](../hooks/meeting-stop-reread.sh) — bot session + active meeting + non-recursive Stop 일 때만 `continue:true`, 그 외 fail-open.
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - 첫 봇 생성: [create-bot.md](create-bot.md)
 - 메인 wizard: [start.md](start.md)

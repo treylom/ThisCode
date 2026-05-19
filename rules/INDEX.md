@@ -20,6 +20,7 @@
 | Porting a tool/skill / deploying / pushing / adding an MCP | [porting-infra.md](porting-infra.md) | Check upstream before hand-rolling. Secret-scan before any push. MCP health-check |
 | Writing a persona response (voice) | [voice.md](voice.md) | Keep the persona's voice + completion signature every response; no echo drift |
 | Delegating to / waiting on a bot · asserting a bot's identity/health · multi-agent coordination | [orchestration.md](orchestration.md) | Verify bot identity (chain-load guard), don't assume; teammate idle = drive not wait; meeting = adopt domain frames, no solo lock |
+| Coordinating an active meeting / dispatch verification / Stop while meeting active | [meeting-protocol.md](meeting-protocol.md) | SessionStart injects active meeting + rules INDEX; verify dispatch execution; KST progress rows; Stop rereads active meeting |
 | Searching the project's own knowledge base / notes / docs | [knowledge-retrieval.md](knowledge-retrieval.md) | Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
 
 ## Splitting principle
