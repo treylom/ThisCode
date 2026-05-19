@@ -51,12 +51,21 @@ test('probe block was extractable from install-hooks.md', () => {
   assert.ok(PROBE && /for _cand in/.test(PROBE), 'must find the ordered-probe bash block');
 });
 
+// The probe runs in bash and emits a POSIX-ish path; on the Windows runner
+// Git Bash keeps `/` for the script-built tail while Node's path.join uses
+// `\`. Compare on the separator-normalized POSIX suffix so the assertion is
+// OS-independent (still proves *which* candidate the probe selected).
+const posix = (p) => p.replace(/\\/g, '/');
+
 test('picks the only candidate that has hooks/bot-session-init.sh', () => {
   const home = mkdtempSync(join(tmpdir(), 'pdp-home-'));
   plant(home, '.claude/plugins/thiscode'); // manual-clone location only
   const r = runProbe(home);
   assert.equal(r.code, 0, `should succeed, got: ${r.out}`);
-  assert.equal(r.resolved, join(home, '.claude/plugins/thiscode'));
+  assert.ok(
+    posix(r.resolved).endsWith('/.claude/plugins/thiscode'),
+    `probe must select the manual-clone dir; got: ${r.resolved}`,
+  );
   rmSync(home, { recursive: true, force: true });
 });
 
@@ -66,10 +75,9 @@ test('ordering: marketplace dir wins over manual clone when both present', () =>
   plant(home, '.claude/plugins/thiscode');
   const r = runProbe(home);
   assert.equal(r.code, 0);
-  assert.equal(
-    r.resolved,
-    join(home, '.claude/plugins/marketplaces/thiscode-marketplace'),
-    'first candidate in the ordered list must win',
+  assert.ok(
+    posix(r.resolved).endsWith('/.claude/plugins/marketplaces/thiscode-marketplace'),
+    `first candidate in the ordered list must win; got: ${r.resolved}`,
   );
   rmSync(home, { recursive: true, force: true });
 });
