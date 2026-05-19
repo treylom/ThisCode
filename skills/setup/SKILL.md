@@ -22,8 +22,12 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 3. Use tmux for Discord bot runtime windows. Do not use cmux for this flow.
 4. Present safe mode first. YOLO/danger-full-access requires explicit opt-in.
 5. Ask `progress_report_cadence`: `per_task`, `1m`, `3m`, `5m`, `off`, or
-   `custom`.
-6. Finish with `thiscode doctor` or the nearest available verify command.
+   `custom`. `per_task` means a meaningful subtask or milestone completion,
+   not every raw model turn boundary.
+6. When aliases are generated, tell the user to `source` the generated alias
+   script/block; only add it to a shell rc file if they explicitly want it
+   permanent.
+7. Finish with `thiscode doctor` or the nearest available verify command.
 
 ## Guardrails
 

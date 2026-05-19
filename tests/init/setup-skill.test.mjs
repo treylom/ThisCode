@@ -10,4 +10,5 @@ test('setup skill is generated through prompt-skill discipline', () => {
   assert.match(text, /progress_report_cadence/);
   assert.match(text, /tmux/i);
   assert.match(text, /Do not use cmux/i);
+  assert.match(text, /source/i);
 });

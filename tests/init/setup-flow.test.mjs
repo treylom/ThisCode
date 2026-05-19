@@ -17,6 +17,19 @@ test('setup flow aliases are repo and BOT_WD parameterized', () => {
   assert.doesNotMatch(text, /cmux/i);
 });
 
+test('setup flow aliases export heartbeat env from selected progress cadence', () => {
+  const text = setupFlowAliases({
+    product: 'thiscode',
+    repoRoot: '/repo/ThisCode',
+    botWd: '/bots/reviewer',
+    stateDir: '/state/discord-reviewer',
+    session: 'thiscode',
+    progressReportCadence: '5m',
+  });
+  assert.match(text, /THISCODE_PROGRESS_CADENCE='5m'/);
+  assert.match(text, /THISCODE_HEARTBEAT_SEC='300'/);
+});
+
 test('setup flow guide is tmux-only and includes progress cadence', () => {
   const text = setupFlowGuide('thiscode');
   assert.match(text, /tmux/i);

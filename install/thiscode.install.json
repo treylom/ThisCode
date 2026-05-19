@@ -14,7 +14,7 @@
       "safety": "none", "verify": { "type": "answered", "key": "apply_confirm" },
       "on_fail": { "next_command": "node bin/thiscode.mjs --check   (먼저 미리보기)" } },
     { "id": "progress_report_cadence", "order": 60, "when": "always", "action": "prompt",
-      "reason": "작업 진행상황(progress/report cadence)을 얼마나 자주 보고할지 정해요 — 작업마다, 1분, 3분, 5분, 안함, 직접 입력 중 선택합니다.",
+      "reason": "작업 진행상황(progress/report cadence)을 얼마나 자주 보고할지 정해요 — per_task는 유의미한 subtask/마일스톤 완료 보고, 1/3/5분은 bridge heartbeat, off는 heartbeat 비활성입니다.",
       "safety": "none", "verify": { "type": "answered", "key": "progress_report_cadence" },
       "on_fail": { "next_command": "node bin/thiscode.mjs --check --progress-report-cadence per_task" } },
     { "id": "apply_placement", "order": 80, "when": "mode == 'apply'", "action": "apply",
