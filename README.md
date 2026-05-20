@@ -18,7 +18,7 @@
 
 ## 🛠️ Zero-config Install
 
-**Prerequisite:** Claude Code CLI already installed + authenticated (https://claude.ai/code). `install.sh` 의 `install-superpowers.sh` step 안 `claude` CLI 호출.
+**Prerequisite:** Claude Code CLI already installed + authenticated (https://claude.ai/code). The `install-superpowers.sh` step inside `install.sh` invokes the `claude` CLI.
 
 For learners who prefer **single-command setup** (no wizard, no choices):
 
@@ -28,7 +28,7 @@ cd ~/.claude/plugins/thiscode
 bash scripts/install.sh --apply
 ```
 
-본 single command installs:
+This single command installs:
 
 1. **superpowers** plugin (via Claude Code plugin manager)
 2. **ripgrep** (Tier 4 baseline — brew / apt / dnf / apk multi-pkg-manager fallback)
@@ -42,16 +42,16 @@ After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers 
 
 **Dependency provenance:** full attribution matrix (16 entries — Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero).
 
-**Lessons learned (consolidated into the v1.0 first integrated release):** 본 cycle 의 학습 정착은 vault `AI_Second_Brain/.claude-memory/shared/feedback_*` 안 보존:
-- `feedback_no_student_term` — learner / 사용자 / 수강자 terminology
-- `feedback_autonomy_mode_no_option_questions` — 자율 cycle 옵션 confirm 묻기 zero
-- `feedback_no_turn_marker_continuous_execution` — turn 마감 발화 zero, 연속 실행
-- `feedback_background_task_proactive_polling` — background task active poll (자동 notification 가정 zero)
-- `feedback_debugging_via_codex` — debugging task = codex 위임 의무
-- `feedback_fresh_env_actual_install_verification` — Phase 1+2 정적 검수 한계, Phase 3 actual install 필수 ⭐ critical
+**Lessons learned (consolidated into the v1.0 first integrated release):** This cycle's learnings are persisted in the vault under `AI_Second_Brain/.claude-memory/shared/feedback_*`:
+- `feedback_no_student_term` — learner / user / participant terminology
+- `feedback_autonomy_mode_no_option_questions` — autonomous cycle asks zero option-confirmation questions
+- `feedback_no_turn_marker_continuous_execution` — zero turn-boundary utterances, continuous execution
+- `feedback_background_task_proactive_polling` — background tasks require active polling (zero auto-notification assumption)
+- `feedback_debugging_via_codex` — debugging tasks must be delegated to codex
+- `feedback_fresh_env_actual_install_verification` — Phase 1+2 static review is limited; Phase 3 actual install is required ⭐ critical
 - `feedback_tofu_at_codex_actual_mechanism` — multi-axis parallel = `/tofu-at-codex` (Agent Teams + sonnet workers)
-- `feedback_sonnet_codex_debate_opus_synthesis` — sonnet ↔ codex multi-round debate → opus 종합 mechanism
-- `feedback_no_user_decision_zone_autonomous` — 자율 cycle 안 "사용자 결정 영역" 분류 zero (autonomy 3rd 강화)
+- `feedback_sonnet_codex_debate_opus_synthesis` — sonnet ↔ codex multi-round debate → opus synthesis mechanism
+- `feedback_no_user_decision_zone_autonomous` — zero "user decision zone" classification inside autonomous cycle (autonomy 3rd reinforcement)
 
 ## 🚀 Quickstart (vault-first)
 
@@ -249,10 +249,10 @@ thiscode/
 │   └── plugin.json
 ├── commands/                              # Slash commands (incl. /thiscode:init)
 ├── skills/                                # skill dirs (vault-mirror policy)
-│   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 lines)
+│   ├── knowledge-manager/                 # full vault 7-Layer Fusion (1161 lines)
 │   ├── knowledge-manager-at/              # Agent Teams variant (1189 lines)
 │   ├── knowledge-manager-lite/            # Lite single-agent (530 lines)
-│   ├── knowledge-manager-bootstrap/       # 4-Tier install 합본
+│   ├── knowledge-manager-bootstrap/       # 4-Tier install bundle
 │   ├── knowledge-manager-plain/           # headless variant
 │   ├── search/                            # 4-Tier vault search
 │   ├── search-lite/                       # 3-Tier (no GraphRAG)
@@ -352,17 +352,17 @@ If your bot's responses don't reflect the persona, the SessionStart hook is like
 
 This safely merges the bot-session-init.sh hook into `~/.claude/settings.json` while preserving any existing hooks.
 
-### GraphRAG server won't start (vendor 의존 + ~/.cache venv)
+### GraphRAG server won't start (vendor dependency + ~/.cache venv)
 
 ```bash
 bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
 bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / vendor SoT check
-bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup uvicorn
+bash scripts/install-graphrag.sh --apply     # venv setup + pip install + nohup uvicorn
 ```
 
 The `--apply` mode:
-- venv 위치 = `~/.cache/thiscode/graphrag/venv` (writable home cache)
-- vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (vault SoT 와 동등 박제, 21 file)
+- venv location = `~/.cache/thiscode/graphrag/venv` (writable home cache)
+- vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (equivalent snapshot of vault SoT, 21 files)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
 - entry = `uvicorn search_server:app --host 127.0.0.1 --port 8400` (background nohup)
 - log = `~/.cache/thiscode/graphrag/run/graphrag.log`
