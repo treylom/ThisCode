@@ -6,7 +6,9 @@ set -euo pipefail
 
 umask 077
 
-WD="$(cd "$(dirname "$0")/.." && pwd)"
+# WD = bot project root (launch.sh's directory).
+# Templates ship launch.sh at project root; .py files live in $WD/scripts/.
+WD="$(cd "$(dirname "$0")" && pwd)"
 cd "$WD"
 
 # Bot 정체성 — alias 와 일치하는 단일 토큰 (BOT_NAME env 로 override). tmux 세션 + ~/.claude/channels/discord-<name>/ 이름.
@@ -53,7 +55,7 @@ if [[ ! -d .venv ]]; then
 fi
 if [[ ! -f "$CHANNEL_DIR/.env" ]]; then
   echo "[FATAL] token .env 없음 — $CHANNEL_DIR/.env (DISCORD_BOT_TOKEN, AGY_PATH) 작성 필요"
-  echo "  template: $WD/scripts/env.template"
+  echo "  template: see thiscode_agy/templates/env.template in ThisCode skill"
   exit 1
 fi
 

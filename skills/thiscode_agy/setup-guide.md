@@ -25,7 +25,12 @@ Full walkthrough for a fresh Discord + Antigravity bot setup.
      - ✅ Embed Links (16384)
      - ✅ Attach Files (32768)
      - ✅ Add Reactions (64)
-     - Total = 117824 (or use the checkboxes — Discord computes the integer)
+     - Sum = 117824 (or use the Discord UI checkboxes — it computes the integer for you)
+
+   Or hand-construct the URL directly:
+   ```
+   https://discord.com/api/oauth2/authorize?client_id=<your-app-id>&permissions=117824&scope=bot+applications.commands
+   ```
 5. Copy the **Generated URL** at the bottom → open in browser → select your guild → **Authorize**.
 
 > ⚠️ **CRITICAL — common gotcha**: if you only add `applications.commands` scope (no `bot`), your bot WILL appear in `/users/@me/guilds` but every `GET /channels/.../messages` returns `{"code": 50001, "message": "Missing Access"}` and `on_message` never fires. You'll see only heartbeat logs. **Always include `bot` scope.** (See `references/troubleshooting.md` §1 for diagnosis.)
@@ -51,10 +56,13 @@ Requires Python 3.10+ (3.14 tested):
 cd ~/my-agy-bot
 python3 -m venv .venv
 .venv/bin/pip install --upgrade pip
-.venv/bin/pip install 'discord.py>=2.3' websockets
+.venv/bin/pip install -r requirements.txt
+# (Or explicitly: .venv/bin/pip install 'discord.py>=2.3' pytest pytest-asyncio)
 ```
 
-> ⚠️ `discord.py>=2.3` must be quoted in zsh (otherwise `>` is interpreted as redirect).
+> ⚠️ If installing without `requirements.txt`, `'discord.py>=2.3'` must be quoted in zsh (otherwise `>=` is interpreted as redirect).
+>
+> Note: `websockets` package is NOT required for the agy bridge (it's only needed for the codex bridge which uses JSON-RPC over WebSocket).
 
 ## §4. tmux setup
 
