@@ -8,38 +8,60 @@ Common issues + fixes. Most are first-launch papercuts.
 
 **Symptom**: bridge daemon pane shows `[HH:MM:SS] gateway READY — <bot>#1234` then every 30s `<bot> alive — queue=0 channels=0`. You `@<bot>` in Discord but no `[RAW]` log line appears.
 
-**Most likely root cause**: OAuth scope mismatch — bot was authorized with only `applications.commands` scope (no `bot` scope). The bot APPEARS in `/users/@me/guilds` but every channel access returns `Missing Access (50001)`, and `on_message` never fires.
+**Two possible root causes** (Missing Access 50001 surface is identical for both):
+
+**(a) OAuth scope mismatch** — bot was authorized with only `applications.commands` scope (no `bot` scope). The bot does NOT appear in `/users/@me/guilds`, and every channel/REST call returns `Missing Access (50001)`.
+
+**(b) Channel permission overwrite denying the bot** — bot has `bot` scope AND appears in `/users/@me/guilds` AND its guild-level permissions integer includes `VIEW_CHANNEL` (1024), but the target channel has an explicit overwrite that denies the bot's role (or @everyone, which the bot inherits when no role is assigned). Same `Missing Access (50001)` on REST, same silent `on_message`.
+
+Differentiator: decode the guild permissions integer from `/users/@me/guilds` — if it contains VIEW_CHANNEL but channel REST still 50001, you're in case (b) not (a).
 
 **Diagnosis** (REST API, no Python needed):
 
 ```bash
 TOK="$(grep '^DISCORD_BOT_TOKEN=' ~/.claude/channels/discord-<bot>/.env | cut -d= -f2 | tr -d '"')"
 
-# What guilds does the bot see?
+# Step 1 — does the bot see the guild at all?
 curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/users/@me/guilds"
-# Expected: at least one guild with your bot's permissions integer.
+# If empty array [] → case (a) OAuth scope. Re-OAuth with bot scope.
+# If guild listed → check the "permissions" integer in the response.
 
-# Can the bot read messages from the target channel?
-curl -s -H "Authorization: Bot $TOK" \
-  "https://discord.com/api/v10/channels/<channel-id>/messages?limit=1"
-# Expected: a JSON array of messages.
-# If you get {"message": "Missing Access", "code": 50001} → OAuth scope problem.
+# Step 2 — decode the guild-level permissions integer.
+python3 -c "
+perms = <integer-from-step-1>
+print('VIEW_CHANNEL:', bool(perms & (1 << 10)))
+print('SEND_MESSAGES:', bool(perms & (1 << 11)))
+print('READ_MESSAGE_HISTORY:', bool(perms & (1 << 16)))
+"
+# If all False → case (a) OAuth scope (bot has guild membership but no permissions; re-OAuth with permissions=117824).
+# If all True → case (b) channel overwrite (proceed to step 3).
 
-# What scopes did the default install URL use?
+# Step 3 — can the bot read the channel meta? (separates guild perms from channel overwrite)
+curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/channels/<channel-id>"
+# If "Missing Access (50001)" despite step 2 showing VIEW_CHANNEL → case (b) channel overwrite.
+
+# Step 4 — what is the default install URL's scopes? (sanity)
 curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/applications/@me" \
   | python3 -c "import sys, json; print(json.load(sys.stdin).get('install_params'))"
-# If scopes is ['applications.commands'] only (no 'bot') → re-OAuth with bot scope.
+# Informational only — the actual install scopes are NOT always identical to this default.
 ```
 
-**Fix**: Re-authorize the bot with `bot` scope. Generate URL via Discord Developer Portal → OAuth2 → URL Generator, or hand-construct:
+**Fix for case (a)** — re-authorize with `bot` scope + permissions:
 
 ```
 https://discord.com/api/oauth2/authorize?client_id=<app-id>&permissions=117824&scope=bot+applications.commands
 ```
 
-`permissions=117824` = View Channels + Send Messages + Embed Links + Attach Files + Read Message History + Add Reactions (minimum for a chat bot). Open in browser → select target guild → Authorize.
+`permissions=117824` = View Channels + Send Messages + Embed Links + Attach Files + Read Message History + Add Reactions (minimum for a chat bot). Open in browser → select target guild → Authorize. This creates/refreshes a managed role with those permissions and assigns it to the bot.
 
-After re-OAuth, the bridge daemon auto-detects new permissions on the next inbound message — no restart needed. First mention should immediately show `[RAW]` + `[INBOX]` + Discord reply.
+**Fix for case (b)** — adjust the channel's permission overwrites:
+1. Open the Discord guild as admin → click the channel name → **Edit Channel** → **Permissions** tab.
+2. Find the bot (or its managed role) in the overwrites list.
+3. Toggle **View Channel**, **Send Messages**, **Read Message History** to ✓ (green check, allow).
+4. Alternatively, remove the overwrite entry entirely to let guild-level permissions apply.
+5. If the channel inherits from a category, fix the category overwrites instead.
+
+After either fix, the bridge daemon auto-detects new permissions on the next inbound message — no restart needed. First mention should immediately show `[RAW]` + `[INBOX]` + Discord reply.
 
 ## §2. Bot receives mentions but `msg.content` is empty (`content='...'` empty in `[RAW]` line)
 
