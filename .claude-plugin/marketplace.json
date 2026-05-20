@@ -8,8 +8,8 @@
   "plugins": [
     {
       "name": "thiscode",
-      "description": "Claude Code 환경 + Discord 봇 1개 + tmux/oh-my-tmux 통합 셋업 플러그인. WSL/Linux/macOS 자동 detect.",
-      "version": "0.1.0",
+      "description": "Claude Code 환경 + Discord 봇 + tmux/oh-my-tmux 통합 셋업 플러그인. WSL/Linux/macOS 자동 detect.",
+      "version": "1.0.0",
       "source": "./",
       "author": {
         "name": "treylom",
