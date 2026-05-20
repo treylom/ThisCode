@@ -36,6 +36,22 @@ Thread             →  all discussion, decisions, outputs
 
 This applies to: meetings, task reviews, design sessions — any bounded unit of work. Keeping topics in threads preserves searchability and prevents channel noise.
 
+### 2.1 Autonomous cycles count as meetings
+
+If an orchestrator bot dispatches work to two or more bots — even informally, even from an autonomous `/goal` session, an overnight cycle, or a direct ping — that is a meeting trigger. The thread + meeting-folder requirement applies. "Informal" is not an exemption: when audience bots reply, they default to the main channel or the completion-report thread unless told otherwise, which cascades into channel-governance violations.
+
+Self-check before dispatching to any teammate bot:
+
+> Will this involve ≥2 bots, or take ≥30 minutes? If yes, open the thread first.
+
+### 2.2 Dispatch messages must name the thread id
+
+When you dispatch work to another bot, include the thread id explicitly in the message body:
+
+> "Continue this work inside thread `<thread_id>`. Use the completion-report thread only for the final completion gate."
+
+Without an explicit thread id, the receiving bot falls back to its default reply target (usually the main channel body or the completion thread), and the work surfaces in the wrong place. The orchestrator owns this — it cannot be retrofitted from the audience side.
+
 ---
 
 ## 3. Cross-Machine Coordination = Dedicated Channel
