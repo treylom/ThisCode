@@ -24,7 +24,7 @@
   "contributors": [
     "Claude (Anthropic Claude Code) <noreply@anthropic.com>",
     "tofukyung (재경)",
-    "Codex (OpenAI Codex CLI / 손석희 reviewer) <noreply@openai.com>"
+    "Codex (OpenAI Codex CLI / code-review-bot) <noreply@openai.com>"
   ],
   "files": [
     "bin/",

@@ -175,6 +175,6 @@ stderr 도 함께 캡처 (`2>&1`). 매일 별도 파일.
 ## 관련 자원
 
 - vault `<vault>/.claude-memory/shared/reference_headless_claude_oneshot_pattern.md`
-- vault AK-Tofu 3층 패턴 (`reference_aktofu_launchd_three_layer.md`)
+- vault aktofu-bot 3층 패턴 (`reference_aktofu_launchd_three_layer.md`)
 - skill: [../skills/bootstrap/SKILL.md](../skills/bootstrap/SKILL.md)
 - Discord MCP server 소스: `~/.claude/plugins/cache/claude-plugins-official/discord/0.0.4/server.ts`

@@ -45,7 +45,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
 
 브라우저로 https://discord.com/developers/applications 접속:
 
-1. "New Application" → 이름 (예: `Karpathy-mybot`)
+1. "New Application" → 이름 (예: `<your-bot-name>`)
 2. 좌측 "Bot" 탭 → "Reset Token" → 토큰 복사
 3. OAuth2 → URL Generator
    - Scopes: `bot`, `applications.commands`

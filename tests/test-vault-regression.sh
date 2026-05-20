@@ -19,8 +19,8 @@ grep -qE "Contract|contracts/" "$VAULT/.claude/commands/search.md" || \
 grep -qE "Contracts|contracts/" "$VAULT/.claude/commands/knowledge-manager.md" || \
   { echo "FAIL T4.3b: contract banner missing in knowledge-manager.md"; exit 1; }
 
-# T4.4 — Karpathy Pipeline reference still in km
-grep -qE "Karpathy Pipeline|km-karpathy-pipeline" "$VAULT/.claude/commands/knowledge-manager.md" || \
-  { echo "FAIL T4.4: Karpathy Pipeline ref missing"; exit 1; }
+# T4.4 — Orchestrator/Karpathy Pipeline reference still in km (legacy "Karpathy Pipeline" name supported in vault mirror)
+grep -qE "Orchestrator Pipeline|km-orchestrator-pipeline|Karpathy Pipeline|km-karpathy-pipeline" "$VAULT/.claude/commands/knowledge-manager.md" || \
+  { echo "FAIL T4.4: Pipeline ref missing"; exit 1; }
 
 echo "PASS"

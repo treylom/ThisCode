@@ -97,7 +97,7 @@ cross-machine sync 시 본 폴더는 exclude.
 └── ...
 ```
 
-봇 specific 페르소나 정정 (예: "Karpathy 가 '영영' 단어 반복 회귀") 본 위치.
+봇 specific 페르소나 정정 (예: "orchestrator-bot 이 특정 단어 반복 회귀") 본 위치.
 
 ## 사용자 vault 없는 경우 (plain markdown 만)
 

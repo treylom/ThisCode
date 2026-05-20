@@ -45,7 +45,7 @@
 ### Phase A-G: GraphRAG 하이브리드 검색 (Dense + Sparse + Reranker)
 
 > **⚡ Mode I에서도 항상 실행.** GraphRAG 검색은 Mode G 전용이 아니다.
-> Karpathy 원칙: "Search/CLI tools는 모든 컴파일에 참여한다."
+> Orchestrator 원칙: "Search/CLI tools는 모든 컴파일에 참여한다."
 > DB 미존재 시에만 스킵 (graceful fallback).
 
 ```

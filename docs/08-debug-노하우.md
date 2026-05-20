@@ -81,7 +81,7 @@ Agent() 호출 시 model 미지정 → Opus 4.7 inherit (비용 폭증). 항상 
 
 git repo `020-Library/` ≠ Mac vault `Library/` (rsync 시점 prefix `020-` strip). file system fact 검증 시 양쪽 root 동시 grep 의무.
 
-회귀: 2026-05-11 코난 cross-bot 검증 false negative ("Mac vault sync 미반영" 보고) → AK-Tofu 정정.
+회귀: 2026-05-11 research-bot cross-bot 검증 false negative ("Mac vault sync 미반영" 보고) → aktofu-bot 정정.
 
 ### C-2. Archive 폴더 정책
 
@@ -241,6 +241,6 @@ Lead (오케스트레이터·하위 봇) 가 다음 단계 진입 시 직전 산
 ## 관련 자원
 
 - vault `<vault>/.claude-memory/shared/SHARED-INDEX.md` (24+ 카테고리 인덱스)
-- vault `<vault>/agent-korea-daily/디버깅.md` (#1~#85 누적 케이스 DB, AK-Tofu 파이프라인 specific)
+- vault `<vault>/agent-korea-daily/디버깅.md` (#1~#85 누적 케이스 DB, aktofu-bot 파이프라인 specific)
 - skill: [../skills/bootstrap/SKILL.md](../skills/bootstrap/SKILL.md)
 - self-check 표: [../skills/bootstrap/references/REFERENCE.md] (예정)
