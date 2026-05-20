@@ -45,17 +45,19 @@ Reference incident: "Phase 3 Hassabis bridge" decision log — `agy --print --ad
 
 In gateway mode, `AgyDiscordBot._worker` ALSO acquires a per-channel `asyncio.Lock` (`_channel_locks`) — the flock is for cross-process safety, the asyncio lock is for in-process queue serialization. Both layers because the gateway code reuses `bridge._dispatch` which expects flock semantics.
 
-## Visual feedback (tmux send-keys → agy TUI pane)
+## Visual feedback (tmux send-keys → agy TUI window)
 
-The bottom tmux pane runs `agy --dangerously-skip-permissions` interactively (not driven by the bridge — purely decorative). `bridge._tmux_inject()` sends `C-u` (clear line) then `-l <text>` (literal, no Enter) to the pane so the user sees the Discord message appear at the prompt without agy actually processing it (the real processing is the Y-3 subprocess).
+Layout: single tmux session `$BOT_NAME` with 2 windows — `agy` (agy CLI TUI, default focus) and `daemon` (bridge.py log). User attaches once (`tmux attach -t $BOT_NAME`) and switches windows with `C-b 0/1`. Mirrors the sshee/codex bridge pattern (single session, codex TUI window + bot.py daemon window).
 
-`AGY_TUI_PANE` env var carries the tmux target (e.g. `mybot:1.2`). `launch.sh` captures it from `tmux split-window -P -F '...'` after the split. The 2-step launch (placeholder bash → split → send-keys to start bridge with correct env) ensures the env value is right even on hosts with non-default `base-pane-index`.
+The `agy` window runs `agy --sandbox` (or `--dangerously-skip-permissions` if `AGY_UNSAFE=1`) interactively, not driven by the bridge — purely decorative. `bridge._tmux_inject()` sends `C-u` (clear line) then `-l <text>` (literal, no Enter) to the agy window pane so the user sees the Discord message appear at the prompt without agy actually processing it (the real processing is the Y-3 subprocess running in the daemon window).
+
+`AGY_TUI_PANE` env var carries the tmux target (e.g. `mybot:agy.0`). `launch.sh` sets it after creating the agy window. tmux accepts named-window targets, so this works regardless of window index numbering. Cross-window send-keys within one session works identically to cross-pane.
 
 ## Heartbeat
 
-`AgyDiscordBot._heartbeat_loop` prints `[HH:MM:SS] <bot> alive — queue=N channels=N` every 30s to the daemon pane. Provides liveness proof without needing to attach. `channels` = count of `_channel_locks` keys, which is populated lazily on first message per channel.
+`AgyDiscordBot._heartbeat_loop` prints `[HH:MM:SS] <bot> alive — queue=N channels=N` every 30s to the daemon window. Provides liveness proof without needing to attach. `channels` = count of `_channel_locks` keys, which is populated lazily on first message per channel.
 
-If you see heartbeat ticking but `queue=0` AND `channels=0` for minutes despite known mentions, the bot is connected to Discord gateway but not receiving messages — almost always OAuth scope (see `troubleshooting.md` §1).
+If you see heartbeat ticking but `queue=0` AND `channels=0` for minutes despite known mentions, the bot is connected to Discord gateway but not receiving messages — almost always OAuth scope OR channel permission overwrite (see `troubleshooting.md` §1 case (a) vs (b)).
 
 ## File layout
 

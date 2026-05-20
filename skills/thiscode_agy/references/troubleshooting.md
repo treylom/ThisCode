@@ -86,38 +86,46 @@ After either fix, the bridge daemon auto-detects new permissions on the next inb
 - Or constrain prompts to non-sensitive ops only (no file writes, no network, no shell).
 - Or pre-stage files in `--add-dir` directories that agy already has access to.
 
-## §4. tmux panes don't show what you expect (`AGY_TUI_PANE` mismatch)
+## §4. tmux windows don't show what you expect (`AGY_TUI_PANE` mismatch)
 
-**Symptom**: bridge logs `[tmux-inject] failed: ...` OR Discord messages don't appear visually in the agy pane.
+**Symptom**: bridge logs `[tmux-inject] failed: ...` OR Discord messages don't appear visually in the agy window.
 
-**Root cause**: tmux pane numbering varies by config (`base-index`, `base-pane-index`). The launch script uses `tmux split-window -P -F '#{session_name}:#{window_index}.#{pane_index}'` to capture the actual pane id, then passes it as `AGY_TUI_PANE` env to the bridge.
+**Root cause**: `AGY_TUI_PANE` env not set or pointing to the wrong target. Launch script sets `AGY_TUI_PANE="${BOT_NAME}:agy.0"` (named window targeting, base-index independent).
 
 **Diagnosis**:
 ```bash
-tmux list-panes -t <bot>
-# Look at the pane indexes (1 and 2 typically)
-echo $AGY_TUI_PANE   # in the bridge pane
-# Should match the agy pane's full target like "<bot>:1.2"
+tmux list-windows -t <bot>
+# Expected: 'agy' and 'daemon' windows.
+tmux capture-pane -t <bot>:daemon -p -S -300 | grep AGY_TUI_PANE
+# Should show the AGY_TUI_PANE env logged at daemon startup.
 ```
 
-**Fix**: Re-launch (`tmux kill-session -t <bot>` then `BOT_NAME=<bot> bash launch.sh`). The 2-step launch is the fix — if you're seeing this on an old launch.sh, ensure the latest template is in use.
+**Fix**: Re-launch (`tmux kill-session -t <bot>` then `BOT_NAME=<bot> bash launch.sh`). The named-window targeting (`<bot>:agy.0`) avoids base-index issues.
 
 ## §5. Wrapper kills the session you're in (`bash: tmux: kill-session ...`)
 
 **Symptom**: You're attached to `<bot>` tmux, you type `<bot>` alias from within → terminal closes / session dies.
 
-**Root cause**: Old launch.sh wrapper unconditionally `tmux kill-session -t <bot>` before recreating. From inside the session, this kills your own session.
+**Root cause**: launch.sh's wrapper unconditionally `tmux kill-session -t <bot>` before recreating. From inside the session, this kills your own session.
 
-**Fix**: Templates ≥2026-05-21 include a **suicide guard**. Inside the wrapper:
+**Solution — shell function bootstrap (recommended)**: Wrap the alias in a shell function that detects "called from inside the bot session" and bootstraps from a side session. Example zsh:
 
 ```bash
-if [[ -n "${TMUX:-}" ]] && tmux display-message -p "#S" | grep -qx "<bot>"; then
-  echo "[WARN] 이미 '<bot>' tmux 안 — wrapper 자살 가드 발동"
-  exit 0
-fi
+<your-bot>() {
+  local cur=""
+  [ -n "${TMUX:-}" ] && cur="$(tmux display-message -p '#S' 2>/dev/null)"
+  if [ "$cur" = "<your-bot>" ]; then
+    local boot="<your-bot>-restart-$$"
+    tmux new-session -d -s "$boot" -n restart \
+      "sleep 0.3; zsh -lc 'cd ~/my-agy-bot && bash launch.sh; tmux switch-client -t <your-bot> 2>/dev/null || true; tmux kill-session -t $boot 2>/dev/null || true; exec zsh'"
+    tmux switch-client -t "$boot"
+    return
+  fi
+  cd ~/my-agy-bot && bash launch.sh
+}
 ```
 
-If you see this on an old template, copy the latest `launch.sh` from `templates/`.
+**Why not in-launch.sh suicide guard?** An exit-0 guard inside launch.sh conflicts with outer `while true; do ./launch.sh; done` watchdogs (the guard fires, watchdog re-runs, infinite loop). Handle the in-session case in your shell layer where you can branch to bootstrap, not exit.
 
 ## §6. Discord reply `text.length undefined` error (MCP plugin variant)
 
