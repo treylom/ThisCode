@@ -181,12 +181,8 @@ class AgyDiscordBot:
             except Exception:
                 pass
 
-        @self.client.event
-        async def on_message(msg: discord.Message):
-            await self._handle_message(msg)
-
     async def _handle_message(self, msg: discord.Message) -> None:
-        # raw debug print — 사용자가 daemon pane 에서 모든 inbound 메시지 가시 (sshee 패턴 mirror)
+        # raw debug print — 사용자가 daemon pane 에서 모든 inbound 메시지 가시 (the codex-side bridge pattern mirror)
         is_self = (self.client.user is not None and msg.author.id == self.client.user.id)
         is_dm = isinstance(msg.channel, discord.DMChannel)
         is_mentioned = (self.client.user is not None and self.client.user in msg.mentions)

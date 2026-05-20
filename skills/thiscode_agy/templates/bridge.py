@@ -110,12 +110,12 @@ class Bridge:
                 fcntl.flock(lock_f.fileno(), fcntl.LOCK_UN)
 
     def _tmux_inject(self, text: str) -> None:
-        """Discord 메시지·응답을 agy TUI pane 으로 시각 주입 (사용자 UX — sshee 패턴 mirror).
+        """Discord 메시지·응답을 agy TUI pane 으로 시각 주입 (사용자 UX — the codex-side bridge pattern mirror).
 
-        HS_AGY_PANE env 지정 시만 동작 (launch.sh 가 split-window 후 설정).
+        AGY_TUI_PANE env 지정 시만 동작 (launch.sh 가 split-window 후 설정).
         prompt 누적 방지: C-u 로 prompt buffer 클리어 후 literal text 주입 (Enter 미발신 — agy 가 처리 ❌, Y-3 subprocess 가 실 응답).
         """
-        target = os.environ.get("HS_AGY_PANE", "")
+        target = os.environ.get("AGY_TUI_PANE", "")
         if not target:
             return
         one_line = text.replace("\n", " ").replace("\r", " ")[:300]
@@ -128,7 +128,7 @@ class Bridge:
 
     async def _dispatch(self, chat_id: str, message_id: str, data: dict) -> None:
         content = data.get("content", "")
-        # 시각 print — bridge daemon pane (sshee bot.py `[MSG]` 패턴 mirror)
+        # 시각 print — bridge daemon pane (codex bridge bot.py `[MSG]` 패턴 mirror)
         author = data.get("author", "?")
         guild = data.get("guild", "dm")
         inbox_line = f"[{time.strftime('%H:%M:%S')}] [INBOX] ch={chat_id} msg={message_id} guild={guild} user={author} content={content[:120]!r}"
@@ -206,28 +206,42 @@ class Bridge:
         if prompt.startswith("/agy-asset"):
             prompt = prompt[len("/agy-asset"):].strip()
         conv_id = self.conv.get(chat_id)
+        # Asset output dir — channel-scoped (not conv-scoped) so first /agy-asset
+        # request also has a stable target before conv_id exists. agy receives
+        # this dir via --add-dir so it knows where to write generated assets.
+        safe = _safe_channel(chat_id)
+        asset_dir = self.cfg.state_root / "assets" / safe
+        asset_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
+        # Snapshot existing files for delta detection (avoids re-attaching old assets).
+        existing_realpaths = {p.resolve() for p in asset_dir.iterdir() if p.exists()}
         session = await self.agy.start_y2(
-            conversation_id=conv_id, add_dirs=add_dirs,
+            conversation_id=conv_id,
+            add_dirs=list(add_dirs) + [str(asset_dir)],
         )
         try:
             out = await session.send(prompt)
             await self.discord.reply(
                 chat_id=chat_id, reply_to=message_id, text=out,
             )
-            # asset dir 의 새 파일 감지 + reply attach
-            if conv_id:
-                asset_dir = self.cfg.state_root / "assets" / _safe_channel(conv_id)
-                if asset_dir.exists():
-                    new_files = [
-                        p for p in asset_dir.iterdir()
-                        if p.is_file() and p.stat().st_mtime > time.time() - 60
-                    ]
-                    if new_files:
-                        await self.discord.reply(
-                            chat_id=chat_id, reply_to=message_id,
-                            text="(asset 생성)",
-                            files=[str(p) for p in new_files],
-                        )
+            # Delta detection — only attach NEW regular files (skip symlinks for safety).
+            new_files = []
+            for p in asset_dir.iterdir():
+                try:
+                    if not p.is_file():
+                        continue
+                    if p.is_symlink():
+                        continue  # symlink target escape mitigation
+                    if p.resolve() in existing_realpaths:
+                        continue  # pre-existing
+                    new_files.append(p)
+                except OSError:
+                    continue
+            if new_files:
+                await self.discord.reply(
+                    chat_id=chat_id, reply_to=message_id,
+                    text="(asset 생성)",
+                    files=[str(p) for p in new_files],
+                )
         finally:
             await session.close()
 

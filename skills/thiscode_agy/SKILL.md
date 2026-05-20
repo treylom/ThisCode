@@ -23,12 +23,15 @@ triggers:
 - **tmux 2-pane visual**: top = bridge daemon log (live `[RAW]`/`[INBOX]`/`[OUTBOX]` events), bottom = agy CLI TUI (Discord message visually injected via `tmux send-keys` — UX mirror of sshee codex pattern).
 
 **Components (genericized from agent-hassabis/)**:
-- `templates/launch.sh.template` — 2-step tmux launch (placeholder → split → env-correct bridge start), wrapper with suicide guard
-- `templates/bridge.py.template` — async bridge daemon (inbox polling fallback + Discord gateway live), per-channel `flock`, tmux send-keys visual inject
-- `templates/discord_client.py.template` — `AgyDiscordBot` + `DiscordReplyAdapter` + `DedupStore` + per-channel `asyncio.Lock`, heartbeat task, raw debug print
-- `templates/agy_worker.template` — agy CLI subprocess invocation (argv-based, `shell=False`, clean env), conversation_id extraction
-- `templates/persona-essence.md.template` — persona prepend snippet (Y-3 mode 에서 agy 가 GEMINI.md 자동 로드 안 해서 inline prepend)
-- `templates/env.template` — `.env` template (`DISCORD_BOT_TOKEN`, `AGY_PATH`, `AGY_UNSAFE`, optional `GEMINI_MODEL`)
+- `templates/launch.sh` — 2-step tmux launch (placeholder → split → env-correct bridge start), wrapper with suicide guard
+- `templates/bridge.py` — async bridge daemon (inbox polling fallback + Discord gateway live), per-channel `flock`, tmux send-keys visual inject
+- `templates/discord_client.py` — `AgyDiscordBot` + `DiscordReplyAdapter` + `DedupStore` + per-channel `asyncio.Lock`, heartbeat task, raw debug print
+- `templates/agy_worker.py` — agy CLI subprocess invocation (argv-based, `shell=False`, clean env), conversation_id extraction
+- `templates/attachment.py`, `conv_map.py`, `log_rotation.py`, `discord_outbox.py` — supporting utilities
+- `templates/setup_bot_dirs.sh` — state + channel dir bootstrap (mode 700, umask 077)
+- `templates/requirements.txt`, `.gitignore` — Python deps + git hygiene
+- `templates/persona-essence.md.template` — persona prepend (only true template file; copy + edit)
+- `templates/env.template` — `.env` shape (`DISCORD_BOT_TOKEN`, `AGY_PATH`, `AGY_UNSAFE`, optional `GEMINI_MODEL`)
 
 **Documentation**:
 - `README.md` — 5-minute quickstart
@@ -45,25 +48,7 @@ triggers:
 
 ## Quick start
 
-```bash
-# 1. Copy templates to your bot directory
-cp -r skills/thiscode_agy/templates/* ~/my-agy-bot/
-mv ~/my-agy-bot/launch.sh.template ~/my-agy-bot/launch.sh
-mv ~/my-agy-bot/bridge.py.template ~/my-agy-bot/bridge.py
-# ... (other templates)
-
-# 2. Create .env (token from Discord Developer Portal)
-cp env.template ~/.claude/channels/discord-<your-bot-name>/.env
-# Edit DISCORD_BOT_TOKEN, AGY_PATH (default /Users/<you>/.local/bin/agy)
-
-# 3. Python venv + deps
-cd ~/my-agy-bot && python3 -m venv .venv
-.venv/bin/pip install 'discord.py>=2.3'
-
-# 4. Launch
-bash launch.sh
-# Or via alias: alias <your-bot-name>='cd ~/my-agy-bot && bash launch.sh'
-```
+See `README.md` for the full quickstart (copy commands for each file into `~/my-agy-bot/{launch.sh,persona-essence.md,requirements.txt,.gitignore}` and `~/my-agy-bot/scripts/{bridge.py,discord_client.py,agy_worker.py,attachment.py,conv_map.py,log_rotation.py,discord_outbox.py,setup_bot_dirs.sh}`). Most templates have their final filename — only `env.template` and `persona-essence.md.template` use the `.template` suffix and require a rename on copy.
 
 See `setup-guide.md` for full details including OAuth permissions (CRITICAL — `bot` scope required, not just `applications.commands`).
 

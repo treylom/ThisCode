@@ -64,17 +64,17 @@ After re-OAuth, the bridge daemon auto-detects new permissions on the next inbou
 - Or constrain prompts to non-sensitive ops only (no file writes, no network, no shell).
 - Or pre-stage files in `--add-dir` directories that agy already has access to.
 
-## §4. tmux panes don't show what you expect (`HS_AGY_PANE` mismatch)
+## §4. tmux panes don't show what you expect (`AGY_TUI_PANE` mismatch)
 
 **Symptom**: bridge logs `[tmux-inject] failed: ...` OR Discord messages don't appear visually in the agy pane.
 
-**Root cause**: tmux pane numbering varies by config (`base-index`, `base-pane-index`). The launch script uses `tmux split-window -P -F '#{session_name}:#{window_index}.#{pane_index}'` to capture the actual pane id, then passes it as `HS_AGY_PANE` env to the bridge.
+**Root cause**: tmux pane numbering varies by config (`base-index`, `base-pane-index`). The launch script uses `tmux split-window -P -F '#{session_name}:#{window_index}.#{pane_index}'` to capture the actual pane id, then passes it as `AGY_TUI_PANE` env to the bridge.
 
 **Diagnosis**:
 ```bash
 tmux list-panes -t <bot>
 # Look at the pane indexes (1 and 2 typically)
-echo $HS_AGY_PANE   # in the bridge pane
+echo $AGY_TUI_PANE   # in the bridge pane
 # Should match the agy pane's full target like "<bot>:1.2"
 ```
 

@@ -32,8 +32,10 @@ class AgyResult:
 
 class AgyWorker:
     def __init__(self, *, agy_path: str, state_root: Path, timeout: int = 300):
-        if "/" not in agy_path:
+        if not os.path.isabs(agy_path):
             raise ValueError(f"agy_path must be absolute, got {agy_path!r}")
+        if not os.path.isfile(agy_path) or not os.access(agy_path, os.X_OK):
+            raise ValueError(f"agy_path must be an executable file, got {agy_path!r}")
         self.agy_path = agy_path
         self.state_root = Path(state_root)
         self.timeout = timeout

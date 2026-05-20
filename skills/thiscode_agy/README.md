@@ -73,7 +73,7 @@ If nothing happens, see `references/troubleshooting.md` — the most common caus
 
 `bridge.py` runs an async daemon that polls a Discord WebSocket gateway via `discord.py`. Each `@mention` lands in `_handle_message` → dedup check → `BridgeMessage` → `asyncio.Queue` → `_worker` → `_dispatch`. The dispatcher composes `persona + content`, spawns `agy --print` via `AgyWorker.run_y3` (argv-based, `shell=False`, sandboxed by default), and replies via `DiscordReplyAdapter` (using `message.reply()` for proper thread context). For asset-generation tasks (`/agy-asset` prefix), it uses `Y-2 PTY` (`agy --prompt-interactive`) and watches for new files in `assets/<conv>/`.
 
-For visual UX, each inbound message is also `tmux send-keys`-injected into the agy TUI pane (HS_AGY_PANE env). This is decorative — the actual response comes from the Y-3 subprocess. Mirrors the sshee/Codex bridge pattern.
+For visual UX, each inbound message is also `tmux send-keys`-injected into the agy TUI pane (AGY_TUI_PANE env). This is decorative — the actual response comes from the Y-3 subprocess. Mirrors the sshee/Codex bridge pattern.
 
 ## Files in this skill
 

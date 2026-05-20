@@ -15,10 +15,17 @@ cd "$WD"
 BOT_NAME="${BOT_NAME:-mybot}"
 CHANNEL_DIR="$HOME/.claude/channels/discord-$BOT_NAME"
 
-# Wrapper 모드 — HS_BRIDGE_ROLE 없으면 이전 세션 정리 + tmux 세션 (위=bridge daemon, 아래=agy CLI 인터랙티브) + attach.
-# 사용자 의도: 두 번째 pane 에 agy CLI 직접 띄움 (Discord bridge daemon 과 별도, 사용자 직접 prompt 가능).
+# Wrapper 모드 — AGY_BRIDGE_ROLE 없으면 이전 세션 정리 + tmux 세션 (위=bridge daemon, 아래=agy CLI 인터랙티브) + attach.
+# 두 번째 pane 에 agy CLI 직접 띄움 (Discord bridge daemon 과 별도, 사용자 직접 prompt 가능).
 # nested tmux 케이스 (Claude Code 가 tmux 안 실행) cover — TMUX 변수 아닌 별도 marker 사용.
-if [[ -z "${HS_BRIDGE_ROLE:-}" ]]; then
+if [[ -z "${AGY_BRIDGE_ROLE:-}" ]]; then
+  # Suicide guard — 이미 같은 이름 tmux session 안에서 wrapper 호출 시 자기 자신 kill 차단.
+  # 사용자가 attached 상태에서 alias 재실행할 때 발생 (이전 회귀 사례 반영).
+  if [[ -n "${TMUX:-}" ]] && tmux display-message -p "#S" 2>/dev/null | grep -qx "$BOT_NAME"; then
+    echo "[WARN] 이미 '$BOT_NAME' tmux 세션 안 — wrapper 자살 가드 (kill+restart 거부)"
+    echo "       강제 재시작은 detach (Ctrl+B,D) 후 다른 터미널에서 alias 재실행"
+    exit 0
+  fi
   if tmux has-session -t "$BOT_NAME" 2>/dev/null; then
     echo "[INFO] 이전 tmux 세션 '$BOT_NAME' 정리"
     tmux kill-session -t "$BOT_NAME"
@@ -39,8 +46,8 @@ if [[ -z "${HS_BRIDGE_ROLE:-}" ]]; then
   DAEMON_PANE_INDEX="$(tmux list-panes -t "$BOT_NAME" -F '#{pane_index}' | head -1)"
   DAEMON_PANE="${BOT_NAME}:$(tmux list-windows -t "$BOT_NAME" -F '#{window_index}' | head -1).${DAEMON_PANE_INDEX}"
   echo "[INFO] agy TUI pane = $AGY_PANE_ID · bridge daemon pane = $DAEMON_PANE"
-  # 4) daemon pane 에 bridge runner 명령 send-keys (정확한 HS_AGY_PANE env 포함)
-  tmux send-keys -t "$DAEMON_PANE" "HS_BRIDGE_ROLE=runner BOT_NAME='$BOT_NAME' HS_AGY_PANE='$AGY_PANE_ID' exec bash '$0'" Enter
+  # 4) daemon pane 에 bridge runner 명령 send-keys (정확한 AGY_TUI_PANE env 포함)
+  tmux send-keys -t "$DAEMON_PANE" "AGY_BRIDGE_ROLE=runner BOT_NAME='$BOT_NAME' AGY_TUI_PANE='$AGY_PANE_ID' exec bash '$0'" Enter
   tmux select-pane -t "$AGY_PANE_ID" 2>/dev/null || true
   if [[ -n "${TMUX:-}" ]]; then
     exec tmux switch-client -t "$BOT_NAME"
@@ -56,6 +63,17 @@ fi
 if [[ ! -f "$CHANNEL_DIR/.env" ]]; then
   echo "[FATAL] token .env 없음 — $CHANNEL_DIR/.env (DISCORD_BOT_TOKEN, AGY_PATH) 작성 필요"
   echo "  template: see thiscode_agy/templates/env.template in ThisCode skill"
+  exit 1
+fi
+
+# AGY_PATH validation — absolute executable path 만 허용 (.env 가 shell-sourced 되므로 untrusted content 방지 차원).
+AGY_PATH_VALIDATE="${AGY_PATH:-$HOME/.local/bin/agy}"
+case "$AGY_PATH_VALIDATE" in
+  /*) ;;  # absolute, OK
+  *) echo "[FATAL] AGY_PATH must be absolute path, got: $AGY_PATH_VALIDATE"; exit 1 ;;
+esac
+if [[ ! -x "$AGY_PATH_VALIDATE" ]]; then
+  echo "[FATAL] AGY_PATH not executable: $AGY_PATH_VALIDATE"
   exit 1
 fi
 

@@ -49,7 +49,7 @@ In gateway mode, `AgyDiscordBot._worker` ALSO acquires a per-channel `asyncio.Lo
 
 The bottom tmux pane runs `agy --dangerously-skip-permissions` interactively (not driven by the bridge — purely decorative). `bridge._tmux_inject()` sends `C-u` (clear line) then `-l <text>` (literal, no Enter) to the pane so the user sees the Discord message appear at the prompt without agy actually processing it (the real processing is the Y-3 subprocess).
 
-`HS_AGY_PANE` env var carries the tmux target (e.g. `mybot:1.2`). `launch.sh` captures it from `tmux split-window -P -F '...'` after the split. The 2-step launch (placeholder bash → split → send-keys to start bridge with correct env) ensures the env value is right even on hosts with non-default `base-pane-index`.
+`AGY_TUI_PANE` env var carries the tmux target (e.g. `mybot:1.2`). `launch.sh` captures it from `tmux split-window -P -F '...'` after the split. The 2-step launch (placeholder bash → split → send-keys to start bridge with correct env) ensures the env value is right even on hosts with non-default `base-pane-index`.
 
 ## Heartbeat
 
@@ -77,7 +77,7 @@ If you see heartbeat ticking but `queue=0` AND `channels=0` for minutes despite 
     │   ├── map.json                # chat_id → conv_id map
     │   └── <safe-ch>.lock          # per-channel flock
     ├── attachments/<guild>/<ch>/<msg>/<file>
-    ├── assets/<conv>/              # Y-2 mode asset outputs
+    ├── assets/<safe-ch>/           # Y-2 mode asset outputs (channel-scoped)
     ├── dedup.json                  # message_id dedup (TTL 24h)
     └── logs/YYYY-MM-DD/bridge.log  # daily rotated
 
