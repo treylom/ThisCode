@@ -355,6 +355,8 @@ Main이 입력 소스를 직접 추출합니다. 스킬 참조: `km-content-extr
 
 ## STEP 3: Vault 탐색 (Main 직접 - 순차)
 
+See `references/` for detailed procedures only when the matched step asks for them.
+
 > **전체 절차 = [references/vault-search.md](references/vault-search.md) Read 후 수행** (Phase A 그래프 / A-G GraphRAG 하이브리드 / B 키워드 / C 교차검증). progressive disclosure.
 
 ## STEP 4~5.5: COMPILE → LINTING → STORE → PROPAGATE

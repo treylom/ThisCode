@@ -293,6 +293,8 @@ AskUserQuestion({
 
 ## STEP 2~4: 팀 구성 → 스폰 → 결과 수집 (RALPH · DA)
 
+See `references/` for detailed procedures only when the matched step asks for them.
+
 > **전체 절차 = [references/team-pipeline.md](references/team-pipeline.md) Read 후 수행** (팀 9-spec · 병렬 스폰 · RALPH 루프 · DA cross-check · 대시보드). progressive disclosure.
 
 ## STEP 5~6: 노트 생성 → 이미지 → 연결 강화 → 보고

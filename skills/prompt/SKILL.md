@@ -27,6 +27,8 @@ A bot whose config mandates `/prompt` (see the repo's
 This `SKILL.md` is the router. Load the heavy reference only for the matched
 task — do not read all of it up front:
 
+See `references/` for detailed procedures only when the matched prompt task asks for them.
+
 | Task | Load |
 |---|---|
 | Generate / refine a prompt (main workflow) | [`references/prompt-generator.md`](references/prompt-generator.md) |

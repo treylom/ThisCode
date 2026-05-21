@@ -475,4 +475,6 @@ $ARGUMENTS
 
 ## 참조
 
+See `references/` for detailed procedures only when the matched step asks for them.
+
 - 사용 예시 · KM 변종 비교 · 참조 스킬 · Auto-Learned Patterns: [references/usage.md](references/usage.md)

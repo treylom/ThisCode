@@ -1,5 +1,5 @@
 ---
-name: thiscode_agy
+name: thiscode-agy
 description: Use when integrating Antigravity (agy) CLI with Discord — Y-3 single-shot + Y-2 PTY interactive bridge daemon, tmux 2-pane visual layout (daemon log + agy TUI), per-channel conversation isolation, persona prepend, attachment sandbox, dedup, atomic dispatch with per-channel flock. Drop-in mirror of the Claude Code bridge pattern (AgyDiscordBot + DiscordReplyAdapter + AgyWorker) for Gemini/Antigravity-side bots.
 version: 1.0.0
 created: 2026-05-21
@@ -38,6 +38,8 @@ triggers:
 - `setup-guide.md` — full setup walkthrough (Discord Developer Portal OAuth + Python venv + agy CLI install + tmux layout)
 - `references/architecture.md` — Y-3 vs Y-2 design, why this hybrid, attachment sandbox model
 - `references/troubleshooting.md` — common issues (OAuth scope, message_content intent, tmux pane numbering, persona prepend)
+
+See `references/` for detailed procedures only when setup or troubleshooting requires them.
 
 ## When to use this skill
 
