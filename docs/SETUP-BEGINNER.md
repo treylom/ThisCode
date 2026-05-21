@@ -3,6 +3,22 @@
 > 이 가이드는 컴퓨터 기초만 있으면 따라할 수 있습니다.
 > 막히면 각 step 의 "❓ 실패 시" 박스 참고. 그래도 안 되면 마지막 단계에서 GitHub Issue 등록 (1분).
 
+## 먼저: AI에게 이렇게 말하세요
+
+Claude Code 또는 Codex에 아래 문장을 그대로 붙여 넣으면 됩니다.
+
+```text
+https://github.com/treylom/ThisCode 에 있는 README.ko.md와 docs/SETUP-BEGINNER.md를 읽고, 단계별로 설치를 도와줘. 내가 복사해야 할 명령은 한 번에 하나씩 보여주고, 토큰/자격증명이나 시스템 패키지 설치 전에는 꼭 확인 질문을 해줘. 마지막에는 healthcheck 검증까지 실행해줘.
+```
+
+직접 터미널에서 시작하려면 이 세 줄입니다:
+
+```bash
+mkdir -p ~/.claude/plugins
+git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
+bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
+```
+
 ## 0단계: wizard 진입 (v2.1 추천)
 
 가장 쉬운 방법은 `thiscode init` wizard — vault / 도구 / 자원 자동 감지 + 8 Phase 추천.

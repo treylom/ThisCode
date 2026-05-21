@@ -6,6 +6,14 @@
 >
 > 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📖 **[Getting started guide (English PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.en.pdf)** (beginner, 14p) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
 
+## Install With Your AI Assistant
+
+Copy this into Claude Code or Codex:
+
+```text
+Follow the install files in https://github.com/treylom/ThisCode step by step. Start from README.md, run the guided setup, ask me before touching credentials or system packages, and finish by running the documented verification commands.
+```
+
 ![ThisCode core idea — a structured Obsidian vault, the right bot per working directory, driven from Discord, bots collaborating](assets/core-mental-model.png)
 
 > **New here?** Core idea: keep a **structured Obsidian vault**, put the **right bot in each working directory**, drive them from **Discord**, and let the bots coordinate with each other. Shared memory / search are supporting payoffs — not the headline. Start with the Setup links above — no prior knowledge assumed.

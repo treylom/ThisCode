@@ -2,6 +2,25 @@
 
 5 단계, 매 step 검증 명령 + troubleshooting 1-2 line. **초보자는 [SETUP-BEGINNER.md](SETUP-BEGINNER.md) 권장**.
 
+## 0. AI에게 설치 맡기기
+
+아래 문장을 Claude Code 또는 Codex에 붙여 넣으면, AI가 이 문서와 스크립트를
+함께 따라가며 설치를 진행합니다. `prompt`(AI에게 주는 작업 지시문)는
+ThisCode/ThisCodex의 `/prompt` 원칙처럼 목표, 확인 조건, 중단 조건을 한 번에
+담습니다.
+
+```text
+https://github.com/treylom/ThisCode 를 설치해줘. README.md와 docs/SETUP.md를 먼저 읽고, 각 단계마다 실행할 명령을 말한 뒤 실행해. 토큰/자격증명, ~/.claude 설정, 시스템 패키지 설치는 실행 전에 나에게 확인해. 끝나면 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh 를 실행하고 결과를 요약해.
+```
+
+스크립트로 직접 시작할 때:
+
+```bash
+mkdir -p ~/.claude/plugins
+git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
+bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
+```
+
 ## 1. Prereq (5분)
 
 ```bash
