@@ -72,3 +72,9 @@ See `setup-guide.md` for full details including OAuth permissions (CRITICAL — 
 ## Reference: the production bot this skill was extracted from
 
 `agent-hassabis/` in the maintainer's vault — Demis Hassabis persona, alias `hs`, tmux session `hs`, channel `~/.claude/channels/discord-hs/`. The persona-specific content was stripped to make this skill generic.
+
+---
+
+## How to Use This Skill
+
+Use this skill for ThisCode agent orchestration and multi-bot coordination. Handles routing to appropriate agent variants, meeting room setup, and bot-to-bot communication within the ThisCode ecosystem.

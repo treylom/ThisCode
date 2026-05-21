@@ -23,3 +23,9 @@ allowedTools: Read, Write, WebFetch, Bash, Glob, Grep
 
 ## Why no Obsidian even when present
 Plain variant guarantees byte-identical output regardless of environment — important for batch ingestion and headless CI use.
+
+---
+
+## How to Use This Skill
+
+Use this skill for straightforward knowledge management without Agent Teams or parallel processing. Supports Mode I (ingestion) and Mode R (reorganization). Good for single-note operations and when parallel execution is not needed.

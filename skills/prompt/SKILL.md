@@ -53,3 +53,9 @@ Procedure:
 - Vendored here so the bot ships self-contained. The upstream maintainer's
   personal deploy script (`commands/prompt-sync.md`) is intentionally
   **excluded** (machine-specific, not relevant to distributees).
+
+---
+
+## How to Use This Skill
+
+Use this skill to generate, optimize, and refine prompts for AI tasks. Helps craft better prompts for Claude, design effective instruction sets, and improve prompt engineering for specialized workflows.

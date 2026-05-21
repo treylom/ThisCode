@@ -159,3 +159,9 @@ agent 가 회의 진행 중 `02-progress.md` 에 timeline (KST) 기록. decision
 - 회의 스레드·채널 거버넌스 규약: [../../docs/05-meeting-thread-protocol.md](../../docs/05-meeting-thread-protocol.md)
 - 공유 메모리 skill: [../shared-memory/SKILL.md](../shared-memory/SKILL.md)
 - slash command: [../../commands/open-meeting.md](../../commands/open-meeting.md)
+
+---
+
+## How to Use This Skill
+
+Use this skill to create, manage, and coordinate multi-bot meeting room structures. Creates the standard 4-file meeting template (00-context, 01-spec, 02-progress, 03-outcome). Essential for any multi-bot collaboration session.

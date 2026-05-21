@@ -52,3 +52,9 @@ let them choose; never self-answer to push past it.
 ## 옵션 언제나 (사용자 spec Q2)
 
 GraphRAG 노트 수 미충족 시도 사용자 force install 가능. preflight (Python/disk/port) 만 의무.
+
+---
+
+## How to Use This Skill
+
+Use this skill during initial setup to run the interactive wizard that detects your environment (vault state, installed tools, system resources) and progressively recommends which phases to install next (ripgrep, obsidian-cli, vault-search MCP, GraphRAG, dense embeddings). Follow the wizard's prompts to match your setup stage.

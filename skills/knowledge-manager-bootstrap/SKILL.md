@@ -43,3 +43,9 @@ km:
 ```
 
 See `references/setup-wizard.md` for exact AskUserQuestion prompts.
+
+---
+
+## How to Use This Skill
+
+Use this skill when knowledge-manager reports "config missing" or when first setting up knowledge manager. It generates necessary configuration files and vault structure templates to prepare your vault for content ingestion.

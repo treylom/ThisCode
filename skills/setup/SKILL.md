@@ -43,3 +43,9 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 
 - Do not turn a copied skill into a completed setup claim.
 - Missing decisions stop with the next command instead of guessed values.
+
+---
+
+## How to Use This Skill
+
+Use this skill during initial setup phase to configure ThisCode environment. Handles dependency verification, environment detection, and configuration file generation for your specific OS and setup context.

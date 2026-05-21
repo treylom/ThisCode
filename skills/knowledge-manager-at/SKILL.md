@@ -304,3 +304,9 @@ See `references/` for detailed procedures only when the matched step asks for th
 ## 사용자 요청 내용
 
 $ARGUMENTS
+
+---
+
+## How to Use This Skill
+
+Use this skill for large-scale vault reorganization tasks (archive cleanup, category restructuring, bulk linking, insight generation). This variant (AT mode) uses Agent Teams for parallel processing. Recommend when managing 500+ notes or performing complex graph operations.

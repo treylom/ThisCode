@@ -171,3 +171,9 @@ vault에서 "{query}" 관련 자료를 찾지 못했습니다.
 ## Auto-Learned Patterns
 
 - [2026-04-12] 배포 환경에서 GraphRAG 서버 의존성 없는 경량 검색 커맨드를 `/search`에서 분리 생성 — 3-Tier Cascade(Obsidian CLI → MCP → Grep) 구조로 설치 없이 동작. `/search`와 동일한 QUICK/DEEP/AUTO 라우팅 유지 (source: 2026-04-12-0021)
+
+---
+
+## How to Use This Skill
+
+Use this skill for lightweight, headless vault search without interactive mode selection. Pass `--quick` or `--deep` for immediate mode choice. Ideal for automated queries and non-interactive environments.

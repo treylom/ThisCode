@@ -421,3 +421,9 @@ See `references/` for detailed procedures only when the matched step asks for th
 ## 사용자 요청 내용
 
 $ARGUMENTS
+
+---
+
+## How to Use This Skill
+
+Use this skill for full-featured knowledge management with all interactive features — AskUserQuestion prompts, variant selection, detailed content settings. Default choice for personal vault operations with full UI/notification support.

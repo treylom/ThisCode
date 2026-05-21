@@ -139,3 +139,9 @@ wizard 가 단계별 안내:
 | Codex CLI / Cursor / Gemini CLI / Goose / OpenCode 등 | ✅ core frontmatter 호환 |
 
 확장 필드 (`metadata.hermes.tags`, `compatibility`)는 추가됐을 때 본 도구에서 활용, 다른 표준 client 에선 자동 무시 (forward-compatible).
+
+---
+
+## How to Use This Skill
+
+Use this skill during initial setup to guide environment detection and automated installation. It handles package installation, tmux configuration, Claude Code authentication, and prepares your system for bot operations.

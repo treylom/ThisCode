@@ -47,3 +47,9 @@ disable-model-invocation: true
 | `pumasi-job-worker.js` lines 273-314 | 타임아웃/종료 처리 |
 | `pumasi-job.js` lines 723-762 | 게이트 실행 루프 |
 | `pumasi-job.js` lines 946-1007 | 재위임 컨텍스트 빌더 |
+
+---
+
+## How to Use This Skill
+
+Use this skill when you need to execute tasks through the Codex CLI bridge with sandboxed execution, state tracking, and dynamic gate verification. It handles multi-model execution (reasoning effort), error recovery with autofix, and team communication via Agent Teams.

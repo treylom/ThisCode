@@ -102,6 +102,29 @@ The wizard detects your vault state / installed tools / resource limits, then re
 
 > **GraphRAG = env-detected + opt-in** (user-spec). Force install is permitted even when note count is below the heuristic threshold.
 
+## 💬 Plugin Commands & Skills Help
+
+Each plugin command and skill has built-in help documentation:
+
+### Plugin Commands
+
+Run `/thiscode:help` inside Claude Code to see all available commands and when to use each:
+
+- `/thiscode:start` — Initial setup wizard (environment detection, bot pairing, validation)
+- `/thiscode:init` — Alternative lightweight setup for experienced users
+- `/thiscode:create-bot` — Create a new Discord bot with soul.md template
+- `/thiscode:km` — Knowledge manager with intelligent variant routing (lite/at/plain)
+- `/thiscode:search` — 4-tier vault search with quick or deep modes
+- `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
+- `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
+- And more — run `/thiscode:help` for the complete list
+
+### Skills
+
+Each skill (bootstrap, knowledge-manager, search, meetings, etc.) includes a **"How to Use This Skill"** section in its SKILL.md. These explain when to invoke each skill and what it does. Search skills are focused on vault operations; knowledge-manager skills handle content ingestion and reorganization with different feature sets (lite/at/plain/full).
+
+---
+
 ## Optional: Discord bot + Agent Teams
 
 Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The 4-Tier vault search works standalone — Discord pairing is for advanced multi-bot orchestration.

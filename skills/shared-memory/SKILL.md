@@ -125,3 +125,9 @@ SessionStart hook 으로 본 인덱스 자동 주입.
 - 한국어 가이드: [../../docs/03-shared-memory.md](../../docs/03-shared-memory.md)
 - vault SHARED-INDEX 실 예시: `<vault>/.claude-memory/shared/SHARED-INDEX.md`
 - 회의실 skill: [../meetings/SKILL.md](../meetings/SKILL.md)
+
+---
+
+## How to Use This Skill
+
+Use this skill to manage cross-machine, cross-bot shared memory. Handles memory index management, bot-specific vs. shared memory separation, and memory synchronization across multiple machines (Mac/WSL).

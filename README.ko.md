@@ -72,6 +72,29 @@ wizard 가 vault 상태 / 도구 / 자원 detect 후 **8 Phase progressive journ
 
 > **GraphRAG = 환경 감지 + 선택사항** (사용자 spec). 노트 수 미충족 시도 force install 가능.
 
+## 💬 플러그인 커맨드 & 스킬 도움말
+
+각 플러그인 커맨드와 스킬에는 내장 도움말이 있습니다:
+
+### 플러그인 커맨드
+
+Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 커맨드와 언제 사용하는지 확인할 수 있습니다:
+
+- `/thiscode:start` — 초기 셋업 wizard (환경 인식, 봇 페어링, 검증)
+- `/thiscode:init` — 경험자용 경량 셋업
+- `/thiscode:create-bot` — 새 Discord 봇 생성 (soul.md 템플릿 포함)
+- `/thiscode:km` — 지능형 variant 라우팅 knowledge manager (lite/at/plain)
+- `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
+- `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
+- `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
+- 그 외 다수 — `/thiscode:help` 로 전체 목록 확인
+
+### 스킬
+
+각 스킬 (bootstrap, knowledge-manager, search, meetings 등)의 SKILL.md 에는 **"How to Use This Skill"** 절이 있어 언제 호출하는지, 무엇을 하는지 설명합니다. vault 관련 스킬은 검색에, knowledge-manager 스킬은 콘텐츠 수집과 재정리에 초점을 맞추며 각 variant (lite/at/plain/full) 마다 기능 세트가 다릅니다.
+
+---
+
 ## 선택: Discord 봇 + Agent Teams
 
 본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. vault-first 검색만으로도 완전히 작동하며, Discord 페어링 및 tmux 세션은 advanced use case 용입니다.

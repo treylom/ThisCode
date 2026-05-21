@@ -169,3 +169,9 @@ vault에서 "{query}" 관련 자료를 찾지 못했습니다.
 /knowledge-manager로 자료를 수집해보세요.
 ```
 </constraints>
+
+---
+
+## How to Use This Skill
+
+Use this skill for intelligent vault search with automatic mode selection (quick/deep). Supports 4-tier fallback (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep), MOC prioritization, and flexible query depth. Main entry point for vault queries.
