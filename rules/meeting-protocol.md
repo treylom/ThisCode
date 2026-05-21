@@ -31,5 +31,25 @@ bot's progress, or stopping while an active meeting is open.
   (`{"decision":"block","reason":<actionable text>}`) — the Stop event has no
   hookSpecificOutput variant — never a vague warning.
 
+## 5. Meeting watchdog (optional, recommended)
+- Every meeting **should** be paired with a watchdog daemon when bots
+  coordinate over time. The orchestrator starts it on thread creation and
+  pushes progress via `--beat`; an external launchd/cron ticker calls
+  `--check` on a fixed cadence (default ~5 min; the maintainer's vault
+  runs ~3 min for a tighter liveness signal — pick what fits your team).
+- Use `scripts/meeting_watchdog.py` (bundled, stdlib-only). Lifecycle:
+  `--start <thread_id> --goal <goal> --tasks-total <N>` →
+  `--beat <thread_id> --tasks-done <K>` (orchestrator) →
+  `--check` (external ticker) → `--stop <thread_id>` (auto on
+  goal_met ∧ tasks_done, or manual).
+- **fail-closed = keep-active**: corrupt or absent manifest never
+  terminates a live meeting. Only the orchestrator can satisfy the
+  termination condition because Claude Code `/goal` has no
+  machine-readable state surface (the script documents this).
+- Wire the launchd/cron ticker once per machine; the rule applies per
+  meeting. Skipping the watchdog is allowed for solo / single-bot work
+  but discouraged the moment ≥2 bots are dispatched (see §2 and
+  `docs/05-meeting-thread-protocol.md` §2.3).
+
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.

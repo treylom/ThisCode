@@ -52,6 +52,25 @@ When you dispatch work to another bot, include the thread id explicitly in the m
 
 Without an explicit thread id, the receiving bot falls back to its default reply target (usually the main channel body or the completion thread), and the work surfaces in the wrong place. The orchestrator owns this — it cannot be retrofitted from the audience side.
 
+### 2.3 Invite a meeting watchdog bot (optional, recommended)
+
+Every meeting **should** include one extra agent acting as a watchdog — a daemon that monitors progress, detects silence/idle/incompletion, and surfaces drift back to the orchestrator. The maintainer's vault runs Dr. Strange on a ~3 min cadence; the bundled default is ~5 min (`scripts/meeting_watchdog.py`). Either works — pick what fits your team's signal-to-noise.
+
+Two pieces:
+
+1. **In-session orchestrator** pushes state via `--start` (thread creation) → `--beat` (each progress transition) → terminates on `goal_met ∧ tasks_done`.
+2. **External ticker** (launchd / cron) calls `--check` on a fixed cadence; fail-closed = a corrupt or absent manifest keeps the meeting active (never false-terminates).
+
+Why an explicit bot, not just a script: the watchdog is the only party that surfaces "this meeting has gone silent for N intervals" without the orchestrator self-grading. Skipping it is allowed for solo / single-bot work but is the first thing to wire up the moment ≥2 bots are dispatched.
+
+| Component | Owner | Cadence |
+|---|---|---|
+| `--start` / `--beat` / `--stop` | Orchestrator (in-session) | Per progress event |
+| `--check` (ticker) | launchd / cron | ~3–5 min (pick once per machine) |
+| Liveness escalation | Watchdog bot or orchestrator | When `--check` flags stale beat |
+
+See `rules/meeting-protocol.md` §5 for the lifecycle contract.
+
 ---
 
 ## 3. Cross-Machine Coordination = Dedicated Channel

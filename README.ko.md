@@ -170,7 +170,7 @@ thiscode 가 packaging 한 우리 vault 운영 노하우:
 
 - [03-shared-memory.md](docs/03-shared-memory.md) — **공유 메모리 4-tier** (T1 git-tracked / T2 machine-specific / T3 project-meetings / T4 per-bot WD)
 - [memory-dreaming.md](docs/memory-dreaming.md) — **메모리 정리(지우지 않고 옮김) 쉬운 설명**: 안 쓰는 메모리를 작업공간 밖 보관소로 *옮기고* 명령 한 줄로 *되돌립니다*(체크섬 검증). 9칸 전부 같은 기준표(Codex 포함)·보수적(자동이동 실측 0건·애매하면 사람검토)·기준은 자기 실수서 학습. 도구 `scripts/memory_dreaming.py`(`--scan` 기본 미리보기 / `--apply` 게이트 / `--restore`), 주1회 강제(YAML+세션시작 경고+launchd 3중)
-- **orchestrator-watchdog** (`scripts/meeting_watchdog.py`) — **회의 진행 watchdog**: 회의 스레드 신설 시 ~5분마다 진행 점검, 목표+전체 작업 완료 시에만 자동 종료(Claude `/goal` 응용). fail-closed = 살아있는 회의 절대 잘못 종료 안 함. [05-meeting-thread-protocol.md](docs/05-meeting-thread-protocol.md) 와 짝
+- **orchestrator-watchdog** (`scripts/meeting_watchdog.py`) — **회의 진행 watchdog (회의마다 권장 — 감시 봇 1개 초대, 첫 dispatch 전에 가동)**: 회의 스레드 신설 시 ~5분마다 진행 점검(메인테이너 vault 는 ~3분 운영), 목표+전체 작업 완료 시에만 자동 종료(Claude `/goal` 응용). fail-closed = 살아있는 회의 절대 잘못 종료 안 함. [05-meeting-thread-protocol.md](docs/05-meeting-thread-protocol.md) §2.3 + [rules/meeting-protocol.md](rules/meeting-protocol.md) §5 와 짝
 - [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **Obsidian CLI 설정** (Mac brew / WSL Windows native / Linux snap·flatpak·deb) + 3-Tier 폴백 (CLI → MCP → Write/Read/Grep) + 알려진 버그·워크어라운드
 - [06-claude-code-server.md](docs/06-claude-code-server.md) — **Claude Code 서버 기능** (`claude -p` 헤드리스 + MCP server + tmux session vs headless 분리 패턴)
 - [08-debug-노하우.md](docs/08-debug-노하우.md) — **디버깅 24+ 카테고리** (Workflow / Code Review / Vault Path / 회의 protocol / Security / Time / LLM Prompt / Schedule / Plugins / External Apps / Cross-bot SoP)
