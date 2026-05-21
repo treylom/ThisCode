@@ -10,6 +10,11 @@ on:
       - 'scripts/generate-agents-index.mjs'
       - 'hermes-plugin/plugin.yaml'
       - 'tests/agents/**'
+      # 2026-05-21 added — workflow / npm deps 자체 변경도 CI 재실행 trigger
+      - '.github/workflows/validate-agents.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:  # 수동 trigger (gh workflow run / GitHub UI)
 
 jobs:
   validate:
@@ -25,6 +30,11 @@ jobs:
 
       - name: Install validators
         run: |
+          # 2026-05-21 fix: ESM import (`import yaml from 'js-yaml'`) needs LOCAL node_modules
+          # — global install (`-g`) is not visible to ES module resolver. `npm ci` installs
+          # devDependencies (js-yaml + ajv-cli + ajv-formats) into ./node_modules.
+          npm ci
+          # ajv-cli also needed on PATH for shell-script validators, keep -g install.
           npm install -g ajv-cli ajv-formats js-yaml
           sudo apt-get update
           sudo apt-get install -y jq

@@ -5,6 +5,7 @@ license: MIT
 homepage: https://github.com/treylom/ThisCode
 provides_tools:
   - knowledge_manager_lite
+  - claude_discode_km_lite
   - claude_discode_ingest
 provides_commands:
   - /thiscode:km
