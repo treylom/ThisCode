@@ -5,6 +5,7 @@ license: MIT
 homepage: https://github.com/treylom/ThisCode
 provides_tools:
   - meetings
+  - claude_discode_meetings
 tier: external
 model: opus[1m]
 allowedTools:

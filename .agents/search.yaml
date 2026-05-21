@@ -6,6 +6,7 @@ homepage: https://github.com/treylom/ThisCode
 
 provides_tools:
   - search
+  - claude_discode_search
 provides_commands:
   - /thiscode:search
 

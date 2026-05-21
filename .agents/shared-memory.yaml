@@ -5,6 +5,7 @@ license: MIT
 homepage: https://github.com/treylom/ThisCode
 provides_tools:
   - shared_memory
+  - claude_discode_shared_memory
 tier: internal
 model: opus[1m]
 allowedTools:
