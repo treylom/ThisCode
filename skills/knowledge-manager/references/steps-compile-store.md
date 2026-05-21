@@ -4,7 +4,7 @@
 
 ## STEP 4: COMPILE — raw→wiki 컴파일 (draft 생성)
 
-> **Karpathy 핵심: "raw → wiki는 컴파일이다."**
+> **Orchestrator 핵심: "raw → wiki는 컴파일이다."**
 > 이 단계의 출력은 **draft** — 아직 확정이 아니다.
 > draft는 STEP 4.5 Linting을 통과해야만 STEP 5에서 저장된다.
 
@@ -16,7 +16,7 @@
 1. 핵심 개념 추출 및 분류
 2. 사용자 선호도 반영한 깊이/초점 조정
 3. 기존 vault 노트와의 관계 분석
-4. [NEW] 모순 즉시 표기 (Karpathy Ingest 패턴):
+4. [NEW] 모순 즉시 표기 (Orchestrator Ingest 패턴):
    - STEP 3 교차검증 Core 노트의 핵심 주장 추출
    - 새 소스의 주장과 비교
    - 모순 발견 시 draft에 인라인 표기:
@@ -110,7 +110,7 @@ draft 생성 시 포함:
 
 ## STEP 4.5: LINTING — 지식 Health Check
 
-> **⚠️ Karpathy 핵심: "지식에도 Linting이 필요하다."**
+> **⚠️ Orchestrator 핵심: "지식에도 Linting이 필요하다."**
 > draft 노트의 품질을 검증하고 자동 수정하는 health check 루프.
 > **lint 통과 전까지 STEP 5 저장 진행 금지.**
 > 참조 스킬: `km-karpathy-pipeline.md`
@@ -143,7 +143,7 @@ draft 생성 시 포함:
    [증분 모드] 원문 변경점 → 기존 노트 반영 여부 검증 → 미반영 항목 표기
    - 증분 시 "## 변경점 요약" 섹션이 draft에 없으면 → lint 실패 (HARD GATE)
 
-6. Orphan detection (고아 페이지 탐지) ← Karpathy Lint 패턴
+6. Orphan detection (고아 페이지 탐지) ← Orchestrator Lint 패턴
    - CLI: "$OBSIDIAN_CLI" orphans → 들어오는 링크(inbound) 없는 페이지 목록
    - CLI: "$OBSIDIAN_CLI" deadends → 나가는 링크(outbound) 없는 페이지 목록
    - 고아 페이지 중 draft와 관련된 것 → wikilink 연결 제안
@@ -356,9 +356,9 @@ IF len(candidate_parent_mocs) > 0:
 
 ---
 
-## STEP 5.5: PROPAGATE — 기존 노트 업데이트 (Karpathy Wiki Pattern)
+## STEP 5.5: PROPAGATE — 기존 노트 업데이트 (Orchestrator Wiki Pattern)
 
-> **Karpathy 핵심: "단일 소스가 10-15개 기존 위키 페이지를 터치한다."**
+> **Orchestrator 핵심: "단일 소스가 10-15개 기존 위키 페이지를 터치한다."**
 > 새 노트를 생성하는 것만으로는 지식이 복리로 쌓이지 않는다.
 > 기존 노트에 새 정보를 반영해야 위키가 compounding artifact가 된다.
 

@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+state/
+*.log
+*.tmp
+
+# .env should be at ~/.claude/channels/discord-<bot>/.env (NOT in bot project dir)
+# but if you ever stage it here by mistake, gitignore it.
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

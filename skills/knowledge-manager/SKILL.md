@@ -11,7 +11,7 @@ allowedTools: Read, Write, Bash, Glob, Grep, mcp__obsidian__*, mcp__notion__*, m
 > **이 명령어는 단일 에이전트가 모든 작업을 순차적으로 직접 수행합니다.**
 > Agent Teams 풀스케일 버전: `/knowledge-manager-at` (tmux + .team-os 필요)
 > 에이전트 정의: `.claude/agents/knowledge-manager.md` 참조
-> **⚡ Karpathy Pipeline**: `km-karpathy-pipeline.md` — Linting + Filed Back + Q&A 오버레이
+> **⚡ Orchestrator Pipeline**: `km-karpathy-pipeline.md` — Linting + Filed Back + Q&A 오버레이
 
 ---
 
@@ -43,7 +43,7 @@ MUST: Skill("/using-superpowers") 호출
   → 적용 가능 스킬 목록 식별, 작업 순서에 매핑
   → 이 호출 없이 STEP 1 이후 진행 금지
 
-참조: km-karpathy-pipeline.md (Karpathy Pipeline 오버레이)
+참조: km-karpathy-pipeline.md (Orchestrator Pipeline 오버레이)
   → STEP 4.5에서 /autoresearch 패턴 적용 (lint 루프)
 ```
 
@@ -354,6 +354,8 @@ Main이 입력 소스를 직접 추출합니다. 스킬 참조: `km-content-extr
 ---
 
 ## STEP 3: Vault 탐색 (Main 직접 - 순차)
+
+See `references/` for detailed procedures only when the matched step asks for them.
 
 > **전체 절차 = [references/vault-search.md](references/vault-search.md) Read 후 수행** (Phase A 그래프 / A-G GraphRAG 하이브리드 / B 키워드 / C 교차검증). progressive disclosure.
 

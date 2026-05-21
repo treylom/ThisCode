@@ -31,13 +31,13 @@ let them choose; never self-answer to push past it.
 
 ## Workflow
 
-1. **env detect** — `scripts/claude-discode-init.sh --detect-only --json` 호출, OS / vault / tools / resources 9 keys JSON 출력
+1. **env detect** — `../../scripts/claude-discode-init.sh --detect-only --json` 호출, OS / vault / tools / resources 9 keys JSON 출력
 2. **Phase 추천** — note_count + 도구 + 자원 multi-axis 알고리즘:
    - current: 현재 가능 (의무 install)
    - recommended: 권장 (사용자 y/n)
    - later: 조건 미충족 / advanced
 3. **wizard 대화** — recommended Phase 별 `y/n` prompt, 사용자 선택 install dispatch
-4. **install dispatch** — 선택한 Phase 마다 `scripts/install-*.sh` 호출
+4. **install dispatch** — 선택한 Phase 마다 `../../scripts/install-*.sh` 호출
 5. **healthcheck** — install 후 `bash scripts/healthcheck.sh`
 
 ## 8 Phase 매핑

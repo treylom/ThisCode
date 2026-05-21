@@ -1,6 +1,6 @@
 ---
 name: knowledge-manager-bootstrap
-description: One-shot environment installer for the 4-Tier search stack — installs Obsidian CLI (optional), vault-search MCP, GraphRAG server (optional), and records vault_root. Use on first run or when user reports "search Tier X 실패".
+description: Use when installing the 4-Tier search stack for the first time, recovering from "search Tier X 실패", or recording vault_root with Obsidian CLI, vault-search MCP, and optional GraphRAG setup.
 allowedTools: Bash, AskUserQuestion, Write, Read
 ---
 
@@ -14,9 +14,9 @@ allowedTools: Bash, AskUserQuestion, Write, Read
 
 1. Detect environment: OS (uname -s), WSL (/proc/version), shell, claude version.
 2. Detect existing assets:
-   - Obsidian (`scripts/install-obsidian-cli.sh --check`)
-   - vault-search MCP (`scripts/install-vault-search.sh --dry-run`)
-   - GraphRAG server (`scripts/install-graphrag.sh --check`)
+   - Obsidian (`../../scripts/install-obsidian-cli.sh --check`)
+   - vault-search MCP (`../../scripts/install-vault-search.sh --dry-run`)
+   - GraphRAG server (`../../scripts/install-graphrag.sh --check`)
 3. Detect vault_root candidates (cwd / $CLAUDE_DISCODE_VAULT env / `~/.thiscode-config` / `~/obsidian-ai-vault` / `~/Documents/Obsidian`).
 4. AskUserQuestion 1회: vault_root 확정 (multiple choice from candidates + Other).
 5. Write `~/.thiscode-config` with selected vault_root.

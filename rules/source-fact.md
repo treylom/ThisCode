@@ -6,6 +6,10 @@ Trigger: about to assert a fact / proper noun / system state; about to say
 ## 1. 4-way label (hard rule)
 - Every claim carries a label: **SOURCE FACT / DERIVED INFERENCE /
   UNCERTAINTY / DELEGATED TASK**. No source → no assertion.
+- Keep the four label names, but write the content in plain language for
+  user-facing reports. Gloss hard English or abbreviations on first use, for
+  example `thread/inject_items` = a Codex app-server API that injects a message
+  into a session log so another client can attach cleanly.
 
 ## 2. No single-grep trap
 - When labeling SOURCE FACT, do not stop at one grep. Cross-check: the topic's

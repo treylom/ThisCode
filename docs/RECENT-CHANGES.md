@@ -26,6 +26,17 @@ auto-activate. The `/thiscode setup` skill drives this step.
 
 ---
 
+## 2026-05-21 — README-first AI install prompt
+
+README and setup docs now start with a copy-paste prompt for Claude Code or
+Codex. The prompt tells the installing AI to read the repo docs first, proceed
+step by step, ask before credentials or system-package changes, and finish with
+the documented verification command.
+
+Why it matters: a new user can paste one clear instruction into an AI assistant
+instead of guessing which script to run first. The script path remains the same:
+clone the repo, run the guided setup, then run `healthcheck.sh`.
+
 ## 2026-05-19 — Meeting Stop-hook output contract fixed (⑨b)
 
 **What changed.** `hooks/meeting-stop-reread.sh` now emits the correct Stop

@@ -1,14 +1,14 @@
 ---
 title: thiscode Codex Adversarial Verify (2nd round)
 date: 2026-05-12
-reviewer: codex review --base HEAD~7 (gpt-5.5) + Karpathy self-review (Claude Code docs cross-check)
+reviewer: codex review --base HEAD~7 (gpt-5.5) + orchestrator-bot self-review (Claude Code docs cross-check)
 commits_reviewed: 7 (732ed4c → f5ad7d6)
 verdict: ❌ Needs fixes (3 critical/high)
 ---
 
 # Codex Adversarial Verify — 2nd round
 
-> 본 verify = `codex review --base HEAD~7` PR diff review (gpt-5.5) 2 finding + Karpathy self-review (Claude Code 공식 docs cross-check) 1 finding 통합. 1차 review (CODEX_REVIEW.md) 회복 후 잔존 critical 점검.
+> 본 verify = `codex review --base HEAD~7` PR diff review (gpt-5.5) 2 finding + orchestrator-bot self-review (Claude Code 공식 docs cross-check) 1 finding 통합. 1차 review (CODEX_REVIEW.md) 회복 후 잔존 critical 점검.
 
 ## CRITICAL (blockers, must fix before user-facing)
 
@@ -98,4 +98,4 @@ Step 2 안 `sudo apt-get install` 등. 사용자 sudo 권한 명시적 prompt �
 
 ## 변경 이력
 
-- 2026-05-12 23:50 KST: 본 2차 verify 작성 (Karpathy self-review + codex review --base HEAD~7 통합). 8th commit 으로 회복 진행.
+- 2026-05-12 23:50 KST: 본 2차 verify 작성 (orchestrator-bot self-review + codex review --base HEAD~7 통합). 8th commit 으로 회복 진행.

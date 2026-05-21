@@ -75,7 +75,7 @@ agents:
     version: 2.2.0
     tier: external
     description: >-
-      Knowledge Manager — vault 7-Layer Fusion + Karpathy Pipeline + agent-office/km-tools 풀 본문 (vault
+      Knowledge Manager — vault 7-Layer Fusion + Orchestrator Pipeline + agent-office/km-tools 풀 본문 (vault
       `.claude/commands/knowledge-manager.md` mirror). Mode I/R/G 모두 지원, 단일 에이전트 순차 처리. v2.2 옵션 C pure Mirror.
     file: .agents/knowledge-manager.yaml
   - name: meetings

@@ -6,7 +6,7 @@
 
 ### 입력 요약
 - 소스: [URL/파일/vault종합]
-- 모드: 단일 에이전트 순차 처리 (Karpathy Pipeline)
+- 모드: 단일 에이전트 순차 처리 (Orchestrator Pipeline)
 
 ### Vault 탐색 결과
 | 카테고리 | 수 | 비고 |
@@ -157,7 +157,7 @@ done
 
 | 기능 | 참조 스킬 |
 |------|----------|
-| **Karpathy Pipeline 오버레이** | `km-karpathy-pipeline.md` |
+| **Orchestrator Pipeline 오버레이** | `km-karpathy-pipeline.md` |
 | 전체 워크플로우 | `km-workflow.md` |
 | 콘텐츠 추출 | `km-content-extraction.md` |
 | **YouTube 트랜스크립트** | `km-youtube-transcript.md` |

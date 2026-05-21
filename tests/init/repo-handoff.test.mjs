@@ -65,7 +65,7 @@ test('shared repo-handoff contract is bundled with the 4 normative points', () =
 // `claude plugin marketplace add` is a real Claude Code CLI command; user WSL
 // run loaded 5 plugins). The earlier "unverified" caveat was over-cautious and
 // factually wrong → it must NOT be reintroduced. The honest ThisCodex/Codex-side
-// "verified broken" note must be retained (different harness, 손석희-verified).
+// "verified broken" note must be retained (different harness, code-review-bot-verified).
 test('A8: quickstart still has a runnable command block (clone/wizard is a valid entry)', () => {
   const blocks = readme.split('```');
   let firstCmds = '';
@@ -106,7 +106,7 @@ test('A8: README retains the honest Codex-side (ThisCodex) verified-broken note'
   assert.match(
     readme,
     /Codex[\s\S]{0,160}(broken|verified broken)/i,
-    'the ThisCodex/Codex plugin path is genuinely broken (손석희) — keep that note',
+    'the ThisCodex/Codex plugin path is genuinely broken (code-review-bot) — keep that note',
   );
   assert.match(readme, /ThisCodex/i, 'must point to ThisCodex for the Codex-side detail');
 });

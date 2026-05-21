@@ -1,0 +1,195 @@
+# references/troubleshooting.md
+
+Common issues + fixes. Most are first-launch papercuts.
+
+---
+
+## §1. Bot connects to gateway but never receives messages (heartbeat ticks, `queue=0 channels=0` forever)
+
+**Symptom**: bridge daemon pane shows `[HH:MM:SS] gateway READY — <bot>#1234` then every 30s `<bot> alive — queue=0 channels=0`. You `@<bot>` in Discord but no `[RAW]` log line appears.
+
+**Two possible root causes** (Missing Access 50001 surface is identical for both):
+
+**(a) OAuth scope mismatch** — bot was authorized with only `applications.commands` scope (no `bot` scope). The bot does NOT appear in `/users/@me/guilds`, and every channel/REST call returns `Missing Access (50001)`.
+
+**(b) Channel permission overwrite denying the bot** — bot has `bot` scope AND appears in `/users/@me/guilds` AND its guild-level permissions integer includes `VIEW_CHANNEL` (1024), but the target channel has an explicit overwrite that denies the bot's role (or @everyone, which the bot inherits when no role is assigned). Same `Missing Access (50001)` on REST, same silent `on_message`.
+
+Differentiator: decode the guild permissions integer from `/users/@me/guilds` — if it contains VIEW_CHANNEL but channel REST still 50001, you're in case (b) not (a).
+
+**Diagnosis** (REST API, no Python needed):
+
+```bash
+TOK="$(grep '^DISCORD_BOT_TOKEN=' ~/.claude/channels/discord-<bot>/.env | cut -d= -f2 | tr -d '"')"
+
+# Step 1 — does the bot see the guild at all?
+curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/users/@me/guilds"
+# If empty array [] → case (a) OAuth scope. Re-OAuth with bot scope.
+# If guild listed → check the "permissions" integer in the response.
+
+# Step 2 — decode the guild-level permissions integer.
+python3 -c "
+perms = <integer-from-step-1>
+print('VIEW_CHANNEL:', bool(perms & (1 << 10)))
+print('SEND_MESSAGES:', bool(perms & (1 << 11)))
+print('READ_MESSAGE_HISTORY:', bool(perms & (1 << 16)))
+"
+# If all False → case (a) OAuth scope (bot has guild membership but no permissions; re-OAuth with permissions=117824).
+# If all True → case (b) channel overwrite (proceed to step 3).
+
+# Step 3 — can the bot read the channel meta? (separates guild perms from channel overwrite)
+curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/channels/<channel-id>"
+# If "Missing Access (50001)" despite step 2 showing VIEW_CHANNEL → case (b) channel overwrite.
+
+# Step 4 — what is the default install URL's scopes? (sanity)
+curl -s -H "Authorization: Bot $TOK" "https://discord.com/api/v10/applications/@me" \
+  | python3 -c "import sys, json; print(json.load(sys.stdin).get('install_params'))"
+# Informational only — the actual install scopes are NOT always identical to this default.
+```
+
+**Fix for case (a)** — re-authorize with `bot` scope + permissions:
+
+```
+https://discord.com/api/oauth2/authorize?client_id=<app-id>&permissions=117824&scope=bot+applications.commands
+```
+
+`permissions=117824` = View Channels + Send Messages + Embed Links + Attach Files + Read Message History + Add Reactions (minimum for a chat bot). Open in browser → select target guild → Authorize. This creates/refreshes a managed role with those permissions and assigns it to the bot.
+
+**Fix for case (b)** — adjust the channel's permission overwrites:
+1. Open the Discord guild as admin → click the channel name → **Edit Channel** → **Permissions** tab.
+2. Find the bot (or its managed role) in the overwrites list.
+3. Toggle **View Channel**, **Send Messages**, **Read Message History** to ✓ (green check, allow).
+4. Alternatively, remove the overwrite entry entirely to let guild-level permissions apply.
+5. If the channel inherits from a category, fix the category overwrites instead.
+
+After either fix, the bridge daemon auto-detects new permissions on the next inbound message — no restart needed. First mention should immediately show `[RAW]` + `[INBOX]` + Discord reply.
+
+## §2. Bot receives mentions but `msg.content` is empty (`content='...'` empty in `[RAW]` line)
+
+**Symptom**: `[RAW]` line shows the message arrived, mentioned=True, but content is empty or just contains the mention `<@...>`.
+
+**Root cause**: **Message Content Intent** is not enabled in Discord Developer Portal → Bot → Privileged Gateway Intents. Without it, Discord strips message content from gateway events for non-mentioned-bots messages (and reduces what mentioned-bots see).
+
+**Fix**: Open https://discord.com/developers/applications/<app-id>/bot → scroll to **Privileged Gateway Intents** → toggle **MESSAGE CONTENT INTENT** ON → Save. No bot restart needed (Discord re-handshakes on next reconnect, or restart for immediate effect).
+
+## §3. agy `--print` hangs forever, never returns
+
+**Symptom**: bridge logs `_dispatch chat=...` then nothing — eventually hits `agy timeout after 300s` exception.
+
+**Likely cause**: agy is waiting for a confirmation prompt (file write, network access) but you're in `--sandbox` mode and stdout is a pipe (no TTY for user input).
+
+**Diagnoses**:
+- Look at agy stderr in the bridge log — there should be a "permission denied" or "approve?" line.
+- Check `AGY_UNSAFE` env: if `0`, agy is in sandbox mode → it WILL prompt for sensitive ops.
+
+**Fix options**:
+- Set `AGY_UNSAFE=1` in `.env` (only on trusted single-user host) → agy uses `--dangerously-skip-permissions`, no prompts.
+- Or constrain prompts to non-sensitive ops only (no file writes, no network, no shell).
+- Or pre-stage files in `--add-dir` directories that agy already has access to.
+
+## §4. tmux windows don't show what you expect (`AGY_TUI_PANE` mismatch)
+
+**Symptom**: bridge logs `[tmux-inject] failed: ...` OR Discord messages don't appear visually in the agy window.
+
+**Root cause**: `AGY_TUI_PANE` env not set or pointing to the wrong target. Launch script sets `AGY_TUI_PANE="${BOT_NAME}:agy.0"` (named window targeting, base-index independent).
+
+**Diagnosis**:
+```bash
+tmux list-windows -t <bot>
+# Expected: 'agy' and 'daemon' windows.
+tmux capture-pane -t <bot>:daemon -p -S -300 | grep AGY_TUI_PANE
+# Should show the AGY_TUI_PANE env logged at daemon startup.
+```
+
+**Fix**: Re-launch (`tmux kill-session -t <bot>` then `BOT_NAME=<bot> bash launch.sh`). The named-window targeting (`<bot>:agy.0`) avoids base-index issues.
+
+## §5. Wrapper kills the session you're in (`bash: tmux: kill-session ...`)
+
+**Symptom**: You're attached to `<bot>` tmux, you type `<bot>` alias from within → terminal closes / session dies.
+
+**Root cause**: launch.sh's wrapper unconditionally `tmux kill-session -t <bot>` before recreating. From inside the session, this kills your own session.
+
+**Solution — shell function bootstrap (recommended)**: Wrap the alias in a shell function that detects "called from inside the bot session" and bootstraps from a side session. Example zsh:
+
+```bash
+<your-bot>() {
+  local cur=""
+  [ -n "${TMUX:-}" ] && cur="$(tmux display-message -p '#S' 2>/dev/null)"
+  if [ "$cur" = "<your-bot>" ]; then
+    local boot="<your-bot>-restart-$$"
+    tmux new-session -d -s "$boot" -n restart \
+      "sleep 0.3; zsh -lc 'cd ~/my-agy-bot && bash launch.sh; tmux switch-client -t <your-bot> 2>/dev/null || true; tmux kill-session -t $boot 2>/dev/null || true; exec zsh'"
+    tmux switch-client -t "$boot"
+    return
+  fi
+  cd ~/my-agy-bot && bash launch.sh
+}
+```
+
+**Why not in-launch.sh suicide guard?** An exit-0 guard inside launch.sh conflicts with outer `while true; do ./launch.sh; done` watchdogs (the guard fires, watchdog re-runs, infinite loop). Handle the in-session case in your shell layer where you can branch to bootstrap, not exit.
+
+## §6. Discord reply `text.length undefined` error (MCP plugin variant)
+
+**Symptom**: bridge.py logs `[discord-worker] ERROR ...: text.length undefined`.
+
+**Root cause**: Some Discord plugin/SDK paths choke on `None` or empty `text` arguments to `reply()`.
+
+**Fix**: The current `bridge._dispatch` already guards with `reply_text = result.stdout or f"(empty agy response, exit={result.exit_code})"`. If you see this error in your fork, check for any custom reply paths that bypass the guard.
+
+## §7. `discord.py>=2.3` install fails in zsh
+
+**Symptom**: `pip install discord.py>=2.3` → zsh: bad pattern: ... OR redirects to a file named `=2.3`.
+
+**Root cause**: zsh interprets `>=` as a redirect glob.
+
+**Fix**: Quote the version specifier:
+```bash
+.venv/bin/pip install 'discord.py>=2.3'
+```
+
+## §8. agy CLI not found (`[FATAL] agy CLI 없음`)
+
+**Symptom**: launch.sh exits with `[FATAL] agy CLI 없음 (/Users/<you>/.local/bin/agy)`.
+
+**Diagnosis**:
+```bash
+which agy
+ls -la $HOME/.local/bin/agy
+agy --version
+```
+
+**Fix**: Install agy CLI per Antigravity website. If installed elsewhere (e.g. `/usr/local/bin/agy`), set `AGY_PATH=/usr/local/bin/agy` in `.env`.
+
+## §9. Bot reply is the literal `(empty agy response, exit=0)` string
+
+**Symptom**: Discord receives this literal string instead of an actual response.
+
+**Root cause**: agy ran successfully (exit 0) but printed nothing to stdout. Usually means agy hit an internal error or the prompt was empty.
+
+**Diagnoses**:
+- Check `[INBOX]` line for `content=...` — was the user message empty?
+- Run `agy --print "<the prompt>" --sandbox` manually from CWD `~/my-agy-bot/state/channels/<safe-ch>/cwd/` and see what it prints.
+
+## §10. Bridge daemon silently dies (`tmux ls` shows session, but pane is dead)
+
+**Symptom**: Heartbeat stops appearing in bridge pane but tmux session still listed.
+
+**Diagnosis**:
+```bash
+ps aux | grep "bridge.py\|agy"
+# Both bridge.py and agy CLI should be running.
+
+tmux capture-pane -t <bot>:1.1 -p -S -200 | tail -30
+# Look for Python traceback in scrollback.
+```
+
+**Fix**: Restart the session. If the crash repeats, capture the traceback and file an issue. Most common cause is an unhandled exception in `_dispatch` → `_worker` doesn't restart (a known limitation of the simple worker pattern).
+
+## §11. `Codex CLI 미설치` or wrong codex binary path (for `sshee`-style bridges)
+
+Not directly an agy issue — but if you're adapting this template for codex CLI bridges, ensure `which codex` returns the right binary and `codex --version` matches your expected release.
+
+## §12. How to enable verbose logging for first-time debugging
+
+Edit `bridge.py` `_dispatch` and add print statements between each step. The current template already has `[INBOX]` / `[OUTBOX]` / `_dispatch` trace lines — uncomment/expand if you need more.
+
+For agy itself: pass `--debug` flag (if your agy version supports it). Otherwise just look at stderr in the bridge log.

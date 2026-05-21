@@ -3,7 +3,7 @@
 
 #set document(
   title: "ThisCode · ThisCodex 아주 쉬운 시작 안내서",
-  author: "글재경 (옵시디언 어벤져스)",
+  author: "프로젝트 작성자 (샘플 팀)",
 )
 
 #set page(
@@ -18,7 +18,7 @@
       #line(length: 100%, stroke: 0.4pt + color.hairline)
       #v(2pt)
       #grid(columns: (1fr, auto),
-        [ThisCode · ThisCodex 시작 안내서],
+        [ThisCode · ThisCodex 시작 안내서 (샘플 팀)],
         [#counter(page).display()])
     ]
   },
@@ -44,7 +44,7 @@
 #v(4.5cm)
 #align(center)[
   #text(font: font.serif, size: 13pt, fill: color.accent,
-        tracking: 3pt)[OBSIDIAN AVENGERS · 시작 안내서]
+        tracking: 3pt)[샘플 팀 · 시작 안내서]
   #v(0.9em)
   #text(font: font.body, size: 30pt, weight: "bold", fill: color.ink)[
     ThisCode · ThisCodex
@@ -65,7 +65,7 @@
   ]
   #v(0.3em)
   #text(size: 9pt, fill: color.muted)[
-    2026-05-19 · 글재경 작성 · v1
+    2026-05-20 · 프로젝트 작성자 · v1
   ]
 ]
 #pagebreak()
@@ -121,11 +121,11 @@
 #table-clean(
   columns: (auto, 1fr),
   [*비서*], [*맡은 일*],
-  [코난], [자료조사 · 사실 확인 (Research)],
-  [손석희], [코드 검증 · 리뷰 (Code review)],
-  [스트레인지], [일정 · 알림 관리 (Schedule)],
-  [글재경], [글쓰기 (Writing)],
-  [카파시], [전체 조율 · 회의 진행 (Orchestration)],
+  [리서치 봇], [자료조사 · 사실 확인 (Research)],
+  [코드리뷰 봇], [코드 검증 · 리뷰 (Code review)],
+  [일정 봇], [일정 · 알림 관리 (Schedule)],
+  [글쓰기 봇], [글쓰기 (Writing)],
+  [조율 봇], [전체 조율 · 회의 진행 (Orchestration)],
 )
 
 #callout(kind: "success", title: "1장 체크포인트")[
@@ -142,17 +142,17 @@
 #table-clean(
   columns: (1fr, auto),
   [*하고 싶은 일*], [*깨울 비서*],
-  [자료를 찾아 정리하고 싶다], [코난],
-  [내가 쓴 코드가 맞는지 봐 달라], [손석희],
-  [언제 뭘 하기로 했는지 챙겨 달라], [스트레인지],
-  [글·문서를 써 달라], [글재경],
-  [여러 비서가 같이 움직여야 한다], [카파시(가 나머지를 부름)],
+  [자료를 찾아 정리하고 싶다], [리서치 봇],
+  [내가 쓴 코드가 맞는지 봐 달라], [코드리뷰 봇],
+  [언제 뭘 하기로 했는지 챙겨 달라], [일정 봇],
+  [글·문서를 써 달라], [글쓰기 봇],
+  [여러 비서가 같이 움직여야 한다], [조율 봇(이 나머지를 부름)],
 )
 
 == 처음이라면 딱 하나만
 
 다 켜지 마세요. 처음엔 *가장 자주 쓸 비서 하나*만 켜고 익숙해진 뒤
-늘리는 게 좋아요. 보통은 자료조사(코난) 또는 글쓰기(글재경)부터
+늘리는 게 좋아요. 보통은 자료조사(리서치 봇) 또는 글쓰기(글쓰기 봇)부터
 시작합니다.
 
 #callout(kind: "warning", title: "한꺼번에 다 켜면")[
@@ -209,10 +209,10 @@
 == alias — 긴 명령을 짧은 별명으로
 
 #term("alias", "별명") 은 길고 복잡한 명령에 *짧은 별명*을 붙이는 기능이에요.
-예를 들어 비서를 깨우는 긴 명령을 `konan` 한 단어로 줄여 둡니다. 설치
+예를 들어 비서를 깨우는 긴 명령을 `mybot` 한 단어로 줄여 둡니다. 설치
 도우미가 이 별명을 만들어 주고, 다음에도 쓰도록 기록해 둬요.
 
-#codeblock("konan   # '코난 비서 깨우기' 긴 명령의 별명", lang: "bash")
+#codeblock("mybot   # '내 비서 깨우기' 긴 명령의 별명", lang: "bash")
 
 == yolo — 매번 확인 안 받고 알아서
 
@@ -304,14 +304,14 @@
 
 #callout(kind: "success", title: "마지막 한 마디")[
   잘못된 폴더에서 20분 헤매는 것보다, 처음 10초 *"여기 맞아?"* 확인이
-  낫습니다. 천천히, 작게 확인하며 가세요. — 글재경
+  낫습니다. 천천히, 작게 확인하며 가세요. — 프로젝트 작성자
 ]
 
 #pagebreak()
 #align(center)[
   #v(2cm)
   #text(font: font.serif, size: 11pt, fill: color.muted)[
-    옵시디언 어벤져스 · ThisCode · ThisCodex
+    샘플 팀 · ThisCode · ThisCodex
   ]
   #v(0.3em)
   #text(size: 9pt, fill: color.muted)[

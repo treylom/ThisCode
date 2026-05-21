@@ -15,7 +15,7 @@ status: draft (v0.2.0)
 
 ### C1. Discord 봇 응답 게이트 — 채널에 reply, 터미널만 X
 - 학습: 외부 채널 응답 task 에서 reply 도구 우선. 터미널 출력만 = 사용자에게 안 보임.
-- 회귀 case (학습 narrative): 2026-04-30 + 2026-05-04 카파시 × 2회 회귀.
+- 회귀 case (학습 narrative): 2026-04-30 + 2026-05-04 orchestrator-bot × 2회 회귀.
 - 영상 길이: 8-10 min.
 
 ### C2. 단정 표현 lint — "절대/반드시/금지" cross-check
@@ -93,7 +93,7 @@ status: draft (v0.2.0)
 - 학습: hard rule 메모리만으로는 attention decay → 회귀. UserPromptSubmit hook 으로 procedural pre-response gate.
 - 영상 길이: 10 min.
 
-### C18. AK-Tofu Phase A → Phase B Stop hook auto-trigger
+### C18. aktofu-bot Phase A → Phase B Stop hook auto-trigger
 - 학습: Lead 응답 분할 회귀를 Stop hook chain 으로 catch. heartbeat 7-step filter.
 - 영상 길이: 11 min.
 
@@ -135,8 +135,8 @@ status: draft (v0.2.0)
 - 학습: 회의 폴더 신설 전 실제 audience 봇 수 자가 점검. 라벨링 X, 실제 발의 ✓.
 - 영상 길이: 6 min.
 
-### C28. follow-up — 스트레인지 캘린더 등재 의무
-- 학습: hard timing follow-up 발생 시 040-Schedule/ owner 스트레인지 mention 등재 의무.
+### C28. follow-up — schedule-bot 캘린더 등재 의무
+- 학습: hard timing follow-up 발생 시 040-Schedule/ owner schedule-bot mention 등재 의무.
 - 영상 길이: 5 min.
 
 ### C29. "긴급" 워딩 over-stack 방지
