@@ -1,22 +1,22 @@
 #!/usr/bin/env bash
 # thiscode installer
-# 환경: WSL Ubuntu / Linux native / macOS 자동 detect 후 분기
+# Environment: WSL Ubuntu / Linux native / macOS — auto-detected and branched
 #
-# 사용:
+# Usage:
 #   curl -fsSL https://raw.githubusercontent.com/<owner>/thiscode/main/install.sh | bash
-#   또는 git clone 후 ./install.sh
+#   or: git clone, then ./install.sh
 #
-# 10 step (Zettelkasten WSL2-tmux 가이드 기반 + Codex + Obsidian CLI 추가):
-#   1.   환경 detect (OS / WSL / package manager)
-#   2.   필수 패키지 (tmux, git, curl, jq, build-essential)
+# 10 steps (Zettelkasten WSL2-tmux guide + Codex + Obsidian CLI):
+#   1.   Environment detection (OS / WSL / package manager)
+#   2.   Base packages (tmux, git, curl, jq, build-essential)
 #   3.   nvm + Node.js LTS
-#   4.   Claude Code 전역 설치
-#   4.5  Codex CLI 전역 설치 (@openai/codex) — codex 호출 layer 의존
-#   5.   oh-my-tmux (gpakosz/.tmux) 자동 install
-#   6.   (선택) thiscode tmux.conf.local 적용
-#   6.5  Obsidian CLI 환경 분기 안내 — vault 3-Tier 폴백 1순위
-#   7.   thiscode plugin install 안내 (marketplace + slash 7종)
-#   8.   첫 봇 wizard 안내 (Claude Code 안 /thiscode:start)
+#   4.   Claude Code global install
+#   4.5  Codex CLI global install (@openai/codex) — codex-layer dependency
+#   5.   oh-my-tmux (gpakosz/.tmux) auto-install
+#   6.   (optional) Apply thiscode tmux.conf.local
+#   6.5  Obsidian CLI environment branching — vault 3-Tier fallback, tier 1
+#   7.   thiscode plugin install guidance (marketplace + 7 slash commands)
+#   8.   First-bot wizard guidance (Claude Code, /thiscode:start)
 
 set -euo pipefail
 
@@ -39,12 +39,12 @@ step() { printf "\n${BOLD}${BLUE}━━━ Step %s/10 ━━━${NC} ${BOLD}%s${
 
 ENV_KIND=""    # wsl / linux / macos
 PKG_MGR=""     # apt / dnf / yum / brew / pacman
-REPO_DIR=""    # thiscode 레포 루트 (curl 경로 시 추후 git clone 으로 채워짐)
+REPO_DIR=""    # thiscode repo root (populated by git clone path if curl-piped)
 
 # ---------------------------------------------------------------- Step 1
 
 detect_env() {
-  step 1 "환경 detect"
+  step 1 "Environment detection"
 
   local os
   os="$(uname -s)"
@@ -52,18 +52,18 @@ detect_env() {
     Linux)
       if grep -qi microsoft /proc/version 2>/dev/null; then
         ENV_KIND="wsl"
-        ok "WSL 감지 (Windows Subsystem for Linux)"
+        ok "WSL detected (Windows Subsystem for Linux)"
       else
         ENV_KIND="linux"
-        ok "Linux native 감지"
+        ok "Linux native detected"
       fi
       ;;
     Darwin)
       ENV_KIND="macos"
-      ok "macOS 감지"
+      ok "macOS detected"
       ;;
     *)
-      err "지원 안 함: $os (Linux / macOS / WSL 만 지원)"
+      err "Unsupported OS: $os (only Linux / macOS / WSL supported)"
       exit 1
       ;;
   esac
@@ -74,16 +74,16 @@ detect_env() {
   elif command -v brew    >/dev/null 2>&1; then PKG_MGR="brew"
   elif command -v pacman  >/dev/null 2>&1; then PKG_MGR="pacman"
   else
-    err "패키지 매니저 못 찾음 (apt / dnf / yum / brew / pacman 중 하나 필요)"
+    err "No supported package manager found (need one of: apt / dnf / yum / brew / pacman)"
     exit 1
   fi
-  ok "패키지 매니저: $PKG_MGR"
+  ok "Package manager: $PKG_MGR"
 }
 
 # ---------------------------------------------------------------- Step 2
 
 install_base_packages() {
-  step 2 "필수 패키지 (tmux + git + curl + jq + build tools)"
+  step 2 "Base packages (tmux + git + curl + jq + build tools)"
 
   case "$PKG_MGR" in
     apt)
@@ -117,41 +117,41 @@ install_node() {
   step 3 "nvm + Node.js LTS"
 
   if command -v node >/dev/null 2>&1; then
-    ok "Node.js 이미 설치됨: $(node --version) → skip"
+    ok "Node.js already installed: $(node --version) → skip"
     return
   fi
 
   if [ ! -d "$HOME/.nvm" ]; then
-    log "nvm 설치 (v0.40.1)"
+    log "Installing nvm (v0.40.1)"
     curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
   else
-    ok "nvm 이미 설치됨"
+    ok "nvm already installed"
   fi
 
-  # 현재 셸에서 nvm 활성화
+  # Activate nvm in current shell
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   # shellcheck disable=SC1091
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-  log "Node.js LTS 설치"
+  log "Installing Node.js LTS"
   nvm install --lts
   nvm use --lts
 
   ok "Node.js: $(node --version)"
-  warn "새 터미널을 열어야 nvm/node 가 PATH 에 영구 잡힙니다"
+  warn "Open a new terminal so nvm/node land permanently in PATH"
 }
 
 # ---------------------------------------------------------------- Step 4
 
 install_claude_code() {
-  step 4 "Claude Code (Anthropic 공식 CLI)"
+  step 4 "Claude Code (Anthropic official CLI)"
 
   if command -v claude >/dev/null 2>&1; then
-    ok "Claude Code 이미 설치됨: $(claude --version) → skip"
+    ok "Claude Code already installed: $(claude --version) → skip"
     return
   fi
 
-  # nvm 활성화 (Step 3 와 같은 셸에서 호출됐다고 가정)
+  # Activate nvm (assumed same shell as Step 3)
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   # shellcheck disable=SC1091
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -159,7 +159,7 @@ install_claude_code() {
   npm install -g @anthropic-ai/claude-code
 
   ok "Claude Code: $(claude --version)"
-  warn "다음 단계 가기 전, 다른 터미널에서 'claude auth login' 으로 브라우저 인증해주세요"
+  warn "Before continuing, run 'claude auth login' in another terminal to complete browser auth"
 }
 
 # ---------------------------------------------------------------- Step 5
@@ -168,7 +168,7 @@ install_oh_my_tmux() {
   step 5 "oh-my-tmux (gpakosz/.tmux)"
 
   if [ -d "$HOME/.tmux" ] && [ -L "$HOME/.tmux.conf" ]; then
-    ok "oh-my-tmux 이미 설치됨 (~/.tmux + ~/.tmux.conf symlink) → skip"
+    ok "oh-my-tmux already installed (~/.tmux + ~/.tmux.conf symlink) → skip"
     return
   fi
 
@@ -182,101 +182,102 @@ install_oh_my_tmux() {
 
   if [ ! -f "$HOME/.tmux.conf.local" ]; then
     cp .tmux/.tmux.conf.local .
-    ok "~/.tmux.conf.local 신규 생성 (user override 파일)"
+    ok "~/.tmux.conf.local created (user override file)"
   else
-    ok "~/.tmux.conf.local 기존 보존"
+    ok "~/.tmux.conf.local preserved (existing file kept)"
   fi
 
-  ok "oh-my-tmux 설치 완료"
-  warn "tmux 환경변수 TERM 은 xterm-256color 여야 합니다 (echo \$TERM 확인)"
+  ok "oh-my-tmux installed"
+  warn "tmux TERM env var should be xterm-256color (verify: echo \$TERM)"
 }
 
 # ---------------------------------------------------------------- Step 6
 
 apply_our_tmux_conf() {
-  step 6 "thiscode tmux.conf.local 적용 (선택)"
+  step 6 "Apply thiscode tmux.conf.local (optional)"
 
   local src="$REPO_DIR/configs/tmux.conf.local"
 
   if [ -z "$REPO_DIR" ] || [ ! -f "$src" ]; then
-    warn "thiscode 레포가 로컬에 없음 → 본 step skip (Step 7 의 git clone 이후 다시 실행 가능)"
+    warn "thiscode repo not present locally → skipping this step (re-runnable after Step 7 git clone)"
     return
   fi
 
-  printf "\n  thiscode 의 tmux.conf.local 을 사용하시겠어요? (y/N) "
+  printf "\n  Use thiscode's tmux.conf.local? (y/N) "
   read -r ans
   if [[ "$ans" =~ ^[Yy]$ ]]; then
     if [ -f "$HOME/.tmux.conf.local" ]; then
       cp "$HOME/.tmux.conf.local" "$HOME/.tmux.conf.local.bak"
-      ok "기존 파일 백업: ~/.tmux.conf.local.bak"
+      ok "Backed up existing file: ~/.tmux.conf.local.bak"
     fi
     cp "$src" "$HOME/.tmux.conf.local"
-    ok "thiscode 의 tmux.conf.local 적용 완료"
+    ok "Applied thiscode's tmux.conf.local"
   else
-    ok "user override 유지 (~/.tmux.conf.local)"
+    ok "Kept user override (~/.tmux.conf.local)"
   fi
 }
 
 # ---------------------------------------------------------------- Step 7
 
 install_plugin() {
-  step 7 "thiscode plugin install 안내"
+  step 7 "thiscode plugin install guidance"
 
   cat <<'EOF'
 
-  Claude Code 안에서 (REPL 진입 후):
+  Inside Claude Code (after entering the REPL):
 
       /plugin marketplace add treylom/ThisCode
       /plugin install thiscode@thiscode-marketplace
 
-  install 직후 자동 인식되는 슬래시 7종:
+  Slash commands recognized automatically after install (7):
 
-      /thiscode:start          — 메인 wizard (환경 + 봇 + 첫 대화)
+      /thiscode:start          — main wizard (env + bot + first chat)
       /thiscode:install-hooks  — SessionStart + UserPromptSubmit hook merge
-      /thiscode:create-bot     — 신규 봇 디렉토리 + .env + soul.md 자동 셋업
-      /thiscode:add-bot        — 추가 봇 1개 신설
-      /thiscode:open-meeting   — 회의실 폴더 신설 (다 봇 협업 4-file)
-      /thiscode:codex-check    — Codex CLI 검증 (호출 layer 활성)
-      /thiscode:self-update    — 자가 업데이트 (git fetch behind 비교)
+      /thiscode:create-bot     — new-bot directory + .env + soul.md auto-setup
+      /thiscode:add-bot        — add one more bot
+      /thiscode:open-meeting   — new meeting folder (multi-bot 4-file pattern)
+      /thiscode:codex-check    — verify Codex CLI (codex layer active)
+      /thiscode:self-update    — self-update (git fetch behind comparison)
 
-  또는 로컬 git clone (검증·테스트용):
+  Or via local git clone (for testing / verification):
 
       git clone https://github.com/treylom/ThisCode.git \
         ~/.claude/plugins/cache/local/thiscode
 
-  prereq: jq (Step 2 에서 자동 설치) — slash 의 hook merge 가 settings.json 안전 병합에 사용.
+  Prereq: jq (auto-installed in Step 2) — used by hook-merge slash commands
+  for safe settings.json merging.
 
 EOF
-  warn "순정 Claude Code 라면 /thiscode:install-hooks 먼저 실행 권장 (SessionStart hook 부재 시 soul.md 고아 회귀 차단)"
+  warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
 }
 
 # ---------------------------------------------------------------- Step 8
 
 print_next_steps() {
-  step 8 "첫 봇 wizard 안내"
+  step 8 "First-bot wizard guidance"
 
   cat <<'EOF'
 
   ╔══════════════════════════════════════════════════════════════╗
-  ║  설치 완료 — 다음 단계                                          ║
+  ║  Install complete — next steps                                 ║
   ╠══════════════════════════════════════════════════════════════╣
   ║                                                                ║
-  ║  1. 새 tmux session 시작                                       ║
+  ║  1. Start a new tmux session                                  ║
   ║       tmux new-session -s claude                              ║
   ║                                                                ║
-  ║  2. claude 실행                                                ║
+  ║  2. Launch claude                                              ║
   ║       cd ~/<project> && claude                                ║
   ║                                                                ║
-  ║  3. Claude Code 안에서 wizard 시동                             ║
-  ║       /thiscode:start                                   ║
+  ║  3. Start the wizard inside Claude Code                       ║
+  ║       /thiscode:start                                         ║
   ║                                                                ║
-  ║     wizard 가 단계별로 안내합니다                                ║
-  ║       - Discord 봇 생성 (Developer Portal)                     ║
-  ║       - 봇 토큰 입력                                            ║
-  ║       - 첫 봇 페르소나 결정 (soul.md template)                 ║
-  ║       - 페어링 + 첫 대화 검증                                    ║
+  ║     The wizard walks you through:                              ║
+  ║       - Discord bot creation (Developer Portal)               ║
+  ║       - Bot token entry                                        ║
+  ║       - First bot persona (soul.md template)                  ║
+  ║       - Pairing + first-chat verification                     ║
   ║                                                                ║
-  ║  4. 막히면 README.md 의 트러블슈팅 섹션 참조                     ║
+  ║  4. If stuck, see the Troubleshooting section in README.md    ║
   ║                                                                ║
   ╚══════════════════════════════════════════════════════════════╝
 
@@ -286,13 +287,13 @@ EOF
 # ---------------------------------------------------------------- main
 
 main() {
-  # REPO_DIR 추정: 본 스크립트 위치
+  # Infer REPO_DIR from this script's location
   if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
     REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   fi
 
-  log "thiscode 설치 시작"
-  log "환경 자동 detect 진행"
+  log "thiscode install: starting"
+  log "Detecting environment automatically"
 
   detect_env
   install_base_packages
@@ -301,86 +302,86 @@ main() {
   install_codex_cli              # Step 4.5
   install_oh_my_tmux
   apply_our_tmux_conf
-  install_obsidian_cli           # NEW Step 6.5
+  install_obsidian_cli           # Step 6.5
   install_plugin
   print_next_steps
 
-  log "thiscode 설치 종료"
+  log "thiscode install: finished"
 }
 
-# ---------------------------------------------------------------- Step 6.5 (NEW)
+# ---------------------------------------------------------------- Step 6.5
 
 install_obsidian_cli() {
-  step "6.5" "Obsidian CLI (vault 접근 3-Tier 폴백 1순위)"
+  step "6.5" "Obsidian CLI (vault access 3-Tier fallback, tier 1)"
 
   if command -v obsidian >/dev/null 2>&1; then
-    ok "Obsidian CLI 이미 설치됨: $(obsidian --version 2>&1 | head -1) → skip"
+    ok "Obsidian CLI already installed: $(obsidian --version 2>&1 | head -1) → skip"
     return
   fi
 
   case "$ENV_KIND" in
     macos)
-      log "Obsidian app 설치 시도 (brew cask)"
-      brew install --cask obsidian || warn "brew cask 실패 — https://obsidian.md/download 에서 수동 설치"
+      log "Installing Obsidian app (brew cask)"
+      brew install --cask obsidian || warn "brew cask failed — install manually from https://obsidian.md/download"
       ;;
     wsl)
-      warn "WSL 환경 — Windows native Obsidian 호출 권장:"
+      warn "WSL environment — calling Windows-native Obsidian recommended:"
       cat <<'EOF'
 
-  1. Windows 에서 https://obsidian.md/download → Obsidian Installer 다운로드 + 실행
-  2. WSL alias 등록:
+  1. On Windows: download and run the Obsidian installer from https://obsidian.md/download
+  2. Register a WSL alias:
        alias obsidian="'/mnt/c/Program Files/Obsidian/Obsidian.com'"
-       # 또는 ~/.bashrc 에 추가
-  3. WSL 안 vault 경로:
+       # or add to ~/.bashrc
+  3. WSL-side vault path:
        VAULT="/mnt/c/Users/<windows-user>/Documents/Obsidian/<vault-name>"
 
-  자세히는 docs/04-obsidian-cli.md 참조.
+  See docs/04-obsidian-cli.md for details.
 
 EOF
       ;;
     linux)
-      log "Linux 환경 — 3 옵션 안내"
+      log "Linux environment — 3 options:"
       cat <<'EOF'
 
-  Option A — Snap (Ubuntu 권장):
+  Option A — Snap (Ubuntu recommended):
        sudo snap install obsidian --classic
 
   Option B — Flatpak:
        flatpak install flathub md.obsidian.Obsidian
 
   Option C — AppImage / deb:
-       https://obsidian.md/download → 다운로드 후 수동 설치
+       Download manually from https://obsidian.md/download
 
 EOF
       ;;
   esac
 
-  # 검증
+  # Verify
   if command -v obsidian >/dev/null 2>&1; then
     ok "Obsidian CLI: $(obsidian --version 2>&1 | head -1)"
   else
-    warn "Obsidian CLI 설치 안 됨 — 3-Tier 폴백의 Tier 2 (MCP) 또는 Tier 3 (Write/Read/Grep) 으로 작동"
-    warn "Obsidian 사용 안 하시면 본 단계 skip OK — thiscode 대부분 작동"
+    warn "Obsidian CLI not installed — 3-Tier fallback will use Tier 2 (MCP) or Tier 3 (Write/Read/Grep)"
+    warn "If you don't use Obsidian, skipping this step is fine — most of thiscode still works"
   fi
 
-  # vault 경로 설정 안내
-  log "Obsidian vault 경로 환경변수 권장 (~/.bashrc 또는 ~/.zshrc 에 추가):"
+  # Vault path env-var guidance
+  log "Recommended vault path env var (add to ~/.bashrc or ~/.zshrc):"
   echo "  export OBSIDIAN_VAULT=\"\$HOME/Documents/<vault-name>\""
   echo "  # WSL: export OBSIDIAN_VAULT=\"/mnt/c/Users/<user>/Documents/Obsidian/<vault-name>\""
   echo ""
 }
 
-# ---------------------------------------------------------------- Step 4.5 (NEW)
+# ---------------------------------------------------------------- Step 4.5
 
 install_codex_cli() {
-  step "4.5" "Codex CLI (Codex 호출 layer 의존)"
+  step "4.5" "Codex CLI (codex-layer dependency)"
 
   if command -v codex >/dev/null 2>&1; then
-    ok "Codex CLI 이미 설치됨: $(codex --version 2>&1 | head -1) → skip"
+    ok "Codex CLI already installed: $(codex --version 2>&1 | head -1) → skip"
     return
   fi
 
-  # nvm 활성화 (Step 3 에서)
+  # Activate nvm (set up in Step 3)
   export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
   # shellcheck disable=SC1091
   [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -388,8 +389,8 @@ install_codex_cli() {
   npm install -g @openai/codex
 
   ok "Codex CLI: $(codex --version 2>&1 | head -1)"
-  warn "다음 단계로 가기 전, 다른 터미널에서 'codex login' 으로 OAuth 인증해주세요"
-  warn "Claude Code 안 install 후 /thiscode:codex-check 슬래시로 검증 가능"
+  warn "Before continuing, run 'codex login' in another terminal to complete OAuth auth"
+  warn "After Claude Code install, run /thiscode:codex-check to verify"
 }
 
 main "$@"
