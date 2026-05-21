@@ -56,6 +56,14 @@ Without an explicit thread id, the receiving bot falls back to its default reply
 
 Every meeting **should** include one extra agent acting as a watchdog — a daemon that monitors progress, detects silence/idle/incompletion, and surfaces drift back to the orchestrator. The maintainer's vault runs Dr. Strange on a ~3 min cadence; the bundled default is ~5 min (`scripts/meeting_watchdog.py`). Either works — pick what fits your team's signal-to-noise.
 
+#### 2.3.1 Active push, not passive timer
+
+The watchdog's job is **active**: at each beat / check interval it MUST mention each active participant in the thread (`<@user_id>` + a one-line "status?" or "one-line progress please" probe). Silent participants = idle signal. The orchestrator then re-drives them with **executable input**, never another "still waiting" message.
+
+A timer-based "WAIT" / "still monitoring" log is an **anti-pattern**: it makes the watchdog look alive without ever surfacing whether participants actually are. The 2026-05-21 operator regression that motivated this rule was exactly that: a code-review sub-agent went silent for ~15 min after an "ack"; the watchdog kept logging "still monitoring" each beat without ever pinging the silent bot. Active push closes that loop.
+
+The watchdog needs each participant's `user_id` to address them. Take it from the orchestrator's SessionStart context, from the meeting manifest's active-participants list, or from an operator-maintained roster — never invent IDs.
+
 Two pieces:
 
 1. **In-session orchestrator** pushes state via `--start` (thread creation) → `--beat` (each progress transition) → terminates on `goal_met ∧ tasks_done`.

@@ -51,5 +51,30 @@ bot's progress, or stopping while an active meeting is open.
   but discouraged the moment ≥2 bots are dispatched (see §2 and
   `docs/05-meeting-thread-protocol.md` §2.3).
 
+## 6. Active push pattern (watchdog bot, not passive timer)
+- The watchdog (whether a dedicated bot or the orchestrator itself
+  fulfilling that role) MUST, at each beat / check interval, **actively
+  ping each active meeting participant** in the thread with an explicit
+  `<@user_id>` mention plus a one-line liveness probe (e.g. "status?"
+  or "one-line progress please"). Pure timer-based "still waiting"
+  or "WAIT" messages are an **anti-pattern**: they regress the
+  watchdog into passive monitoring and let silent participants stall
+  the meeting unnoticed.
+- A participant that does not respond within N consecutive beats
+  (default N=2 — pick a sensible value for your cadence) is logged
+  as idle in the progress file. The orchestrator then re-drives that
+  participant with **executable input**, not another wait message
+  (see §2 "dispatch verification" — `re-drive the teammate with
+  executable input instead of waiting`).
+- The watchdog needs the bot roster (`user_id` per participant) to
+  address each one. Take it from the orchestrator's SessionStart
+  context, from the meeting manifest's active-participants list, or
+  from the operator-maintained roster — never invent IDs.
+- **Why** (2026-05-21 operator regression): a sub-agent went silent
+  after an "ack" while its actual work hung; the watchdog reported
+  "still monitoring" each beat without ever pinging the silent bot.
+  The meeting stayed open for ~15 min before the orchestrator
+  noticed. Active push closes that loop.
+
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.
