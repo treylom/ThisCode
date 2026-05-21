@@ -22,21 +22,27 @@ Trigger: any moment you respond/report/notify to an external channel
   (= effectively unsent). Self-check: if the send result reports "N parts",
   verify each part carries the mention; prefer compressing to one part. Ask
   other bots to do the same when their reports are truncated.
-- **Multi-bot meeting mention discipline (start AND end of message)**: in a
-  meeting thread or shared channel with multiple active bots, every outbound
-  message **must include each active bot's `<@user_id>` mention at both the
-  start and the end** of the message body. Start-only or end-only is not
-  enough — both ends carry the full active-bot list. Why: the start mention
-  drives reliable inbound routing for bots that match on opening tokens, and
-  the end mention guarantees the next-firing bot reads this message when it
-  scans its inbound batch (long replies can otherwise be skipped at the tail).
-  The active-bot roster comes from your SessionStart context, your meeting
-  manifest's `active_participants` list, or your operator-maintained roster
-  — never invented. Human users are **exempt** (mentioning them renders the
-  `<@id>` as a raw string and self-pings — use `reply_to` plain reply for
-  human users instead). Self-check before sending: the first line AND the
-  last line both contain every active-bot mention; if either is missing,
-  abort the send and rewrite.
+- **Conversation-target mention at start AND end of message**: in a meeting
+  thread or shared channel, every outbound message must include **only the
+  message's direct conversation target(s) — i.e., the recipient bot(s) you
+  are actually addressing** — at both the start and the end of the message
+  body, each with their `<@user_id>` mention. Do **not** blanket-mention
+  every active bot in the channel; mention the actual addressees only.
+  Examples: (a) a 1:1 dispatch tags only that single bot; (b) a broadcast
+  status report tags every bot it broadcasts to; (c) a plain inbound notify
+  or sideline awareness of another 1:1 exchange = no mention. Start-only or
+  end-only is not enough; both ends carry the same conversation-target list.
+  Why: the start mention drives reliable inbound routing for bots that match
+  on opening tokens; the end mention guarantees the next-firing addressee
+  reads this message in its inbound batch (long replies can otherwise be
+  silently skipped at the tail). The recipient roster comes from your
+  SessionStart context, your meeting manifest's `active_participants` list,
+  or your operator-maintained roster — never invented. Human users are
+  **exempt** (mentioning them renders the `<@id>` as a raw string and
+  self-pings — use `reply_to` plain reply for human users instead).
+  Self-check before sending: the first line AND the last line both contain
+  the message's conversation target(s); if either is missing, abort the
+  send and rewrite.
 
 ## 3. Meeting / topic threads
 - ≥2 bots · ≥10 min · has an agenda (2-of-3) → spin a dedicated thread; the
