@@ -22,6 +22,21 @@ Trigger: any moment you respond/report/notify to an external channel
   (= effectively unsent). Self-check: if the send result reports "N parts",
   verify each part carries the mention; prefer compressing to one part. Ask
   other bots to do the same when their reports are truncated.
+- **Multi-bot meeting mention discipline (start AND end of message)**: in a
+  meeting thread or shared channel with multiple active bots, every outbound
+  message **must include each active bot's `<@user_id>` mention at both the
+  start and the end** of the message body. Start-only or end-only is not
+  enough — both ends carry the full active-bot list. Why: the start mention
+  drives reliable inbound routing for bots that match on opening tokens, and
+  the end mention guarantees the next-firing bot reads this message when it
+  scans its inbound batch (long replies can otherwise be skipped at the tail).
+  The active-bot roster comes from your SessionStart context, your meeting
+  manifest's `active_participants` list, or your operator-maintained roster
+  — never invented. Human users are **exempt** (mentioning them renders the
+  `<@id>` as a raw string and self-pings — use `reply_to` plain reply for
+  human users instead). Self-check before sending: the first line AND the
+  last line both contain every active-bot mention; if either is missing,
+  abort the send and rewrite.
 
 ## 3. Meeting / topic threads
 - ≥2 bots · ≥10 min · has an agenda (2-of-3) → spin a dedicated thread; the
