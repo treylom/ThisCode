@@ -22,6 +22,10 @@ $ARGUMENTS
 - `02-progress.md` — timeline (KST)
 - `03-outcome.md` — 회의 마감 후 결론 + 후속 action
 
+Stop hook active marker:
+- `ACTIVE.md` — 현재 회의가 열려 있음을 표시하는 marker. `hooks/meeting-stop-reread.sh` 가 기본으로 읽는 SoT.
+- 다른 파일명을 쓰는 설치자는 `MEETING_ACTIVE_FILE=<absolute-path>` 로 override.
+
 봇 N 분기:
 - 0 봇 (사용자만) → 공유 memory 직접 등재, 폴더 X
 - 1 봇 → outcome-only.md
@@ -49,7 +53,7 @@ MEETING_DIR=<vault-or-project>/.claude-meetings/${TODAY}-${TOPIC}
 mkdir -p ${MEETING_DIR}
 ```
 
-### Step 3. 4 파일 skeleton 생성
+### Step 3. 4 파일 skeleton + ACTIVE marker 생성
 
 `00-context.md`:
 ```yaml
@@ -78,6 +82,23 @@ trigger: <입력>
 ```
 
 `01-spec.md` / `02-progress.md` / `03-outcome.md` 도 skeleton 생성 (frontmatter + 빈 헤더).
+
+`ACTIVE.md`:
+```markdown
+# active meeting
+
+thread_id: <thread-id-or-pending>
+meeting_dir: ${MEETING_DIR}
+progress_file: ${MEETING_DIR}/02-progress.md
+
+Before stopping during this meeting, re-read `02-progress.md`, append a KST
+progress row for meaningful start/done/blocked transitions, then report through
+the meeting thread.
+```
+
+`ACTIVE.md` 는 회의 마감 시 삭제하거나 `03-outcome.md` 작성 뒤 `status: closed` 로 바꾼다.
+Stop hook 이 다른 marker 를 읽게 하려면 `MEETING_ACTIVE_FILE=/absolute/path/to/ACTIVE.md`
+환경변수를 사용한다.
 
 ### Step 4. Discord 스레드 신설 안내 (선택)
 
@@ -110,6 +131,7 @@ POST /channels/<parent-channel-id>/threads
 ## 검증
 
 - [ ] 4 파일 모두 존재 (`00-context.md` 외 3개)
+- [ ] Stop hook marker 존재 (`ACTIVE.md` 또는 `MEETING_ACTIVE_FILE` override)
 - [ ] audience 봇 list 정확 mention
 - [ ] Discord 스레드 신설 시 thread_id 가 00-context 에 기록
 - [ ] 회의 마감 시 `03-outcome.md` 가 후속 action + 시간 기반 caller (스케쥴 봇) 에 캘린더 등재

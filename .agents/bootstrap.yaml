@@ -10,6 +10,7 @@ provides_commands:
   - /thiscode:setup
 provides_hooks:
   - on_session_start
+  - on_stop
 tier: external
 model: opus[1m]
 allowedTools:

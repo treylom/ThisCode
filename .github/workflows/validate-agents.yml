@@ -9,7 +9,10 @@ on:
       - 'scripts/check-agents-index.mjs'
       - 'scripts/generate-agents-index.mjs'
       - 'hermes-plugin/plugin.yaml'
+      - 'hooks/meeting-stop-reread.sh'
+      - 'commands/open-meeting.md'
       - 'tests/agents/**'
+      - 'tests/init/meeting-protocol.test.mjs'
       # 2026-05-21 added — workflow / npm deps 자체 변경도 CI 재실행 trigger
       - '.github/workflows/validate-agents.yml'
       - 'package.json'
@@ -51,6 +54,9 @@ jobs:
 
       - name: Plugin sync (hermes-plugin/plugin.yaml ↔ .agents/*.yaml)
         run: bash tests/agents/test-plugin-sync.sh
+
+      - name: Meeting Stop hook fixture
+        run: node --test tests/init/meeting-protocol.test.mjs
 
       - name: All-yamls test
         run: bash tests/agents/test-all-yamls.sh

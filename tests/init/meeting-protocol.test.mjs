@@ -28,6 +28,13 @@ test('install-hooks command wires the meeting Stop hook', () => {
   assert.match(install, /meeting-stop-reread\.sh/);
 });
 
+test('open-meeting command creates the active-meeting marker used by the Stop hook', () => {
+  const openMeeting = normalize(readFileSync('commands/open-meeting.md', 'utf8'));
+  assert.match(openMeeting, /ACTIVE\.md/);
+  assert.match(openMeeting, /MEETING_ACTIVE_FILE/);
+  assert.match(openMeeting, /02-progress\.md/);
+});
+
 test('SessionStart hook injects active meeting and rules index when present', () => {
   const home = mkdtempSync(join(tmpdir(), 'mp-home-'));
   const cwd = mkdtempSync(join(tmpdir(), 'mp-cwd-'));

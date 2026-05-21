@@ -16,6 +16,7 @@ provides_tools:
   - claude_discode_route_model
 provides_hooks:
   - on_session_start
+  - on_stop
 provides_commands:
   - /thiscode:km
   - /thiscode:km-bootstrap
