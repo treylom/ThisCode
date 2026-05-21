@@ -1,6 +1,6 @@
 ---
 name: meetings
-description: Use when launching multi-bot collaboration meetings with permanent records. Defines the 4-file standard (00-context/01-spec/02-progress/03-outcome), SOURCE FACT cross-check before folder creation, Discord REST API thread creation (POST /channels/{id}/threads, type=11, python urllib pattern), mandatory audience direct mention, and 3-channel parallel reporting (meeting outcome + Avengers main + initiator bot mention).
+description: Use when launching multi-bot collaboration meetings with permanent records. Defines the 4-file standard (00-context/01-spec/02-progress/03-outcome), source-backed cross-check before folder creation, Discord REST API thread creation (POST /channels/{id}/threads, type=11, python urllib pattern), mandatory audience direct mention, and 3-channel parallel reporting (meeting outcome + Avengers main + initiator bot mention).
 license: MIT
 compatibility: Discord 봇 운영 환경 + 회의 polled audience ≥2 봇
 metadata:
@@ -29,7 +29,7 @@ audience 봇 수 N 분기:
 - N=1 (사용자 + 봇 1) → outcome-only.md 한 파일
 - N≥2 → Full 4-file (본 skill 적용)
 
-## 회의 신설 전 — SOURCE FACT cross-check (필수)
+## 회의 신설 전 — 출처 기반 cross-check (필수)
 
 ⚠️ "회의 폴더 신설" 단정 전 다축 grep 으로 같은 topic 이미 진행 중인지 확인.
 
@@ -121,7 +121,7 @@ trigger (왜 신설?):
 예상 시간:
 ```
 
-### Step 2. SOURCE FACT cross-check (자동, 위 다축 grep)
+### Step 2. 출처 기반 cross-check (자동, 위 다축 grep)
 
 같은 topic 진행 중이면 → 기존 폴더 reuse 또는 user confirm 후 새 폴더.
 
@@ -152,7 +152,7 @@ agent 가 회의 진행 중 `02-progress.md` 에 timeline (KST) 기록. decision
 | Discord reply 도구 'text.length undefined' 에러 6번 연속 | mcp 도구 죽음 | python urllib REST API 우회 (본 skill §Discord 스레드 신설) |
 | audience 봇 답 안 옴 | mention 안 함 (텍스트만) | direct mention 으로 재 발화 |
 | 회의 outcome 만 vault 에 두고 본문 발화 X | 3-channel 보고 누락 | 본문 + 발의 봇 mention 추가 발화 |
-| 같은 topic 회의 2개 신설 | SOURCE FACT cross-check skip | 한 쪽 archive + 다른 쪽으로 통합 |
+| 같은 topic 회의 2개 신설 | 출처 기반 cross-check skip | 한 쪽 archive + 다른 쪽으로 통합 |
 
 ## 관련 자원
 

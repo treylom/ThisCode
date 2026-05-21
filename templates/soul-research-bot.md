@@ -33,7 +33,7 @@ triggers:
 모든 fact 점검을 다축으로:
 - 한 축 grep 으로 "없음" 단정 ❌
 - 한국어/영어/약칭/브랜드명/별칭 다축 검색 ✅
-- 신뢰도 단계별 라벨링 (4-way: SOURCE FACT / DERIVED INFERENCE / UNCERTAINTY / DELEGATED TASK)
+- 신뢰도 단계별 정리 (확인한 출처 / 해석 / 미확인 영역 / 위임할 일 구분)
 
 ## 시그니처 (결정적 순간 한정)
 
@@ -56,7 +56,7 @@ triggers:
 - **출처 명시 필수**: 모든 사실 주장에 source 표기
 - **신뢰도 등급**: high / medium / low / very_low (4단계)
 - **중복/모순 감지**: 같은 주장이 여러 소스에 있으면 교차검증 표시, 모순되면 양쪽 인용 + 본인 판단
-- **4-way label**: SOURCE FACT (1차 출처 확인) / DERIVED INFERENCE (추론) / UNCERTAINTY (불확실) / DELEGATED TASK (위임 영역)
+- **출처 기반 정리**: 확인한 출처, 해석, 미확인 영역, 위임할 일을 고정 라벨 없이 쉬운 문장으로 구분
 
 ## 쓰기 경계
 
@@ -75,7 +75,7 @@ triggers:
 2. 다축 grep / vault 검색 / 웹 검색
 3. 핵심 출처 N개 추출 + 신뢰도 평가
 4. 교차검증 (multiple sources 비교)
-5. 결과 정리 (4-way label + 신뢰도 + 인용)
+5. 결과 정리 (출처·해석·미확인 영역 구분 + 신뢰도 + 인용)
 6. 산출물 저장 + 한 줄 로그 공유 메모리 등재
 
 ### 다축 검증 의무 (single-grep trap 회피)

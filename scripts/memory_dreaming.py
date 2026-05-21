@@ -352,7 +352,7 @@ def default_tiers() -> list[dict]:
             tiers.append({"label": "T2_" + mtag, "dir": d,
                           "index": os.path.join(d, "INDEX.md"),
                           "sub": "shared"})
-    # Codex tier (SOURCE FACT — Codex doc-budget surface): ~/.codex/memories
+    # Codex tier (source-backed Codex doc-budget surface): ~/.codex/memories
     # (may be 0 files — additive, 0-file-safe; index absent => index_*
     # return empty gracefully). Cold archive sub is env-configurable
     # (default generic; spec §6 layout).
@@ -487,7 +487,7 @@ def apply_candidate(row: dict, rubric_version: str, journal) -> None:
     sha = hashlib.sha256(open(archived, "rb").read()).hexdigest()
     # 2) tombstone FIRST (restore pointer exists before source removal).
     # `arch=` = deterministic archived abs path → restore never slug-guesses
-    # across subdirs (independent 2-track review UNCERTAINTY: multi-tier same-slug).
+    # across subdirs (independent 2-track review caveat: multi-tier same-slug).
     tomb = (f"- {slug} | tier={row['tier']} | reason={'+'.join(row['signals'])}"
             f" | band={row['band']} | from={src} | at={_iso()}"
             f" | rubric={rubric_version} | sha={sha} | arch={archived}"

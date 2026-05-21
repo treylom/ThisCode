@@ -9,7 +9,7 @@
 | **A** | Workflow / Tooling | cron 분류 (launchd vs CronCreate vs CCR), hook 등록, 자기 스킬 영역 |
 | **B** | Code Review | GPT-5.5 페어, CCProxy, DA 동반 스폰, `model="sonnet"` 명시 |
 | **C** | Vault Path | 정규화, 양쪽 root 동시 grep, archive exclude |
-| **D** | 회의 protocol | SOURCE FACT cross-check, audience direct mention, 3-channel 병행 |
+| **D** | 회의 protocol | 출처 기반 cross-check, audience direct mention, 3-channel 병행 |
 | **E** | Security | No-auth 우회 금지, OAuth 우선 |
 | **F** | Time / Demo | AI agent 진행 시간 기준, 1인 카톡방 익명성 우회 |
 | **G** | Output Sync | typst-report Windows vault 복사 |
@@ -93,7 +93,7 @@ git repo `020-Library/` ≠ Mac vault `Library/` (rsync 시점 prefix `020-` str
 
 자세히는 [05-meeting-thread-protocol.md] 참조.
 
-- D-1. SOURCE FACT cross-check (다축 grep) 의무
+- D-1. 출처 기반 cross-check (다축 grep) 의무
 - D-2. audience direct mention (텍스트만 ❌)
 - D-3. 3-channel 병행 보고 (회의 outcome + 어벤져스 본문 + 발의 봇 mention)
 

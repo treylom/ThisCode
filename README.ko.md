@@ -174,7 +174,7 @@ thiscode 가 packaging 한 우리 vault 운영 노하우:
 - [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **Obsidian CLI 설정** (Mac brew / WSL Windows native / Linux snap·flatpak·deb) + 3-Tier 폴백 (CLI → MCP → Write/Read/Grep) + 알려진 버그·워크어라운드
 - [06-claude-code-server.md](docs/06-claude-code-server.md) — **Claude Code 서버 기능** (`claude -p` 헤드리스 + MCP server + tmux session vs headless 분리 패턴)
 - [08-debug-노하우.md](docs/08-debug-노하우.md) — **디버깅 24+ 카테고리** (Workflow / Code Review / Vault Path / 회의 protocol / Security / Time / LLM Prompt / Schedule / Plugins / External Apps / Cross-bot SoP)
-- (예정) `05-meeting-thread-protocol.md` — 회의 신설 SOURCE FACT cross-check + Discord REST API thread + audience direct mention + 3-channel 병행 보고
+- (예정) `05-meeting-thread-protocol.md` — 회의 신설 출처 기반 cross-check + Discord REST API thread + audience direct mention + 3-channel 병행 보고
 - (예정) `07-codex-호출-layer.md` — `/tofu-at-codex` + codex-exec-bridge 패턴 + Hermes 호환 subprocess plugin
 
 ### Step 2. Claude Code 인증

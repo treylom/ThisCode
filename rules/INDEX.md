@@ -14,7 +14,7 @@
 | Trigger (when this situation) | Rule file | One-line gist |
 |---|---|---|
 | Replying/reporting to an external channel (Discord etc.) | [discord-comms.md](discord-comms.md) | Send via the channel reply tool; terminal output ≠ delivered. Bot mention/thread/completion gate |
-| Asserting a fact / "it's empty/missing/exists" / acking a sub-agent report | [source-fact.md](source-fact.md) | No source → no assertion. Label SOURCE FACT/INFERENCE/UNCERTAINTY; cross-check, don't single-grep |
+| Asserting a fact / "it's empty/missing/exists" / acking a sub-agent report | [source-fact.md](source-fact.md) | No source → no assertion. Separate checked facts from interpretation in plain prose; don't single-grep |
 | Tempted to confirm every step / about to say "done" / partial·blocked | [autonomy.md](autonomy.md) | Self-judge & proceed; over-confirm ❌. Proactively report completion/partial/blocked without being pinged |
 | Starting a build/design / debug / verify task | [skill-process.md](skill-process.md) | Invoke the relevant skill BEFORE responding. Root cause before fix. Design before implement (unless user said "proceed") |
 | Porting a tool/skill / deploying / pushing / adding an MCP | [porting-infra.md](porting-infra.md) | Check upstream before hand-rolling. Secret-scan before any push. MCP health-check |

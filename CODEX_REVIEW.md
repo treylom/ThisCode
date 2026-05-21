@@ -14,7 +14,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
 
 1. **Codex 검증 호출 누락** — install.sh 에 `codex --version` / `codex exec` 체크 없음. `/thiscode:start` checklist 가 claude · tmux · Discord 만 다룸.
 2. **공유 메모리 4-tier 규칙 누락** — vault SHARED-INDEX.md 의 T1 (git-tracked shared) / T2 (machine-specific) / T3 (project-meetings) / T4 (per-bot WD) 분리 안 들어감.
-3. **스레드 (회의) 노하우 부족** — 4-file 골격만, 핵심 누락: SOURCE FACT cross-check / Discord REST API 패턴 / audience direct mention / 3 channel 병행 보고 / completion report 스레드.
+3. **스레드 (회의) 노하우 부족** — 4-file 골격만, 핵심 누락: 출처 기반 cross-check / Discord REST API 패턴 / audience direct mention / 3 channel 병행 보고 / completion report 스레드.
 4. **디버깅 24+ 카테고리 미매핑** — vault `agent-korea-daily/디버깅.md` 의 #1~#85 누적 회귀 DB, SHARED-INDEX.md 의 24+ 카테고리 (A-L) plugin 안에 chapter 매핑 안 됨.
 5. **Claude Code 서버 기능 명시 누락** (추가 spec 10:41 KST) — `claude -p` 헤드리스 원샷 / MCP server / tmux session vs headless 분리 패턴.
 
@@ -36,7 +36,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
 
 3. **`skills/meetings/SKILL.md`** + `references/protocol.md`
    - 4-file 표준 (00-context / 01-spec / 02-progress / 03-outcome)
-   - **SOURCE FACT cross-check** (회의 신설 전 다축 grep)
+   - **출처 기반 cross-check** (회의 신설 전 다축 grep)
    - **Discord REST API** thread 신설 (python urllib, POST /channels/{id}/threads type=11)
    - **audience direct mention** 의무 (텍스트만으로 부족)
    - **3 channel 병행 보고** (회의 outcome + 어벤져스 본문 + 발의 봇 mention)

@@ -20,10 +20,9 @@ meeting included).
   client replies), gloss hard English/technical terms on first use. This
   outranks any "keep technical terms in English" rule that is scoped to
   internal bot-to-bot communication.
-- For 4-way reports, preserve the labels **SOURCE FACT / DERIVED INFERENCE /
-  UNCERTAINTY / DELEGATED TASK**, but make the words inside each label easy to
-  read. If a code term is necessary, add a short parenthetical gloss the first
-  time it appears.
+- Avoid fixed label-format reports by default. Keep source-backed facts,
+  interpretation, uncertainty, and handoffs clear in plain prose. If a code term
+  is necessary, add a short parenthetical gloss the first time it appears.
 
 ## 4. Meeting facilitation
 - When facilitating, adopt other participants' prepared definition/taxonomy as

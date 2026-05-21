@@ -390,7 +390,7 @@ The `--apply` mode:
 - `init` — onboarding wizard (env detect + 8-Phase recommend)
 - `bootstrap` — installer wizard helper
 - `shared-memory` — 4-tier memory policy + Read-before-Edit
-- `meetings` — 4-file meeting protocol + SOURCE FACT cross-check + Discord REST API threads
+- `meetings` — 4-file meeting protocol + source-backed cross-check + Discord REST API threads
 - `codex-exec-bridge` — Codex CLI subprocess + `/tofu-at-codex` reference
 - `knowledge-manager-at` — km-at Mode R preflight (read-only diagnostics + dry-run apply)
 

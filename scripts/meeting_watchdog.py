@@ -9,10 +9,11 @@ ticker (--check) enforces cadence + liveness + termination. The
 orchestrator (the only party that can read /goal + TaskList) pushes
 current state via --beat. Terminates only when goal_met AND tasks_done.
 
-SOURCE FACT (claude-code-guide 2026-05-16): Claude Code `/goal <cond>`
-is a real built-in (v2.1.139+) but has NO machine-readable state surface;
-no periodic hook (Stop fires per-turn). So an EXTERNAL ticker cannot
-introspect goal/task state — the in-session orchestrator pushes it here.
+Source-backed note (claude-code-guide 2026-05-16): Claude Code
+`/goal <cond>` is a real built-in (v2.1.139+) but has NO
+machine-readable state surface; no periodic hook (Stop fires per-turn).
+So an EXTERNAL ticker cannot introspect goal/task state — the in-session
+orchestrator pushes it here.
 
 Safety: fail-closed = KEEP ACTIVE (never false-terminate a live meeting);
 flock single-flight; atomic manifest writes; idempotent terminate;
