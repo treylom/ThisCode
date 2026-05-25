@@ -1,0 +1,1 @@
+bash "$HOOKS_DIR/kst-timestamp.sh"

@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<channel source=\"plugin:discord:discord\" chat_id=\"123\">테스트</channel>"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"y","name":"mcp__plugin_discord_discord__reply","input":{"chat_id":"123","text":"답"}}]}}

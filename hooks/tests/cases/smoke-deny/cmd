@@ -1,0 +1,1 @@
+source "$HOOKS_DIR/lib/hookkit.sh"; hk_failopen; hk_deny "smoke deny"

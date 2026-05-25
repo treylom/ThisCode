@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<channel source=\"plugin:discord:discord\" chat_id=\"DM\">작업 해줘</channel>"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"r1","name":"mcp__plugin_discord_discord__reply","input":{"chat_id":"DM","text":"작업 완료했습니다. 산출 전달."}}]}}

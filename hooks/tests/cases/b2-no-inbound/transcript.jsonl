@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":"일반 터미널 요청"}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"네"}]}}

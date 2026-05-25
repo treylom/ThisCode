@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<channel source=\"plugin:discord:discord\" chat_id=\"T\">상태?</channel>"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"r1","name":"mcp__plugin_discord_discord__reply","input":{"chat_id":"T","text":"진행 상황 정리했습니다"}}]}}

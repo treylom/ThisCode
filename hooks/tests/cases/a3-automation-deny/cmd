@@ -1,0 +1,1 @@
+bash "$HOOKS_DIR/automation-no-interactive.sh"

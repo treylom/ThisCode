@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"<channel source=\"plugin:discord:discord\" chat_id=\"T\" ts=\"2026-05-25T14:00:00Z\">언제?</channel>"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"r1","name":"mcp__plugin_discord_discord__reply","input":{"chat_id":"T","text":"23:44 KST 에 끝납니다"}}]}}
