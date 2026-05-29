@@ -129,6 +129,18 @@ Each skill (bootstrap, knowledge-manager, search, meetings, etc.) includes a **"
 
 Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The 4-Tier vault search works standalone — Discord pairing is for advanced multi-bot orchestration.
 
+### What you can do from Discord
+
+Once a bot is paired, Discord becomes a remote control for your vault bots — no terminal needed:
+
+- **💬 Hand off a task by mention** — `@bot summarize today's notes`; the bot works in its own session and replies in the channel.
+- **🧵 Hold a meeting in a thread** — spin a thread for multi-bot collaboration; each bot reads/writes a shared meeting doc.
+- **⏰ Wake an idle bot** — a channel message re-engages a bot whose session went quiet (signal via the channel, never by injecting into its tmux — see `rules/discord-comms.md` §5).
+- **📎 Send files & images** — attach a screenshot or doc; the bot downloads it and works on it.
+- **🧹 Tidy a session** — a human operator can send harness session-meta commands (`/compact`, `/clear`) straight into a bot's tmux session to manage its context (`rules/discord-comms.md` §5 R5).
+
+> Everyday moves. For the fuller channel-mode session model (Admin / Main / Session routing), see [`docs/connector-session-ux.md`](docs/connector-session-ux.md).
+
 ---
 
 ## 📊 4-Tier Search Benchmark

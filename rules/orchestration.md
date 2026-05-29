@@ -20,9 +20,16 @@ asserting another bot's identity or health, or coordinating multiple agents.
   assumption, then waiting, is dereliction.
 
 ## 2. Drive, don't idle (collaboration-boundary distinction)
-- Teammate is the gate but idle/blocked → orchestrator actively re-engages:
-  supply an executable input (e.g. collect the *data* yourself so the
-  teammate's judgement step is unblocked), run non-gating tracks in parallel.
+- Teammate is the gate but idle/blocked → orchestrator actively re-engages
+  **via the channel**: re-send the request (mention/reply), and run non-gating
+  tracks in parallel (e.g. collect the *data* yourself so the teammate's
+  judgement step is unblocked).
+  - ⚠️ **Never inject input into a peer bot's `tmux` session.** "Drive" does
+    **not** mean typing into another bot's input buffer — that strips
+    provenance = internal prompt injection. tmux is read-only; signal via the
+    channel. Channel re-send still silent = bridge problem (no workaround) →
+    escalate. See discord-comms §5. (A human operator's session-meta send —
+    `/compact`·`/clear` — is the normal exception, discord-comms §5 R5.)
 - Distinguish: **blocked on a user decision** → summarize, report, stop (no
   polling). **Teammate idle / oversight** → not a stop; drive and verify. Do
   not conflate the two into passive waiting.

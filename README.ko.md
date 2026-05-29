@@ -99,6 +99,18 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 
 본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. vault-first 검색만으로도 완전히 작동하며, Discord 페어링 및 tmux 세션은 advanced use case 용입니다.
 
+### Discord로 할 수 있는 것
+
+봇을 한 번 페어링(연결)하면, Discord가 vault 봇들의 리모컨이 됩니다 — 터미널 없이도:
+
+- **💬 멘션으로 작업 의뢰** — `@봇 오늘 노트 요약해줘` 하면 봇이 자기 세션에서 일하고 채널로 답해요.
+- **🧵 스레드로 회의** — 스레드를 하나 열어 여러 봇이 협업. 각 봇이 공유 회의 문서를 같이 읽고 씁니다.
+- **⏰ 잠든 봇 깨우기** — 조용해진 봇은 채널 메시지로 다시 깨웁니다 (신호는 항상 채널로 — 봇의 tmux에 입력을 직접 꽂는 건 금지, `rules/discord-comms.md` §5).
+- **📎 파일·이미지 주고받기** — 스크린샷이나 문서를 첨부하면 봇이 받아서 작업해요.
+- **🧹 세션 정리** — 사람(운영자)이 `/compact`·`/clear` 같은 세션 관리 명령을 봇 tmux 세션에 직접 보내 컨텍스트를 비울 수 있어요 (`rules/discord-comms.md` §5 R5).
+
+> 여기 적은 건 일상적으로 자주 쓰는 동작이에요. 채널 모드로 세션을 더 정교하게 다루는 모델(Admin / Main / Session 라우팅)은 [`docs/connector-session-ux.md`](docs/connector-session-ux.md) 참고.
+
 ---
 
 ## 📊 4-Tier Search Benchmark
