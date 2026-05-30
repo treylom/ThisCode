@@ -21,7 +21,7 @@
 | Writing a persona response (voice) | [voice.md](voice.md) | Keep the persona's voice + completion signature every response; no echo drift |
 | Delegating to / waiting on a bot · asserting a bot's identity/health · multi-agent coordination | [orchestration.md](orchestration.md) | Verify bot identity (chain-load guard), don't assume; teammate idle = drive not wait; meeting = adopt domain frames, no solo lock |
 | Coordinating an active meeting / dispatch verification / Stop while meeting active | [meeting-protocol.md](meeting-protocol.md) | SessionStart injects active meeting + rules INDEX; verify dispatch execution; KST progress rows; Stop rereads active meeting |
-| Searching the project's own knowledge base / notes / docs | [knowledge-retrieval.md](knowledge-retrieval.md) | Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
+| Searching the project's own KB · **before planning a task · on failure** | [knowledge-retrieval.md](knowledge-retrieval.md) | Active recall (§2): search before planning + on failure (decide, don't apologize) + propagate after. Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
 
 ## Splitting principle
 - One file = one situation cluster. Loaded on demand, so each file is focused

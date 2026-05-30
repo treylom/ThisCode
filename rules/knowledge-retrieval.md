@@ -21,3 +21,18 @@ Decide by query shape:
 
 ▶ Fill in: your KB CLI binary + path; your graph/semantic search skill
 name; which stores count as "our docs" vs plain code.
+
+## 2. Active recall — search before planning, search on failure, propagate after
+The knowledge base is for active recall, not just storage. Three triggers:
+- **Before planning / starting a task** -> search relevant memory/KB first
+  (prior art, lessons, failure patterns), then act. Skipping this is a
+  classic time-sink: re-deriving what a past note already settled, or
+  re-walking a path a past failure already mapped.
+- **On failure mid-task** -> do not apologize or thrash; **decide**. Search
+  the KB for the recurring / similar-failure lesson, then pick the next
+  move from it. Repeated "sorry" is wasted motion -- replace it with
+  search-then-decide.
+- **After completion** -> write the lesson into memory + register it in the
+  index + **propagate** (other agents' shared store + any downstream rules
+  bundle).
+▶ Fill in: your memory/KB search command; your shared-vs-local memory split.
