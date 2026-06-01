@@ -1,0 +1,1 @@
+bash "$HOME/obsidian-ai-vault/.claude/hooks/memory-s5-stop-guard.sh"

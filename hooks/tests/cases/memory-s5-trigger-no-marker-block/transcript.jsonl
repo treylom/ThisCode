@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"지난번처럼 고쳐줘"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"수정했습니다."}]}}

@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":[{"type":"text","text":"다시 빌드하고 테스트해줘"}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"빌드 진행합니다."}]}}
