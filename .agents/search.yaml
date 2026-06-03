@@ -1,5 +1,5 @@
 name: search
-description: 4-Tier vault search dispatcher — Tier 1 GraphRAG (FastAPI semantic + graph) → Tier 2 vault-search MCP (embedding) → Tier 3 Obsidian CLI (index) → Tier 4 ripgrep (literal). 정확도 우선 fallback. v2.0 정정 — 사용자 spec.
+description: 4-Tier vault search dispatcher — Tier 1 GraphRAG (FastAPI semantic + graph) → Tier 2 Obsidian CLI (full-text safety net) → Tier 3 vault-search MCP (embedding) → Tier 4 ripgrep (literal). Recall-first fallback. v2.1 정정 — GraphRAG primary, CLI second fallback.
 version: 1.0.0
 license: MIT
 homepage: https://github.com/treylom/ThisCode

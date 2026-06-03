@@ -64,9 +64,9 @@ grep -lE '^type:.*-?MOC|^\s*-\s*MOC\b|MOC/' "{source_note}" 2>/dev/null || \
 </moc_priority>
 
 <search_engine>
-## 공통 검색 엔진 — GraphRAG (QUICK/DEEP 동일)
+## 공통 검색 엔진 — GraphRAG → Obsidian CLI fallback (QUICK/DEEP 동일)
 
-**모든 검색은 GraphRAG를 사용합니다.** Obsidian 텍스트 검색이 아닙니다.
+내용 recall 기본값은 GraphRAG입니다. GraphRAG가 불가하거나 실패하면 Obsidian CLI full-text를 2순위 안전망으로 사용합니다. CLI는 파일명·frontmatter·본문·wikilink를 찾지만 relevance ranking이 약하므로 흔한 질의는 `limit=1000`까지 확장합니다.
 
 ### 1차 — FastAPI 서버 (port 8400):
 ```bash
@@ -74,7 +74,13 @@ QUERY_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sy
 curl -s "http://127.0.0.1:8400/api/search?q=${QUERY_ENCODED}&top_k=${TOP_K}&mode=hybrid&dense_weight=0.3&sparse_weight=0.4&decomposed_weight=0.15&entity_weight=0.15" --connect-timeout 3
 ```
 
-### 2차 — CLI fallback (서버 미실행 시):
+### 2차 — Obsidian CLI fallback (GraphRAG 불가·실패 시):
+```bash
+OBSIDIAN_CLI="/Applications/Obsidian.app/Contents/MacOS/obsidian-cli"
+"$OBSIDIAN_CLI" search query="${QUERY}" format=json limit=1000
+```
+
+### 3차 — GraphRAG CLI fallback (FastAPI만 불가 시):
 ```bash
 # repo root 및 python 실행기 자동 감지 (Mac venv 우선, 없으면 시스템 python3)
 for REPO_ROOT in <vault> <vault>; do
@@ -85,8 +91,8 @@ PY="python3"
 cd "$REPO_ROOT" && PYTHONPATH=".team-os/graphrag/scripts" "$PY" .team-os/graphrag/scripts/graph_search.py hybrid "${QUERY}" --rerank --top-k ${TOP_K} --json 2>/dev/null
 ```
 
-### 3차 — 비상 폴백 (GraphRAG 전체 불가 시):
-Obsidian MCP → Grep 순서로 폴백. 이 경우 답변에 "GraphRAG 서버 미실행으로 텍스트 검색 결과입니다" 명시.
+### 4차 — 비상 폴백:
+vault-search MCP → Grep 순서로 폴백. 이 경우 답변에 "GraphRAG 서버 미실행으로 텍스트 검색 결과입니다" 명시.
 
 ### 모드별 파라미터
 - **QUICK**: top_k=5, 노트 읽기 1-2개
