@@ -76,5 +76,14 @@ bot's progress, or stopping while an active meeting is open.
   The meeting stayed open for ~15 min before the orchestrator
   noticed. Active push closes that loop.
 
+## 7. Meeting roster includes the watchdog/schedule agent
+- When a team has a dedicated watchdog / schedule-domain agent (the one
+  that runs the liveness ticker and owns cadence), include it in **every**
+  meeting roster — both the meeting `00-context` roster and the watchdog
+  `--participants` list. A meeting the watchdog agent is not a member of
+  cannot get consistent liveness, termination, and schedule visibility.
+- **One-off announcements / rule propagation do NOT open a meeting** — use
+  the team channel. Reserve meetings for >=2-agent, >=30-min real work.
+
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.
