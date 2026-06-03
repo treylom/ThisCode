@@ -17,6 +17,9 @@ adding an MCP server; writing API code.
   (a token-optimizer-filtered grep can blank/mangle matches — see
   source-fact.md §2). A public-repo change is the user's authority domain
   (autonomy.md §1) — confirm unless under a standing go.
+- Rule / operating-principle changes in the source repo sync to this
+  deploy bundle's rules/ **at session-end** — else the bundle drifts
+  from the source rules (a standing operator directive).
 
 ## 3. MCP servers
 - Before adding: list current MCPs. After adding: health-check. Remove on

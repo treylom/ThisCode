@@ -27,7 +27,10 @@ Decide by query shape:
   **content/topic recall** ("find the doc *about* X") to **ranked /
   semantic search**; reserve the exact-match CLI for **known-name
   lookup, tags, backlinks, and structure queries**, where exact
-  matching is its strength.
+  matching is its strength. Even so, keep the exact-match CLI as a
+  **mandatory 2nd-tier fallback** for content recall when the ranked
+  engine is unavailable (full-text, unranked — degraded but
+  functional; do not drop it from the recall path).
 
 ▶ Fill in: your KB CLI binary + path; your graph/semantic search skill
 name; which stores count as "our docs" vs plain code.
