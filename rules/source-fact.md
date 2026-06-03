@@ -20,6 +20,13 @@ Trigger: about to assert a fact / proper noun / system state; about to say
   false-report a non-empty dir as empty. For debugging / forensic / secret
   scans, use a raw (unfiltered) path or a dedicated tool, not the filtered one.
   This applies to sub-agent greps too — re-verify their "CLEAN" yourself.
+- Do not conclude a tool/feature "can't do X" from a limited probe (small
+  limit, single sample, default params). A missing result under a tight
+  limit can be ranking-burial, not absence. Before asserting absence:
+  **expand the boundary** (max out limit/range/depth — does it appear?)
+  and **isolate the feature** (probe with input that exercises only that
+  capability). Limited-observation absence claims are the single-grep
+  trap in another form.
 
 ## 3. Sub-agent report verification (hard rule)
 - Before acking a subordinate report: self-identify, verify the file-system

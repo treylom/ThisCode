@@ -18,6 +18,16 @@ Decide by query shape:
 - Tool *failure* → fall back: structured CLI → its MCP/server → direct
   read/grep. Failure-fallback is a separate concept from first-choice
   selection; do not collapse the two.
+- **⚠️ A substring/exact-match KB CLI with no relevance ranking is NOT
+  the default for *content recall*.** Such a CLI may match across
+  filename + frontmatter + body + links, yet return hits in path/name
+  order with no relevance ranking — so for a common term the relevant
+  doc is buried hundreds deep and looks like a MISS at any practical
+  limit. That is a structural limit of the tool, not a tunable. Route
+  **content/topic recall** ("find the doc *about* X") to **ranked /
+  semantic search**; reserve the exact-match CLI for **known-name
+  lookup, tags, backlinks, and structure queries**, where exact
+  matching is its strength.
 
 ▶ Fill in: your KB CLI binary + path; your graph/semantic search skill
 name; which stores count as "our docs" vs plain code.
