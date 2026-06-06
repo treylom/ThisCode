@@ -44,6 +44,13 @@ STATE_DIR = os.environ.get(
     "MEETING_WATCHDOG_STATE_DIR", os.path.join(HOME, ".claude-state"))
 DEFAULT_INTERVAL = 300  # 5 min (operator spec)
 STALE_FACTOR = 2        # beats older than INTERVAL*this => liveness warn
+# blocked_on done-waiting carve-out 은 'gate worker 가 progressing 중' 을 암묵
+# 가정한다. gate worker 의 장기 turn 이 hang 하면 carve-out 이 그 stall 을 false
+# '정상 대기' 로 영구 은닉한다. 해법: blocked_on 에 'since=<ts>' anchor 를 박고
+# now-since 가 상한 초과면 progressing 가정을 깨고 carve-out 무시 → stall 승격
+# (사람 에스컬레이션, 봇 mention ❌). meeting-protocol.md §3.
+BLOCKED_STALL_UPPER_SEC = int(
+    os.environ.get("MEETING_WATCHDOG_BLOCKED_STALL_UPPER_SEC", "1200"))  # 20m
 DISCORD_API = "https://discord.com/api/v10"
 KST = timezone(timedelta(hours=9))
 # Optional signature appended to watchdog posts. Empty in a public repo;
@@ -71,6 +78,57 @@ def _age_sec(iso: str | None) -> float | None:
         return (datetime.now(timezone.utc) - d).total_seconds()
     except ValueError:
         return None
+
+
+def _blocked_since_age(blk: str) -> float | None:
+    """blocked_on 문자열에서 'since=<ts>' anchor 를 추출해 경과초 반환.
+    지원 ts: ISO 'YYYY-MM-DDTHH:MM[:SS][Z]'(UTC), 또는 'HH:MM'(오늘 KST).
+    since= 없음/파싱불가 → None(= hang 판정 불가 → 호출측은 기존 suppress 유지,
+    하위호환). meeting-protocol.md §3 blocked_on since= anchor."""
+    if not blk:
+        return None
+    m = re.search(r"since\s*=\s*([0-9T:\-]+Z?)", blk)
+    if not m:
+        return None
+    raw = m.group(1).strip()
+    now = datetime.now(timezone.utc)
+    for fmt in ("%Y-%m-%dT%H:%M:%SZ", "%Y-%m-%dT%H:%M:%S",
+                "%Y-%m-%dT%H:%MZ", "%Y-%m-%dT%H:%M"):
+        try:
+            d = datetime.strptime(raw, fmt).replace(tzinfo=timezone.utc)
+            return (now - d).total_seconds()
+        except ValueError:
+            pass
+    m2 = re.fullmatch(r"(\d{1,2}):(\d{2})", raw)
+    if m2:
+        try:
+            now_kst = datetime.now(KST)
+            d = now_kst.replace(hour=int(m2.group(1)), minute=int(m2.group(2)),
+                                second=0, microsecond=0)
+            if d > now_kst:           # 미래 시각 = 어제(자정 넘김)
+                d = d - timedelta(days=1)
+            return (now_kst - d).total_seconds()
+        except ValueError:
+            return None
+    return None
+
+
+def _ntfy_push(text: str) -> None:
+    """사람 에스컬레이션 push. hung turn 은 Discord mention 을 못 받으니 봇 mention 이
+    아닌 ntfy 푸시로 사람에게 도달(no raw <@id> — discord-comms 사람 태그 금지 정합).
+    best-effort·fail-open. env 로 topic override/비활성(off/none/-)."""
+    topic = os.environ.get("MEETING_WATCHDOG_NTFY_TOPIC", "").strip()
+    if not topic or topic.lower() in ("off", "none", "-"):
+        return
+    try:
+        req = urllib.request.Request(
+            f"https://ntfy.sh/{topic}",
+            data=text.encode("utf-8"),
+            headers={"Title": "meeting hang 의심 — 세션 재시작 검토",
+                     "Priority": "urgent", "Tags": "warning"})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:
+        pass  # fail-open: push 실패가 watchdog 를 막지 않는다
 
 
 def _manifest_path(thread_id: str) -> str:
@@ -389,8 +447,31 @@ def cmd_check(a) -> int:
                    f"tasks {man.get('tasks_done')}/{man.get('tasks_total')}, "
                    f"goal_met={man.get('goal_met')}.")
             if stale:
-                msg += (f" ⚠ {int(beat_age)}s 활동 무신호 "
-                        f"(>{interval*STALE_FACTOR}s) — 진행 정체 의심.")
+                # blocked_on done-waiting carve-out + since= hang-detect:
+                # blocked_on set(게이트 대기) → 참여봇 침묵 = done-waiting 정상 →
+                # 정체 경고 suppress. 단 since= anchor 가 상한 초과면 progressing
+                # 가정을 깨고 hang 승격(사람 ntfy 에스컬레이션, 봇 mention ❌).
+                blk = (man.get("blocked_on") or "").strip()
+                blocked = bool(blk) and blk.lower() not in ("null", "none", "-")
+                since_age = _blocked_since_age(blk) if blocked else None
+                hung = (since_age is not None
+                        and since_age > BLOCKED_STALL_UPPER_SEC)
+                if blocked and not hung:
+                    msg += (f" ⚠ {int(beat_age)}s 무신호이나 blocked_on="
+                            f"{blk.split('(')[0].strip()} = 참여봇 done-waiting "
+                            f"정상 — 정체 경고 보류.")
+                elif blocked and hung:
+                    msg += (f" 🚨 blocked_on={blk.split('(')[0].strip()} 이 "
+                            f"{int(since_age//60)}분째 지속"
+                            f"(>{BLOCKED_STALL_UPPER_SEC//60}분 상한) — "
+                            f"done-waiting 아닌 hang 의심. 봇 재구동이 아닌 "
+                            f"사람(세션 재시작) 에스컬레이션 권장.")
+                    _ntfy_push(
+                        f"meeting {a.thread_id} hang 의심: blocked_on="
+                        f"{blk.split('(')[0].strip()} {int(since_age//60)}분 지속")
+                else:
+                    msg += (f" ⚠ {int(beat_age)}s 활동 무신호 "
+                            f"(>{interval*STALE_FACTOR}s) — 진행 정체 의심.")
             msg += _SIG
             if _discord_post(a.thread_id, msg):
                 man["last_post_iso"] = _iso()

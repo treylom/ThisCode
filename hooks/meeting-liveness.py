@@ -72,6 +72,47 @@ def meeting_active(thread_id):
     return False
 
 
+def meeting_blocked(thread_id):
+    """watchdog manifest 에 blocked_on 이 set 인가. set = 사용자/구현 게이트 대기
+    (pause) → 참여봇 침묵 = done-and-waiting 정상(stuck 아님) → active-push skip.
+    수동 active-push 도 blocked_on SoT 존중 (자동 stall-mention 과 동일 SoT →
+    양-데몬 정합). meeting-protocol.md §3 carve-out."""
+    path = os.path.join(_state_dir(), f"meeting-watchdog-{thread_id}.yaml")
+    try:
+        for ln in open(path, encoding="utf-8"):
+            ln = ln.strip()
+            if ln.startswith("blocked_on:"):
+                v = ln.split(":", 1)[1].strip().lower()
+                return bool(v) and v not in ("null", "none", "-")
+    except OSError:
+        return False
+    return False
+
+
+def done_participants(thread_id):
+    """watchdog manifest 의 optional `done_participants:` 필드 → 완결 봇 이름 set.
+    개별 봇이 트랙을 완결하고 done-waiting 인데 다른 봇은 아직 active producer라
+    meeting-level blocked_on(전체 suppress)을 못 거는 경우, 그 봇만 per-bot probe 에서
+    제외한다. meeting_blocked(전체)와 직교 — active producer 는 계속 push, 완결 봇만 skip.
+    gate-release 이벤트 전달은 안 막고 liveness nag 만 끈다. 필드 부재/빈값 → 빈 set
+    (하위호환). meeting-protocol.md §3 done-waiting carve-out 의 per-bot 판."""
+    path = os.path.join(_state_dir(), f"meeting-watchdog-{thread_id}.yaml")
+    try:
+        for ln in open(path, encoding="utf-8"):
+            ln = ln.strip()
+            if ln.startswith("done_participants:"):
+                v = ln.split(":", 1)[1].strip()
+                if " #" in v:                      # 인라인 주석 제거
+                    v = v.split(" #", 1)[0].strip()
+                if not v or v.lower() in ("null", "none", "-", "[]"):
+                    return set()
+                return {p.split(":")[0].strip().lower()
+                        for p in v.strip("[]").split(",") if p.strip()}
+    except OSError:
+        return set()
+    return set()
+
+
 def _rate_path(thread_id, bot):
     d = os.path.join(_state_dir(), "liveness-rate")
     try:
@@ -138,6 +179,9 @@ def main(argv=None):
     if a.active_only and not meeting_active(a.thread_id):
         print(f"[{'SEND' if a.send else 'DRY-RUN'}] 회의 비활성(status != active) → skip (thread {a.thread_id})")
         return 0
+    if meeting_blocked(a.thread_id):
+        print(f"[{'SEND' if a.send else 'DRY-RUN'}] 회의 blocked_on set(done-waiting) → active-push skip (thread {a.thread_id})")
+        return 0
     parts = {}
     for pair in a.participants.split(","):
         pair = pair.strip()
@@ -145,6 +189,16 @@ def main(argv=None):
             b, u = pair.split(":", 1)
             if b.strip() and u.strip():
                 parts[b.strip()] = u.strip()
+    # per-bot done suppression: 완결 봇은 probe 대상 제외 (meeting_blocked 전체
+    # suppress 와 직교 — active producer 는 계속 push). meeting-protocol §3.
+    done = done_participants(a.thread_id)
+    if done:
+        suppressed = [b for b in parts if b.lower() in done]
+        for b in suppressed:
+            parts.pop(b, None)
+        if suppressed:
+            print(f"[{'SEND' if a.send else 'DRY-RUN'}] done_participants probe skip: "
+                  f"{','.join(suppressed)} (thread {a.thread_id})")
     silent = silent_bots(a.progress, parts, a.threshold)
     mode = "SEND" if a.send else "DRY-RUN"
     if not silent:

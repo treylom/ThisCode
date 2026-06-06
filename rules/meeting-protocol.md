@@ -75,6 +75,34 @@ bot's progress, or stopping while an active meeting is open.
   "still monitoring" each beat without ever pinging the silent bot.
   The meeting stayed open for ~15 min before the orchestrator
   noticed. Active push closes that loop.
+- **Done-waiting carve-out** — not every silence is a stall. When a
+  meeting (or a single participant) is legitimately *blocked on a gate*
+  (a user decision, an upstream deliverable, a build), silence is
+  `done-and-waiting`, not stuck, and pinging it is noise. Three knobs,
+  all driven by the manifest so the automated ticker AND any manual
+  active-push respect the same source of truth:
+  - **meeting-level** `blocked_on: <gate>` — the whole meeting is gated:
+    suppress active-push for all participants until the gate clears.
+  - **per-bot** `done_participants: <bot1>,<bot2>` — a participant
+    finished its track and is done-waiting while *others are still
+    producing*. Setting meeting-level `blocked_on` here would wrongly
+    silence the active producers, so suppress only the listed bots'
+    per-bot probe. Orthogonal to `blocked_on`; it lifts liveness nags
+    only (gate-release events still reach the bot). Absent field → no
+    change (backward-compatible). Implemented in `meeting-liveness.py`
+    (`done_participants`).
+  - **hang vs done-waiting** — the carve-out assumes the gate worker is
+    *progressing*. If its long turn hangs, the carve-out would hide the
+    stall forever. So anchor the block with a start timestamp:
+    `blocked_on: <gate> (since=<ISO|HH:MM>)`. The watchdog re-measures
+    `now - since` each tick; past an upper bound (default 20 min, env
+    `MEETING_WATCHDOG_BLOCKED_STALL_UPPER_SEC`) it breaks the
+    progressing assumption and escalates as a hang. A hung turn cannot
+    receive a Discord mention, so escalation is a **human** push (ntfy,
+    env `MEETING_WATCHDOG_NTFY_TOPIC`), never a bot mention. No `since=`
+    → hang undetectable → keep full suppress (backward-compatible).
+    Implemented in `meeting_watchdog.py` (`_blocked_since_age`) and
+    `meeting-stop-reread.sh` (blocked_on reread skip).
 
 ## 7. Meeting roster includes the watchdog/schedule agent
 - When a team has a dedicated watchdog / schedule-domain agent (the one

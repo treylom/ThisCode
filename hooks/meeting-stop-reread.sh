@@ -49,6 +49,17 @@ try:
 except Exception:
     body = ""
 
+# blocked_on done-waiting carve-out (meeting-protocol.md §3): meeting 이 게이트
+# 대기(blocked/paused)면 참여봇 침묵 = done-waiting 정상 → 매 stop 재독 강제는
+# 무익 cycling 만 유발한다. ACTIVE.md 에 값 있는 'blocked_on:' 마커가 있으면
+# reread 강제 skip(=stop 허용). 마커 부재 → 기존 동작 유지(하위호환).
+import re as _re
+_m = _re.search(r"(?mi)^\s*blocked_on\s*:\s*(.+)$", body)
+if _m:
+    _v = _m.group(1).strip().split("#", 1)[0].strip().lower()
+    if _v and _v not in ("null", "none", "-", "[]"):
+        sys.exit(0)
+
 context = (
     f"=== active meeting reread required ({active}) ===\n\n"
     f"{body}\n\n"
