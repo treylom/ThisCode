@@ -30,6 +30,8 @@
 - 가중치/RRF/reranker 튜닝은 autoresearch로 **시간·라운드 박스**(예 ≤8R/≤90분), retrieval 지표(hit@k) 기준 개선만 promote.
 - **score-gaming 거부**: 합성 composite만 오르고 hit@k가 떨어지는 후보는 거부(속도 단일 샘플 inflation 주의).
 - **LLM 답변합성/전역 Map-Reduce 활성화**는 env-gate + 비용 상한 필수: 전역검색이 전체 커뮤니티에 LLM 호출 시 **상한(cap) 없으면 비용 폭주**(커뮤니티 수만큼 호출). 잘못된 timeout/provider 입력에 graceful fallback. 활성화 전 fallback 분기 테스트.
+- **LLM provider 추상화 (단일 벤더 CLI에 못박기 금지)**: 합성 LLM 호출 경로는 **env로 provider 선택 가능하게 분기**(추상화)하고 기본은 OFF(opt-in). 특정 벤더의 print/headless CLI one-shot 모드(구독 인증 기반)는 **향후 deprecated·제한될 수 있으므로 그 경로 하나에 못박지 말 것** — 교체 가능한 plugin 구조 + 미설정/실패 시 template fallback 보존. 이러면 한 경로가 막혀도 다른 provider로 무중단 교체된다(default 동작은 opt-in OFF라 애초에 무영향).
+  - ⚠️ **구독 CLI 자동화 = 벤더 미지원일 수 있음**: 구독 인증 기반 one-shot CLI(print/exec 모드)는 벤더가 **비대화 자동화를 공식 미지원**하는 경우가 있어(예고 없이 제한 가능). 따라서 이런 CLI provider는 **opt-in proof/local provider**로만 두고, 항상-켜는 production 합성이 필요하면 **벤더-지원 API key provider를 명시적 비용·키로 별도 추가**(운영자 결정 사항). 진짜 resilience는 "어느 CLI를 쓰느냐"가 아니라 **추상화 + OFF default + template fallback** 그 자체 — 어느 provider가 막혀도 기본 검색(retrieval)은 무영향.
 
 ## 6. 정직 framing
 - "GraphRAG"를 쓴다고 MS GraphRAG 논문(arXiv:2404.16130) **동등**은 과장. LLM 관계추출·커뮤니티 LLM요약·전역 Map-Reduce가 실제 작동하는지 코드로 확인하고, 미작동이면 "GraphRAG 계열(graph-augmented RAG)"로 정직 표기.
