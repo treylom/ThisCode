@@ -82,7 +82,10 @@ def meeting_blocked(thread_id):
         for ln in open(path, encoding="utf-8"):
             ln = ln.strip()
             if ln.startswith("blocked_on:"):
-                v = ln.split(":", 1)[1].strip().lower()
+                v = ln.split(":", 1)[1].strip()
+                if " #" in v:                  # inline comment strip (flat YAML)
+                    v = v.split(" #", 1)[0].strip()
+                v = v.lower()
                 return bool(v) and v not in ("null", "none", "-")
     except OSError:
         return False

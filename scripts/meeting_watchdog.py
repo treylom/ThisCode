@@ -452,7 +452,9 @@ def cmd_check(a) -> int:
                 # 정체 경고 suppress. 단 since= anchor 가 상한 초과면 progressing
                 # 가정을 깨고 hang 승격(사람 ntfy 에스컬레이션, 봇 mention ❌).
                 blk = (man.get("blocked_on") or "").strip()
-                blocked = bool(blk) and blk.lower() not in ("null", "none", "-")
+                # inline ' #' comment strip (flat YAML — avoid blocked misjudge).
+                _blk_val = blk.split(" #", 1)[0].strip() if " #" in blk else blk
+                blocked = bool(_blk_val) and _blk_val.lower() not in ("null", "none", "-")
                 since_age = _blocked_since_age(blk) if blocked else None
                 hung = (since_age is not None
                         and since_age > BLOCKED_STALL_UPPER_SEC)
