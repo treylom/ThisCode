@@ -21,7 +21,7 @@ jobs:
       - name: Install deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y ripgrep jq python3 docker.io
+          sudo apt-get install -y ripgrep jq python3
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
@@ -44,7 +44,7 @@ jobs:
           fi
 
       - name: Open PR (if Tier 1 measured)
-        if: hashFiles('benchmark/results/tier1-*.json') != ''
+        if: hashFiles('benchmark/results/tier1-2*.json') != ''
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore(benchmark): Tier 1 GraphRAG biweekly update"
