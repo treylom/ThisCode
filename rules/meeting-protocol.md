@@ -112,6 +112,11 @@ bot's progress, or stopping while an active meeting is open.
   cannot get consistent liveness, termination, and schedule visibility.
 - **One-off announcements / rule propagation do NOT open a meeting** — use
   the team channel. Reserve meetings for >=2-agent, >=30-min real work.
+- **Create the room first (hard rule)**: a >=2-agent collaboration / discussion
+  / analysis on one topic IS a meeting → create the dedicated room (thread +
+  progress files) **before** speaking; do not run it in the main channel. The
+  convening / chairing agent sets it up — don't defer ("someone will set it up
+  later" → main-channel drift is exactly the violation this blocks).
 
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.

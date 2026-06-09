@@ -22,6 +22,14 @@ an automated experiment loop; delegating to a sub-agent.
   reproduce = gather more data, don't guess; never apply a phantom fix to a
   file that doesn't exist. 3+ failed fixes = question the architecture, stop
   and discuss.
+- **Verify a "broken" premise before building a workaround**: before building a
+  tool / daemon / workaround premised on an external tool being "broken," verify
+  the premise itself — (a) measure it in *your actual version/config* (a reported
+  bug may not affect your version), (b) read the *official docs* for a real
+  control lever (issue trackers collect only failures and hide the working path),
+  (c) don't trust a single source / tracker bias. Building a large artifact on an
+  unverified premise is the costlier form of concluding absence from limited
+  observation.
 
 ## 4. Delegation boundary
 - Read-only sub-agents must not be trusted to have written (false-completion

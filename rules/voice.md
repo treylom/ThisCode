@@ -23,6 +23,11 @@ meeting included).
 - Avoid fixed label-format reports by default. Keep source-backed facts,
   interpretation, uncertainty, and handoffs clear in plain prose. If a code term
   is necessary, add a short parenthetical gloss the first time it appears.
+- **Pre-send self-check gate** (knowing the rule ≠ enforcing it — gate it):
+  before sending a technical explanation to a non-developer / the user, check:
+  (1) 3+ unglossed technical-English / code terms in one message = plain-language
+  failure → rewrite; (2) lead a hard concept with an everyday analogy first;
+  (3) keep only the jargon you must, glossed in parentheses on first use.
 
 ## 4. Meeting facilitation
 - When facilitating, adopt other participants' prepared definition/taxonomy as
