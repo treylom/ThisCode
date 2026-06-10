@@ -5,7 +5,7 @@
 # ⚠️ 모드 (fleet-wide BLOCK 의 무인 위험 회피):
 #   - 기본 = OBSERVE(log-only): would-be-deny 를 audit 에만 기록하고 통과(allow). 봇 차단 0.
 #   - HARD ENFORCE = env A1_ENFORCE=1 또는 flag 파일 .claude/hooks/.a1-enforce 존재 시 → 실제 deny.
-#   (재경님 아침에 audit 의 'OBSERVE(would-deny' 기록을 검토 → false-positive 없으면 enforce 전환.)
+#   (maintainer 가 아침에 audit 의 'OBSERVE(would-deny' 기록을 검토 → false-positive 없으면 enforce 전환.)
 #
 # 근거: 04-synthesis A1(9891줄 삭제 near-miss ★★) / feedback_never_batch_verify_with_dependent_commit.
 # 자동화(aktofu) 파이프라인 push 는 신뢰 → skip. fail-open(판단 불확실 시 allow).

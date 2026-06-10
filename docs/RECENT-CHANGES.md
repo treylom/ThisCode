@@ -26,6 +26,33 @@ auto-activate. The `/thiscode setup` skill drives this step.
 
 ---
 
+## 2026-06-10 — Fresh-install audit fixes (vendored vault-search MCP + portability)
+
+- **vault-search MCP is now vendored** at `vendor/vault-search-mcp/` and
+  `scripts/install-vault-search.sh` builds it from there. The old path (git
+  clone of `treylom/vault-search-mcp`) pointed at a repo that does not exist
+  publicly, so a fresh Tier-2 install always failed. Registration now uses
+  **`claude mcp add`** when the `claude` CLI exists (Claude Code does NOT read
+  `claude_desktop_config.json`; that file is only a Claude Desktop fallback).
+  The server receives your vault path via the `VAULT_PATH` env var.
+- **Script root auto-detection**: `install-vault-search.sh` and
+  `km-version.sh` now derive the repo root from their own location, so the
+  documented plugin install path (`~/.claude/plugins/thiscode`) works without
+  setting `CLAUDE_DISCODE_HOME`.
+- **Discord setup docs now include Privileged Gateway Intents**: enable
+  "Message Content Intent" in the Developer Portal (Bot tab) or the bot reads
+  no channel messages even with a valid token. Added to
+  `commands/create-bot.md`, `commands/start.md` + troubleshooting tables.
+- **Generalized personal defaults**: orchestrator-only hooks now gate on
+  `ORCHESTRATOR_BOT` env (was a hardcoded bot name); automation-loop bots are
+  `HK_AUTOMATION_BOTS` (comma list, was hardcoded); soul templates no longer
+  reference maintainer-personal skills; memory hooks honor
+  `VAULT_ROOT` before the default vault path.
+- **New docs**: multi-bot setup (§4.5) + knowledge-manager variant matrix
+  (§4.6) in SETUP-CONFIG-GUIDE.md; "what works without Obsidian" table in
+  SETUP-BEGINNER.md; `/prompt` now has a dedicated
+  `Bot-Persona-Generator.md` route for drafting soul.md / CLAUDE.md.
+
 ## 2026-05-21 — README-first AI install prompt
 
 README and setup docs now start with a copy-paste prompt for Claude Code or

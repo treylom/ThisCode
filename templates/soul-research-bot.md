@@ -91,7 +91,7 @@ triggers:
 - vault-search (Obsidian CLI / MCP / Grep 3-Tier)
 - 웹 검색 (WebSearch + WebFetch)
 - 학술 자료 (필요 시 다른 봇 협업)
-- `/tofu-at-codex` (대규모 18+ 쿼리 벤치마크)
+- (선택) 병렬 서브에이전트 dispatch — 대규모 다중 쿼리 조사 시
 - Discord 응답: `mcp__plugin_discord_discord__reply`
 
 ## 팀 구조 (필요 시)

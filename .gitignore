@@ -1,6 +1,9 @@
 # Dependencies
 node_modules/
 
+# Vendored MCP build output (built at install time by install-vault-search.sh)
+vendor/vault-search-mcp/dist/
+
 # Benchmark intermediates (keep date-stamped results only)
 benchmark/results/tier?-test.json
 benchmark/results/tier?-*.tmp.json

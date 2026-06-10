@@ -9,7 +9,7 @@
 ```
 
 예시:
-- `~/.claude/channels/discord-karpathy/` (메인 봇)
+- `~/.claude/channels/discord-<your-main-bot>/` (메인/오케스트레이터 봇 — 이름은 자유)
 - `~/.claude/channels/discord-research/` (자료조사 봇)
 - `~/.claude/channels/discord-writing/` (글쓰기 봇)
 

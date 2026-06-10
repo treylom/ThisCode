@@ -65,7 +65,7 @@ triggers:
 ### 외부 도구
 
 - vault-search (Obsidian CLI / MCP / Grep 3-Tier 폴백)
-- 필요 시 `/tofu-at-codex` 또는 `/thiscode:codex-check`
+- 필요 시 `/thiscode:codex-check` (Codex 연동 점검)
 - Discord 응답은 mcp__plugin_discord_discord__reply 도구
 
 ## 변경 이력

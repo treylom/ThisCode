@@ -14,7 +14,7 @@ is a real built-in (v2.1.139+) but has NO machine-readable state surface;
 no periodic hook (Stop fires per-turn). So an EXTERNAL ticker cannot
 introspect goal/task state — the in-session orchestrator pushes it here.
 
-2026-06-03 fix (재경님 "tasks 0/5 고정 + beat 무신호 false alarm + 종료 미인식"):
+2026-06-03 fix (maintainer "tasks 0/5 고정 + beat 무신호 false alarm + 종료 미인식"):
 _parse_progress 의 line_re 가 한 bracket 형식([HH:MM KST MM-DD])만 매칭해서
 실제 봇 줄([YYYY-MM-DD ~HH:MM KST] 등)을 0개 파싱 → tasks 영영 0, broken
 auto-beat 가 수동 beat 를 0 으로 덮어씀, bot_last(liveness) 산출 후 폐기,

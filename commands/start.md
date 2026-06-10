@@ -47,10 +47,12 @@ command -v tmux git curl node claude     # 의존 도구 확인
 
 1. "New Application" → 이름 (예: `<your-bot-name>`)
 2. 좌측 "Bot" 탭 → "Reset Token" → 토큰 복사
-3. OAuth2 → URL Generator
+3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" ON** → Save
+   - ⚠️ 미설정 시 토큰·초대가 정상이어도 봇이 서버 채널 메시지 내용을 못 읽어 무반응 (DM 은 예외). "토큰 valid 인데 채널 답 없음" 1순위 원인.
+4. OAuth2 → URL Generator
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: Send Messages, Read Messages, Read Message History, Add Reactions, Attach Files, Embed Links
-4. 생성된 URL 로 봇을 본인 Discord 서버 또는 DM 가능 채널에 초대
+5. 생성된 URL 로 봇을 본인 Discord 서버 또는 DM 가능 채널에 초대
 
 > ⚠️ **다봇 셋업 시 — 봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 애플리케이션이라
 > OAuth 초대도 **봇 앱마다 따로** 해야 합니다. 신규 봇 초대를 빠뜨리면 그 봇만 무반응

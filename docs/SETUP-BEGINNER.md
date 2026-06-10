@@ -133,7 +133,18 @@ which obsidian-cli
 - 나머지 Tier 1 (GraphRAG) / Tier 2 (MCP) / Tier 4 (ripgrep) 정상 작동
 - 기능 80% 동일, 단 Obsidian graph view 와 연동 X
 
-→ 바로 4단계로 진행
+**Obsidian 없이 뭐가 되고 뭐가 안 되나 (구체적으로):**
+
+| 기능 | Obsidian 없이 | 설명 |
+|---|---|---|
+| Discord 봇 대화·작업 | ✅ 100% | Obsidian 과 무관 |
+| 키워드 검색 (`ripgrep`) | ✅ 100% | 파일명·본문 문자 일치 검색 |
+| 의미 기반 검색 (GraphRAG/MCP) | ✅ 가능 | 노트 폴더(.md 모음)만 있으면 됨 — Obsidian *앱* 필수 아님 |
+| 노트 graph view·백링크 UI | ❌ | Obsidian 앱 전용 |
+| Obsidian CLI 구조 질의 (tags·backlinks) | ❌ | Tier 3 만 빠짐 — 검색은 다른 Tier 가 대신 |
+
+→ 결론: **첫 봇 운영엔 충분**합니다. 노트가 수백 개 이상 쌓이고 그래프
+시각화가 필요해질 때 Obsidian 을 설치해도 늦지 않습니다. 바로 4단계로 진행
 
 ---
 

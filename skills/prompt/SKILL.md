@@ -36,6 +36,7 @@ See `references/` for detailed procedures only when the matched prompt task asks
 | Worked examples (Claude / GPT / image) | [`references/examples/`](references/examples/) |
 | Build a GPTs instruction | [`references/instructions/GPTs-Prompt-Generator.md`](references/instructions/GPTs-Prompt-Generator.md) |
 | Build a Gems instruction | [`references/instructions/Gems-Prompt-Generator.md`](references/instructions/Gems-Prompt-Generator.md) |
+| Build bot meta files (soul.md / CLAUDE.md / AGENTS.md) | [`references/instructions/Bot-Persona-Generator.md`](references/instructions/Bot-Persona-Generator.md) |
 
 Procedure:
 

@@ -299,6 +299,45 @@ Example prompts and what to expect:
 If a reply seems off-persona or ignores a rule: check (a) `soul.md` frontmatter
 is valid, (b) the situation actually matches a `rules/INDEX.md` trigger row.
 
+### §4.5 — Multi-bot setup (2+ bots, optional)
+
+Each bot is just **its own Discord app + its own state dir + its own working
+directory**. To add a second bot:
+
+1. Create another Discord application in the Developer Portal (new token,
+   Message Content Intent ON, invite to your server — same steps as the first
+   bot; every bot app needs its **own** OAuth invite).
+2. Run `/thiscode:create-bot` again with a different name → creates
+   `~/.claude/channels/discord-<name2>/` (.env + soul.md).
+3. Give the bot its own working directory and run each bot in its own tmux
+   window / terminal:
+
+```bash
+# window 1                              # window 2
+export DISCORD_STATE_DIR=~/.claude/channels/discord-research
+cd ~/projects/research && claude        # repeat with discord-writing + its WD
+```
+
+4. Cross-bot coordination: list every bot's name + Discord user id in a
+   `bot-roster.yaml` at your vault/workspace root (the SessionStart hook
+   injects it so bots can @mention each other without guessing ids), and
+   apply the meeting-thread rules in `rules/discord-comms.md` +
+   `docs/05-meeting-thread-protocol.md`. Bots address each other **only**
+   via Discord mentions — never by typing into each other's terminals.
+
+### §4.6 — Which knowledge-manager variant?
+
+| Variant | Best for | Needs |
+|---|---|---|
+| `knowledge-manager-lite` | first install, single bot | none (keyword presets, no popups) |
+| `knowledge-manager` (full) | interactive single-bot use | AskUserQuestion UI |
+| `knowledge-manager-plain` | headless / Codex bots / cron | none (never asks) |
+| `knowledge-manager-at` | 2+ bots coordinating (Agent Teams) | Agent Teams support |
+| `knowledge-manager-bootstrap` | one-time env setup / "Tier X 실패" repair | run once |
+
+New user: start with `-lite` (or `-plain` for unattended bots); move to `-at`
+only when multiple bots need to split one ingestion job.
+
 ## §5 — Skills 2.0 conformance checklist
 
 Any skill you add under `skills/<name>/SKILL.md` should pass these (the standard

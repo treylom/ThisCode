@@ -2,7 +2,9 @@
 # km-version.sh — compare thiscode contracts vs vault mirror, warn on drift.
 set -e
 
-PLUGIN_DIR="${CLAUDE_DISCODE_HOME:-$HOME/code/thiscode}/contracts"
+# repo root = this script's parent dir (works for ~/.claude/plugins/thiscode, ~/code/thiscode, anywhere)
+SCRIPT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+PLUGIN_DIR="${CLAUDE_DISCODE_HOME:-$SCRIPT_ROOT}/contracts"
 VAULT_DIR="${CLAUDE_DISCODE_VAULT:-$HOME/obsidian-ai-vault}/.claude/reference/contracts"
 
 if [ ! -d "$PLUGIN_DIR" ]; then

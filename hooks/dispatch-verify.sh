@@ -2,12 +2,13 @@
 # dispatch-verify.sh — Stop hook (B3, orchestrator 한정): 다른 봇에게 작업을 dispatch
 #   (봇 @mention 이 담긴 Discord reply)한 뒤 tmux capture-pane 으로 실행 진입을 실측 검증하지
 #   않고 종료하려 하면 1턴 연장 + 리마인드. 근거: meeting-protocol §2 / orchestration §2 (ack≠execution).
-# karpathy(orchestrator) 세션에서만 동작. fail-open + 재귀가드 + 자동화 skip.
+# orchestrator 봇 세션에서만 동작 (ORCHESTRATOR_BOT env 로 봇 이름 지정, default: orchestrator).
+# fail-open + 재귀가드 + 자동화 skip.
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/hookkit.sh"
 hk_failopen
 hk_read_input
 hk_stop_active && hk_allow_stop
-[ "$(hk_bot)" = "karpathy" ] || hk_allow_stop
+[ "$(hk_bot)" = "${ORCHESTRATOR_BOT:-orchestrator}" ] || hk_allow_stop
 hk_is_automation && hk_allow_stop
 TRANSCRIPT="$(hk_transcript)"
 [ -n "$TRANSCRIPT" ] || hk_allow_stop
@@ -16,7 +17,7 @@ command -v python3 >/dev/null 2>&1 || hk_allow_stop
 
 RESULT="$(TR="$TRANSCRIPT" python3 2>/dev/null <<'PY'
 import json, os, re
-USER_ID = os.environ.get("OWNER_USER_ID", "")          # 재경님 — 봇 dispatch 아님(제외)
+USER_ID = os.environ.get("OWNER_USER_ID", "")          # 운영자(사람) user id — 봇 dispatch 아님(제외)
 MENTION = re.compile(r"<@!?(\d{15,20})>")
 path = os.environ["TR"]
 try:

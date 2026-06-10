@@ -2,7 +2,7 @@
 # hookkit.sh — soft→hard enforcement 훅 공용 라이브러리 (source 전용, 직접 실행 ❌)
 #
 # 출처: AI_Second_Brain/meetings/2026-05-25-soft-to-hard-rule-enforcement/05-implementation-plan.md
-#       재경님 1차 승인 2026-05-25. 패턴 미러:
+#       maintainer 1차 승인 2026-05-25. 패턴 미러:
 #       .claude/scripts/{meeting-stop-reread,regression-self-check,notify-strange-stop}.sh
 #
 # 🔒 불변 안전 (위반 = 전 봇 trap): 모든 훅 fail-open.
@@ -35,10 +35,13 @@ hk_bot() {
 
 # 반복운영루프(무인 자동화) 세션인가? → 0(자동화) / 1(아님)
 # autonomy.md §2 "반복 운영 루프(AK-Tofu 일상 파이프라인)만 제외" 구현.
-# 마커: 명시 env(HK_AUTOMATION) 또는 봇==aktofu(AK-Tofu 파이프라인 전담봇).
+# 마커: 명시 env(HK_AUTOMATION) 또는 봇 이름이 HK_AUTOMATION_BOTS(콤마 구분 목록)에 포함.
 hk_is_automation() {
   [ -n "${HK_AUTOMATION:-}" ] && return 0
-  [ "$(hk_bot)" = "aktofu" ] && return 0
+  local _b; _b="$(hk_bot)"
+  if [ -n "$_b" ] && [ -n "${HK_AUTOMATION_BOTS:-}" ]; then
+    case ",${HK_AUTOMATION_BOTS}," in *",${_b},"*) return 0 ;; esac
+  fi
   return 1
 }
 

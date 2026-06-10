@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """meeting-liveness.py — B1 (flagship): 회의 active 봇 per-bot liveness 강제 push.
 
-04-synthesis B1 (재경님 seed). 회의 02-progress.md 의 각 active 봇 마지막 append 시각이
+04-synthesis B1 (maintainer seed). 회의 02-progress.md 의 각 active 봇 마지막 append 시각이
 임계(기본 180s)를 넘으면 그 봇을 @mention 으로 재구동 push (soft beat → hard push).
 
 ⚠️ 기본 = DRY-RUN (대상만 출력, 발신 안 함). 실제 발신 = --send.

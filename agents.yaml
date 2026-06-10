@@ -50,7 +50,7 @@ agents:
     tier: experimental
     description: >-
       Knowledge Manager Agent Teams variant — Mode R (Reorganization) workflow with category lead + worker split via
-      tofu-at pattern. Advanced KM for team vaults.
+      parallel-agent orchestration pattern. Advanced KM for team vaults.
     file: .agents/knowledge-manager-at.yaml
   - name: knowledge-manager-bootstrap
     version: 1.0.0

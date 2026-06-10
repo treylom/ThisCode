@@ -41,10 +41,14 @@ chmod 700 "$BOT_DIR"
 브라우저로 https://discord.com/developers/applications:
 1. "New Application" → 이름 = `<봇 이름 또는 별칭>`
 2. 좌측 "Bot" 탭 → "Reset Token" → 토큰 복사
-3. OAuth2 → URL Generator:
+3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 를 ON** → Save
+   - ⚠️ 이걸 안 켜면 토큰·초대가 전부 정상이어도 **봇이 서버 채널 메시지 내용을 못 읽어** 무반응이 됩니다 (DM 은 예외적으로 읽힘). "토큰은 valid 한데 채널에서 답이 없다" 의 1순위 원인.
+   - (선택) 멤버 목록 조회가 필요하면 "Server Members Intent" 도 ON.
+4. OAuth2 → URL Generator:
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: Send Messages / Read Messages / Read Message History / Add Reactions / Attach Files / Embed Links
-4. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대
+5. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대
+6. (권장) 봇이 보일 채널 제어: 첫 봇이면 **DM 전용**이 가장 단순 — 서버에 초대하되 DM 으로만 대화. 특정 채널만 쓰려면 비공개 채널을 만들어 봇을 그 채널에만 추가.
 
 > ⚠️ **봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 앱이라 OAuth 초대도 봇 앱마다
 > 따로. 다봇 셋업에서 신규 봇 초대를 빠뜨리면 그 봇만 무반응 (로컬 설정은 정상인데
@@ -175,6 +179,7 @@ echo "  Discord 앱에서 봇에 DM → 페어링 코드 발급 → 페어링 �
 |---|---|---|
 | `permission denied` on .env | chmod 미적용 | `chmod 600 "$BOT_DIR/.env"` |
 | Discord 봇 토큰 invalid | 줄바꿈 포함 또는 reset 후 미저장 | 토큰 재 발급 + .env 한 줄 |
+| 토큰 정상인데 서버 채널에서 무반응 (DM 은 됨) | Message Content Intent OFF | Developer Portal → Bot → Privileged Gateway Intents → Message Content Intent ON |
 | 페어링 코드 만료 | 봇에 다시 DM | 새 코드 발급 |
 | soul.md 안 inject | DISCORD_STATE_DIR 미export 또는 SessionStart hook 미등록 | `/thiscode:install-hooks` 먼저 실행 |
 | 같은 봇 이름 디렉토리 충돌 | 이미 존재 | 다른 이름 또는 기존 정리 |

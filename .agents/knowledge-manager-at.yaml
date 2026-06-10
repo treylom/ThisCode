@@ -1,5 +1,5 @@
 name: knowledge-manager-at
-description: Knowledge Manager Agent Teams variant — Mode R (Reorganization) workflow with category lead + worker split via tofu-at pattern. Advanced KM for team vaults.
+description: Knowledge Manager Agent Teams variant — Mode R (Reorganization) workflow with category lead + worker split via parallel-agent orchestration pattern. Advanced KM for team vaults.
 version: 1.0.0
 license: MIT
 homepage: https://github.com/treylom/ThisCode
