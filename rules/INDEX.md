@@ -33,6 +33,9 @@
 ## Filling these in
 Each `rules/<topic>.md` here is a **generic skeleton**: a trigger, the
 persona-agnostic rule shell, and a `▶ Fill in:` line for your bot/project
-specifics. Adapt them; do not ship them blank. (The §0 guided onboarding in
+specifics. Adapt them; do not ship them blank — a blank fill-in does not
+error, the rule just silently never fires. Walk
+[FILL-IN-GUIDE.md](FILL-IN-GUIDE.md) (what each blank means, where to find the
+value, filled examples, what breaks if skipped). (The §0 guided onboarding in
 [docs/SETUP-CONFIG-GUIDE.md](../docs/SETUP-CONFIG-GUIDE.md) can scaffold + fill
 these for you via `/prompt` + `/using-superpowers`.)
