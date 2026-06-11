@@ -103,6 +103,18 @@ bot's progress, or stopping while an active meeting is open.
     → hang undetectable → keep full suppress (backward-compatible).
     Implemented in `meeting_watchdog.py` (`_blocked_since_age`) and
     `meeting-stop-reread.sh` (blocked_on reread skip).
+  - **`since=` is for worker-hang gates ONLY**: it encodes a *progressing
+    assumption* (a bot/CLI turn that should finish). If the gate is an
+    indefinite **human decision wait** (`awaiting_<user>_directive`-style),
+    there is no progressing assumption — adding `since=` there just
+    manufactures false hang escalations every upper-bound interval (ntfy
+    spam). Deliberately omitting `since=` on human-wait gates is the
+    correct form, not an omission.
+  - **Refresh the `since=` anchor on worker activity**: if the gate stays
+    up but the worker visibly produced something (output, pivot), move
+    `since=` to that latest activity timestamp — a stale anchor turns
+    legitimate long gates into false hangs. Timestamps in `since=` are
+    UTC `Z` form (a naive local time is misread by the watchdog).
 
 ## 7. Meeting roster includes the watchdog/schedule agent
 - When a team has a dedicated watchdog / schedule-domain agent (the one
