@@ -1,0 +1,31 @@
+# Rule: Code quality · regression prevention · debug artifacts
+
+Trigger: receiving a bug report, about to modify a file, about to claim "fixed/done", after resolving a non-trivial bug.
+
+## 1. Prove It
+- Bug report → **reproduce → fix → prove**, in that order. No speculative patching ("I think this fixes it" = failure mode).
+- No root cause identified = no fix. Can't reproduce = gather more data, don't guess. Never apply a phantom fix to a file you haven't verified exists.
+
+## 2. Before modifying a file
+- List what currently works → analyze blast radius → modify → verify. Write down what could break *before* touching it.
+
+## 3. 3-step verification after a change
+1. Checklist — only the intended change went in
+2. Run test — the changed feature works
+3. Integration test — adjacent features didn't regress
+- Never say "done" without verification.
+
+## 4. Don't conclude absence from limited observation
+- Never assert "tool/feature/field doesn't exist / can't do X" from a small-limit, single-sample, default-parameter observation.
+- **Boundary**: push limit/range/timeout/depth to max — if results change it was a cutoff/ranking issue, not absence.
+- **Isolation**: re-test with input that isolates exactly the capability in question.
+- When checking "is it empty", scan **all file types** (`find -type f`), not just one extension — a `*.md` filter hides strays.
+
+## 5. Verify the "it's broken" premise before building a workaround
+Before building a tool/daemon/workaround on the belief that an external tool is broken: (a) measure in *your* environment/version, (b) read the official docs directly for a control lever, (c) don't rely on bug trackers alone (they collect failures, not the working pattern). A wrong premise turns into a whole wasted build.
+
+## 6. Debug artifact contract (after fixing a non-trivial bug)
+Leave a debug artifact with **fixed sections, fixed order** (don't end at "fix commit + one progress line"):
+① Problem (symptom·repro) → ② Hypotheses (**≥3, on different axes** — environment/dependency/state/control-flow) → ③ Investigation (evidence accepting/rejecting each) → ④ Root Cause → ⑤ **Detection Gap** (why existing tests/hooks/checks missed it) → ⑥ **Sibling Search, 4 axes** (same file / adjacent module / same design decision / same symptom elsewhere — report each axis, "skipped" ❌) → ⑦ Prevention (which test/hook/rule now blocks recurrence).
+- **Trivial escape hatch**: typo/config-slip class bugs skip the full artifact, but must declare `n/a — trivial fix` explicitly (silent omission ❌). Trivial = root cause 1-hop obvious AND sibling probability structurally zero.
+- §6 is the *post-fix* counterpart of §1 (Prove It = before, artifact = after: knowledge asset).

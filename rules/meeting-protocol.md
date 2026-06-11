@@ -132,3 +132,10 @@ bot's progress, or stopping while an active meeting is open.
 
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.
+
+## 8. LATEST.md pointer (long meetings)
+
+- For meetings with 3+ milestones or a long progress log (30+ rows), keep **one `LATEST.md`** in the meeting folder so a newly joining (or post-compaction) agent can sync without rereading the whole log. ≤10 lines: current phase / blocked_on / per-agent one-liner / next gate / `evidence: progress row [HH:MM]` / last-updated timestamp.
+- The dated progress log remains the append-only source of truth; LATEST.md is a *pointer/summary* — on conflict the log wins.
+- **Atomic update + no-op duty**: write temp file → `mv` swap (never expose partial writes). If content is unchanged, do **not** rewrite (mtime noise reads as a false "something changed" signal). Real file only — no symlink (breaks across machines/sync).
+- Owner = the chairing agent, updated at milestones (lock/dispatch/gate-passed/hold-resume). Short one-shot meetings may skip it.

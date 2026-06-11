@@ -90,3 +90,14 @@ hook does **not** run until it is trusted via the Codex `/hooks` flow (a
 `trusted_hash` must land in `~/.codex/config.toml`). See ThisCodex's setup
 skill / README for the Codex `/hooks` trust step — without it the meeting
 Stop-reread is silently inactive even though the wiring exists.
+
+## Root-instruction unification (CLAUDE.md / AGENTS.md single source)
+
+When one deployment serves both Claude Code (auto-loads `CLAUDE.md`) and Codex-style agents (auto-load `AGENTS.md`), do not maintain two rule bodies:
+
+- **`AGENTS.md` = the shared operational rules (SSOT)** — progressive-disclosure pointer to `rules/INDEX.md`, completion gates, core paths.
+- **`CLAUDE.md` = `@AGENTS.md` import at the top** + Claude-specific blocks only (identity guard, tool wrappers).
+
+Caveats learned in production (obsidian-ai-vault charness adoption, 2026-06-11):
+1. A whitelist-style `.gitignore` (`*` then `!` exceptions) silently untracks a new root file — add an explicit `!/AGENTS.md`.
+2. Verifying that a Codex agent actually receives the chain: echo-style probes get **contaminated** — the injected rules change the probe's own behavior. Use session-transcript forensics (inspect the injected payload in the agent's rollout log) with a read-only sandbox instead.
