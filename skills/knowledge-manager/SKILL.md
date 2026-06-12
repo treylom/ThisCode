@@ -202,10 +202,10 @@ AskUserQuestion({
       "question": "노트를 어떻게 분할할까요?",
       "header": "노트 분할",
       "options": [
-        {"label": "단일 노트", "description": "모든 내용을 하나의 노트에"},
-        {"label": "주제별 분할", "description": "주요 주제마다 별도 노트 (MOC 포함)"},
+        {"label": "3-tier 계층 (기본)", "description": "메인MOC + 카테고리MOC + 원자노트"},
+        {"label": "주제별 분할 (2-tier)", "description": "주요 주제마다 별도 노트 (MOC 포함)"},
         {"label": "원자적 분할", "description": "최대한 작은 단위로 분할 (Zettelkasten)"},
-        {"label": "3-tier 계층 (권장)", "description": "메인MOC + 카테고리MOC + 원자노트"}
+        {"label": "단일 노트", "description": "모든 내용을 하나의 노트에 — 선택 시 그대로 적용"}
       ],
       "multiSelect": false
     },
@@ -213,9 +213,9 @@ AskUserQuestion({
       "question": "기존 노트와 얼마나 연결할까요?",
       "header": "연결 수준",
       "options": [
-        {"label": "최소", "description": "태그만 추가"},
+        {"label": "최대 (기본)", "description": "태그 + 링크 + 기존 노트와 자동 연결 탐색"},
         {"label": "보통", "description": "태그 + 관련 노트 링크 제안"},
-        {"label": "최대 (권장)", "description": "태그 + 링크 + 기존 노트와 자동 연결 탐색"}
+        {"label": "최소", "description": "태그만 추가"}
       ],
       "multiSelect": false
     }
@@ -224,6 +224,10 @@ AskUserQuestion({
 ```
 
 > 단일 에이전트 버전에서는 RALPH/DA 관련 질문이 없습니다 (미사용).
+
+> **기본값 정책 (전 변형 공통)**: 사용자가 답하지 않거나 AskUserQuestion 불가 컨텍스트(자율 봇·배치·헤드리스)에서는 **노트 분할 = 3-tier 계층, 연결 수준 = 최대**를 기본값으로 적용한다. 단 요약 분량(1-2p)은 단일 노트 carve-out. **사용자가 단일 노트·2-tier(주제별)·원자적을 명시 선택하면 그 선택이 항상 우선** — 기본값은 미지정 시에만 작동한다.
+
+> **파일 ingest 변환 fallback = kordoc**: 입력이 로컬 문서 파일인데 기본 경로(Read·기존 어댑터)로 충실히 못 읽는 형식 — **HWP·HWPX, 표 복잡한 XLSX/DOCX, 한국어 PDF** — 은 [kordoc](https://github.com/chrisryugj/kordoc)으로 md 변환 후 STEP 진행: `npx kordoc <files> -d <outdir>` (PDF는 `pdfjs-dist@4` peer 필요 — v6 비호환 실측). 변환 md 는 원문 보존 검증(표 행수·수치 표본 대조) 후 사용.
 
 ### 이미지 추출 판별 (키워드 감지 시에만 활성화)
 

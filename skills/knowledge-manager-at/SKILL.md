@@ -218,10 +218,10 @@ AskUserQuestion({
       "question": "노트를 어떻게 분할할까요?",
       "header": "노트 분할",
       "options": [
-        {"label": "단일 노트", "description": "모든 내용을 하나의 노트에"},
-        {"label": "주제별 분할", "description": "주요 주제마다 별도 노트 (MOC 포함)"},
+        {"label": "3-tier 계층 (기본)", "description": "메인MOC + 카테고리MOC + 원자노트"},
+        {"label": "주제별 분할 (2-tier)", "description": "주요 주제마다 별도 노트 (MOC 포함)"},
         {"label": "원자적 분할", "description": "최대한 작은 단위로 분할 (Zettelkasten)"},
-        {"label": "3-tier 계층 (권장)", "description": "메인MOC + 카테고리MOC + 원자노트"}
+        {"label": "단일 노트", "description": "모든 내용을 하나의 노트에 — 선택 시 그대로 적용"}
       ],
       "multiSelect": false
     },
@@ -229,9 +229,9 @@ AskUserQuestion({
       "question": "기존 노트와 얼마나 연결할까요?",
       "header": "연결 수준",
       "options": [
-        {"label": "최소", "description": "태그만 추가"},
+        {"label": "최대 (기본)", "description": "태그 + 링크 + 기존 노트와 자동 연결 탐색"},
         {"label": "보통", "description": "태그 + 관련 노트 링크 제안"},
-        {"label": "최대 (권장)", "description": "태그 + 링크 + 기존 노트와 자동 연결 탐색"}
+        {"label": "최소", "description": "태그만 추가"}
       ],
       "multiSelect": false
     }
@@ -241,6 +241,10 @@ AskUserQuestion({
 
 > AT 버전에서는 RALPH가 항상 ON (max 5회), DA가 항상 ON입니다.
 > 별도 질문 없이 자동 적용됩니다.
+
+> **기본값 정책 (전 변형 공통)**: 분할/연결 미지정·헤드리스 호출 = **3-tier + 최대 연결** 기본. 사용자의 명시 선택(단일·2-tier 포함)은 항상 기본값보다 우선.
+
+> **kordoc fallback**: HWP·HWPX·복잡한 표 문서·한국어 PDF 등 직접 읽기가 깨지는 형식은 `npx kordoc <file>` ([github.com/chrisryugj/kordoc](https://github.com/chrisryugj/kordoc))으로 md 변환 후 ingest. PDF 경로는 peer `pdfjs-dist@4` 필요(v6 비호환).
 
 > **퀵 프리셋은 `/knowledge-manager-m` 전용입니다.** 이 커맨드에서는 항상 STEP 1 질문을 수행합니다.
 
