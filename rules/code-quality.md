@@ -29,3 +29,10 @@ Leave a debug artifact with **fixed sections, fixed order** (don't end at "fix c
 ① Problem (symptom·repro) → ② Hypotheses (**≥3, on different axes** — environment/dependency/state/control-flow) → ③ Investigation (evidence accepting/rejecting each) → ④ Root Cause → ⑤ **Detection Gap** (why existing tests/hooks/checks missed it) → ⑥ **Sibling Search, 4 axes** (same file / adjacent module / same design decision / same symptom elsewhere — report each axis, "skipped" ❌) → ⑦ Prevention (which test/hook/rule now blocks recurrence).
 - **Trivial escape hatch**: typo/config-slip class bugs skip the full artifact, but must declare `n/a — trivial fix` explicitly (silent omission ❌). Trivial = root cause 1-hop obvious AND sibling probability structurally zero.
 - §6 is the *post-fix* counterpart of §1 (Prove It = before, artifact = after: knowledge asset).
+
+## 7. Verification ladder — state WHICH grade your "verified" means
+"GREEN / verified / passed" claims must state the verification grade. Different agents mean different things by "verified" — naming the grade closes that gap (e.g. a doc *claiming* an artifact exists vs. the artifact actually existing).
+- **Ladder (low → high)**: ① **deterministic** — automated checks / script asserts (seconds) → ② **scenario replay** — real-scenario reproduction / e2e round-trip (minutes) → ③ **evaluator** — independent evaluator / cross-engine review → ④ **human review**.
+- A GREEN that only passed a lower rung must say so (e.g. "GREEN — ① deterministic only"). **No silent downgrade** — never substitute a lower rung where a higher one was required. Executable proof > eyeballing code.
+- **JSON form**: new automation outputs carry `schema_version` + `proof_class` (e.g. fixture-smoke / in-process / live). Retrofit existing outputs only on next touch — no bulk backfill.
+- §3 says *what* to verify; §7 names *at which grade* you verified it.

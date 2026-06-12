@@ -22,6 +22,12 @@ bot's progress, or stopping while an active meeting is open.
   the meeting progress file.
 - Use KST timestamps for human-facing rows unless a repository-specific
   protocol states otherwise.
+- **Spill rule**: when the progress file exceeds ~100 rows, move detail
+  blocks (long analyses, logs, tables) into a numbered doc (`NN-*.md`)
+  and leave one row: `[KST] <bot> | spill | →NN-doc`. The progress file
+  keeps only decisions, pointers, and gate states — test: "does reading
+  the progress file alone give the flow?" (guards against spilling so
+  much that the source of truth scatters).
 
 ## 4. Stop-hook reread
 - A Stop hook may request continuation only when all are true: bot session,
