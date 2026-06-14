@@ -36,6 +36,10 @@ cat <<'EOF'
 
 4. [Skill invoke gate] creative / debugging / verification task 인가?
    → superpowers skill BEFORE response (Red Flag 표 통과)
+
+5. [자동 루프 다양성 게이트] 반복 LLM 변형/최적화 루프가 "수렴/완료" 판정 직전인가?
+   → skeleton 다양성(골격 중복률·self-loop 비율) 1회 확인. 골격 정체(단말만
+     치환) = attractor 의심 → cross-model / lateral / diverse seeds 주입 후 재판정.
 EOF
 
 exit 0

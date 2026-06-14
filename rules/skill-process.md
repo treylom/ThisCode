@@ -36,5 +36,22 @@ an automated experiment loop; delegating to a sub-agent.
   risk); independent worker processes may write. Verify a sub-agent's result
   before relying on it.
 
+## 5. Diversity gate for automated loops
+- Iterative LLM-driven mutation/optimization loops (self-improving search,
+  evolve-style loops) drift toward an "attractor": repeated mutations revisit
+  the same structural skeleton even as surface tokens change. Before a loop
+  declares "converged/done," check skeleton-level diversity **once** — abstract
+  recent accepted states to their skeleton (drop values/leaves, keep control
+  structure) → hash → unique-ratio; a low ratio (only leaves swapped) = suspect
+  attractor, not a true optimum. Inject diversity once (cross-model, a
+  lateral/multi-persona pass, or diverse seeds), then re-judge.
+- This is a **review gate** (inform-the-human, not auto-applied) and stays in the
+  free read/draft zone — keep the commit/deploy boundary (autonomy.md §1).
+- Verify the metric responds to the genome before trusting an optimization run:
+  a coarse pass/fail metric can be insensitive (flat) and make every variant look
+  equal; confirm sensitivity on extremes first, switch to a rank-aware metric if
+  flat.
+
 ▶ Fill in: which skill system you use + how to invoke it; your debugging
-process doc; your sub-agent vs. worker delegation tools.
+process doc; your sub-agent vs. worker delegation tools; your automated-loop
+tool(s) and where the diversity check is recorded.
