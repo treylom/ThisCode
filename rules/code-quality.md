@@ -36,3 +36,13 @@ Leave a debug artifact with **fixed sections, fixed order** (don't end at "fix c
 - A GREEN that only passed a lower rung must say so (e.g. "GREEN — ① deterministic only"). **No silent downgrade** — never substitute a lower rung where a higher one was required. Executable proof > eyeballing code.
 - **JSON form**: new automation outputs carry `schema_version` + `proof_class` (e.g. fixture-smoke / in-process / live). Retrofit existing outputs only on next touch — no bulk backfill.
 - §3 says *what* to verify; §7 names *at which grade* you verified it.
+
+## 8. Code-generation minimalism gate
+Before generating code, run a 6-rung ladder as a reflex (not a research project — stop at the first rung that holds):
+**① Does this need to exist? (YAGNI — if speculative, skip it and say so in one line) → ② Stdlib does it? → ③ Native platform feature? → ④ Already-installed dependency? → ⑤ One line? → ⑥ Only then: the minimum that works.**
+- **Lazy ≠ negligent**: trust-boundary validation, data-loss handling, security, accessibility, and verification (§3/§7) are never on the chopping block.
+- Mark a deliberate simplification with a `ponytail:` comment naming its ceiling + upgrade path (e.g. `# ponytail: global lock, per-account if throughput matters`) — no silent shortcuts.
+- Rung ① (YAGNI) is the key gap, complementary to §5 (verify a "broken" premise before building a workaround) and the role/autonomy boundary — it catches over-build and wrong-premise builds before the first line.
+- A **review gate** (inform-the-human, not a universal mandate). Token/cost savings are conditional (on simple tasks the skill-read tax can make it *worse*) — the value is less code / fewer files and avoiding wrong builds, not guaranteed cost savings. Origin: the Ponytail ruleset (MIT, github.com/DietrichGebert/ponytail) 6-rung ladder.
+
+▶ Fill in: where your team records deliberate simplifications and their upgrade paths.
