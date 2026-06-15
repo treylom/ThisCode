@@ -11,6 +11,12 @@ Trigger: any moment you respond/report/notify to an external channel
 - Inbound arrives as a `<channel chat_id=… message_id=…>` block → reply with
   that `chat_id` (use `reply_to=message_id` to thread under an earlier message;
   omit for the latest).
+- **Raw REST/CLI fallback — inline `-c` corrupts backticks**: if you fall back to
+  sending via an inline `python -c "...body..."`, backticks / `$` / `[]` in the
+  body are eaten by the shell (command substitution / glob) and silently blanked
+  — the send still returns 2xx, so the report looks fine. Write a `/tmp/*.py`
+  file and run it instead (Python string literals bypass the shell); verify
+  message integrity by re-fetching, and correct via edit, not a duplicate send.
 
 ## 2. Addressing another bot
 - In a shared channel, a message aimed at another bot **must** carry its

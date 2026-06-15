@@ -28,6 +28,18 @@ bot's progress, or stopping while an active meeting is open.
   keeps only decisions, pointers, and gate states — test: "does reading
   the progress file alone give the flow?" (guards against spilling so
   much that the source of truth scatters).
+- **Same-account dual-instance owner declaration**: if the same bot account can
+  run as two instances (e.g. terminal + channel), declare the owner on the first
+  progress-file row (`owner=<which> <bot>`); a non-owner instance must not write,
+  dispatch, or fire the completion gate for that meeting. Coordinate between
+  same-account instances **through the progress file only** — a channel mention
+  does not reach your own account's other instance. An unfamiliar row under your
+  own bot name = dual-instance signal → verify (mtime/tmux/fetch) before acting.
+- **Idle judged on 3 axes + append-race tail-verify**: don't conclude "idle" from
+  a silent progress file + idle terminal alone → also weigh the token/context
+  gauge (rising = working) and the thread's fetched messages. Concurrent appends
+  can lose a row (read-modify-write race), so after appending, tail the file once
+  to confirm your row survived; re-append if lost (race ≠ idle).
 
 ## 4. Stop-hook reread
 - A Stop hook may request continuation only when all are true: bot session,

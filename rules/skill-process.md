@@ -52,6 +52,18 @@ an automated experiment loop; delegating to a sub-agent.
   equal; confirm sensitivity on extremes first, switch to a rank-aware metric if
   flat.
 
+## 6. Case feedback → don't over-harden into universal rules
+- When porting a case-specific correction (one piece of content, one screen, one
+  incident) into a skill/rule file, do **not** promote it to a universal
+  "never/always". Carry three markers: (a) an "in this case" qualifier preserving
+  context, (b) explicit room for situational re-judgment, (c) the human's latest
+  feedback always wins.
+- This is the *write-to-file* counterpart of the assertion-lint (cross-checking
+  "never/always/must" before committing to it): writing "never/forbidden/always"
+  into a skill or rule is itself the self-check trigger.
+
+▶ Fill in: where your case-vs-universal corrections get recorded.
+
 ▶ Fill in: which skill system you use + how to invoke it; your debugging
 process doc; your sub-agent vs. worker delegation tools; your automated-loop
 tool(s) and where the diversity check is recorded.
