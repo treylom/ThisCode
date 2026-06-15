@@ -36,6 +36,7 @@ Leave a debug artifact with **fixed sections, fixed order** (don't end at "fix c
 - A GREEN that only passed a lower rung must say so (e.g. "GREEN — ① deterministic only"). **No silent downgrade** — never substitute a lower rung where a higher one was required. Executable proof > eyeballing code.
 - **JSON form**: new automation outputs carry `schema_version` + `proof_class` (e.g. fixture-smoke / in-process / live). Retrofit existing outputs only on next touch — no bulk backfill.
 - §3 says *what* to verify; §7 names *at which grade* you verified it.
+- **Validity threats + benchmark fixture convention**: ① **Threats to validity** — a non-trivial verification / experiment / benchmark conclusion carries an explicit list of "why you might *not* trust this result" (sample size, measurement scope, generalization limits, n=1 noise) as named items, not one line of prose. ② **Benchmarks = fixtures + raw output + threats** — experiments and benchmarks use fixed fixtures (deterministic inputs) + preserved raw output (e.g. JSON) + a threats note, so they reproduce. Both are a lightweight extension of the §7 ladder (existing discipline unchanged, no new hard gate).
 
 ## 8. Code-generation minimalism gate
 Before generating code, run a 6-rung ladder as a reflex (not a research project — stop at the first rung that holds):
