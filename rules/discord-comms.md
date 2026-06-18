@@ -11,6 +11,14 @@ Trigger: any moment you respond/report/notify to an external channel
 - Inbound arrives as a `<channel chat_id=… message_id=…>` block → reply with
   that `chat_id` (use `reply_to=message_id` to thread under an earlier message;
   omit for the latest).
+- **Reply body param is `text`, not `content`**: the channel reply tool's required
+  body field is `text` — `reply(chat_id, text="...")` (attach files via
+  `files=[abs paths]`). Calling it with `content` leaves `text` undefined and the
+  handler crashes with `undefined is not an object (evaluating 'text.length')`. The
+  raw Discord REST API uses `content`, which invites the mix-up — but the MCP tool
+  wants `text`. On a `text.length` error, **fix the param name first**; only fall
+  back to the raw REST path below if `text` itself keeps failing (a real
+  tool/gateway death). Don't reach for REST while the real cause is the param name.
 - **Raw REST/CLI fallback — inline `-c` corrupts backticks**: if you fall back to
   sending via an inline `python -c "...body..."`, backticks / `$` / `[]` in the
   body are eaten by the shell (command substitution / glob) and silently blanked
