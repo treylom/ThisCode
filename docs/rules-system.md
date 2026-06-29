@@ -101,3 +101,21 @@ When one deployment serves both Claude Code (auto-loads `CLAUDE.md`) and Codex-s
 Caveats learned in production (obsidian-ai-vault charness adoption, 2026-06-11):
 1. A whitelist-style `.gitignore` (`*` then `!` exceptions) silently untracks a new root file — add an explicit `!/AGENTS.md`.
 2. Verifying that a Codex agent actually receives the chain: echo-style probes get **contaminated** — the injected rules change the probe's own behavior. Use session-transcript forensics (inspect the injected payload in the agent's rollout log) with a read-only sandbox instead.
+
+## Enforcement: when the self-check gets skipped (rule-router + action gates)
+
+The progressive-disclosure pattern above relies on the agent **scanning INDEX each turn** and Reading the matching rule. That scan is *soft* — under load, time pressure, or a long message chain the agent can skip it, leaving the rule unapplied ("knowledge ≠ enforcement"). Two optional, fail-open hook layers harden the high-cost rules without re-bloating always-on context:
+
+### Layer 1 — force-surface the matching rule gate (`hooks/rule-router.sh`, UserPromptSubmit)
+Rather than trusting the agent to scan INDEX, a UserPromptSubmit hook reads the prompt, matches task-type keywords, and **injects the matching rule's core gate into context right then**. The mapping mirrors INDEX's trigger table (single source — the hook keys off task-types, it does not duplicate the rule bodies). This is complementary to a static always-on self-check, which becomes tuned-out precisely because it is identical every turn; the router is situation-matched, so it is relevant and hard to ignore. fail-open: no keyword match, or no `jq`/empty prompt → emit nothing, `exit 0`.
+
+### Layer 2 — block the detectable violation (Stop / PreToolUse action gates)
+Where a rule maps to a **detectable action** (a tool call, a Stop, an outbound deliverable), a Stop or PreToolUse hook checks for the violation signal and blocks with a one-line reminder (Stop blocks via `{"decision":"block","reason":...}`). Shipped examples: `completion-gate.sh` (pre-report before declaring "done" to the user), `dispatch-verify.sh` (verify a delegated bot actually started before ending the turn), `reply-gate.sh` (deliver via the channel tool, not terminal-only).
+
+### Discipline (avoid over-hardening)
+- Put hooks only on **costly, repeatedly-skipped** rules — never on the soft judgment/draft space (over-hooking = false positives = the agent fights its own harness). Mirror the autonomy gradient: read/draft = free, commit = self-judge, deploy/public = multi-party.
+- **fail-open is non-negotiable** (uncertainty → allow): a buggy gate degrades to a no-op, never a session trap. Recursion-guard every Stop gate (`stop_hook_active`).
+- Ship each gate with a **block-case + allow-case test** before wiring.
+- Transcript-scanning Stop gates miss events summarized away by context **compaction** → carry an escape clause ("if already satisfied / not applicable, ignore and stop"); detection should key off filenames/structured fields, not free-text keywords (which false-fire on progress reports).
+
+Origin: obsidian-ai-vault 2026-06-29 — a soft INDEX self-check was being skipped under load; `rule-router` (Layer 1) + action gates (Layer 2) were added. The router is the broad fix ("rules not read"); action gates are the targeted fix ("rule read but not obeyed").

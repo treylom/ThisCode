@@ -25,7 +25,10 @@ $ARGUMENTS
 3. **UserPromptSubmit** → `regression-self-check.sh`
    - 4-gate self-check (Discord reply / 단정 표현 / single-grep / skill invoke) 매 응답 전 환기
 
-4. **Stop** → `meeting-stop-reread.sh`
+4. **UserPromptSubmit** → `rule-router.sh`
+   - 프롬프트 task-type 키워드 매칭 → 해당 rule 핵심 게이트 자동 주입 (Layer-1 enforcement, docs/rules-system.md). 정적 self-check 보완 — 상황 매칭이라 무뎌지지 않음. fail-open(무매칭/jq부재 → 무출력)
+
+5. **Stop** → `meeting-stop-reread.sh`
    - active meeting 이 열려 있는 봇 세션이면 종료 전 회의 state 재독을 요청
    - active meeting 없음 / 일반 개발 세션 / 재귀 Stop = fail-open allow-stop
 
@@ -94,6 +97,11 @@ PATCH=$(cat <<EOF
           {
             "type": "command",
             "command": "bash '$PLUGIN_DIR/hooks/regression-self-check.sh'",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash '$PLUGIN_DIR/hooks/rule-router.sh'",
             "timeout": 3
           }
         ]
