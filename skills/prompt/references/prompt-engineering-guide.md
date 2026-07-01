@@ -2515,6 +2515,43 @@ client.messages.create(
 
 ---
 
+#### Part 0.4: Sonnet 5 운용 (현행 최신 · Claude Code 2.1.197 기본, 2026-06-30~)
+
+> **Sonnet 5(`claude-sonnet-5`)는 Sonnet 4.6의 drop-in upgrade**이며 2026-06-30 Claude Code 2.1.197부터 **기본 모델**입니다. 별칭 `sonnet` → `claude-sonnet-5` 자동 resolve. `claude-sonnet-5-0` 등 날짜/변형 ID는 없음(dateless pinned snapshot). 같은 가격대에서 4.6 대비 능력 향상(특히 coding·agentic).
+
+| 항목 | Sonnet 4.6 | Sonnet 5 (현행) |
+|------|------------|-----------------|
+| Model ID | `claude-sonnet-4-6` | `claude-sonnet-5` (별칭 `sonnet`) |
+| 가격 (Input/Output) | $3/$15 per MTok | **intro $2/$10 (~2026-08-31), 이후 $3/$15** (per-token 동일하나 tokenizer ~30%↑로 요청당 비용 상승) |
+| 컨텍스트 | 1M | 1M (default=max, 소형 variant 없음) |
+| Max Output | 128K | 128K (API) · ⚠️ **Claude Code CLI 실측 cap = 64K** |
+| thinking | extended(budget_tokens, deprecated) + adaptive | **adaptive만** — `budget_tokens` 지정 시 **400 에러** |
+| `effort` 기본값 | `high` | `high` (Claude API·Claude Code) |
+| sampling params | 수용 | **temperature/top_p/top_k 비기본값 = 400 에러** (제거·시스템프롬프트로 대체) |
+| assistant prefill | 400 에러 | 400 에러 (4.6과 동일) |
+| tokenizer | (구) | **신규 tokenizer — 같은 텍스트 ~30% 토큰↑** (budget·token count 재측정 필수) |
+| Knowledge cutoff | 2025-08 | **2026-01** |
+| 기타 | — | Priority Tier 미지원 · **실시간 사이버보안 safeguard** (거부 = HTTP 200 `stop_reason:"refusal"`, 에러 아님) |
+
+**Sonnet 4.6 → 5 마이그레이션 (공식 3 behavior change):**
+1. **adaptive thinking 기본 ON**: 4.6은 `thinking` 없으면 thinking 없이 실행 → 5는 adaptive로 실행. 끄려면 `thinking:{type:"disabled"}`. `max_tokens`는 thinking+응답 합산 한도라 재조정.
+2. **manual extended thinking 제거**: `thinking:{type:"enabled","budget_tokens":N}` → 400. adaptive + `effort`로 교체.
+3. **sampling params 미수용**: `temperature`/`top_p`/`top_k` 비기본값 → 400. 제거하고 시스템프롬프트로 유도.
++ token/cost budget = 4.6 값 재사용 ❌ (신규 tokenizer ~30%↑ 재측정). output budget = Claude Code 세션이면 실효 64K 기준.
+
+```python
+### Sonnet 5: model ID 교체 + effort 명시(기본 high는 지연↑) + adaptive thinking
+client.messages.create(
+    model="claude-sonnet-5",
+    max_tokens=64000,
+    thinking={"type": "adaptive"},
+    output_config={"effort": "medium"},  # 고볼륨/지연민감이면 "low"
+    messages=[...],  # temperature 등 sampling param 제거
+)
+```
+
+> 출처: Anthropic Models overview + whats-new-sonnet-5 (2026-07-01 확인) · Claude Code 2.1.197 changelog · 우리 CLI 실측(코난·손석희 R0, `AI_Second_Brain/meetings/2026-07-01-sonnet5-adoption/`).
+
 #### Part 0.5: 회귀 체크포인트 (Opus 4.6/Sonnet 4.5 → 4.7/4.6 마이그레이션 시)
 
 | 회귀 증상 | 원인 | 대응 |
@@ -2580,6 +2617,14 @@ client.messages.create(
 ---
 
 #### Part 1: 모델 개요
+
+##### 1.0 현행 최신 sonnet — Sonnet 5 (2026-06-30~, Claude Code 2.1.197 기본)
+
+| 모델 | Model ID | 특징 | 컨텍스트 | Max Output | 가격 (Input/Output) |
+|------|----------|------|----------|------------|---------------------|
+| Sonnet 5 | `claude-sonnet-5` (별칭 `sonnet`) | 현행 최신 sonnet, adaptive thinking, coding/agentic↑, 신규 tokenizer(~30%↑) | 1M | 128K (API) / CLI 실측 64K | intro $2/$10(~2026-08-31)·이후 $3/$15 |
+
+> ⚠️ 아래 "1.1 Opus 4.7 (최신)" 표기는 2026-04-16 기준 stale. 현행 최신 세대 = Opus 4.8 / Sonnet 5. 본 업데이트는 **sonnet 축만** 반영(Opus 4.8 카탈로그 갱신은 별건). Sonnet 5 운용 상세 = Part 0.4.
 
 ##### 1.1 Opus 4.7 (최신, 2026-04-16)
 
