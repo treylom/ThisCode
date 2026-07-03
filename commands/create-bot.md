@@ -117,7 +117,7 @@ agent 가 다음 5 template 중 사용자 선택 안내:
 
 - `<bot-name>` → 사용자 입력 봇 이름
 - `<역할>` / `<어휘>` / `<시그니처>` 등 — AskUserQuestion 으로 받아 채우기
-- **USER-PROFILE 소비 (Step 0 산출)**: ①template 추천 — `roles`/`pain_points` 에서 유도해 "당신 업무엔 research-bot 이 맞아 보입니다" 근거와 함께 제안 ②soul.md 말미에 `## 사용자 컨텍스트` 절 자동 삽입: "이 봇의 사용자는 <roles 요약> 업무를 하며, <pain_points 요약> 이 페인포인트다. 응답·제안은 이 맥락 위에서." — 봇이 첫날부터 사용자를 아는 상태로 시작한다.
+- **USER-PROFILE 소비 (Step 0 산출 — 보조층)**: ①template 추천 — `roles`/`pain_points` 에서 유도해 "당신 업무엔 research-bot 이 맞아 보입니다" 근거와 함께 제안 ②soul.md 말미에 `## 사용자 컨텍스트` 절(응답 톤 보정용 요약 2~3줄). **프로필의 본 정착지는 여기가 아니라 Step 6 의 구조(CLAUDE.md·폴더·rules·hook 후보)다** — soul 주입만 하고 끝내지 말 것.
 
 ```bash
 # thiscode plugin 위치 detect (templates/ 보유 위치) — PLUGIN_DIR 미설정 시.
@@ -150,6 +150,15 @@ sed -e "s|<bot-name>|${BOT_NAME}|g" \
 사용자가 더 세밀한 customization 필요시 agent 가 Edit 도구로 추가 수정 안내.
 
 ### Step 6. WD (Working Directory) 결정 + CLAUDE.md 생성 (선택)
+
+> **USER-PROFILE 의 본 정착지 (구조 층)** — 인터뷰 답은 페르소나가 아니라 *구조*로 내려간다:
+>
+> | 프로필 필드 | 이 Step 에서 하는 일 |
+> |---|---|
+> | `north_star` | 생성하는 CLAUDE.md **최상단에 목표 1줄** ("이 시스템은 <north_star> 를 위해 있다") |
+> | `roles` + `automation_wishes` | CLAUDE.md 에 `## 사용자 업무 컨텍스트` 절 — 모든 세션이 읽는 정본 층 |
+> | `workflows` | **폴더 스캐폴드 제안** — 업무 흐름 순서대로 WD 하위 트리를 제안하고 동의 시 생성 (강의 업무면 `강의/`, 리서치면 `Research/` — 답변에 나온 실제 단계·산출물 이름을 쓴다, 범용 템플릿 ❌) |
+> | `pain_points` | WD `rules/` 스캐폴드 — **페인포인트 1개 = rules/INDEX.md 트리거 행 1 + rule stub 1** ("복붙 정리에 시간 뺏김" → 저장 자동화 rule). 반복 실수형이면 **hook 후보를 1줄 제안**만 하고 사용자 판단에 맡긴다 (설치 시점 훅 강제 ❌) |
 
 봇의 작업 디렉토리. 사용자 입력:
 
