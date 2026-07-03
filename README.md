@@ -46,7 +46,7 @@ This single command installs:
 
 After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
 
-**Windows users:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) is detected by `install.sh` and instructed to use WSL. PowerShell port is planned for a future cycle.
+**Windows users:** two paths. **(a) Bot pairing only** — native **PowerShell works today**: Claude Code + the Discord plugin's *channels* directories (`~/.claude/channels/discord-<bot>/`) need **no tmux, no cmux, no daemon**; a bot session is just a PowerShell window running `claude` with `DISCORD_STATE_DIR` set ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) Full `install.sh` environment** (oh-my-tmux, multi-session helpers) — WSL 2 (Ubuntu 22.04+). If an AI assistant is driving your install on Windows, point it at path (a) — it must not try to recreate tmux with daemons or background services.
 
 **Dependency provenance:** full attribution matrix (16 entries — Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero).
 
@@ -343,7 +343,7 @@ Follow the wizard. The 8-Phase journey takes you from ripgrep-only to GraphRAG-w
 | **WSL Ubuntu 20.04+** | ✅ primary | `install.sh` most-tested target |
 | **Linux native** (Debian / Ubuntu / Fedora / Arch) | ✅ | Package manager auto-detected |
 | **macOS** | ✅ | brew-based |
-| **Windows native** | ❌ | Use WSL instead |
+| **Windows native (PowerShell)** | ✅ bot pairing | Discord-bot pairing runs natively via Claude Code **channels** (`~/.claude/channels/`) — **no tmux / cmux / daemon needed**. Only the tmux-based extras (oh-my-tmux, multi-session helpers in `install.sh`) still want WSL — see [docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md) |
 
 | Agent runtime | Compatibility | Notes |
 |---|---|---|

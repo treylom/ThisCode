@@ -26,6 +26,8 @@ claude -p "Discord 에 오늘 일정 정리 메시지 보내줘"
 # launchd/cron 으로 10분 주기 실행
 
 export DISCORD_STATE_DIR="$HOME/.claude/channels/discord-<bot-name>"
+# Windows PowerShell (tmux/daemon 불요 — docs/10-windows-powershell-bots.md):
+#   $env:DISCORD_STATE_DIR = "$HOME\.claude\channels\discord-<bot-name>"; claude
 
 cd /path/to/bot/WD || exit 1   # CLAUDE.md → soul.md 자동 로드 체인
 
