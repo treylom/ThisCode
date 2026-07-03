@@ -55,6 +55,8 @@ Windows Terminal `settings.json`의 `profiles.list`에 봇당 하나씩:
 }
 ```
 
+> `pwsh` = PowerShell 7. 설치돼 있지 않다면(내장 PowerShell 5.1만 있는 환경) `pwsh`를 `powershell`로 바꾸면 그대로 동작한다 — 본문 명령들은 5.1에서도 전부 유효하다.
+
 탭 하나 = 봇 하나. 이것이 Windows에서 tmux의 온전한 대체다.
 
 ## 하지 말 것 (AI 어시스턴트용 명시 금지 목록)
