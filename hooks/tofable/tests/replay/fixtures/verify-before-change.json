@@ -1,0 +1,9 @@
+{
+  "name": "verify-before-change",
+  "description": "Verification ran BEFORE the gated change (ordering bypass). Evidence must postdate the last gated change.",
+  "events": [
+    {"kind": "verify", "command": "python3 -m pytest tests/", "stdout": "3 passed", "exit_code": 0},
+    {"kind": "change", "file_path": "{CWD}/src/module.py"}
+  ],
+  "expect": "block"
+}

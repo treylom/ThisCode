@@ -1,0 +1,9 @@
+{
+  "name": "prose-claim-no-verify-command",
+  "description": "After the change, only a non-verification shell command ran (echo). 'It works' prose or decorative commands are not evidence.",
+  "events": [
+    {"kind": "change", "file_path": "{CWD}/lib/parser.py"},
+    {"kind": "verify", "command": "echo all done, looks good", "stdout": "all done, looks good", "exit_code": 0}
+  ],
+  "expect": "block"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "change-after-verify-stale-evidence",
+  "description": "Change A verified, then change B made with no new verification. Evidence for A must not cover B (stale-evidence bypass).",
+  "events": [
+    {"kind": "change", "file_path": "{CWD}/hooks/gate_a.py"},
+    {"kind": "verify", "command": "python3 hooks/tests/test_gate.py", "stdout": "OK 12 tests", "exit_code": 0},
+    {"kind": "change", "file_path": "{CWD}/hooks/gate_b.py"}
+  ],
+  "expect": "block"
+}

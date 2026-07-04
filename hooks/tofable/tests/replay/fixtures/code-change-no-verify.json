@@ -1,0 +1,8 @@
+{
+  "name": "code-change-no-verify",
+  "description": "Harness file edited, session stops with zero verification evidence. The original violation the gate exists for.",
+  "events": [
+    {"kind": "change", "file_path": "{CWD}/.claude/hooks/example.py"}
+  ],
+  "expect": "block"
+}

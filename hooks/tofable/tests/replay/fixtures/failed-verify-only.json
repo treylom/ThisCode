@@ -1,0 +1,9 @@
+{
+  "name": "failed-verify-only",
+  "description": "Verification ran after the change but FAILED (nonzero exit). A failed check is not evidence.",
+  "events": [
+    {"kind": "change", "file_path": "{CWD}/.claude/scripts/deploy.sh"},
+    {"kind": "verify", "command": "bash -n .claude/scripts/deploy.sh", "stdout": "syntax error near line 3", "exit_code": 1}
+  ],
+  "expect": "block"
+}
