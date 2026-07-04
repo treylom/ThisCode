@@ -47,3 +47,17 @@ Before generating code, run a 6-rung ladder as a reflex (not a research project 
 - A **review gate** (inform-the-human, not a universal mandate). Token/cost savings are conditional (on simple tasks the skill-read tax can make it *worse*) — the value is less code / fewer files and avoiding wrong builds, not guaranteed cost savings. Origin: the Ponytail ruleset (MIT, github.com/DietrichGebert/ponytail) 6-rung ladder.
 
 ▶ Fill in: where your team records deliberate simplifications and their upgrade paths.
+
+## 9. 기능 구현 완료 = 클릭스루 전수 + 발주자-의도 대조 + 적대 자문 (2026-07-05 추가)
+UI/기능 구현을 "완료" 보고·배포하기 전 3축:
+1. **클릭스루 전수**: 새/변경 기능의 모든 인터랙션 경로를 실제로 눌러 왕복(자동 e2e와 별개의 실화면 흐름).
+2. **발주자-의도 대조**: 원 지시 문구 인용 → 항목별 실동작 대조표 — "자체 spec 대비" ❌, 발주자 원문 대비.
+3. **적대 자문 1회**: "사용자가 눌러보면 이상한 게 없나" 반문 1줄(발견 시 fix 후 보고).
+- 배경: 자동 e2e GREEN이 "요약만 렌더되고 원문 부재"를 통과시킨 회귀 — 사용자 실사용 클릭이 적발. 상황별 재판단 여지(비UI·소규모 변경) + 사용자 최종 피드백 우선.
+
+### §3 보강 (2026-07-05)
+- **웹 산출 검증 = 소스 grep ❌ 최종 응답 실측**: 웹페이지·외부 URL 산출의 "반영됐다" 판정은 (a) HTTP 최종 status(redirect 추적 후)+content-type+bytes 실측 (b) 렌더 측 확인(SSR은 주석 분절로 연속 문자열 grep이 0히트 착시 — 분리 토큰으로). 소스 참조 grep은 pre-filter일 뿐 완료 근거 ❌.
+- **파이프라인 셸 = 의존 단계 exit 직접 캡처**: 후속 단계가 선행 성공에 의존하면 선행 명령을 단독 실행해 exit 직접 캡처(`set -o pipefail` 또는 파이프 제거) — `cmd | tail` 뒤 `$?`는 tail의 exit라 실패가 마스킹된다.
+
+### §4 보강 (2026-07-05)
+- **git 파일 "없다" = `git log --all` 후에만**: 워킹트리/HEAD에 없는 파일을 "원래 없던 것"으로 단정 ❌ — 다른 브랜치에 실렸을 수 있다(자동커밋이 feature 브랜치 체크아웃 중 문서를 그 브랜치에 실은 실사례). boundary 확장의 git판.
