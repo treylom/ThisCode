@@ -113,7 +113,7 @@ draft 생성 시 포함:
 > **⚠️ Orchestrator 핵심: "지식에도 Linting이 필요하다."**
 > draft 노트의 품질을 검증하고 자동 수정하는 health check 루프.
 > **lint 통과 전까지 STEP 5 저장 진행 금지.**
-> 참조 스킬: `km-karpathy-pipeline.md`
+> 참조 스킬: Orchestrator Pipeline 오버레이 (vault-internal — 번들 미포함, 없으면 본 단계 기본 흐름대로)
 
 ### 4.5-1. Lint 규칙 6가지
 
@@ -259,11 +259,11 @@ Write({ file_path: "{vault_absolute_path}/적절한/경로/파일명.md", conten
 **Mine/ vs Library/ 라우팅**: 노트 생성 전 반드시 아래 규칙으로 경로를 결정합니다.
 
 ```
-Q: "이 콘텐츠의 원저자가 tofukyung인가?"
+Q: "이 콘텐츠의 원저자가 vault 주인(owner)인가?"
 
 YES → Mine/ 하위:
   - 얼룩소 원문           → Mine/얼룩소/
-  - @tofukyung Threads    → Mine/Threads/
+  - 본인 Threads/SNS 원문 → Mine/Threads/
   - 참고 자료             → Resources/
   - 에세이/분석/에버그린  → Mine/Essays/
   - 업무 산출물 (CV 등)   → Mine/Projects/
@@ -278,9 +278,9 @@ NO → Library/ 하위 (기본):
 ```
 
 **판별 시그널 (우선순위)**:
-1. author 필드 = "tofukyung" → Mine/
-2. source URL에 "@tofukyung" 포함 → Mine/Threads/
-3. tags에 "tofukyung" 포함 → Mine/
+1. author 필드 = vault 주인 핸들(사용자 CLAUDE.md 에 선언) → Mine/
+2. source URL에 본인 핸들 포함 → Mine/Threads/
+3. tags에 본인 핸들 포함 → Mine/
 4. 위 해당 없음 → Library/
 
 ### 5-0-PLUS. 기존 상위 MOC parent 자동 등록 (2026-04-21 운영 규율)

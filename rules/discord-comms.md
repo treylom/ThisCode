@@ -33,7 +33,9 @@ Trigger: any moment you respond/report/notify to an external channel
   --channel <id> --payload <json-file>` (`--dry-run` validates first; the payload
   MUST be a file, never inline `-c` — see the backtick-corruption rule above).
   Color convention: green 0x2ECC71=done, yellow 0xF1C40F=waiting/attention, red
-  0xE74C3C=issue. Everyday conversation stays plain text — don't card-ify chat.
+  0xE74C3C=issue. Cards are for genuinely tabular/field-shaped payloads —
+  not a default. Prose that reads fine as prose stays plain text; everyday
+  conversation is never card-ified.
 
 ## 2. Addressing another bot
 - In a shared channel, a message aimed at another bot **must** carry its

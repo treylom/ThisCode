@@ -3,7 +3,7 @@
 > **대상**: 개인/팀 vault(또는 임의 데이터)를 ChatGPT에 OAuth로 안전하게 연결하려는 개발자
 > **검증 환경**: WSL Ubuntu, Node 24, Express + TypeScript MCP SDK 1.15.0, ChatGPT Business plan
 > **최종 업데이트**: 2026-04-27
-> **참고 리서치**: [`Library/Research/deep-research/chatgpt-mcp-hosting-cases_20260427/report.md`](../../AI_Second_Brain/Library/Research/deep-research/chatgpt-mcp-hosting-cases_20260427/report.md) (32 sources, A+B 91%)
+> **참고 리서치**: 내부 딥리서치 리포트 (32 sources, A+B 91% — 번들 미포함)
 
 ---
 
@@ -414,8 +414,8 @@ tail -f ~/.cache/ngrok-vault.log
 
 ## 11. 참고
 
-- 본 가이드의 결정 근거 = [`Library/Research/deep-research/chatgpt-mcp-hosting-cases_20260427/report.md`](../../AI_Second_Brain/Library/Research/deep-research/chatgpt-mcp-hosting-cases_20260427/report.md) (32 sources)
-- ChatGPT MCP OAuth Provider 비교 = [`Library/Research/deep-research/auth0-mcp-oauth-comparison_20260427/report.md`](../../AI_Second_Brain/Library/Research/deep-research/auth0-mcp-oauth-comparison_20260427/report.md) (30 sources)
+- 본 가이드의 결정 근거 = 내부 딥리서치 리포트 (32 sources — 번들 미포함)
+- ChatGPT MCP OAuth Provider 비교 = 내부 딥리서치 리포트 (30 sources — 번들 미포함)
 - 기존 cloudflared + Bearer 시절 가이드 = [`../CHATGPT_CONNECTOR.md`](../CHATGPT_CONNECTOR.md) (deprecated, 보존용)
 
 ### 외부 자료

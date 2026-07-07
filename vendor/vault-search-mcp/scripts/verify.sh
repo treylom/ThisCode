@@ -8,7 +8,7 @@
 #   ./scripts/verify.sh codex        # codex exec 호출만
 #
 # 환경변수:
-#   VAULT_PATH               vault 경로 (default: /home/tofu/AI/AI_Second_Brain)
+#   VAULT_PATH               vault 경로 (default: ${VAULT_PATH:-$HOME/AI_Second_Brain})
 #   GRAPHRAG_API_URL         GraphRAG 서버 (default: http://127.0.0.1:8400)
 #   MCP_HTTP_PORT            HTTP 검증 포트 (default: 8401)
 #   MCP_AUTH_TOKEN           HTTP 인증 토큰 (default: verify-test-token)
@@ -21,7 +21,7 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIST_INDEX="$REPO_ROOT/dist/index.js"
 DIST_HTTP="$REPO_ROOT/dist/http.js"
 
-VAULT_PATH="${VAULT_PATH:-/home/tofu/AI/AI_Second_Brain}"
+VAULT_PATH="${VAULT_PATH:-$HOME/AI_Second_Brain}"
 GRAPHRAG_API_URL="${GRAPHRAG_API_URL:-http://127.0.0.1:8400}"
 MCP_HTTP_PORT="${MCP_HTTP_PORT:-8401}"
 MCP_AUTH_TOKEN="${MCP_AUTH_TOKEN:-verify-test-token}"

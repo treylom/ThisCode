@@ -46,6 +46,10 @@ TASK = [
 ]
 HIGH_RISK = ["회의", "재발", "매번", "이전 산출", "기존 구현"]
 
+# Vault root — set VAULT_ROOT to your Obsidian vault path (default kept for
+# backward compatibility with the reference deployment).
+VAULT_ROOT = Path(os.environ.get("VAULT_ROOT", str(Path.home() / "obsidian-ai-vault")))
+
 MEMORY_ROOT_HINTS = (
     "memory",
     ".claude-memory",
@@ -159,7 +163,7 @@ def user_prompt_submit() -> int:
 
 def _append_event_log(kind: str, data: dict[str, Any]) -> None:
     try:
-        path = Path.home() / "obsidian-ai-vault/.claude/state/memory-s5/events.jsonl"
+        path = VAULT_ROOT / ".claude/state/memory-s5/events.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
         rec = {"ts": time.time(), "kind": kind, **data}
         with path.open("a", encoding="utf-8") as f:
@@ -230,7 +234,7 @@ def _bridge_evidence() -> bool:
     paths = []
     if os.environ.get("MEMORY_S5_BRIDGE_LOG"):
         paths.append(Path(os.environ["MEMORY_S5_BRIDGE_LOG"]))
-    paths.append(Path.home() / "obsidian-ai-vault/.claude/state/memory-s5/bridge-evidence.jsonl")
+    paths.append(VAULT_ROOT / ".claude/state/memory-s5/bridge-evidence.jsonl")
     paths.append(Path.home() / ".claude/state/memory-s5/bridge-evidence.jsonl")
     cutoff = time.time() - 6 * 3600
     for path in paths:

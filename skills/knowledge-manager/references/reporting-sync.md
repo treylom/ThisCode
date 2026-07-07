@@ -63,7 +63,7 @@
 
 ### 6-4. 엔티티 페이지 자동 생성 제안
 
-> **Karpathy 패턴: log.md는 시간순, 추가 전용(append-only), grep 파싱 가능.**
+> **Andrej Karpathy 패턴: log.md는 시간순, 추가 전용(append-only), grep 파싱 가능.**
 
 ```
 STEP 6 결과 보고 완료 후, vault의 _km-log.md에 자동 append:
@@ -157,7 +157,7 @@ done
 
 | 기능 | 참조 스킬 |
 |------|----------|
-| **Orchestrator Pipeline 오버레이** | `km-karpathy-pipeline.md` |
+| **Orchestrator Pipeline 오버레이** | (vault-internal — 번들 미포함) |
 | 전체 워크플로우 | `km-workflow.md` |
 | 콘텐츠 추출 | `km-content-extraction.md` |
 | **YouTube 트랜스크립트** | `km-youtube-transcript.md` |

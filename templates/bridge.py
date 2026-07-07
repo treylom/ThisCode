@@ -79,7 +79,8 @@ THREAD_ID_PATH = WD / ".codex-thread-id"
 _THISCODEX_ROOT = Path(__file__).resolve().parents[1]
 for _scripts_dir in (
     Path(os.environ.get("THISCODEX_ROOT", _THISCODEX_ROOT)) / "scripts",
-    Path.home() / "obsidian-ai-vault/.claude/scripts",
+    # VAULT_ROOT = your Obsidian vault path (default kept for the reference deployment)
+    Path(os.environ.get("VAULT_ROOT", str(Path.home() / "obsidian-ai-vault"))) / ".claude/scripts",
 ):
     if _scripts_dir.exists():
         sys.path.insert(0, str(_scripts_dir))

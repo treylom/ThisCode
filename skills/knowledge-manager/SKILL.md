@@ -11,7 +11,7 @@ allowedTools: Read, Write, Bash, Glob, Grep, mcp__obsidian__*, mcp__notion__*, m
 > **이 명령어는 단일 에이전트가 모든 작업을 순차적으로 직접 수행합니다.**
 > Agent Teams 풀스케일 버전: `/knowledge-manager-at` (tmux + .team-os 필요)
 > 에이전트 정의: `.claude/agents/knowledge-manager.md` 참조
-> **⚡ Orchestrator Pipeline**: `km-karpathy-pipeline.md` — Linting + Filed Back + Q&A 오버레이
+> **⚡ Orchestrator Pipeline**: vault-internal 오버레이 (Linting + Filed Back + Q&A — 번들 미포함, 없으면 기본 흐름대로 진행)
 
 ---
 
@@ -43,7 +43,7 @@ MUST: Skill("/using-superpowers") 호출
   → 적용 가능 스킬 목록 식별, 작업 순서에 매핑
   → 이 호출 없이 STEP 1 이후 진행 금지
 
-참조: km-karpathy-pipeline.md (Orchestrator Pipeline 오버레이)
+참조: Orchestrator Pipeline 오버레이 (vault-internal — 번들 미포함)
   → STEP 4.5에서 /autoresearch 패턴 적용 (lint 루프)
 ```
 
@@ -290,7 +290,7 @@ Main이 입력 소스를 직접 추출합니다. 스킬 참조: `km-content-extr
 
 ### 증분 처리 — 중복 소스 감지 + 변경점 자동 추출 (Incremental Processing)
 
-> **Karpathy 원칙: "새 소스가 도착하면 LLM이 읽고, 핵심 정보를 추출하고, 기존 위키에 통합한다."**
+> **Andrej Karpathy 원칙: "새 소스가 도착하면 LLM이 읽고, 핵심 정보를 추출하고, 기존 위키에 통합한다."**
 > 단순히 "있는지 없는지"만 보는 게 아니라, **"뭐가 바뀌었는지"까지 자동으로 추출**해야 한다.
 
 ```

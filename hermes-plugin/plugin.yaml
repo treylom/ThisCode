@@ -22,7 +22,7 @@ provides_commands:
   - /thiscode:km-bootstrap
   - /thiscode:search
   - /thiscode:setup
-author: tofukyung
+author: treylom
 homepage: https://github.com/treylom/ThisCode
 license: MIT
 platforms:
