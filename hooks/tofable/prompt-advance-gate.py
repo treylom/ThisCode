@@ -37,17 +37,27 @@ except Exception:
 
 GATED_TOOLS = {"Write", "Edit", "MultiEdit", "NotebookEdit", "Task", "Agent"}
 
-# Requirement-crystallizing phase happened:
+# Requirement-crystallizing phase happened. Invoke-shaped evidence only:
+# loose substrings ("skill...interview") over-fire on injected rule/prose
+# text that merely MENTIONS interviews (live-transcript probe, 2026-07-08).
 ROLE_CONFIRM_RE = re.compile(
-    r"ouroboros[:_]interview|ouroboros_interview|skill.{0,40}interview"
+    r"ouroboros[:_]interview"
+    r"|<command-name>[^<]{0,30}interview"
     r"|superpowers:brainstorming|\"skill\"\s*:\s*\"brainstorming\""
     r"|ExitPlanMode",
     re.IGNORECASE,
 )
-# Prompt-engineering pass evidence:
+# Prompt-engineering pass evidence. Same discipline: only shapes a real
+# invocation leaves in the transcript. A harness that injects guidance
+# prose mentioning "/prompt" or the guide's filename must not silently
+# satisfy the gate (self-pass vector measured live, 2026-07-08) — so we
+# match the Read tool-call JSON, the command tag, the Skill-invoke JSON,
+# and the batch-mode flag, not bare filenames.
 PROMPT_PASS_RE = re.compile(
-    r"prompt-engineering-guide|/prompt\b|\"skill\"\s*:\s*\"prompt\""
-    r"|prompt\s+--batch|image-prompt|expert-domain-priming",
+    r"file_path\"?\s*:\s*\"[^\"]*prompt-engineering-guide"
+    r"|<command-name>\s*/?prompt\b"
+    r"|\"skill\"\s*:\s*\"(?:prompt|image-prompt)\""
+    r"|prompt\s+--batch",
     re.IGNORECASE,
 )
 

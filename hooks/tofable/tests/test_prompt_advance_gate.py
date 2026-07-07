@@ -50,7 +50,11 @@ def write_transcript(directory: Path, lines: list[str]) -> Path:
 
 INTERVIEW_LINE = json.dumps({"type": "assistant", "text": "Skill invoked: ouroboros:interview crystallized the task"})
 PLAN_LINE = json.dumps({"type": "assistant", "text": "ExitPlanMode approved the plan"})
-PROMPT_LINE = json.dumps({"type": "assistant", "text": "loaded prompt-engineering-guide.md section for research template"})
+# Real invocation shape: the Read tool-call JSON for the guide.
+PROMPT_LINE = json.dumps({"type": "assistant", "tool_use": {"name": "Read", "input": {"file_path": "/skills/prompt-engineering-guide.md"}}})
+# Injected guidance PROSE that merely mentions the skill — must NOT count
+# (self-pass vector: rule-router style text measured in a live transcript).
+ROUTER_PROSE_LINE = json.dumps({"type": "system", "text": "reminder: research/factcheck/image tasks should use /prompt and read prompt-engineering-guide.md before generating"})
 CHAT_LINE = json.dumps({"type": "user", "text": "just fix the typo in the readme"})
 
 
@@ -86,6 +90,11 @@ class PromptAdvanceGateTests(unittest.TestCase):
     def test_prompt_pass_after_marker_allows(self):  # nominal: compliant flow
         transcript = write_transcript(self.dir, [INTERVIEW_LINE, PROMPT_LINE])
         self.assertFalse(denied(run_hook(self.payload(transcript), self.env)))
+
+    def test_router_prose_does_not_satisfy_gate(self):  # deep: self-pass vector
+        transcript = write_transcript(self.dir, [INTERVIEW_LINE, ROUTER_PROSE_LINE])
+        self.assertTrue(denied(run_hook(self.payload(transcript), self.env)),
+                        "injected prose mentioning /prompt must not count as a prompt pass")
 
     def test_prompt_pass_before_marker_still_denies(self):  # deep: ordering matters
         transcript = write_transcript(self.dir, [PROMPT_LINE, PLAN_LINE, CHAT_LINE])
