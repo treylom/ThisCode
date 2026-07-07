@@ -17,3 +17,5 @@ benchmark/results/tier?-*.tmp.json
 
 .thiscode-init-state.json
 *.thiscode.bak
+__pycache__/
+*.pyc

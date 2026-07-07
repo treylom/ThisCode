@@ -26,6 +26,15 @@ Trigger: any moment you respond/report/notify to an external channel
   file and run it instead (Python string literals bypass the shell); verify
   message integrity by re-fetching, and correct via edit, not a duplicate send.
 
+
+- **Structured reports = embed cards**: morning briefings, completion cards, and
+  status summaries read far better as rich embed cards than flat text. Use the
+  bundled helper — `python3 scripts/discord-embed-send.py --bot <bot>
+  --channel <id> --payload <json-file>` (`--dry-run` validates first; the payload
+  MUST be a file, never inline `-c` — see the backtick-corruption rule above).
+  Color convention: green 0x2ECC71=done, yellow 0xF1C40F=waiting/attention, red
+  0xE74C3C=issue. Everyday conversation stays plain text — don't card-ify chat.
+
 ## 2. Addressing another bot
 - In a shared channel, a message aimed at another bot **must** carry its
   `<@user_id>` mention or a `reply_to` — otherwise the receiving bot silently

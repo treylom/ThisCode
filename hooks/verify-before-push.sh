@@ -8,7 +8,7 @@
 #   (maintainer 가 아침에 audit 의 'OBSERVE(would-deny' 기록을 검토 → false-positive 없으면 enforce 전환.)
 #
 # 근거: 04-synthesis A1(9891줄 삭제 near-miss ★★) / feedback_never_batch_verify_with_dependent_commit.
-# 자동화(aktofu) 파이프라인 push 는 신뢰 → skip. fail-open(판단 불확실 시 allow).
+# 자동화 파이프라인 push 는 신뢰 → skip. fail-open(판단 불확실 시 allow).
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/hookkit.sh"
 hk_failopen
 hk_read_input
@@ -25,7 +25,9 @@ HAS_VERIFY=unknown
 if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ] && command -v python3 >/dev/null 2>&1; then
   HAS_VERIFY="$(TR="$TRANSCRIPT" python3 2>/dev/null <<'PY'
 import json, os, re
-VERIFY = re.compile(r"\b(test|pytest|vitest|jest|tsc|build|lint|py_compile|cargo|go test|npm|run-hook-tests|playwright)\b|git\s+diff|\bdiff\b")
+# \bverify\S*\.(py|sh|mjs|js) matches verify_state.py / verify-*.sh style verification scripts
+# (upstream vault fix 2026-07-07: real verification runs were not recognized).
+VERIFY = re.compile(r"\b(test|pytest|vitest|jest|tsc|build|lint|py_compile|cargo|go test|npm|run-hook-tests|playwright)\b|git\s+diff|\bdiff\b|\bverify\S*\.(py|sh|mjs|js)\b")
 PUSH = re.compile(r"(^|[;&| ])git\s+(push|commit)|gh\s+pr\s+(create|merge)")
 path = os.environ["TR"]
 try:

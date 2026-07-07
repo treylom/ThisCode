@@ -4,6 +4,16 @@
 > `soul.md`/memory bloats context → recall drops ("the bot can't keep it all in
 > mind"). Only this INDEX is always loaded; **when a trigger matches, Read that
 > one rule file then** and apply it. Rule bodies live in `rules/<topic>.md`.
+>
+> **Loading reality (measured 2026-07-07 upstream)**: recent Claude Code
+> versions auto-inject the entire `.claude/rules/*.md` directory as project
+> instructions at session start — for Claude sessions this INDEX therefore acts
+> as an *attention router* over rules already in context, not a lazy-load
+> gate. Codex (and other harnesses that do not auto-load the rules directory) keep the original
+> progressive-disclosure behavior: Read the matched rule file on trigger.
+> Front-loading is an accepted trade-off on large-context models; if your
+> model context is small, move rules out of the auto-loaded directory and rely
+> on this INDEX alone.
 > Full convention + the Claude Code / Codex variants: [rules-system.md](../docs/rules-system.md) (shipped in this repo; the ThisCodex companion ships the matching copy).
 >
 > **How to use (self-check every turn)**: scan the trigger table below → if a
