@@ -101,6 +101,13 @@ chmod 600 "$BOT_DIR/.env"
 
 ⚠️ 토큰 Discord 본문 / git / screenshot 노출 X.
 
+### Step 4.5. 페르소나·직무 프롬프트 고도화 (`/prompt` 연동 — 설치 권장)
+
+Step 5/6 에서 placeholder 를 사용자 답변 그대로 박지 말고, 먼저 프롬프트 엔지니어링 패스를 한 번 돌린다:
+
+- **`/prompt` 스킬이 설치돼 있으면 (권장)**: `/prompt --batch "봇 페르소나·직무 시스템 프롬프트 생성: 이름=<bot-name>, 역할=<Step0 roles 요약>, 업무 맥락=<north_star·pain_points 요약>, 산출=soul.md 의 역할/어휘/시그니처 절 + CLAUDE.md 의 업무 컨텍스트 절"` 을 실행해 고도화된 페르소나 프롬프트를 받고, 그 산출을 Step 5 placeholder 와 Step 6 구조에 주입한다. (에이전트 목적 감지 → 전문가 프라이밍·구조화가 자동 적용된다.)
+- **미설치면**: 이 단계를 건너뛰고 AI 자체 생성으로 대체한다 — 단 사용자에게 한 줄 안내: "prompt-engineering 스킬을 설치하면 봇 페르소나 품질이 올라갑니다."
+
 ### Step 5. soul.md template 선택 + 채우기
 
 agent 가 다음 5 template 중 사용자 선택 안내:

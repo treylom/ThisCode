@@ -1,6 +1,6 @@
 # Installing the fable verification hooks
 
-These hooks are the mechanical half of `fable-work`: an evidence ledger that
+These hooks are the mechanical half of `tofable`: an evidence ledger that
 records what actually ran, and a stop-gate that won't let a turn end
 claiming "done" on a harness/code change it never verified. They are plain
 Python scripts driven over stdin/stdout — no dependencies beyond Python 3.
@@ -10,31 +10,38 @@ that can run a command on a post-tool event and on a turn-end event; only
 the wiring syntax differs. If you're on **Codex**, prefer the upstream
 plugin instead — see [`../codex/README.md`](../codex/README.md).
 
-## The three files
+## The files
 
 | File | Role | Hook event |
 |---|---|---|
-| `fable_lib.py` | shared library (surface heuristic, ledger, gate logic, kill switch). The other two import it. | — |
+| `fable_lib.py` | shared library (surface heuristic, ledger, gate logic, kill switch). Every gate imports it. | — |
 | `verify-ledger.py` | records real verifications (test run / scan / cross-check) as ordered evidence. Records only, never blocks. Fail-open. | `PostToolUse` |
 | `stop-verify-gate.py` | if the turn changed a code/harness surface with no verification recorded since, emits `{"decision":"block"}` to bounce the stop once. Capped, fail-open. | `Stop` |
+| `continuation-gate.py` | bounces deferral language ("I'll do it next turn") when work is still open. | `Stop` |
+| `surfacing-gate.py` | destructive shell ops (rm/force-push/DROP …) must be surfaced once before running. | `PreToolUse` (Bash) |
+| `blind-retry-gate.py` | the byte-identical command that just failed gets one "diagnose first" bounce. | `PreToolUse` (Bash) |
+| `prompt-advance-gate.py` | after an interview/brainstorm/plan phase, the first execution-grade call without a prompt-engineering pass gets one bounce (workflow: role confirmed → advance the prompt → execute). | `PreToolUse` (Write\|Edit\|MultiEdit\|Task\|Agent) |
+
+The minimal install is still the first three; the other gates are opt-in —
+wire only what you want enforced.
 
 ## Install (Claude Code)
 
 **1. Get the files onto your machine.**
 
 ```bash
-git clone https://github.com/treylom/fable-work
+git clone https://github.com/treylom/tofable
 ```
 
 (Or copy just the `hooks/` directory somewhere — if you do, adjust the
-`fable-work/hooks/...` paths in the commands below to wherever you put it.)
+`tofable/hooks/...` paths in the commands below to wherever you put it.)
 
 Pick a stable absolute path for the three files — e.g. `~/.claude/fable-hooks/`:
 
 ```bash
 mkdir -p ~/.claude/fable-hooks
-cp fable-work/hooks/fable_lib.py fable-work/hooks/verify-ledger.py \
-   fable-work/hooks/stop-verify-gate.py ~/.claude/fable-hooks/
+cp tofable/hooks/fable_lib.py tofable/hooks/verify-ledger.py \
+   tofable/hooks/stop-verify-gate.py ~/.claude/fable-hooks/
 ```
 
 **2. Wire them into `~/.claude/settings.json`.**
@@ -85,7 +92,7 @@ takes no matcher — it always fires on every turn-end. Both scripts find
 **3. Confirm it's actually wired (don't assume).**
 
 ```bash
-python3 fable-work/hooks/tests/test_gate.py
+python3 tofable/hooks/tests/test_gate.py
 ```
 
 This drives the hooks as real subprocesses and asserts the gate blocks when
