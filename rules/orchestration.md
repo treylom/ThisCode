@@ -42,3 +42,24 @@ asserting another bot's identity or health, or coordinating multiple agents.
 
 ▶ Fill in: how `<bot>` is derived in your setup; your identity-guard location;
 your independent-review + second-track reviewers; your maintainer sign-off path.
+
+## 4. Debugging = co-engage a second, independent reviewer (no solo closure)
+
+- When a **non-trivial bug** surfaces (reproduction, root-cause hunting, or
+  fix verification is at stake), the discovering bot does not close it alone.
+  Bring in an independent engineering peer (a different bot/engine — e.g. a
+  Codex-side reviewer if the finder runs on Claude) in one of three shapes:
+  ① independent reproduction/diagnosis on a different hypothesis axis
+  ② cross-review of the proposed fix ③ parallel repair on an isolated
+  branch/worktree. State the shape explicitly in the dispatch (HOW-complete).
+- Mind machine boundaries: a peer on another machine joins local-only repro
+  work as the diagnosis/review axis; if the repo is on a shared remote, it can
+  reproduce directly.
+- **Trivial escape hatch**: typos and 1-hop self-evident fixes may go solo —
+  but leave a one-line judgment note in the progress log / commit.
+- Rationale: a single-viewpoint debug leaves sibling bugs and detection gaps
+  behind; an independent second viewpoint is the cheapest cross-check.
+
+▶ Fill in: which peer bot/engine serves as your debugging co-reviewer; where
+its dispatch channel lives; your progress-log path for the judgment note.
+
