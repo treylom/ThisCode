@@ -35,6 +35,7 @@
 | Searching the project's own KB · **before planning a task · on failure** | [knowledge-retrieval.md](knowledge-retrieval.md) | Active recall (§2): search before planning + on failure (decide, don't apologize) + propagate after. Pick tool by query shape: structured KB CLI → graph/semantic search skill → plain grep. Don't raw-grep our own docs first |
 | About to query KB search · a search just failed/came back empty | [search-usage.md](search-usage.md) | 3–7 word keyword queries; trust tool defaults (no per-query weight overrides). Never re-throw the same failed query — rephrase once → CLI full-text 2nd tier → plain search. Outside latency envelope = report, don't retry |
 | Receiving a bug report / modifying files / about to claim "fixed" / non-trivial bug resolved | [code-quality.md](code-quality.md) | Reproduce→fix→prove; 3-step verification; don't conclude absence from limited observation; debug artifact with Detection Gap + 4-axis sibling search |
+| Starting disk-heavy work · configuring a daemon's logging · ENOSPC/low-space signals | [resource-limits.md](resource-limits.md) | Pre-flight headroom ≥ max(15GB, 2× expected transient) + periodic re-measure; ENOSPC = full HOLD + alert. Verbose tracing opt-in only; daemon logs through a size-bounded rotating sink; single file >2GB = early alarm |
 
 ## Splitting principle
 - One file = one situation cluster. Loaded on demand, so each file is focused
