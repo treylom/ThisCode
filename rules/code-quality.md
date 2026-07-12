@@ -49,10 +49,10 @@ Before generating code, run a 6-rung ladder as a reflex (not a research project 
 
 ▶ Fill in: where your team records deliberate simplifications and their upgrade paths.
 
-## 9. Feature completion = full click-through + commissioner-intent diff + one adversarial pass (added 2026-07-05)
+## 9. Feature completion = full click-through + requester-intent diff + one adversarial pass (added 2026-07-05)
 Before reporting a UI/feature implementation "done" (or cutting over), three axes:
 1. **Full click-through**: actually walk every interaction path of the new/changed feature (each card type, button, link at least once) — a real-screen pass, separate from automated e2e.
-2. **Commissioner-intent diff**: quote the original instruction → item-by-item table against actual behavior — comparing against "our own spec" ❌; compare against the commissioner's wording.
+2. **Requester-intent diff**: quote the original instruction → item-by-item table against actual behavior — comparing against "our own spec" ❌; compare against the requester's wording.
 3. **One adversarial pass**: one line asking "would anything look wrong if the user clicked around?" (fix before reporting if something turns up).
 - Background: an automated-e2e GREEN passed a page that rendered only the summary with the full text missing — the user's real clicks caught it. Situational judgment (non-UI / small changes) and the user's final feedback win.
 
@@ -61,7 +61,7 @@ Before reporting a UI/feature implementation "done" (or cutting over), three axe
 - **Pipeline shells: capture the exit of the step you depend on directly**: if a later step (rotation, commit, post-send) depends on an earlier command succeeding, run that command alone and capture its exit directly (`set -o pipefail` or drop the pipe) — `$?` after `cmd | tail` is tail's exit, so failures get masked.
 
 ### §3 reinforcement (2026-07-12)
-- **Never merge/pull on a dirty tree in a shared repo — merge in an isolated worktree**: git's merge *refusal* path is not read-only. On a dirty tree, merge internally snapshots your uncommitted changes (stash create); if the merge is then refused, it restores via `read-tree --reset -u HEAD` + `stash apply` — and that apply's failure is **silently ignored**, so your uncommitted work can be rolled back with no error shown. Do merges/pulls in an isolated worktree (`git worktree add --detach <dir>`), push from there, then remove it; afterwards re-measure the shared tree (`git status --short | wc -l`) instead of trusting a stale count. If work does go missing: `git fsck --dangling` → date-filter the "WIP on …" stash snapshots → recover from them.
+- **Never merge/pull on a dirty tree in a shared repo — merge in an isolated worktree**: git's merge path on a dirty tree is not read-only. Once a merge strategy actually starts, git first snapshots your uncommitted changes (stash create); if the merge then fails or aborts mid-run (distinct from the read-only pre-flight refusal that touches nothing), it restores via `read-tree --reset -u HEAD` + `stash apply` — and that apply's failure is **silently ignored**, so your uncommitted work can be rolled back with no error shown. Do merges/pulls in an isolated worktree (`git worktree add --detach <dir>`), push from there, then remove it; afterwards re-measure the shared tree (`git status --short | wc -l`) instead of trusting a stale count. If work does go missing: `git fsck --dangling` → date-filter the "WIP on …" stash snapshots → recover from them.
 
 ### §4 reinforcement (2026-07-05)
 - **"The file never existed" only after `git log --all`**: don't conclude that a file absent from the working tree/HEAD "never existed" — it may have landed on another branch (real case: an auto-commit hook committed docs onto a feature branch that happened to be checked out). The git flavor of boundary expansion.

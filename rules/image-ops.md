@@ -25,3 +25,5 @@ Trigger: generating, editing, labeling, or dispatching image work.
 
 ## 5. Dispatch contract
 - The first dispatch message must name: edit vs generate, required reference path/URL/message, forbidden paths, expected output path, and verification criteria.
+
+▶ Fill in: your image toolchain (edit-capable model, overlay tool) and where reference assets live.

@@ -13,7 +13,7 @@ How to fill: edit the rule file in your bot's `rules/` copy and replace the
 `▶ Fill in:` line with a short concrete block (keep it under ~5 lines; these
 files stay lean by design).
 
-## Checklist (11 items, grouped by file)
+## Checklist (12 items, grouped by file)
 
 ### discord-comms.md — reply tool · bot ids · completion thread · channel map
 - **Where to get it**: reply tool name = your Discord integration's tool id
@@ -100,6 +100,15 @@ files stay lean by design).
   smoke test must be green first
   ```
 - **If blank**: rule changes drift between repos; secrets ride along in pushes.
+
+### image-ops.md — image toolchain · reference assets
+- **Filled example**:
+  ```
+  Edit-capable model: gpt-image-2 via $imagegen (image-input mode)
+  Deterministic overlay tool: PIL/ImageMagick (technical images only)
+  Reference assets: assets/refs/ (person/brand/product ground truth)
+  ```
+- **If blank**: bots route edits to generators (composition drift) or invent real people/brand looks.
 
 ## Verify you're done
 
