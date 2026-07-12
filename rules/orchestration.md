@@ -63,3 +63,27 @@ your independent-review + second-track reviewers; your maintainer sign-off path.
 ▶ Fill in: which peer bot/engine serves as your debugging co-reviewer; where
 its dispatch channel lives; your progress-log path for the judgment note.
 
+## 4.5 Security domain = dedicated security lineage first (NEW work only)
+
+- **New security work** (integrity / tamper-resistance, sealing, adversarial
+  audits, attack reproduction — from planning through verification) goes to
+  your designated security-verifier lineage (an engine/bot independent of the
+  implementer), not to the implementing bot itself.
+- Non-security work (experiment bodies, feature verification, data recording)
+  stays with its current owners.
+- **Assignment default, not a retroactive purge**: a direction like "security
+  goes to X" sets the default for NEW assignments. Healthy in-flight tracks
+  keep their current owner — forced mid-flight transfers churn a working
+  pipeline. If retroactive re-assignment seems warranted, confirm with the
+  maintainer in one line first. (Learned from two same-day over-application
+  regressions: a scope directive ballooned into "halt everyone", then into
+  "transfer healthy in-flight work".)
+- The orchestrator does not re-derive security verdicts (no hash
+  re-derivation / probe re-runs) — it accepts the security reviewer's verdict
+  and coordinates flow. Non-security feature-deploy gates stay with the
+  orchestrator.
+
+▶ Fill in: your security-verifier lineage (bot/engine); grandfathered
+in-flight tracks; your maintainer-confirmation channel.
+
+
