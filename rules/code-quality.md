@@ -37,6 +37,7 @@ Leave a debug artifact with **fixed sections, fixed order** (don't end at "fix c
 - **JSON form**: new automation outputs carry `schema_version` + `proof_class` (e.g. fixture-smoke / in-process / live). Retrofit existing outputs only on next touch — no bulk backfill.
 - §3 says *what* to verify; §7 names *at which grade* you verified it.
 - **Validity threats + benchmark fixture convention**: ① **Threats to validity** — a non-trivial verification / experiment / benchmark conclusion carries an explicit list of "why you might *not* trust this result" (sample size, measurement scope, generalization limits, n=1 noise) as named items, not one line of prose. ② **Benchmarks = fixtures + raw output + threats** — experiments and benchmarks use fixed fixtures (deterministic inputs) + preserved raw output (e.g. JSON) + a threats note, so they reproduce. Both are a lightweight extension of the §7 ladder (existing discipline unchanged, no new hard gate).
+- **When the final judgment is human taste, measure once at n≥18 then escalate — no self-convergence loop**: for a metric whose final acceptance is a person's preference (game balance, tone, design taste), don't keep re-measuring to converge on the "right" number yourself. Measure once at n≥18 (probabilistic outcomes need n≥18 — a small sample's 0/N can be chance), then escalate the range/candidate early ("is this range OK?") and let the human make the call. If the judge is a person but the bot self-converges, that's over-verification overrun (opportunity cost — an afternoon burned on precision nobody asked for). Situational judgment; user's final call wins.
 
 ## 8. Code-generation minimalism gate
 Before generating code, run a 6-rung ladder as a reflex (not a research project — stop at the first rung that holds):
@@ -48,16 +49,19 @@ Before generating code, run a 6-rung ladder as a reflex (not a research project 
 
 ▶ Fill in: where your team records deliberate simplifications and their upgrade paths.
 
-## 9. 기능 구현 완료 = 클릭스루 전수 + 발주자-의도 대조 + 적대 자문 (2026-07-05 추가)
-UI/기능 구현을 "완료" 보고·배포하기 전 3축:
-1. **클릭스루 전수**: 새/변경 기능의 모든 인터랙션 경로를 실제로 눌러 왕복(자동 e2e와 별개의 실화면 흐름).
-2. **발주자-의도 대조**: 원 지시 문구 인용 → 항목별 실동작 대조표 — "자체 spec 대비" ❌, 발주자 원문 대비.
-3. **적대 자문 1회**: "사용자가 눌러보면 이상한 게 없나" 반문 1줄(발견 시 fix 후 보고).
-- 배경: 자동 e2e GREEN이 "요약만 렌더되고 원문 부재"를 통과시킨 회귀 — 사용자 실사용 클릭이 적발. 상황별 재판단 여지(비UI·소규모 변경) + 사용자 최종 피드백 우선.
+## 9. Feature completion = full click-through + commissioner-intent diff + one adversarial pass (added 2026-07-05)
+Before reporting a UI/feature implementation "done" (or cutting over), three axes:
+1. **Full click-through**: actually walk every interaction path of the new/changed feature (each card type, button, link at least once) — a real-screen pass, separate from automated e2e.
+2. **Commissioner-intent diff**: quote the original instruction → item-by-item table against actual behavior — comparing against "our own spec" ❌; compare against the commissioner's wording.
+3. **One adversarial pass**: one line asking "would anything look wrong if the user clicked around?" (fix before reporting if something turns up).
+- Background: an automated-e2e GREEN passed a page that rendered only the summary with the full text missing — the user's real clicks caught it. Situational judgment (non-UI / small changes) and the user's final feedback win.
 
-### §3 보강 (2026-07-05)
-- **웹 산출 검증 = 소스 grep ❌ 최종 응답 실측**: 웹페이지·외부 URL 산출의 "반영됐다" 판정은 (a) HTTP 최종 status(redirect 추적 후)+content-type+bytes 실측 (b) 렌더 측 확인(SSR은 주석 분절로 연속 문자열 grep이 0히트 착시 — 분리 토큰으로). 소스 참조 grep은 pre-filter일 뿐 완료 근거 ❌.
-- **파이프라인 셸 = 의존 단계 exit 직접 캡처**: 후속 단계가 선행 성공에 의존하면 선행 명령을 단독 실행해 exit 직접 캡처(`set -o pipefail` 또는 파이프 제거) — `cmd | tail` 뒤 `$?`는 tail의 exit라 실패가 마스킹된다.
+### §3 reinforcement (2026-07-05)
+- **Web deliverables: verify the final response, not a source grep**: judging "it's live" for a web page / external URL takes (a) the measured **final** HTTP status (after following redirects) + content-type + bytes, and (b) render-side confirmation (SSR can split strings across comment boundaries, so a contiguous-string grep can 0-hit falsely — probe with separated tokens). Grepping the source/references is only a pre-filter, never completion evidence.
+- **Pipeline shells: capture the exit of the step you depend on directly**: if a later step (rotation, commit, post-send) depends on an earlier command succeeding, run that command alone and capture its exit directly (`set -o pipefail` or drop the pipe) — `$?` after `cmd | tail` is tail's exit, so failures get masked.
 
-### §4 보강 (2026-07-05)
-- **git 파일 "없다" = `git log --all` 후에만**: 워킹트리/HEAD에 없는 파일을 "원래 없던 것"으로 단정 ❌ — 다른 브랜치에 실렸을 수 있다(자동커밋이 feature 브랜치 체크아웃 중 문서를 그 브랜치에 실은 실사례). boundary 확장의 git판.
+### §3 reinforcement (2026-07-12)
+- **Never merge/pull on a dirty tree in a shared repo — merge in an isolated worktree**: git's merge *refusal* path is not read-only. On a dirty tree, merge internally snapshots your uncommitted changes (stash create); if the merge is then refused, it restores via `read-tree --reset -u HEAD` + `stash apply` — and that apply's failure is **silently ignored**, so your uncommitted work can be rolled back with no error shown. Do merges/pulls in an isolated worktree (`git worktree add --detach <dir>`), push from there, then remove it; afterwards re-measure the shared tree (`git status --short | wc -l`) instead of trusting a stale count. If work does go missing: `git fsck --dangling` → date-filter the "WIP on …" stash snapshots → recover from them.
+
+### §4 reinforcement (2026-07-05)
+- **"The file never existed" only after `git log --all`**: don't conclude that a file absent from the working tree/HEAD "never existed" — it may have landed on another branch (real case: an auto-commit hook committed docs onto a feature branch that happened to be checked out). The git flavor of boundary expansion.

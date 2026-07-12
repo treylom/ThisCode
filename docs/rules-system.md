@@ -25,6 +25,9 @@ A `rules/` directory with one small **router** + many **on-demand topical files*
 ├── skill-process.md  ← loaded only when starting a build/debug/verify task
 ├── porting-infra.md  ← loaded only when porting/deploying/adding MCP
 ├── voice.md          ← loaded only when writing a persona response
+├── image-ops.md      ← loaded only when generating/editing images
+│                        (edit vs generate vs overlay; real people/brands/
+│                         products are reference-first, no-imagination)
 ├── orchestration.md  ← loaded only when delegating to / waiting on a bot,
                          asserting a bot's identity/health, or coordinating
                          multiple agents (chain-load identity guard: a shared

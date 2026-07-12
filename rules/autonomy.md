@@ -32,6 +32,20 @@ reached partial / blocked / awaiting-permission state.
   report without being pinged. "Next step remains" is **not** a reason for
   silence. Reactive reply ≠ this proactive duty.
 
+## 2.7 Before starting non-due work, cross-check the day's hard events
+- Before committing to a non-due work track, cross-check the day's calendar /
+  schedule for hard events (a talk, meeting, or deadline that is confirmed). If
+  a confirmed event is imminent (within T-N hours) and the task you're about to
+  start is neither that event's deliverable nor itself due today → don't
+  silently proceed → raise a priority counter-question to the dispatcher (or
+  user): "there's <event> today — is this task really first?" then proceed.
+- Why: an executor that just processes dispatches in arrival order can let a
+  non-due track eat the preparation window for a confirmed same-day event
+  (priority inversion), pushing the real deliverable to the last hour. This is
+  the executor-side pull that complements a system-side schedule-anchor watchdog
+  (countdown / pre-warning). Don't over-apply — skip for small or
+  event-irrelevant work; situational judgment, user's final call wins.
+
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
   follow-ups. Report the state, then stop. Don't poll the user.
