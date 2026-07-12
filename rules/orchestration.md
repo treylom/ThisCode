@@ -66,7 +66,7 @@ its dispatch channel lives; your progress-log path for the judgment note.
 ## 4.5 Security domain = dedicated security lineage first (NEW work only)
 
 - **New security work** (integrity / tamper-resistance, sealing, adversarial
-  audits, attack reproduction — from planning through verification) goes to
+  audits (incl. attack reproduction) — from planning through verification) goes to
   your designated security-verifier lineage (an engine/bot independent of the
   implementer), not to the implementing bot itself.
 - Non-security work (experiment bodies, feature verification, data recording)
@@ -80,10 +80,7 @@ its dispatch channel lives; your progress-log path for the judgment note.
   "transfer healthy in-flight work".)
 - The orchestrator does not re-derive security verdicts (no hash
   re-derivation / probe re-runs) — it accepts the security reviewer's verdict
-  and coordinates flow. Non-security feature-deploy gates stay with the
-  orchestrator.
+  and coordinates flow. Non-security gates keep their existing owners.
 
 ▶ Fill in: your security-verifier lineage (bot/engine); grandfathered
 in-flight tracks; your maintainer-confirmation channel.
-
-
