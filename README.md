@@ -2,6 +2,8 @@
 
 # ThisCode
 
+> **Role boundary**: ThisCode is the bot-harness operations bundle (operating rules, GraphRAG ops vendor, deployment contracts). The general-purpose knowledge product is [knowledge-manager](https://github.com/treylom/knowledge-manager); plugin installs go through [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins).
+
 > Claude Code + Discord bot + Codex CLI bridge plugin — personal vault automation + multi-agent ops.
 >
 > 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📖 **[Getting started guide (English PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.en.pdf)** (beginner, 14p) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
