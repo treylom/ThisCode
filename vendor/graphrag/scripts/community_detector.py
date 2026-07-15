@@ -27,6 +27,7 @@ _PROJECT_DIR = _Path(__file__).resolve().parents[3]
 _DEFAULT_DB = str(_PROJECT_DIR / ".team-os/graphrag/index/vault_graph.db")
 
 import json
+import re
 import sqlite3
 from typing import Any
 
@@ -71,6 +72,24 @@ COMMUNITY_LEVELS: list[tuple[int, float, str]] = [
     (2, 2.0, "C2-fine"),
     (3, 4.0, "C3-local"),    # finest — local search target
 ]
+
+MOC_TOKEN_RE = re.compile(r"(^|[-_/])moc($|[-_/\s.(])", re.IGNORECASE)
+MOC_RESIDUAL_RESOLUTION = 0.5
+MOC_RESIDUAL_TARGET_BUCKETS = 64
+
+
+def _has_moc_marker(value: str | None) -> bool:
+    text = (value or "").replace("\\", "/")
+    return bool(MOC_TOKEN_RE.search(text))
+
+
+def is_moc_seed_entity(entity: dict[str, Any] | sqlite3.Row) -> bool:
+    """Return True when an entity represents an MOC note/seed."""
+    name = (entity["name"] or "").strip()
+    source_note = (entity["source_note"] or "").strip()
+    if name.lower() == "moc" and not source_note:
+        return False
+    return _has_moc_marker(name) or _has_moc_marker(source_note)
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +214,161 @@ def detect_hierarchical_communities(
     return result
 
 
+def _load_moc_seed_entities(conn: sqlite3.Connection, G: "nx.Graph") -> list[dict[str, Any]]:
+    rows = [
+        dict(row)
+        for row in conn.execute("SELECT id, name, source_note FROM entities")
+        if row["id"] in G and is_moc_seed_entity(row)
+    ]
+    rows.sort(key=lambda row: ((row.get("name") or ""), row["id"]))
+    return rows
+
+
+def _split_residual_nodes(
+    G: "nx.Graph",
+    residual_nodes: list[str],
+    start_label: int,
+    target_buckets: int = MOC_RESIDUAL_TARGET_BUCKETS,
+) -> tuple[dict[str, int], dict[int, str], dict[str, int]]:
+    """Split only the unseeded C0 residual with a Louvain sub-pass."""
+    if not residual_nodes:
+        return {}, {}, {"raw_residual_subcommunities": 0, "residual_subcommunities": 0}
+
+    target_buckets = max(1, target_buckets)
+    residual_graph = G.subgraph(residual_nodes).copy()
+    raw_partition = community_louvain.best_partition(
+        residual_graph,
+        weight="weight",
+        resolution=MOC_RESIDUAL_RESOLUTION,
+        random_state=42,
+    )
+
+    raw_groups: dict[int, list[str]] = {}
+    for node_id, raw_label in raw_partition.items():
+        raw_groups.setdefault(raw_label, []).append(node_id)
+    ordered_groups = sorted(
+        (sorted(nodes) for nodes in raw_groups.values()),
+        key=lambda nodes: (-len(nodes), nodes[0]),
+    )
+
+    bucket_count = min(target_buckets, len(ordered_groups))
+    buckets: list[list[str]] = [[] for _ in range(bucket_count)]
+    bucket_sizes = [0] * bucket_count
+
+    for group in ordered_groups:
+        bucket_idx = min(range(bucket_count), key=lambda idx: (bucket_sizes[idx], idx))
+        buckets[bucket_idx].extend(group)
+        bucket_sizes[bucket_idx] += len(group)
+
+    partition: dict[str, int] = {}
+    names: dict[int, str] = {}
+    for idx, nodes in enumerate(buckets):
+        label = start_label + idx
+        for node_id in nodes:
+            partition[node_id] = label
+        names[label] = f"[C0-global] Unseeded residual {idx + 1:02d}"
+
+    return partition, names, {
+        "raw_residual_subcommunities": len(raw_groups),
+        "residual_subcommunities": bucket_count,
+    }
+
+
+def build_moc_seeded_c0_partition(
+    conn: sqlite3.Connection,
+    G: "nx.Graph",
+    fallback_partition: dict[str, int],
+) -> tuple[dict[str, int], dict[int, str], dict[str, int]]:
+    """
+    Rebuild C0 around MOC seed neighborhoods.
+
+    MOC seed entities keep their coarse Louvain label. Directly linked targets
+    are assigned to the MOC seed label with the strongest outgoing evidence.
+    Nodes in coarse Louvain communities that already contain a MOC seed keep
+    that label. Remaining unseeded nodes are split by a residual-only Louvain
+    sub-pass; C1~C3 still preserve local detail.
+    """
+    moc_rows = _load_moc_seed_entities(conn, G)
+    if not moc_rows:
+        return dict(fallback_partition), {}, {
+            "moc_seed_count": 0,
+            "moc_seed_communities": 0,
+            "direct_targets_assigned": 0,
+            "orphan_nodes": 0,
+        }
+
+    seed_ids = {row["id"] for row in moc_rows}
+    next_label = (max(fallback_partition.values()) + 1) if fallback_partition else 0
+    seed_label: dict[str, int] = {}
+    moc_names_by_label: dict[int, list[str]] = {}
+    for row in moc_rows:
+        label = fallback_partition.get(row["id"], next_label)
+        if row["id"] not in fallback_partition:
+            next_label += 1
+        seed_label[row["id"]] = label
+        moc_names_by_label.setdefault(label, []).append(row["name"])
+
+    moc_labels = set(seed_label.values())
+    target_votes: dict[str, dict[int, float]] = {}
+    for row in conn.execute(
+        """
+        SELECT source_id, target_id, strength, confidence
+          FROM relationships
+         WHERE source_id IN ({})
+        """.format(",".join("?" * len(seed_ids))),
+        tuple(seed_ids),
+    ):
+        target_id = row["target_id"]
+        if target_id not in G or target_id in seed_ids:
+            continue
+        label = seed_label[row["source_id"]]
+        weight = (row["strength"] or 1.0) * (row["confidence"] or 1.0)
+        target_votes.setdefault(target_id, {})
+        target_votes[target_id][label] = target_votes[target_id].get(label, 0.0) + weight
+
+    partition: dict[str, int] = {}
+    residual_nodes: list[str] = []
+    direct_targets_assigned = 0
+    orphan_nodes = 0
+
+    for node_id in G.nodes():
+        if node_id in seed_label:
+            partition[node_id] = seed_label[node_id]
+        elif node_id in target_votes:
+            votes = target_votes[node_id]
+            partition[node_id] = min(votes, key=lambda label: (-votes[label], label))
+            direct_targets_assigned += 1
+        else:
+            fallback_label = fallback_partition.get(node_id, next_label)
+            if fallback_label in moc_labels:
+                partition[node_id] = fallback_label
+            else:
+                residual_nodes.append(node_id)
+                orphan_nodes += 1
+
+    residual_partition, residual_names, residual_stats = _split_residual_nodes(
+        G,
+        residual_nodes,
+        start_label=next_label,
+    )
+    partition.update(residual_partition)
+
+    community_names: dict[int, str] = {}
+    for label, names in moc_names_by_label.items():
+        top_names = sorted(names)[:2]
+        suffix = f" +{len(names) - 2} MOCs" if len(names) > 2 else ""
+        community_names[label] = f"[C0-MOC] {' / '.join(top_names)}{suffix}"
+    community_names.update(residual_names)
+
+    return partition, community_names, {
+        "moc_seed_count": len(seed_ids),
+        "moc_seed_communities": len(moc_labels),
+        "direct_targets_assigned": direct_targets_assigned,
+        "orphan_nodes": orphan_nodes,
+        **residual_stats,
+    }
+
+
 def should_recalculate(
     conn: sqlite3.Connection,
     changed_count: int,
@@ -294,6 +468,7 @@ def save_communities_at_level(
     resolution: float,
     level_label: str,
     parent_partitions: dict[int, dict[str, int]] | None = None,
+    community_names: dict[int, str] | None = None,
 ) -> int:
     """
     Save one level's community partition to DB.
@@ -338,9 +513,13 @@ def save_communities_at_level(
 
         summary = summarize_community_llm(members, edges, level=level)
         name = (
-            f"[{level_label}] {members[0]['name']} et al."
-            if members
-            else f"[{level_label}] Community {label}"
+            community_names[label]
+            if community_names and label in community_names
+            else (
+                f"[{level_label}] {members[0]['name']} et al."
+                if members
+                else f"[{level_label}] Community {label}"
+            )
         )
 
         # Determine parent_id from level - 1
@@ -429,6 +608,16 @@ def run_community_detection(
 
     # Multi-resolution community detection (Hierarchy Space)
     all_partitions = detect_hierarchical_communities(G, levels)
+    community_name_overrides: dict[int, dict[int, str]] = {}
+    moc_seed_stats: dict[str, int] | None = None
+    if 0 in all_partitions:
+        c0_partition, c0_names, moc_seed_stats = build_moc_seeded_c0_partition(
+            conn,
+            G,
+            all_partitions[0],
+        )
+        all_partitions[0] = c0_partition
+        community_name_overrides[0] = c0_names
 
     # Save from coarsest (C0) to finest (C3) to set parent_id correctly
     community_counts: dict[str, int] = {}
@@ -442,6 +631,7 @@ def run_community_detection(
             resolution=resolution,
             level_label=level_label,
             parent_partitions=all_partitions,
+            community_names=community_name_overrides.get(level_idx),
         )
         community_counts[level_label] = count
 
@@ -453,6 +643,7 @@ def run_community_detection(
         "nodes": G.number_of_nodes(),
         "edges": G.number_of_edges(),
         "communities_per_level": community_counts,
+        "moc_seed_stats": moc_seed_stats,
         # TDA metrics (β₀, β₁, Euler characteristic)
         "tda": tda_metrics,
     }

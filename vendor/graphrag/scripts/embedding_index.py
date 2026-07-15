@@ -27,7 +27,10 @@ import yaml
 # rebuild so cached vectors are never mixed with embeddings from a different
 # model.
 # ---------------------------------------------------------------------------
-MODEL_NAME = "paraphrase-multilingual-MiniLM-L12-v2"
+# 2026-06-16 (코난 autoresearch R-E1): env-configurable for isolated embedding bake-off.
+# Default unchanged = no live behavior change. Build a separate --output index with a
+# new model via GRAPHRAG_EMBED_MODEL, benchmark on a test port, swap only if it wins.
+MODEL_NAME = os.environ.get("GRAPHRAG_EMBED_MODEL", "paraphrase-multilingual-MiniLM-L12-v2")
 
 # ---------------------------------------------------------------------------
 # Lazy model loader (avoids slow import at module level when not needed)
@@ -40,7 +43,9 @@ def _get_model():
     if _model is None:
         from sentence_transformers import SentenceTransformer  # type: ignore
 
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
+        device = os.environ.get("GRAPHRAG_EMBED_DEVICE", "").strip()
+        model_kwargs = {"device": device} if device else {}
+        _model = SentenceTransformer(MODEL_NAME, **model_kwargs)
     return _model
 
 
@@ -227,7 +232,7 @@ def build_index(vault_path: str, db_path: str, output_dir: str) -> None:
         )
         new_vectors: np.ndarray = model.encode(
             texts_to_encode,
-            batch_size=64,
+            batch_size=int(os.environ.get("GRAPHRAG_EMBED_BATCH", "64")),
             show_progress_bar=True,
             convert_to_numpy=True,
             normalize_embeddings=True,
@@ -254,6 +259,63 @@ def build_index(vault_path: str, db_path: str, output_dir: str) -> None:
 # search
 # ---------------------------------------------------------------------------
 
+LoadedIndex = tuple[np.ndarray, list[dict[str, Any]]]
+
+
+def load_index(output_dir: str) -> LoadedIndex:
+    """Load note embedding vectors and metadata once for reuse by the search server."""
+    out = Path(output_dir)
+    embeddings_file = out / "embeddings.npy"
+    meta_file = out / "embedding_meta.json"
+
+    if not embeddings_file.exists() or not meta_file.exists():
+        raise FileNotFoundError(
+            f"Index not found in {output_dir}. Run `build` first."
+        )
+
+    vectors: np.ndarray = np.load(str(embeddings_file))  # (N, 384)
+    raw_meta = json.loads(meta_file.read_text())
+    meta: list[dict[str, Any]] = (
+        raw_meta.get("notes", []) if isinstance(raw_meta, dict) else raw_meta
+    )
+    return vectors, meta
+
+
+def _rank_loaded_index(
+    query: str,
+    loaded_index: LoadedIndex,
+    top_k: int,
+) -> list[tuple[dict[str, Any], float]]:
+    vectors, meta = loaded_index
+    k = min(top_k, len(vectors), len(meta))
+    if k <= 0:
+        return []
+
+    model = _get_model()
+    q_vec: np.ndarray = model.encode(
+        [query],
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+    )[0]
+
+    scores: np.ndarray = vectors @ q_vec
+    top_indices = np.argpartition(scores, -k)[-k:]
+    top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
+    return [(meta[idx], float(scores[idx])) for idx in top_indices]
+
+
+def search_loaded(query: str, loaded_index: LoadedIndex, top_k: int = 20) -> list[dict[str, Any]]:
+    """Search a preloaded note embedding index."""
+    return [
+        {
+            "note_path": entry.get("note_path", ""),
+            "title": entry.get("title", ""),
+            "score": score,
+        }
+        for entry, score in _rank_loaded_index(query, loaded_index, top_k)
+    ]
+
+
 def search(query: str, output_dir: str, top_k: int = 20) -> list[dict[str, Any]]:
     """
     Search the embedding index for notes similar to query.
@@ -266,46 +328,7 @@ def search(query: str, output_dir: str, top_k: int = 20) -> list[dict[str, Any]]
     Returns:
         List of dicts with keys: note_path, title, score (float, 0–1).
     """
-    out = Path(output_dir)
-    embeddings_file = out / "embeddings.npy"
-    meta_file = out / "embedding_meta.json"
-
-    if not embeddings_file.exists() or not meta_file.exists():
-        raise FileNotFoundError(
-            f"Index not found in {output_dir}. Run `build` first."
-        )
-
-    vectors: np.ndarray = np.load(str(embeddings_file))  # (N, 384)
-    raw_meta = json.loads(meta_file.read_text())
-    # Support both old format (bare list) and new format (dict with "model" key)
-    meta: list[dict[str, Any]] = (
-        raw_meta.get("notes", []) if isinstance(raw_meta, dict) else raw_meta
-    )
-
-    model = _get_model()
-    q_vec: np.ndarray = model.encode(
-        [query],
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )[0]  # (384,)
-
-    # Cosine similarity — vectors are already L2-normalised from build_index
-    scores: np.ndarray = vectors @ q_vec  # (N,)
-
-    top_indices = np.argpartition(scores, -min(top_k, len(scores)))[-top_k:]
-    top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
-
-    results: list[dict[str, Any]] = []
-    for idx in top_indices:
-        entry = meta[idx]
-        results.append(
-            {
-                "note_path": entry.get("note_path", ""),
-                "title": entry.get("title", ""),
-                "score": float(scores[idx]),
-            }
-        )
-    return results
+    return search_loaded(query, load_index(output_dir), top_k=top_k)
 
 
 # ---------------------------------------------------------------------------
@@ -327,8 +350,14 @@ def build_entity_index(db_path: str, output_dir: str) -> None:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     rows = conn.execute(
-        "SELECT id, name, COALESCE(name_ko,'') AS name_ko, "
-        "COALESCE(description,'') AS description, "
+        # Truncate at the DB read so pathological entity text never enters Python
+        # and blows up the embedder. An extraction bug produced ~15 entities whose
+        # name field is up to ~111MB; with no cap, one such string detonates the
+        # bge-m3 tokenizer/attention memory (OOM). p99 entity text = 81 chars, so
+        # a 2000-char cap is a no-op for real entities and only clips the garbage.
+        "SELECT id, substr(name,1,2000) AS name, "
+        "substr(COALESCE(name_ko,''),1,500) AS name_ko, "
+        "substr(COALESCE(description,''),1,2000) AS description, "
         "COALESCE(source_note,'') AS source_note, type "
         "FROM entities"
     ).fetchall()
@@ -359,7 +388,7 @@ def build_entity_index(db_path: str, output_dir: str) -> None:
     model = _get_model()
     vectors = model.encode(
         texts,
-        batch_size=64,
+        batch_size=int(os.environ.get("GRAPHRAG_EMBED_BATCH", "64")),
         show_progress_bar=True,
         convert_to_numpy=True,
         normalize_embeddings=True,
@@ -372,32 +401,39 @@ def build_entity_index(db_path: str, output_dir: str) -> None:
     print(f"[embedding_index] Entity index: {len(meta_entries)} entities → {entity_emb_file}", flush=True)
 
 
-def search_entities(query: str, output_dir: str, top_k: int = 20) -> list[dict[str, Any]]:
-    """Semantic search over entity embeddings. Returns [{id, name, type, source_note, score}]."""
+def load_entity_index(output_dir: str) -> LoadedIndex | None:
+    """Load entity embedding vectors and metadata once; return None when absent."""
     out = Path(output_dir)
     entity_emb_file = out / ENTITY_EMBEDDINGS_FILE
     entity_meta_file = out / ENTITY_META_FILE
 
     # v2.3.3: partial index 보호 — emb 파일 있는데 meta 파일 없는 case 안 graceful (CLI / 직접 호출 보호)
     if not entity_emb_file.exists() or not entity_meta_file.exists():
-        return []
+        return None
 
     vectors = np.load(str(entity_emb_file))
     raw_meta = json.loads(entity_meta_file.read_text(encoding="utf-8"))
     meta = raw_meta.get("entities", raw_meta) if isinstance(raw_meta, dict) else raw_meta
+    return vectors, meta
 
-    model = _get_model()
-    q_vec = model.encode([query], convert_to_numpy=True, normalize_embeddings=True)[0]
-    scores = vectors @ q_vec
 
-    k = min(top_k, len(scores))
-    top_indices = np.argpartition(scores, -k)[-k:]
-    top_indices = top_indices[np.argsort(scores[top_indices])[::-1]]
-
+def search_entities_loaded(
+    query: str,
+    loaded_index: LoadedIndex | None,
+    top_k: int = 20,
+) -> list[dict[str, Any]]:
+    """Semantic search over a preloaded entity embedding index."""
+    if loaded_index is None:
+        return []
     return [
-        {**meta[idx], "score": float(scores[idx])}
-        for idx in top_indices
+        {**entry, "score": score}
+        for entry, score in _rank_loaded_index(query, loaded_index, top_k)
     ]
+
+
+def search_entities(query: str, output_dir: str, top_k: int = 20) -> list[dict[str, Any]]:
+    """Semantic search over entity embeddings. Returns [{id, name, type, source_note, score}]."""
+    return search_entities_loaded(query, load_entity_index(output_dir), top_k=top_k)
 
 
 # ---------------------------------------------------------------------------

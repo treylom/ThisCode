@@ -34,9 +34,12 @@ DB**(SQLite) + **임베딩 인덱스** → **검색 서버**(:8400, hybrid + rer
 | job | 역할 | 주기 권장 |
 |---|---|---|
 | server | 검색 서버 상시 | KeepAlive |
-| incremental | 증분 갱신 (노트 변경 따라잡기) | 30분 (10분 이하 = 서버 블로킹 회귀 이력) |
+| incremental | 증분 갱신 (노트 변경 따라잡기) — dense 재임베딩은 하지 않고 worker 에 요청만 남김 | 30분 (10분 이하 = 서버 블로킹 회귀 이력) |
+| embedding-worker | dense 노트 임베딩 전담 (외부 프로세스·CPU) — staging→verify→promote→activate 세대 관리, 서버 GPU 점유 wedge 차단 | 5분 tick (요청 없으면 no-op) |
 | rebuild | 풀빌드 (커뮤니티·centrality 재계산) | 새벽 1회 |
 | monitor | 외부 헬스 감시 (응답시간 초과 → push 알림) | 주기형 |
+
+> **임베딩 워커 분리 이유** (2026-07 실장): 서버 in-process 재임베딩이 GPU(Metal/MPS)를 점유해 검색 자체를 수백 초 wedge 시키던 회귀의 본수리. `embedding_worker.py`(스크립트 동봉)가 색인을 별도 세대 디렉터리에 빌드→검증→승격하고 서버는 reload 만 받는다. 일일 풀빌드도 `embedding_worker.py`의 staging→verify→promote 경로를 재사용하며, 빌드 후 위생(로그 로테이션·sync_log 정리·stale 파일 보고)은 `graphrag_maintenance.py`.
 
 ```bash
 # macOS launchd 예 — 상태 / 정지(가역) / 재개
@@ -59,6 +62,8 @@ sqlite3 "file:index/<db>?mode=ro" "SELECT COUNT(*) FROM entities WHERE length(na
 ## 3. 코드 변경 절차 (순서 고정)
 
 1. `scripts/` 수정 → 2. **전체 테스트** `.venv/bin/python3 -m unittest discover -s scripts -p "test_*.py"` (전건 OK — 시스템 python ❌) → 3. 서버 재시작 → 4. §2 점검 + 실검색 1회 → 5. 벤치 회귀(§5) → 6. 본 문서·search-usage.md 기대치 갱신.
+
+> ⚠️ **3번(서버 재시작)을 건너뛰면 안 되는 이유** (2026-07 실사고): 서버는 `incremental` 등 스크립트 모듈을 기동 시 import 해서 **메모리에 들고 있다**. 파일만 고치고 재시작을 안 하면 CLI 경로는 새 코드, 서버 경로(`POST /api/index/update`)는 옛 코드로 갈라져 — "고쳤는데 안 고쳐진" 상태가 침묵으로 지속된다. 스케줄러 재개보다 서버 재시작이 항상 먼저다.
 
 ## 4. 장애 대응 (증상 → 진단 → 처치)
 
@@ -104,3 +109,34 @@ sqlite3 "file:index/<db>?mode=ro" "SELECT COUNT(*) FROM entities WHERE length(na
 온보딩 입력 = ① 본 문서 ② 설계 기록(왜 이렇게 만들었나 — 채널 가중·LLM 추출
 보류 근거·frontmatter 2층 규율·사건 전말) ③ 직전 회의/변경 로그. 이 3개로
 부족하면 본 문서를 보강하라.
+
+## 7. codex 환경에서 검색 쓰기 (샌드박스 함정 2개)
+
+codex CLI 세션은 기본 `read-only` 샌드박스가 **로컬호스트 HTTP까지 차단**한다 (curl exit 7).
+검색 서버(:8400)에 닿으려면:
+
+```bash
+# 1회성 — 명령마다
+codex exec --sandbox workspace-write -c sandbox_workspace_write.network_access=true ...
+```
+
+```toml
+# 영구 — $CODEX_HOME/config.toml (재시작 후 적용; CLI -c 와 1:1 매핑)
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+```
+
+- ⚠ `read-only` 인 채로 network_access 만 켜면 **무시된다** — 반드시 workspace-write 이상과 짝.
+- ⚠ network_access=true 는 외부 네트워크도 열린다 — 신뢰 작업 전용 세션에만 영구 적용, 그 외 1회성 권장.
+- 결과 JSON의 문서 식별 필드 = `entity`·`source_note`·`description` (`title` 없음 — null 함정):
+  `curl -s "http://127.0.0.1:8400/api/search?q=<질의>&top_k=5" | jq -r '.results[] | "\(.entity)\t\(.source_note)"'`
+- 상시 봇에 기본 탑재하려면: 영구 설정 + 행동 규칙 1줄("vault 내용 질문 = 검색 먼저") + 기기 경계 주의(다른 머신 봇은 그 머신의 서버로).
+
+## 8. 관계 재분류 도구 (relabel/)
+
+generic 관계(`related_to`)가 그래프의 다수를 차지하면 `vendor/graphrag/relabel/README-method.md`
+파이프라인으로 의미 타입(parent/cites/precedes …)을 재부여할 수 있다 — 파일럿(무작위 표본) → 전량 →
+저신뢰 2차 재심 → merge(증분 정지 필수) → 보존 가드 순. 증분 재추출이 의미 라벨을 되돌리지 않는 가드는
+`incremental.py`에 이미 내장(§3 재시작 규율과 함께 적용).

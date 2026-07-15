@@ -34,7 +34,11 @@ def _load_config(config_path: str = _DEFAULT_CONFIG) -> dict:
 def _get_db(config: dict, override: str | None = None) -> str:
     if override:
         return override
-    return config.get("database", {}).get("path", _DEFAULT_DB)
+    db_path = config.get("database", {}).get("path", _DEFAULT_DB)
+    db = Path(db_path).expanduser()
+    if not db.is_absolute():
+        db = _PROJECT_DIR / db
+    return str(db)
 
 
 def _get_vault(config: dict, override: str | None = None) -> str:
@@ -124,6 +128,7 @@ def cmd_build(args: argparse.Namespace, config: dict) -> int:
 def cmd_update(args: argparse.Namespace, config: dict) -> int:
     """Incremental update: detect changes → re-extract → community recalc."""
     from graphrag_core import get_connection, close_connection
+    from graphrag_core import create_fts5_tables, populate_fts5
     from incremental import detect_changes, incremental_update
     from community_detector import run_community_detection
 
@@ -140,6 +145,14 @@ def cmd_update(args: argparse.Namespace, config: dict) -> int:
     if total == 0:
         print("No changes detected. Up to date.")
         close_connection(conn)
+        if args.rebuild_embeddings:
+            from embedding_index import build_entity_index, build_index
+
+            index_dir = str(Path(db).parent)
+            build_index(vault_path=vault, db_path=db, output_dir=index_dir)
+            if not args.skip_entity_embeddings:
+                build_entity_index(db_path=db, output_dir=index_dir)
+            print(f"Embeddings: rebuilt in {index_dir}")
         return 0
 
     stats = incremental_update(conn, vault, changes, use_llm=args.llm)
@@ -151,7 +164,21 @@ def cmd_update(args: argparse.Namespace, config: dict) -> int:
     result = run_community_detection(conn, changed_count=total, force=args.force_community)
     print(f"Communities: {result}")
 
+    create_fts5_tables(conn)
+    populate_fts5(conn)
+    print("FTS5: synced")
+
     close_connection(conn)
+
+    if args.rebuild_embeddings:
+        from embedding_index import build_entity_index, build_index
+
+        index_dir = str(Path(db).parent)
+        build_index(vault_path=vault, db_path=db, output_dir=index_dir)
+        if not args.skip_entity_embeddings:
+            build_entity_index(db_path=db, output_dir=index_dir)
+        print(f"Embeddings: rebuilt in {index_dir}")
+
     return 0
 
 
@@ -368,6 +395,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_update.add_argument("--llm", action="store_true", help="Enable LLM extraction")
     p_update.add_argument("--force-community", action="store_true",
                           help="Force community recalculation")
+    p_update.add_argument("--rebuild-embeddings", action="store_true",
+                          help="Refresh dense note/entity embeddings after DB update")
+    p_update.add_argument("--skip-entity-embeddings", action="store_true",
+                          help="With --rebuild-embeddings, skip entity embedding refresh")
 
     # sync
     p_sync = sub.add_parser("sync", help="Sync frontmatter ↔ DB")

@@ -16,9 +16,11 @@ class BenchmarkJudgeGoldNotesTest(unittest.TestCase):
 
         gold = benchmark_judge.load_gold_notes(SCRIPTS_DIR / 'benchmark_runner.py')
 
-        self.assertEqual(len(gold), 18)
+        self.assertEqual(len(gold), 24)
         self.assertEqual(gold['Q01'], ['GraphRAG-Theory-MOC', 'Obsidian-GraphRAG-Journey-MOC'])
         self.assertEqual(gold['Q18'], ['얼룩소-아카이브-MOC', 'AI-기술-MOC', '정치-민주주의-MOC'])
+        self.assertEqual(gold['Q23'], ['Agent-Teams-아키텍처', 'Building-Effective-Agents-Orchestrator-Workers', 'Claude-46-Subagent-Orchestration'])
+        self.assertEqual(gold['Q24'], ['임베딩과-벡터공간-기하학'])
 
 
 class BenchmarkJudgeCliTest(unittest.TestCase):

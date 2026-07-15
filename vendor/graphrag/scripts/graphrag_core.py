@@ -317,8 +317,9 @@ def populate_fts5(conn: sqlite3.Connection) -> int:
 def _expand_query_with_aliases(conn: sqlite3.Connection, query: str) -> str:
     """Expand FTS5 query using entity_aliases table (M2a).
 
-    For each term in the query, look up matching aliases and collect
-    all aliases of the matched entities. Returns an OR-expanded FTS5 query.
+    Manual aliases keep the historical partial-term expansion. Frontmatter
+    aliases are only eligible when the full query exactly matches the alias;
+    otherwise broad aliases such as "AI..." pull unrelated entities into OR.
     """
     terms = [t.strip() for t in query.split() if len(t.strip()) >= 2]
     if not terms:
@@ -330,13 +331,26 @@ def _expand_query_with_aliases(conn: sqlite3.Connection, query: str) -> str:
             aliases = conn.execute(
                 "SELECT DISTINCT a2.alias_name FROM entity_aliases a1 "
                 "JOIN entity_aliases a2 ON a1.entity_id = a2.entity_id "
-                "WHERE a1.alias_name LIKE ?",
+                "WHERE COALESCE(a1.alias_type, 'manual') != 'frontmatter' "
+                "AND a1.alias_name LIKE ?",
                 (f"%{term}%",),
             ).fetchall()
             for a in aliases:
                 alias_name = a[0]
                 if alias_name and len(alias_name) >= 2:
                     expanded.add(alias_name)
+
+        exact_frontmatter_aliases = conn.execute(
+            "SELECT DISTINCT a2.alias_name FROM entity_aliases a1 "
+            "JOIN entity_aliases a2 ON a1.entity_id = a2.entity_id "
+            "WHERE a1.alias_type = 'frontmatter' "
+            "AND LOWER(a1.alias_name) = LOWER(?)",
+            (query.strip(),),
+        ).fetchall()
+        for a in exact_frontmatter_aliases:
+            alias_name = a[0]
+            if alias_name and len(alias_name) >= 2:
+                expanded.add(alias_name)
     except sqlite3.OperationalError:
         pass  # entity_aliases table may not exist
 
@@ -560,14 +574,20 @@ _DEFAULT_TBOX: dict = {
         {"name": "centrality",    "domain_class": "*",       "range": "float",   "description": "Betweenness centrality score"},
     ],
     "relation_types": [
-        {"name": "extends",       "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
-        {"name": "contrasts",     "domain": "*", "range": "*", "is_symmetric": True,  "is_transitive": False},
-        {"name": "cites",         "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
         {"name": "belongs_to",    "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
-        {"name": "precedes",      "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
-        {"name": "used_by",       "domain": "tool", "range": "*", "is_symmetric": False, "is_transitive": False},
-        {"name": "created_by",    "domain": "*", "range": "person", "is_symmetric": False, "is_transitive": False},
+        {"name": "parent",        "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
+        {"name": "contains",      "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
+        {"name": "part_of",       "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": True},
+        {"name": "references",    "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "sourced_from",  "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "derived_from",  "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "supported_by",  "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
         {"name": "related_to",    "domain": "*", "range": "*", "is_symmetric": True,  "is_transitive": False},
+        {"name": "aligns_with",   "domain": "*", "range": "*", "is_symmetric": True,  "is_transitive": False},
+        {"name": "next",          "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "prev",          "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "supersedes",    "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
+        {"name": "mentions",      "domain": "*", "range": "*", "is_symmetric": False, "is_transitive": False},
         {"name": "co_occurs",     "domain": "*", "range": "*", "is_symmetric": True,  "is_transitive": False},
     ],
     "axioms": [

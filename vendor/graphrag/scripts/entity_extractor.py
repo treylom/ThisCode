@@ -2,7 +2,7 @@
 entity_extractor.py — Entity/relationship extraction from vault notes
 
 Theory-based enhancements:
-  1. Binary relations (wikilink→cites, tag→belongs_to) — preserved
+  1. Binary relations (typed wikilinks, tag→belongs_to) — preserved
   2. N-ary relation detection + Reification (event node creation)
      Ref: 메타엣지-하이퍼그래프-구현.md §5.17 (Reification pattern)
   3. Named Graph context: confidence + extracted_date on each relation
@@ -115,13 +115,143 @@ def _reified_id(event_type: str, participant_ids: list[str]) -> str:
 
 _WIKILINK_RE = re.compile(r"\[\[([^\]|#]+?)(?:\|[^\]]+)?\]\]")
 _TAG_RE = re.compile(r"(?:^|\s)#([\w/\-]+)", re.MULTILINE)
+_FRONTMATTER_RE = re.compile(r"^---\s*\n.*?\n---\s*\n?", re.DOTALL)
+_FRONTMATTER_BLOCK_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n?", re.DOTALL)
+_FRONTMATTER_KEY_RE = re.compile(r"^([A-Za-z_][\w-]*):\s*(.*)$")
+_HEADING_RE = re.compile(r"^#{2,4}\s+(.+?)\s*$")
+MAX_ENTITY_NAME_CHARS = 200
 
 # Sentence boundary splitter for N-ary detection
 _SENT_RE = re.compile(r"(?<=[.!?。])\s+")
 
+_FM_KEY_TO_REL: dict[str, str] = {
+    "parent": "parent",
+    "up": "parent",
+    "parent_meeting": "parent",
+    "parent_moc": "parent",
+    "moc": "part_of",
+    "source": "sourced_from",
+    "sot": "sourced_from",
+    "source_post": "sourced_from",
+    "report": "derived_from",
+    "target_doc": "derived_from",
+    "related": "related_to",
+    "next": "next",
+    "prev": "prev",
+    "previous_lesson": "prev",
+    "previous_version": "supersedes",
+}
+
+_HEADING_TO_REL: dict[str, str] = {
+    "상위": "parent",
+    "up": "parent",
+    "하위": "contains",
+    "children": "contains",
+    "참고": "references",
+    "참고 자료": "references",
+    "참고자료": "references",
+    "참고 문서": "references",
+    "참조": "references",
+    "references": "references",
+    "출처": "sourced_from",
+    "source": "sourced_from",
+    "sources": "sourced_from",
+    "원문": "sourced_from",
+    "근거": "supported_by",
+    "관련": "related_to",
+    "관련 노트": "related_to",
+    "관련 글": "related_to",
+    "관련 문서": "related_to",
+    "관련 자료": "related_to",
+    "관련 링크": "related_to",
+    "유사 주제": "related_to",
+    "연결": "related_to",
+    "링크": "related_to",
+    "related": "related_to",
+    "related notes": "related_to",
+    "see also": "related_to",
+    "정합": "aligns_with",
+    "다음": "next",
+    "이전": "prev",
+}
+
+
+def _strip_frontmatter(content: str) -> str:
+    """Return markdown body without YAML frontmatter."""
+    return _FRONTMATTER_RE.sub("", content, count=1)
+
+
+def _extract_frontmatter_block(content: str) -> str:
+    m = _FRONTMATTER_BLOCK_RE.match(content)
+    return m.group(1) if m else ""
+
+
+def _is_safe_entity_name(name: str) -> bool:
+    name = name.strip()
+    if not name:
+        return False
+    if len(name) == 1 or name.isdigit():
+        return False
+    if len(name) > MAX_ENTITY_NAME_CHARS:
+        return False
+    if "\n" in name or "\r" in name:
+        return False
+    return True
+
 
 def _extract_wikilinks(content: str) -> list[str]:
-    return [m.group(1).strip() for m in _WIKILINK_RE.finditer(content)]
+    targets: list[str] = []
+    for m in _WIKILINK_RE.finditer(content):
+        target = m.group(1).strip()
+        if _is_safe_entity_name(target):
+            targets.append(target)
+    return targets
+
+
+def _extract_frontmatter_typed_links(content: str) -> list[tuple[str, str]]:
+    """Extract explicitly typed wikilinks from whitelisted YAML frontmatter keys."""
+    frontmatter = _extract_frontmatter_block(content)
+    if not frontmatter:
+        return []
+
+    links: list[tuple[str, str]] = []
+    active_rel: str | None = None
+    for raw_line in frontmatter.splitlines():
+        line = raw_line.rstrip()
+        key_match = _FRONTMATTER_KEY_RE.match(line)
+        if key_match:
+            key = key_match.group(1).strip().lower()
+            active_rel = _FM_KEY_TO_REL.get(key)
+            if active_rel:
+                for target in _extract_wikilinks(key_match.group(2)):
+                    links.append((target, active_rel))
+            continue
+
+        stripped = line.strip()
+        if active_rel and stripped.startswith("-"):
+            for target in _extract_wikilinks(stripped[1:]):
+                links.append((target, active_rel))
+
+    return links
+
+
+def _normalize_heading(heading: str) -> str:
+    return heading.strip().strip("#").strip().lower()
+
+
+def _iter_body_wikilinks_with_relation(content: str) -> list[tuple[str, str]]:
+    """Yield body wikilinks classified by the nearest preceding heading."""
+    links: list[tuple[str, str]] = []
+    active_rel: str | None = None
+    for line in content.splitlines():
+        heading_match = _HEADING_RE.match(line)
+        if heading_match:
+            active_rel = _HEADING_TO_REL.get(_normalize_heading(heading_match.group(1)))
+            continue
+        rel_type = active_rel or "mentions"
+        for target in _extract_wikilinks(line):
+            links.append((target, rel_type))
+    return links
 
 
 def _extract_tags(content: str) -> list[str]:
@@ -134,6 +264,49 @@ def _note_name_from_path(note_path: str) -> str:
 
 def _now_iso() -> str:
     return datetime.utcnow().isoformat(timespec="seconds")
+
+
+def _ensure_entity(
+    entities: list[Entity],
+    seen_entity_ids: set[str],
+    target_name: str,
+) -> str:
+    target_id = _entity_id(target_name)
+    if target_id not in seen_entity_ids:
+        entities.append({
+            "id": target_id,
+            "name": target_name,
+            "name_ko": None,
+            "type": "concept",
+            "description": None,
+            "source_note": _resolve_note_path(target_name),
+        })
+        seen_entity_ids.add(target_id)
+    return target_id
+
+
+def _relationship(
+    source_id: str,
+    target_id: str,
+    rel_type: str,
+    evidence_text: str,
+    note_path: str,
+    now: str,
+    *,
+    strength: float,
+    confidence: float,
+) -> Relationship:
+    return {
+        "id": _rel_id(source_id, target_id, rel_type),
+        "source_id": source_id,
+        "target_id": target_id,
+        "type": rel_type,
+        "strength": strength,
+        "evidence_text": evidence_text,
+        "source_note": note_path,
+        "confidence": confidence,
+        "extracted_date": now,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -267,9 +440,10 @@ def extract_entities_rule_based(
 ) -> tuple[list[Entity], list[Relationship], list[ReifiedRelationship]]:
     """
     Rule-based extraction:
-    1. Wikilinks [[Target]] → source -cites-> target (binary, ABox fact)
-    2. Tags #tag → source -belongs_to-> tag entity (binary, ABox fact)
-    3. Shared tags (2+ wikilinks in same sentence) → Reification as co_occurs event
+    1. Frontmatter typed wikilinks → source -typed_relation-> target
+    2. Body wikilinks [[Target]] → heading-typed relation or mentions fallback
+    3. Tags #tag → source -belongs_to-> tag entity (binary, ABox fact)
+    4. Shared tags (2+ wikilinks in same sentence) → Reification as co_occurs event
        (hyperedge cluster seed per 메타엣지-하이퍼그래프-구현.md §5.17)
 
     All relationships carry Named Graph context (confidence, extracted_date).
@@ -292,37 +466,34 @@ def extract_entities_rule_based(
     reified: list[ReifiedRelationship] = []
     seen_entity_ids: set[str] = {source_id}
 
-    wikilinks = _extract_wikilinks(content)
-    tags = _extract_tags(content)
+    extraction_content = _strip_frontmatter(content)
+    frontmatter_links = _extract_frontmatter_typed_links(content)
+    body_links = _iter_body_wikilinks_with_relation(extraction_content)
+    tags = _extract_tags(extraction_content)
 
-    # --- Binary wikilink relations (ABox facts) ---
-    for target_name in wikilinks:
-        target_id = _entity_id(target_name)
-        if target_id not in seen_entity_ids:
-            entities.append({
-                "id": target_id,
-                "name": target_name,
-                "name_ko": None,
-                "type": "concept",
-                "description": None,
-                "source_note": _resolve_note_path(target_name),
-            })
-            seen_entity_ids.add(target_id)
-        relationships.append({
-            "id": _rel_id(source_id, target_id, "cites"),
-            "source_id": source_id,
-            "target_id": target_id,
-            "type": "cites",
-            "strength": 1.0,
-            "evidence_text": f"[[{target_name}]]",
-            "source_note": note_path,
-            "confidence": 1.0,
-            "extracted_date": now,
-        })
+    # --- Binary frontmatter relations (explicit typed ABox facts) ---
+    for target_name, rel_type in frontmatter_links:
+        target_id = _ensure_entity(entities, seen_entity_ids, target_name)
+        relationships.append(_relationship(
+            source_id, target_id, rel_type, f"[[{target_name}]]", note_path, now,
+            strength=1.0, confidence=1.0,
+        ))
+
+    # --- Binary body wikilink relations (heading typed or mentions fallback) ---
+    for target_name, rel_type in body_links:
+        target_id = _ensure_entity(entities, seen_entity_ids, target_name)
+        strength = 1.0 if rel_type == "mentions" else 0.9
+        confidence = 1.0 if rel_type == "mentions" else 0.85
+        relationships.append(_relationship(
+            source_id, target_id, rel_type, f"[[{target_name}]]", note_path, now,
+            strength=strength, confidence=confidence,
+        ))
 
     # --- Binary tag relations (ABox facts) ---
     tag_entity_ids: list[str] = []
     for tag in tags:
+        if not _is_safe_entity_name(tag):
+            continue
         tag_id = _entity_id(f"#tag:{tag}")
         if tag_id not in seen_entity_ids:
             entities.append({
@@ -350,7 +521,7 @@ def extract_entities_rule_based(
     # --- Hyperedge cluster seed: shared tags as N-ary co_occurs ---
     # When 3+ wikilink targets appear in the same sentence/paragraph,
     # reify as a co_occurs event node (hyperedge per §5.17).
-    sentences = _SENT_RE.split(content)
+    sentences = _SENT_RE.split(extraction_content)
     for sentence in sentences:
         co_refs = [
             _entity_id(t)

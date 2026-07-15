@@ -34,7 +34,7 @@ CV_THRESHOLDS = [(0.1, 5), (0.15, 4), (0.2, 3), (0.3, 2), (float("inf"), 1)]
 # ── Quality scoring ───────────────────────────────────────────────────
 
 # "Higher is better" thresholds — use _threshold_score_gte()
-COVERAGE_THRESHOLDS = [(18, 10), (17, 8), (16, 6), (15, 4), (0, 2)]
+COVERAGE_THRESHOLDS = [(1.0, 10), (17 / 18, 8), (16 / 18, 6), (15 / 18, 4), (0, 2)]
 COMPLETENESS_THRESHOLDS = [(0.95, 10), (0.85, 8), (0.75, 6), (0.65, 4), (0, 2)]
 CONFIDENCE_ACC_THRESHOLDS = [(0.9, 5), (0.8, 4), (0.7, 3), (0.6, 2), (0, 1)]
 
@@ -117,7 +117,9 @@ def score_quality_automated(benchmark: dict) -> dict:
 
     # Coverage
     with_results = sum(1 for q in queries if q.get("total_results", 0) > 0)
-    coverage_score = _threshold_score_gte(with_results, COVERAGE_THRESHOLDS)
+    query_count = int(benchmark.get("query_count") or len(queries))
+    coverage_ratio = with_results / query_count if query_count else 0.0
+    coverage_score = _threshold_score_gte(coverage_ratio, COVERAGE_THRESHOLDS)
 
     # Completeness (gold note hit rate)
     completeness = benchmark.get("completeness", 0)
@@ -128,7 +130,7 @@ def score_quality_automated(benchmark: dict) -> dict:
         "max": 60,
         "note": "Partial score — relevance/ranking/confidence require judge input",
         "breakdown": {
-            "coverage": {"score": coverage_score, "max": 10, "value": f"{with_results}/18"},
+            "coverage": {"score": coverage_score, "max": 10, "value": f"{with_results}/{query_count}"},
             "completeness": {"score": completeness_score, "max": 10, "value": round(completeness, 3)},
             "relevance": {"score": 0, "max": 20, "note": "requires judges"},
             "ranking": {"score": 0, "max": 15, "note": "requires judges"},

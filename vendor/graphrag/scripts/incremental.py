@@ -126,9 +126,17 @@ def incremental_update(
             content_hash = compute_content_hash(body, fm)
             fm_hash = compute_frontmatter_hash(fm)
 
-            # Remove old extractions from this note
+            # Remove old extractions from this note.
+            # track① guard (2026-07-15): only delete GENERIC relations so that
+            # semantically re-labeled relations (parent/precedes/cites/... from the
+            # track① merge) survive incremental re-extraction. Re-extraction still
+            # regenerates generic (related_to/mentions) from wikilink rules as before.
+            # NOTE: the deleted-note cleanup below (L~182) must stay unguarded —
+            # full delete is correct there (guarding it would leave orphan relations).
             conn.execute(
-                "DELETE FROM relationships WHERE source_note = ?", (rel_path,)
+                "DELETE FROM relationships WHERE source_note = ? "
+                "AND type IN ('related_to','mentions')",
+                (rel_path,),
             )
             # Only remove entities that originated from this note and aren't referenced elsewhere
             conn.execute(

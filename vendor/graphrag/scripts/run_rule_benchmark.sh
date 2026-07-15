@@ -10,6 +10,6 @@ if [[ ! -f "$INPUT_JSON" ]]; then
   exit 1
 fi
 
-python3 "$(dirname "$0")/benchmark_judge.py" "$INPUT_JSON" --mode rule --output "$JUDGE_JSON"
-python3 "$(dirname "$0")/benchmark_scorer.py" "$INPUT_JSON" --judges "$JUDGE_JSON" --output "$SCORE_JSON"
+python3 .team-os/graphrag/scripts/benchmark_judge.py "$INPUT_JSON" --mode rule --output "$JUDGE_JSON"
+python3 .team-os/graphrag/scripts/benchmark_scorer.py "$INPUT_JSON" --judges "$JUDGE_JSON" --output "$SCORE_JSON"
 python3 -c "import json; d=json.load(open('$SCORE_JSON')); print(d['composite']['composite'])"

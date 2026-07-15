@@ -34,6 +34,10 @@ GRAPH_FIELDS = {"graph_entity", "graph_community", "graph_connections"}
 BATCH_SIZE = 100
 BATCH_DELAY_SEC = 2
 MAX_CONNECTIONS_DISPLAY = 5
+MAX_GRAPH_ENTITY_CHARS = 200
+MAX_GRAPH_CONNECTION_CHARS = 240
+_ESCAPE_SEQUENCE_RE = re.compile(r"\\\\|\\[nrt]|\\x[0-9A-Fa-f]{2}|\\u[0-9A-Fa-f]{4}")
+_GRAPH_CONNECTION_RE = re.compile(r"^(.+?)\s*\((\w+)\)\s*$")
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +69,122 @@ def _rebuild_content(fm: dict, body: str) -> str:
     if not fm:
         return body
     return _serialize_frontmatter(fm) + body
+
+
+def _is_safe_graph_entity_name(name: str) -> bool:
+    if not isinstance(name, str):
+        return False
+    if not name:
+        return False
+    if len(name) > MAX_GRAPH_ENTITY_CHARS:
+        return False
+    if "\n" in name or "\r" in name:
+        return False
+    if _ESCAPE_SEQUENCE_RE.search(name):
+        return False
+    return True
+
+
+def _is_safe_graph_connection(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    if len(value) > MAX_GRAPH_CONNECTION_CHARS:
+        return False
+    if "\n" in value or "\r" in value:
+        return False
+    if _ESCAPE_SEQUENCE_RE.search(value):
+        return False
+    m = _GRAPH_CONNECTION_RE.match(value.strip())
+    if not m:
+        return False
+    target_name, rel_type = m.group(1).strip(), m.group(2).strip()
+    return _is_safe_graph_entity_name(target_name) and bool(rel_type)
+
+
+def _sanitize_graph_connections(values: Any) -> list[str]:
+    if not isinstance(values, list):
+        return []
+    return [value.strip() for value in values if _is_safe_graph_connection(value)]
+
+
+def _extract_aliases(fm: dict[str, Any]) -> list[str]:
+    """Extract safe Obsidian frontmatter aliases."""
+    raw = fm.get("aliases", [])
+    if isinstance(raw, str):
+        candidates = [raw]
+    elif isinstance(raw, list):
+        candidates = [item for item in raw if isinstance(item, str)]
+    else:
+        candidates = []
+
+    aliases: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        alias = candidate.strip()
+        if alias in seen:
+            continue
+        if not _is_safe_graph_entity_name(alias):
+            continue
+        aliases.append(alias)
+        seen.add(alias)
+    return aliases
+
+
+def _find_entity_id_for_note_name(conn: sqlite3.Connection, note_path: str) -> str | None:
+    """Find the entity whose name matches the Obsidian note stem."""
+    note_name = Path(note_path).stem
+    row = conn.execute(
+        """
+        SELECT id
+          FROM entities
+         WHERE name = ?
+         ORDER BY
+           CASE
+             WHEN source_note = ? THEN 0
+             WHEN source_note IS NULL OR source_note = '' THEN 1
+             ELSE 2
+           END,
+           COALESCE(centrality_score, 0) DESC
+         LIMIT 1
+        """,
+        (note_name, note_path),
+    ).fetchone()
+    return row["id"] if row else None
+
+
+def _sync_frontmatter_aliases_to_db(
+    conn: sqlite3.Connection,
+    note_path: str,
+    fm: dict[str, Any],
+) -> bool:
+    """Refresh frontmatter aliases for one note/entity."""
+    entity_id = _find_entity_id_for_note_name(conn, note_path)
+    if entity_id is None:
+        return False
+
+    existing = conn.execute(
+        """
+        SELECT COUNT(*)
+          FROM entity_aliases
+         WHERE entity_id = ? AND alias_type = 'frontmatter'
+        """,
+        (entity_id,),
+    ).fetchone()[0]
+    aliases = _extract_aliases(fm)
+
+    conn.execute(
+        "DELETE FROM entity_aliases WHERE entity_id = ? AND alias_type = 'frontmatter'",
+        (entity_id,),
+    )
+    conn.executemany(
+        """
+        INSERT OR IGNORE INTO entity_aliases(entity_id, alias_name, alias_type)
+        VALUES (?, ?, 'frontmatter')
+        """,
+        [(entity_id, alias) for alias in aliases],
+    )
+    conn.commit()
+    return bool("aliases" in fm or existing or aliases)
 
 
 # ---------------------------------------------------------------------------
@@ -111,9 +231,16 @@ def _build_graph_connections_field(
            JOIN entities e1 ON r.source_id = e1.id
            WHERE e2.source_note = ?
            ORDER BY strength DESC LIMIT ?""",
-        (note_path, note_path, max_connections),
+        (note_path, note_path, max_connections * 10),
     ).fetchall()
-    return [f"{row['target_name']} ({row['rel_type']})" for row in rows]
+    values: list[str] = []
+    for row in rows:
+        value = f"{row['target_name']} ({row['rel_type']})"
+        if _is_safe_graph_connection(value):
+            values.append(value)
+        if len(values) >= max_connections:
+            break
+    return values
 
 
 # ---------------------------------------------------------------------------
@@ -207,6 +334,9 @@ def sync_graph_to_frontmatter(
                     new_fm["graph_connections"] = resolve_conflict(
                         db_connections, fm.get("graph_connections", []), source=None
                     )
+                    new_fm["graph_connections"] = _sanitize_graph_connections(
+                        new_fm["graph_connections"]
+                    )
 
                 # Check if frontmatter actually changed
                 new_fm_hash = compute_frontmatter_hash(new_fm)
@@ -295,6 +425,8 @@ def sync_frontmatter_to_graph(
                 fm, _ = _parse_frontmatter(content)
                 current_hash = compute_frontmatter_hash(fm)
                 if state and state["frontmatter_hash"] == current_hash:
+                    if _sync_frontmatter_aliases_to_db(conn, rel_path, fm):
+                        stats["processed"] += 1
                     continue  # No user edits since last system write
             except Exception:
                 continue
@@ -302,9 +434,12 @@ def sync_frontmatter_to_graph(
         try:
             content = md_file.read_text(encoding="utf-8")
             fm, _ = _parse_frontmatter(content)
+            aliases_processed = _sync_frontmatter_aliases_to_db(conn, rel_path, fm)
 
             graph_fields = {k: fm[k] for k in GRAPH_FIELDS if k in fm}
             if not graph_fields:
+                if aliases_processed:
+                    stats["processed"] += 1
                 continue
 
             # Push user-added connections back to DB
@@ -334,10 +469,10 @@ def _sync_user_connections_to_db(
         return
 
     source_id = source_row["id"]
-    _parse_rel_re = re.compile(r"^(.+?)\s*\((\w+)\)\s*$")
-
     for conn_str in connections:
-        m = _parse_rel_re.match(conn_str.strip())
+        if not _is_safe_graph_connection(conn_str):
+            continue
+        m = _GRAPH_CONNECTION_RE.match(conn_str.strip())
         if not m:
             continue
         target_name, rel_type = m.group(1).strip(), m.group(2).strip()

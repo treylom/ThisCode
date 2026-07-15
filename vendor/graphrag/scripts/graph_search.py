@@ -26,9 +26,13 @@ _PROJECT_DIR = _Path(__file__).resolve().parents[3]
 _DEFAULT_DB = str(_PROJECT_DIR / ".team-os/graphrag/index/vault_graph.db")
 
 import json
+import os
 import re
 import sqlite3
+import subprocess
+import tempfile
 import threading
+import time
 from enum import Enum
 from typing import Any
 
@@ -89,15 +93,26 @@ _CROSS_LINGUAL_MAP: dict[str, list[str]] = {
     "그래프": ["graph"],
     "검색": ["search"],
     "임베딩": ["embedding"],
+    "벡터": ["vector"],
+    "의미": ["semantic", "meaning"],
     "커뮤니티": ["community"],
     "온톨로지": ["ontology"],
     "agent": ["에이전트"],
+    "orchestration": ["오케스트레이션", "orchestrator workers"],
+    "orchestrator": ["오케스트레이션", "orchestration"],
+    "patterns": ["패턴", "pattern"],
+    "pattern": ["패턴", "patterns"],
+    "worker": ["워커"],
+    "workers": ["워커"],
     "prompt": ["프롬프트"],
     "safety": ["안전"],
     "research": ["연구"],
     "knowledge": ["지식"],
     "graph": ["그래프"],
     "search": ["검색"],
+    "semantic": ["의미"],
+    "meaning": ["의미"],
+    "vector": ["벡터"],
     # v3 additions — gap analysis (Q09, Q14, Q16, Q17, Q18)
     "여정": ["journey"],
     "트렌드": ["trend", "trends"],
@@ -131,6 +146,58 @@ _CROSS_LINGUAL_MAP: dict[str, list[str]] = {
 }
 
 
+def _normalize_phrase_text(text: str) -> str:
+    normalized = re.sub(r"[^0-9a-zA-Z가-힣]+", " ", text.casefold())
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def _phrase_token_count(phrase: str) -> int:
+    normalized = _normalize_phrase_text(phrase)
+    return len(normalized.split()) if normalized else 0
+
+
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for value in values:
+        normalized = _normalize_phrase_text(value)
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        out.append(normalized)
+    return out
+
+
+def _query_terms_for_phrase(query: str) -> list[str]:
+    normalized = _normalize_phrase_text(query)
+    return [term for term in normalized.split() if len(term) >= 2]
+
+
+def _exact_phrase_queries(query: str) -> list[str]:
+    terms = _query_terms_for_phrase(query)
+    phrases: list[str] = []
+
+    for idx in range(0, max(0, len(terms) - 1)):
+        if terms[idx] not in _CROSS_LINGUAL_MAP or terms[idx + 1] not in _CROSS_LINGUAL_MAP:
+            continue
+        phrases.append(" ".join(terms[idx:idx + 2]))
+        left_options = [terms[idx], *_CROSS_LINGUAL_MAP.get(terms[idx], [])]
+        right_options = [terms[idx + 1], *_CROSS_LINGUAL_MAP.get(terms[idx + 1], [])]
+        for left in left_options:
+            for right in right_options:
+                phrase = _normalize_phrase_text(f"{left} {right}")
+                if _phrase_token_count(phrase) >= 2:
+                    phrases.append(phrase)
+
+    return _dedupe_preserve_order([p for p in phrases if _phrase_token_count(p) >= 2])
+
+
+def _text_matches_exact_phrase(text: str, phrase: str) -> bool:
+    normalized_text = _normalize_phrase_text(text)
+    normalized_phrase = _normalize_phrase_text(phrase)
+    return bool(normalized_phrase and normalized_phrase in normalized_text)
+
+
 def expand_query_cross_lingual(query: str) -> str:
     """Expand a query string by appending cross-lingual equivalents.
 
@@ -161,6 +228,33 @@ _QE_CACHE_MAX = 200
 
 _QE_DEFAULT = {"expanded_terms": [], "english_query": "", "intent": "lookup"}
 
+# 2026-06-16 (코난, 재경님 (나) 승인): env-gated precomputed expansion file. When
+# GRAPHRAG_QE_CACHE_FILE points to a JSON {query: {expanded_terms, english_query, intent}},
+# expand_query_llm serves from it (no HTTP) — lets us prove the expansion FEATURE in
+# isolation before standing up the shared CLIProxyAPI backend. Default unset = unchanged
+# HTTP behavior (live 8400 safe).
+_QE_FILE_CACHE: dict[str, dict[str, Any]] | None = None
+
+
+def _normalize_query_cache_key(query: str) -> str:
+    """Normalize query identity without changing the query sent to retrieval."""
+    return query.strip().casefold()
+
+
+def _load_qe_file_cache() -> dict[str, dict[str, Any]] | None:
+    global _QE_FILE_CACHE
+    if _QE_FILE_CACHE is not None:
+        return _QE_FILE_CACHE
+    path = os.environ.get("GRAPHRAG_QE_CACHE_FILE")
+    if not path:
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            _QE_FILE_CACHE = json.load(f)
+    except Exception:
+        _QE_FILE_CACHE = {}
+    return _QE_FILE_CACHE
+
 
 def expand_query_llm(query: str) -> dict[str, Any]:
     """LLM-based query expansion. Returns expanded_terms, english_query, intent.
@@ -168,8 +262,24 @@ def expand_query_llm(query: str) -> dict[str, Any]:
     Uses CLIProxyAPI (Anthropic-compatible) with LRU cache and 5s timeout.
     Falls back to empty expansion on any failure.
     """
-    if query in _QE_CACHE:
-        return _QE_CACHE[query]
+    cache_key = _normalize_query_cache_key(query)
+    if cache_key in _QE_CACHE:
+        return _QE_CACHE[cache_key]
+
+    # 2026-06-16: precomputed expansion file (isolated experiment backend, env-gated)
+    _file_cache = _load_qe_file_cache()
+    if _file_cache is not None:
+        hit = _file_cache.get(query)
+        if hit:
+            result = {
+                "expanded_terms": hit.get("expanded_terms", []),
+                "english_query": hit.get("english_query", query),
+                "intent": hit.get("intent", "lookup"),
+            }
+        else:
+            result = {**_QE_DEFAULT, "english_query": query}
+        _QE_CACHE[cache_key] = result
+        return result
 
     try:
         import httpx  # type: ignore
@@ -229,7 +339,7 @@ def expand_query_llm(query: str) -> dict[str, Any]:
     if len(_QE_CACHE) >= _QE_CACHE_MAX:
         oldest_key = next(iter(_QE_CACHE))
         del _QE_CACHE[oldest_key]
-    _QE_CACHE[query] = result
+    _QE_CACHE[cache_key] = result
     return result
 
 
@@ -318,7 +428,7 @@ _DEPTH_MAP: dict[QueryLevel, int] = {
 
 
 # ---------------------------------------------------------------------------
-# LLM placeholders
+# LLM synthesis/map helpers
 # ---------------------------------------------------------------------------
 
 INSIGHT_SYNTHESIS_PROMPT = """\
@@ -386,14 +496,199 @@ Return a JSON object:
 """
 
 
+_LLM_DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+_LLM_DEFAULT_TIMEOUT = 10.0
+_LLM_DEFAULT_PROVIDER = "http"
+_LLM_CODEX_DEFAULT_MODEL = "gpt-5.5"
+_LLM_CODEX_CLI_CWD = "/tmp"
+_LLM_CODEX_CLI_MAX_CONCURRENCY_DEFAULT = 1
+_LLM_CODEX_CLI_MAX_OUTPUT_CHARS_DEFAULT = 20000
+_GLOBAL_MAX_COMMUNITIES_DEFAULT = 50
+_LLM_SYNTHESIS_FALLBACK = "[LLM synthesis unavailable — set GRAPHRAG_LLM_ENABLED=1 and configure provider]"
+_LLM_MAP_FALLBACK = {"answer": "[map unavailable]", "relevance_score": 0.0, "key_entities": []}
+_llm_codex_cli_semaphore_lock = threading.Lock()
+_llm_codex_cli_semaphore: tuple[int, threading.BoundedSemaphore] | None = None
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    try:
+        value = float(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+def _env_int(name: str, default: int) -> int:
+    try:
+        value = int(os.environ.get(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+def _extract_text_block(payload: dict[str, Any]) -> str:
+    for block in payload.get("content", []):
+        if block.get("type") == "text":
+            return str(block.get("text", "")).strip()
+    return ""
+
+
+def _strip_json_fence(text: str) -> str:
+    text = text.strip()
+    if "```" not in text:
+        return text
+    fenced = text.split("```", 2)[1].strip()
+    return fenced[4:].strip() if fenced.startswith("json") else fenced
+
+
+def _get_codex_cli_semaphore() -> threading.BoundedSemaphore:
+    limit = _env_int("GRAPHRAG_LLM_CODEX_MAX_CONCURRENCY", _LLM_CODEX_CLI_MAX_CONCURRENCY_DEFAULT)
+    global _llm_codex_cli_semaphore
+    with _llm_codex_cli_semaphore_lock:
+        if _llm_codex_cli_semaphore is None or _llm_codex_cli_semaphore[0] != limit:
+            _llm_codex_cli_semaphore = (limit, threading.BoundedSemaphore(limit))
+        return _llm_codex_cli_semaphore[1]
+
+def _llm_completion_codex_cli(prompt: str, *, max_tokens: int) -> str | None:
+    """Call Codex non-interactive mode through the already-authenticated CLI."""
+    del max_tokens  # Codex CLI completion provider captures the final answer via -o.
+    model = (
+        os.environ.get("GRAPHRAG_LLM_CODEX_MODEL")
+        or os.environ.get("GRAPHRAG_LLM_MODEL")
+        or _LLM_CODEX_DEFAULT_MODEL
+    ).strip() or _LLM_CODEX_DEFAULT_MODEL
+    timeout = _env_float("GRAPHRAG_LLM_TIMEOUT", _LLM_DEFAULT_TIMEOUT)
+    binary = os.environ.get("GRAPHRAG_LLM_CODEX_BIN", "codex").strip() or "codex"
+    cwd = os.environ.get("GRAPHRAG_LLM_CODEX_CWD", _LLM_CODEX_CLI_CWD).strip() or _LLM_CODEX_CLI_CWD
+    max_output_chars = _env_int(
+        "GRAPHRAG_LLM_CODEX_MAX_OUTPUT_CHARS",
+        _LLM_CODEX_CLI_MAX_OUTPUT_CHARS_DEFAULT,
+    )
+    output_path: str | None = None
+    env = os.environ.copy()
+    env.pop("OPENAI_API_KEY", None)
+    env.pop("ANTHROPIC_API_KEY", None)
+
+    try:
+        with tempfile.NamedTemporaryFile(prefix="graphrag-codex-", suffix=".txt", delete=False) as output_file:
+            output_path = output_file.name
+        cmd = [
+            binary,
+            "exec",
+            "--ephemeral",
+            "--skip-git-repo-check",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--sandbox",
+            "read-only",
+            "-C",
+            cwd,
+            "-m",
+            model,
+            "-o",
+            output_path,
+            "-",
+        ]
+        with _get_codex_cli_semaphore():
+            result = subprocess.run(
+                cmd,
+                input=prompt,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                cwd=cwd,
+                env=env,
+            )
+        if result.returncode != 0:
+            return None
+        text = _Path(output_path).read_text(encoding="utf-8", errors="replace").strip()
+        if not text or len(text) > max_output_chars:
+            return None
+        return text
+    except Exception:
+        return None
+    finally:
+        if output_path:
+            try:
+                _Path(output_path).unlink(missing_ok=True)
+            except Exception:
+                pass
+
+
+def _llm_completion(prompt: str, *, max_tokens: int) -> str | None:
+    """Call the configured low-cost model provider when explicitly enabled."""
+    if not _env_flag("GRAPHRAG_LLM_ENABLED"):
+        return None
+
+    provider = os.environ.get("GRAPHRAG_LLM_PROVIDER", _LLM_DEFAULT_PROVIDER).strip().lower()
+    if provider in {"codex_cli", "codex-cli", "codex"}:
+        return _llm_completion_codex_cli(prompt, max_tokens=max_tokens)
+    if provider not in {"http", "anthropic", "proxy"}:
+        return None
+
+    try:
+        import httpx  # type: ignore
+    except ImportError:
+        return None
+
+    api_base = os.environ.get("GRAPHRAG_LLM_API_BASE", _QE_API_BASE).rstrip("/")
+    api_key = os.environ.get("GRAPHRAG_LLM_API_KEY", _QE_API_KEY)
+    model = os.environ.get("GRAPHRAG_LLM_MODEL", _LLM_DEFAULT_MODEL)
+    timeout = _env_float("GRAPHRAG_LLM_TIMEOUT", _LLM_DEFAULT_TIMEOUT)
+
+    try:
+        resp = httpx.post(
+            f"{api_base}/v1/messages",
+            headers={
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            },
+            json={
+                "model": model,
+                "max_tokens": max_tokens,
+                "messages": [{"role": "user", "content": prompt}],
+            },
+            timeout=timeout,
+        )
+        resp.raise_for_status()
+        text = _extract_text_block(resp.json())
+        return text or None
+    except Exception:
+        return None
+
+
 def _llm_synthesize(prompt: str) -> str:
-    """LLM synthesis placeholder. Replace with actual LLM call."""
-    return "[LLM synthesis placeholder — implement with actual LLM provider]"
+    """Run synthesis when enabled; otherwise preserve graceful fallback."""
+    return _llm_completion(prompt, max_tokens=700) or _LLM_SYNTHESIS_FALLBACK
 
 
 def _llm_map_answer(prompt: str) -> dict[str, Any]:
-    """LLM map step placeholder. Returns mock answer with 0 relevance."""
-    return {"answer": "[map placeholder]", "relevance_score": 0.0, "key_entities": []}
+    """Run map step when enabled; otherwise preserve zero-relevance fallback."""
+    text = _llm_completion(prompt, max_tokens=300)
+    if not text:
+        return dict(_LLM_MAP_FALLBACK)
+    try:
+        result = json.loads(_strip_json_fence(text))
+    except Exception:
+        return dict(_LLM_MAP_FALLBACK)
+    answer = str(result.get("answer", "")).strip()
+    try:
+        relevance_score = float(result.get("relevance_score", 0.0))
+    except (TypeError, ValueError):
+        relevance_score = 0.0
+    key_entities = result.get("key_entities", [])
+    if not isinstance(key_entities, list):
+        key_entities = []
+    return {
+        "answer": answer or _LLM_MAP_FALLBACK["answer"],
+        "relevance_score": max(0.0, min(1.0, relevance_score)),
+        "key_entities": [str(entity) for entity in key_entities],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -518,6 +813,9 @@ def global_search(
                 "SELECT id, name, summary, member_entity_ids, level FROM communities LIMIT 50"
             )
         ]
+
+    max_communities = _env_int("GRAPHRAG_GLOBAL_MAX_COMMUNITIES", _GLOBAL_MAX_COMMUNITIES_DEFAULT)
+    communities = communities[:max_communities]
 
     # MAP: score each community, generate intermediate answer
     map_results: list[dict[str, Any]] = []
@@ -962,10 +1260,16 @@ def interview(
 # Hybrid search constants
 # ---------------------------------------------------------------------------
 
-DEFAULT_DENSE_WEIGHT: float = 0.3   # semantic similarity weight
-DEFAULT_SPARSE_WEIGHT: float = 0.4  # keyword (FTS5) weight — Korean domain terminology
-DEFAULT_DECOMPOSED_WEIGHT: float = 0.15  # query decomposition for multi-term matching
-DEFAULT_ENTITY_WEIGHT: float = 0.15  # entity embedding for MOC/hub note surfacing
+# 2026-06-16 (코난 R-V1 deploy): default channel weights env-configurable so the live
+# deploy can set the winner profile (dense0.5) without code change. Default values =
+# current/unchanged (live 8400 safe until launchd env is set). Per-query params still override.
+DEFAULT_DENSE_WEIGHT: float = float(os.environ.get("GRAPHRAG_DENSE_WEIGHT", "0.3"))   # semantic similarity weight
+DEFAULT_SPARSE_WEIGHT: float = float(os.environ.get("GRAPHRAG_SPARSE_WEIGHT", "0.4"))  # keyword (FTS5) weight — Korean domain terminology
+DEFAULT_DECOMPOSED_WEIGHT: float = float(os.environ.get("GRAPHRAG_DECOMPOSED_WEIGHT", "0.15"))  # query decomposition for multi-term matching
+DEFAULT_ENTITY_WEIGHT: float = float(os.environ.get("GRAPHRAG_ENTITY_WEIGHT", "0.15"))  # entity embedding for MOC/hub note surfacing
+# 2026-07-03 (코난 B-layer): concept-hop channel — query→concept(bge-m3)→concept_note_edges→note.
+# Additive RRF term (does not alter _rrf_score signature/cache). weight=0 disables (fail-safe rollback).
+DEFAULT_CONCEPT_WEIGHT: float = float(os.environ.get("GRAPHRAG_CONCEPT_WEIGHT", "0.10"))
 DEFAULT_INDEX_DIR: str = ".team-os/graphrag/index"
 RRF_K: int = 60
 _QUERY_SPLIT_PATTERN = re.compile(
@@ -1005,7 +1309,20 @@ def _get_cross_encoder():
         if _cross_encoder is None:
             from sentence_transformers import CrossEncoder  # type: ignore
             # R9: Upgraded MiniLM→bge-reranker-base for multilingual (Korean) content
-            _cross_encoder = CrossEncoder("BAAI/bge-reranker-base")
+            # 2026-06-16 (코난 autoresearch R-B1): reranker model env-configurable for
+            # isolated bake-off (default unchanged = no live behavior change).
+            _model_id = os.environ.get("GRAPHRAG_RERANKER_MODEL", "BAAI/bge-reranker-base")
+            # 2026-06-16 (코난 R-B2): empirically the current sentence-transformers
+            # defaults BOTH bge-reranker-base AND v2-m3 to Sigmoid (relevant pair ~0.001
+            # for base) — so the L1248 "raw logits" comment is stale and the live pipeline
+            # is structural-boost-dominated (ce_score ~0). v2-m3 with Identity gives a 10.7
+            # logit spread (3x base's 3.3) = a genuinely useful neural signal. Env-gated
+            # raw-logit mode (default off = exact current Sigmoid behavior, live 8400 safe).
+            if os.environ.get("GRAPHRAG_RERANKER_RAW_LOGITS", "0") == "1":
+                import torch  # type: ignore
+                _cross_encoder = CrossEncoder(_model_id, activation_fn=torch.nn.Identity())
+            else:
+                _cross_encoder = CrossEncoder(_model_id)
     return _cross_encoder
 
 
@@ -1157,14 +1474,189 @@ def _rrf_score(
 
 
 # ---------------------------------------------------------------------------
+# Concept-hop channel (B-layer, 2026-07-03) — query → concept(bge-m3) → note
+# Isolated: reads concept_* tables + concept_embeddings.npy. Absent/error = empty (fail-safe).
+# ---------------------------------------------------------------------------
+_CONCEPT_INDEX: "dict[str, Any] | None" = None
+_CONCEPT_INDEX_LOCK = threading.Lock()
+_CONCEPT_FLOOR = 0.55  # query↔concept min sim to consider (below = noise)
+
+def _load_concept_index(conn: sqlite3.Connection, output_dir: str) -> "dict[str, Any] | None":
+    global _CONCEPT_INDEX
+    if _CONCEPT_INDEX is not None:
+        return _CONCEPT_INDEX or None
+    with _CONCEPT_INDEX_LOCK:
+        if _CONCEPT_INDEX is not None:
+            return _CONCEPT_INDEX or None
+        try:
+            import numpy as _np
+            emb_path = os.path.join(output_dir, "concept_embeddings.npy")
+            if not os.path.exists(emb_path):
+                _CONCEPT_INDEX = {}
+                return None
+            emb = _np.load(emb_path).astype("float32")
+            emb /= (_np.linalg.norm(emb, axis=1, keepdims=True) + 1e-9)
+            rows = conn.execute(
+                "SELECT id, canonical_name, embedding_ref, low_priority FROM concept_entities WHERE layer='B-2026-07'"
+            ).fetchall()
+            by_row = {r[2]: {"cid": r[0], "name": r[1], "low": r[3]} for r in rows}
+            _CONCEPT_INDEX = {"emb": emb, "by_row": by_row}
+            return _CONCEPT_INDEX
+        except Exception:
+            _CONCEPT_INDEX = {}
+            return None
+
+def _concept_channel_search(conn: sqlite3.Connection, query: str, output_dir: str, top_k: int) -> list[dict[str, Any]]:
+    """query→concept(bge-m3, reuse note embed model)→concept_note_edges→note entities. Ranked note-entity dicts."""
+    if DEFAULT_CONCEPT_WEIGHT <= 0:
+        return []
+    idx = _load_concept_index(conn, output_dir)
+    if not idx or not idx.get("by_row"):
+        return []
+    try:
+        import numpy as _np
+        model = _embedding_index._get_model()  # same bge-m3 space as concept_embeddings
+        qv = _np.asarray(model.encode([query], normalize_embeddings=True)[0], dtype="float32")
+        sims = idx["emb"] @ qv
+        order = _np.argsort(-sims)[: max(top_k, 10)]
+        note_best: dict[str, float] = {}
+        for ri in order:
+            s = float(sims[int(ri)])
+            if s < _CONCEPT_FLOOR:
+                break
+            meta = idx["by_row"].get(int(ri))
+            if not meta:
+                continue
+            lp = 0.5 if meta["low"] else 1.0
+            for neid, econf in conn.execute(
+                "SELECT note_entity_id, confidence FROM concept_note_edges WHERE concept_cid=? AND layer='B-2026-07'",
+                (meta["cid"],),
+            ):
+                w = s * float(econf) * lp
+                if w > note_best.get(neid, 0.0):
+                    note_best[neid] = w
+        if not note_best:
+            return []
+        top_ids = sorted(note_best, key=lambda k: -note_best[k])[:top_k]
+        out: list[dict[str, Any]] = []
+        for neid in top_ids:
+            row = conn.execute(
+                "SELECT id, name, type, description, source_note, centrality_score FROM entities WHERE id=?",
+                (neid,),
+            ).fetchone()
+            if row:
+                d = dict(row)
+                d["_concept_weight"] = note_best[neid]
+                out.append(d)
+        return out
+    except Exception:
+        return []
+
+
+# ---------------------------------------------------------------------------
 # Hybrid Search (Dense + Sparse + RRF)
 # ---------------------------------------------------------------------------
 
 _HYBRID_CACHE: dict[tuple[str, int, tuple[float, float, float, float]], list[SearchResult]] = {}
 _HYBRID_CACHE_LOCK = threading.Lock()  # v2.3.3: background warmup + /reload + concurrent /api/search race 차단
 _HYBRID_CACHE_MAX = 100
-_ALIAS_RERANK_BOOST = 0.0  # R19 DISCARD: disabled (infra retained). Lesson: CE dominates, boost ineffective.
-RERANK_POOL_MULTIPLIER = 3  # R12b: sparse-only 3x expansion — dense/entity already hit top-10, sparse needs more BM25 coverage for gold at rank 20-40
+_ALIAS_RERANK_BOOST = 1.0  # C-3b: frontmatter aliases are exact user-authored recall hints.
+_EXACT_PHRASE_BOOST = 0.03  # E-2: multi-token exact phrase hits are high-precision recall hints.
+_EXACT_PHRASE_RERANK_BOOST = 2.0
+RERANK_POOL_MULTIPLIER = int(os.environ.get("GRAPHRAG_RERANK_POOL_MULT", "3"))  # R12b: sparse-only 3x expansion. 2026-06-16 (코난 R-E1d): env-configurable for pool-depth sweep (default 3 = unchanged).
+
+
+def _is_exact_alias_query(query: str, matched_alias: str | None) -> bool:
+    return bool(matched_alias and query.strip().casefold() == matched_alias.strip().casefold())
+
+
+def _exact_phrase_search(conn: sqlite3.Connection, query: str, limit: int) -> list[dict[str, Any]]:
+    phrases = _exact_phrase_queries(query)
+    if not phrases:
+        return []
+
+    results: list[dict[str, Any]] = []
+    seen_names: set[str] = set()
+
+    for phrase in phrases:
+        tokens = phrase.split()
+        if len(tokens) < 2:
+            continue
+
+        phrase_token_count = len(tokens)
+
+        # Alias/frontmatter phrases are curated user-authored recall hints, so
+        # collect them before generic entity text hits.
+        alias_conditions = " AND ".join(["LOWER(a.alias_name) LIKE ?"] * len(tokens))
+        alias_params = [f"%{token}%" for token in tokens]
+        try:
+            alias_rows = [
+                dict(row)
+                for row in conn.execute(
+                    f"SELECT e.id, e.name, e.type, e.description, e.source_note, e.centrality_score, a.alias_name "
+                    f"FROM entity_aliases a JOIN entities e ON a.entity_id = e.id "
+                    f"WHERE {alias_conditions} "
+                    f"ORDER BY e.centrality_score DESC LIMIT ?",
+                    (*alias_params, max(limit, 50)),
+                )
+            ]
+        except Exception:
+            alias_rows = []
+
+        for row in alias_rows:
+            name = row.get("name", "")
+            alias_name = str(row.get("alias_name") or "")
+            if name and name not in seen_names and _text_matches_exact_phrase(alias_name, phrase):
+                row["phrase_matched"] = True
+                row["matched_phrase"] = phrase
+                row["alias_matched"] = True
+                row["matched_alias"] = alias_name
+                row["_phrase_token_count"] = phrase_token_count
+                row["_phrase_alias_hit"] = True
+                results.append(row)
+                seen_names.add(name)
+
+        entity_text = "COALESCE(name, '') || ' ' || COALESCE(source_note, '') || ' ' || COALESCE(description, '')"
+        entity_conditions = " AND ".join([f"LOWER({entity_text}) LIKE ?"] * len(tokens))
+        entity_params = [f"%{token}%" for token in tokens]
+        try:
+            entity_rows = [
+                dict(row)
+                for row in conn.execute(
+                    f"SELECT id, name, type, description, source_note, centrality_score "
+                    f"FROM entities WHERE {entity_conditions} "
+                    f"ORDER BY centrality_score DESC LIMIT ?",
+                    (*entity_params, max(limit, 50)),
+                )
+            ]
+        except Exception:
+            entity_rows = []
+
+        for row in entity_rows:
+            name = row.get("name", "")
+            haystack = " ".join(
+                str(row.get(key) or "") for key in ("name", "source_note", "description")
+            )
+            if name and name not in seen_names and _text_matches_exact_phrase(haystack, phrase):
+                row["phrase_matched"] = True
+                row["matched_phrase"] = phrase
+                row["_phrase_token_count"] = phrase_token_count
+                row["_phrase_alias_hit"] = False
+                results.append(row)
+                seen_names.add(name)
+
+    results.sort(
+        key=lambda row: (
+            -int(row.get("_phrase_token_count") or 0),
+            not bool(row.get("_phrase_alias_hit")),
+            -float(row.get("centrality_score") or 0.0),
+            str(row.get("name") or "").casefold(),
+        )
+    )
+    for row in results:
+        row.pop("_phrase_token_count", None)
+        row.pop("_phrase_alias_hit", None)
+    return results[:limit]
 
 
 def clear_hybrid_cache() -> None:
@@ -1183,6 +1675,9 @@ def hybrid_search(
     sparse_weight: float = DEFAULT_SPARSE_WEIGHT,
     decomposed_weight: float = DEFAULT_DECOMPOSED_WEIGHT,
     entity_weight: float = DEFAULT_ENTITY_WEIGHT,
+    note_index: Any | None = None,
+    entity_index: Any | None = None,
+    timings: dict[str, float] | None = None,
 ) -> list[SearchResult]:
     """
     Hybrid search combining up to 4 independent channels via RRF.
@@ -1199,16 +1694,24 @@ def hybrid_search(
         return []
 
     weights = (dense_weight, sparse_weight, decomposed_weight, entity_weight)
-    cache_key = (query, top_k, weights)
+    cache_key = (_normalize_query_cache_key(query), top_k, weights)
     with _HYBRID_CACHE_LOCK:  # v2.3.3: get atomic
         cached_results = _HYBRID_CACHE.get(cache_key)
     if cached_results is not None:
+        if timings is not None:
+            timings["cache_hit"] = 1.0
         return [dict(result) for result in cached_results]
+
+    if timings is not None:
+        timings["cache_hit"] = 0.0
 
     rerank_pool_limit = top_k * RERANK_POOL_MULTIPLIER
 
     # M1: LLM Query Expansion — expand before all channels
+    phase_started = time.perf_counter()
     qe = expand_query_llm(query)
+    if timings is not None:
+        timings["qe"] = round((time.perf_counter() - phase_started) * 1000, 3)
     qe_terms = qe.get("expanded_terms", [])
     qe_english = qe.get("english_query", "")
     qe_intent = qe.get("intent", "lookup")
@@ -1217,16 +1720,24 @@ def hybrid_search(
     sparse_results: list[dict[str, Any]] = []
     decomposed_results: list[dict[str, Any]] = []
     entity_dense_results: list[dict[str, Any]] = []
+    phrase_results: list[dict[str, Any]] = []
 
+    phase_started = time.perf_counter()
     if _EMBEDDING_AVAILABLE:
         try:
-            dense_results = _embedding_index.search(query, output_dir, top_k=rerank_pool_limit)
+            if note_index is not None:
+                dense_results = _embedding_index.search_loaded(query, note_index, top_k=rerank_pool_limit)
+            else:
+                dense_results = _embedding_index.search(query, output_dir, top_k=rerank_pool_limit)
         except (FileNotFoundError, Exception):
             dense_results = []
         # M1: Also search with english_query for cross-lingual recall
         if qe_english and qe_english.lower() != query.lower() and _EMBEDDING_AVAILABLE:
             try:
-                en_results = _embedding_index.search(qe_english, output_dir, top_k=rerank_pool_limit)
+                if note_index is not None:
+                    en_results = _embedding_index.search_loaded(qe_english, note_index, top_k=rerank_pool_limit)
+                else:
+                    en_results = _embedding_index.search(qe_english, output_dir, top_k=rerank_pool_limit)
                 seen_paths = {r.get("note_path") for r in dense_results}
                 for r in en_results:
                     if r.get("note_path") not in seen_paths:
@@ -1234,6 +1745,8 @@ def hybrid_search(
                         seen_paths.add(r.get("note_path"))
             except Exception:
                 pass
+    if timings is not None:
+        timings["dense"] = round((time.perf_counter() - phase_started) * 1000, 3)
 
     try:
         sparse_results = fts5_search(conn, query, limit=rerank_pool_limit)
@@ -1282,13 +1795,28 @@ def hybrid_search(
         entity_seen_names: set[str] = set()
         for entity_query in entity_queries:
             try:
-                for row in _embedding_index.search_entities(entity_query, output_dir, top_k=rerank_pool_limit):
+                if entity_index is not None:
+                    entity_rows = _embedding_index.search_entities_loaded(
+                        entity_query,
+                        entity_index,
+                        top_k=rerank_pool_limit,
+                    )
+                else:
+                    entity_rows = _embedding_index.search_entities(entity_query, output_dir, top_k=rerank_pool_limit)
+                for row in entity_rows:
                     name = row.get("name")
                     if name and name not in entity_seen_names:
                         entity_dense_results.append(row)
                         entity_seen_names.add(name)
             except (FileNotFoundError, Exception):
                 continue
+
+    # B-layer concept-hop channel (additive; empty when weight=0 or tables absent)
+    concept_results: list[dict[str, Any]] = []
+    try:
+        concept_results = _concept_channel_search(conn, query, output_dir, rerank_pool_limit)
+    except Exception:
+        concept_results = []
 
     channel_weights = {
         "dense": dense_weight,
@@ -1375,6 +1903,8 @@ def hybrid_search(
     except Exception:
         pass  # entity_aliases table may not exist on older DBs
 
+    phrase_results = _exact_phrase_search(conn, query, rerank_pool_limit)
+
     dense_rank_map: dict[str, int] = {
         r["note_path"]: idx + 1 for idx, r in enumerate(dense_results)
     }
@@ -1385,8 +1915,17 @@ def hybrid_search(
     entity_rank_map: dict[str, int] = {
         r["name"]: idx + 1 for idx, r in enumerate(entity_dense_results)
     }
+    concept_rank_map: dict[str, int] = {
+        r["name"]: idx + 1 for idx, r in enumerate(concept_results)
+    }
     like_rank_map: dict[str, int] = {
         r["name"]: idx + 1 for idx, r in enumerate(like_results)
+    }
+    phrase_rank_map: dict[str, int] = {
+        r["name"]: idx + 1 for idx, r in enumerate(phrase_results)
+    }
+    phrase_matched_by_name: dict[str, str] = {
+        r["name"]: r.get("matched_phrase", "") for r in phrase_results if r.get("matched_phrase")
     }
 
     # P6: Community-based search — inject top centrality entities from largest communities
@@ -1464,11 +2003,20 @@ def hybrid_search(
                 "_note_path": note_path,
             }
 
-    for result_set in (sparse_results, decomposed_results, entity_dense_results, like_results, community_results):
+    for result_set in (sparse_results, decomposed_results, entity_dense_results, like_results, phrase_results, community_results, concept_results):
         for r in result_set:
             name = r.get("name", "")
-            if name and name not in candidates:
+            if not name:
+                continue
+            if name not in candidates:
                 candidates[name] = r
+            else:
+                if r.get("alias_matched"):
+                    candidates[name]["alias_matched"] = True
+                    candidates[name]["matched_alias"] = r.get("matched_alias", candidates[name].get("matched_alias", ""))
+                if r.get("phrase_matched"):
+                    candidates[name]["phrase_matched"] = True
+                    candidates[name]["matched_phrase"] = r.get("matched_phrase", candidates[name].get("matched_phrase", ""))
 
     # M5: Bulk-fetch relationship strengths for all candidate entities
     candidate_names = list(candidates.keys())
@@ -1482,6 +2030,7 @@ def hybrid_search(
         ds_rank = decomposed_rank_map.get(name)
         e_rank = entity_rank_map.get(name)
         l_rank = like_rank_map.get(name)
+        p_rank = phrase_rank_map.get(name)
 
         rrf = _rrf_score(
             d_rank,
@@ -1497,11 +2046,18 @@ def hybrid_search(
         # Add LIKE channel contribution (weight 0.1 — lightweight fallback)
         if l_rank is not None:
             rrf += 0.1 / (60 + l_rank)
+        if p_rank is not None:
+            rrf += 0.15 / (60 + p_rank)
 
         # Add community channel to RRF (low weight for structural diversity)
         c_rank = community_rank_map.get(name)
         if c_rank is not None:
             rrf += 0.05 / (60 + c_rank)
+
+        # B-layer concept-hop channel (additive; DEFAULT_CONCEPT_WEIGHT=0 disables → fail-safe rollback)
+        concept_r = concept_rank_map.get(name)
+        if concept_r is not None and DEFAULT_CONCEPT_WEIGHT > 0:
+            rrf += DEFAULT_CONCEPT_WEIGHT / (RRF_K + concept_r)
 
         sources = []
         if d_rank is not None:
@@ -1514,6 +2070,8 @@ def hybrid_search(
             sources.append("entity")
         if l_rank is not None:
             sources.append("like")
+        if p_rank is not None:
+            sources.append("phrase")
         if c_rank is not None:
             sources.append("community")
         if not sources:
@@ -1534,11 +2092,19 @@ def hybrid_search(
         entity_rel_strength = rel_strengths.get(name, 0.0)
         rel_strength_boost = min(entity_rel_strength * 0.03, 0.015)  # cap at 0.015
 
-        additive_boost_total = min(moc_boost + multi_channel_boost + rel_strength_boost, 0.03)
-        boosted_rrf = rrf + centrality_boost + additive_boost_total
-
         alias_matched = bool(info.get("alias_matched") or name in alias_matched_names)
         matched_alias = info.get("matched_alias") or alias_matched_by_name.get(name, "")
+        phrase_matched = bool(info.get("phrase_matched") or name in phrase_matched_by_name)
+        matched_phrase = info.get("matched_phrase") or phrase_matched_by_name.get(name, "")
+        alias_boost = (
+            _ALIAS_RERANK_BOOST
+            if alias_matched and l_rank is not None and _is_exact_alias_query(query, matched_alias)
+            else 0.0
+        )
+        phrase_boost = _EXACT_PHRASE_BOOST if phrase_matched and p_rank is not None else 0.0
+
+        additive_boost_total = min(moc_boost + multi_channel_boost + rel_strength_boost, 0.03)
+        boosted_rrf = rrf + centrality_boost + additive_boost_total + alias_boost + phrase_boost
 
         scored.append({
             "entity": name,
@@ -1552,14 +2118,19 @@ def hybrid_search(
             "moc_boost": moc_boost,
             "multi_channel_boost": multi_channel_boost,
             "rel_strength_boost": rel_strength_boost,
+            "alias_boost": alias_boost,
+            "phrase_boost": phrase_boost,
             "rel_strength": entity_rel_strength,
             "dense_rank": d_rank,
             "sparse_rank": s_rank,
             "decomposed_rank": ds_rank,
             "entity_rank": e_rank,
+            "phrase_rank": p_rank,
             "source": "+".join(sources),
             "alias_matched": alias_matched,
             "matched_alias": matched_alias,
+            "phrase_matched": phrase_matched,
+            "matched_phrase": matched_phrase,
             "qe_intent": qe_intent,
         })
 
@@ -1570,13 +2141,17 @@ def hybrid_search(
             x.get("sparse_rank") or 10**9,
             x.get("decomposed_rank") or 10**9,
             x.get("entity_rank") or 10**9,
+            x.get("phrase_rank") or 10**9,
             x["entity"].casefold(),
         )
     )
     # R14: slice to top_k * 2 (middle ground between R12 [:top_k]=20 top-1=11/top-10=13
     # and R13 [:rerank_pool_limit=60] top-1=8/top-10=15). Target: 40 candidates preserves
     # enough top-ranked RRF items for top-1 while giving rerank room to surface new candidates.
-    rerank_slice_size = top_k * 2
+    # 2026-06-16 (코난 R-B2): slice mult env-configurable (default 2 = unchanged). Pairs with
+    # GRAPHRAG_RERANK_FUSION so a deeper slice can surface base-ranked golds (Q04/Q08) without
+    # the reranker displacing well-base-ranked golds (Q09/Q12/Q13/Q24).
+    rerank_slice_size = top_k * int(os.environ.get("GRAPHRAG_RERANK_SLICE_MULT", "2"))
     results = scored[:rerank_slice_size]
 
     # Guarantee top sparse match is included (FTS5 precision > centrality popularity)
@@ -1652,6 +2227,8 @@ def rerank(
         parts.append(c.get("entity", ""))
         if c.get("alias_matched") and c.get("matched_alias"):
             parts.insert(1 if rel_str > 0 else 0, f"[alias: {c['matched_alias']}]")
+        if c.get("phrase_matched") and c.get("matched_phrase"):
+            parts.insert(1 if rel_str > 0 else 0, f"[phrase: {c['matched_phrase']}]")
         if c.get("source_note"):
             parts.append(c["source_note"])
         if c.get("description"):
@@ -1730,19 +2307,53 @@ def rerank(
         if source_count >= 2:
             adj += 0.5
         # Alias boost: protect alias-matched LIKE results from being buried by CE score alone
-        if candidate.get("alias_matched") and "like" in candidate.get("source", "").split("+"):
+        if (
+            candidate.get("alias_matched")
+            and "like" in candidate.get("source", "").split("+")
+            and _is_exact_alias_query(query, candidate.get("matched_alias"))
+        ):
             alias_boost = _ALIAS_RERANK_BOOST
             adj += alias_boost
-        adjusted.append((candidate, float(ce_score), adj, alias_boost))
+        phrase_boost = 0.0
+        if (
+            candidate.get("phrase_matched")
+            and candidate.get("matched_phrase")
+            and candidate.get("alias_matched")
+            and candidate.get("matched_alias")
+        ):
+            phrase_boost = _EXACT_PHRASE_RERANK_BOOST
+            adj += phrase_boost
+        adjusted.append((candidate, float(ce_score), adj, alias_boost, phrase_boost))
 
-    adjusted.sort(key=lambda x: x[2], reverse=True)
+    # 2026-06-16 (코난 R-B2): rank-fusion of base-RRF order + reranker order.
+    # Diagnostic (pool sweep): the cross-encoder displaces well-base-ranked golds
+    # (Q09/Q12/Q13/Q24) and buries golds the base retrieval ranks 1-2 (Q04/Q08).
+    # Pure-adj sort throws away the base signal. Fusion hedges: a gold at base_rank 0
+    # but rerank_rank 15 still gets lifted by the base term. Env-gated, default off =
+    # current pure-adj behavior unchanged (live 8400 safe + recoverable).
+    if os.environ.get("GRAPHRAG_RERANK_FUSION", "0") == "1":
+        _fk = float(os.environ.get("GRAPHRAG_RERANK_FUSION_K", "60"))
+        _wb = float(os.environ.get("GRAPHRAG_RERANK_FUSION_WBASE", "1.0"))
+        _wr = float(os.environ.get("GRAPHRAG_RERANK_FUSION_WRR", "1.0"))
+        # base_rank = index in adjusted (candidates arrive in base-RRF order).
+        _adj_order = sorted(range(len(adjusted)), key=lambda i: adjusted[i][2], reverse=True)
+        _rr_rank = {orig: r for r, orig in enumerate(_adj_order)}
+        _fused = sorted(
+            range(len(adjusted)),
+            key=lambda i: _wb / (_fk + i) + _wr / (_fk + _rr_rank[i]),
+            reverse=True,
+        )
+        adjusted = [adjusted[i] for i in _fused]
+    else:
+        adjusted.sort(key=lambda x: x[2], reverse=True)
 
     results = []
-    for candidate, ce_score, adj_score, alias_boost in adjusted[:top_k]:
+    for candidate, ce_score, adj_score, alias_boost, phrase_boost in adjusted[:top_k]:
         result = dict(candidate)
         result["rerank_score"] = ce_score
         result["adj_score"] = adj_score  # R4 apr13: expose adj for downstream rescoring
         result["alias_boost"] = alias_boost
+        result["phrase_boost"] = phrase_boost
         result["confidence"] = _confidence_level(adj_score)
         results.append(result)
     # Protect sparse-channel matches from cross-encoder override before filtering.
@@ -1838,6 +2449,107 @@ def community_rescore(
     results.sort(key=lambda r: r.get("_adj_score", 0), reverse=True)
 
     # Clean up temporary key
+    for r in results:
+        r.pop("_adj_score", None)
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# R1: Typed relation re-scoring — explicit edge boost for L1/L2
+# ---------------------------------------------------------------------------
+
+# v2 (2026-07-02 재설계 — 24q A/B v1: 0.6/edge 누적이 rerank_score 스케일(0.003~0.58, 인접격차 ~0.1)을
+# 지배해 12/24로 붕괴. 처방: high-class 2종만 소비·δ=rerank 격차의 ~1/5·per-result cap.)
+_TYPED_RELATION_BOOSTS: dict[str, float] = {
+    "parent": 0.02,
+    "contains": 0.0,
+    "sourced_from": 0.02,
+    "supported_by": 0.0,
+    "references": 0.0,
+    "part_of": 0.0,
+    "aligns_with": 0.0,
+    "next": 0.0,
+    "prev": 0.0,
+    "supersedes": 0.0,
+    "derived_from": 0.0,
+    "related_to": 0.0,
+    "mentions": 0.0,
+}
+
+# 한 결과가 받을 수 있는 typed boost 총량 상한 (edge 다수 누적 방지)
+_TYPED_RESCORE_CAP: float = 0.04
+
+
+def _is_l0_query_level(query_level: "QueryLevel | str | None") -> bool:
+    if query_level == QueryLevel.L0:
+        return True
+    return str(query_level) in {"QueryLevel.L0", "L0", "0"}
+
+
+def typed_relation_rescore(
+    results: list[dict],
+    conn: sqlite3.Connection,
+    query_level: "QueryLevel | None" = None,
+) -> list[dict]:
+    """Re-score results using explicit typed relations among top result entities."""
+    if not results or len(results) < 2:
+        return results
+    if _is_l0_query_level(query_level):
+        return results
+
+    entity_names = [r.get("entity", "") for r in results if r.get("entity")]
+    entity_names = list(dict.fromkeys(entity_names))
+    if len(entity_names) < 2:
+        return results
+
+    placeholders = ",".join("?" * len(entity_names))
+    typed_boosts = {name: 0.0 for name in entity_names}
+    typed_types: dict[str, set[str]] = {name: set() for name in entity_names}
+
+    try:
+        rows = conn.execute(
+            f"""
+            SELECT e1.name AS source_name, e2.name AS target_name, r.type AS rel_type,
+                   COALESCE(r.strength, 1.0) AS strength
+              FROM relationships r
+              JOIN entities e1 ON e1.id = r.source_id
+              JOIN entities e2 ON e2.id = r.target_id
+             WHERE e1.name IN ({placeholders})
+               AND e2.name IN ({placeholders})
+               AND e1.name != e2.name
+            """,
+            entity_names + entity_names,
+        ).fetchall()
+    except (sqlite3.OperationalError, AttributeError):
+        return results
+
+    for row in rows:
+        rel_type = row["rel_type"] if isinstance(row, sqlite3.Row) else row[2]
+        source_name = row["source_name"] if isinstance(row, sqlite3.Row) else row[0]
+        target_name = row["target_name"] if isinstance(row, sqlite3.Row) else row[1]
+        strength = row["strength"] if isinstance(row, sqlite3.Row) else row[3]
+        boost = _TYPED_RELATION_BOOSTS.get(str(rel_type), 0.0) * float(strength or 1.0)
+        if boost <= 0:
+            continue
+        for name in (source_name, target_name):
+            typed_boosts[name] = typed_boosts.get(name, 0.0) + boost
+            typed_types.setdefault(name, set()).add(str(rel_type))
+
+    for r in results:
+        name = r.get("entity", "")
+        base_score = r.get("_adj_score")
+        if base_score is None:
+            base_score = r.get("adj_score")
+        if base_score is None:
+            base_score = r.get("rerank_score", r.get("score", 0))
+        community_boost = float(r.get("community_coherence") or 0.0)
+        boost = min(typed_boosts.get(name, 0.0), _TYPED_RESCORE_CAP)
+        r["typed_relation_boost"] = boost
+        r["typed_relation_types"] = sorted(typed_types.get(name, set()))
+        r["_adj_score"] = float(base_score or 0.0) + community_boost + boost
+
+    results.sort(key=lambda r: r.get("_adj_score", 0), reverse=True)
     for r in results:
         r.pop("_adj_score", None)
 
