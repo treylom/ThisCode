@@ -147,6 +147,13 @@ bot's progress, or stopping while an active meeting is open.
   progress files) **before** speaking; do not run it in the main channel. The
   convening / chairing agent sets it up — don't defer ("someone will set it up
   later" → main-channel drift is exactly the violation this blocks).
+- **Bridge-based teammates → prefer a monitored room**: when dispatching long
+  or multi-step work to an agent that lives behind a bridge / different harness
+  (e.g. a Codex CLI bot relayed through a channel bridge), prefer opening a
+  meeting room (thread + progress files + watchdog) over reusing an ad-hoc
+  thread — the liveness ticker attaches automatically, so bridge lag and silent
+  no-pickup get caught early instead of after hours. Small one-shot asks may
+  still go direct (judgment call; operator preference wins).
 
 ▶ Fill in: your active-meeting filename, progress-file path convention, and
 meeting cadence.
