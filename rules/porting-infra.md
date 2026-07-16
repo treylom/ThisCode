@@ -17,6 +17,19 @@ adding an MCP server; writing API code.
   (a token-optimizer-filtered grep can blank/mangle matches — see
   source-fact.md §2). A public-repo change is the user's authority domain
   (autonomy.md §1) — confirm unless under a standing go.
+- Dual-platform packaging: ship one repo with **both** manifests — Claude Code
+  (`.claude-plugin/`) and Codex/ChatGPT (`.codex-plugin/plugin.json` +
+  `.agents/plugins/marketplace.json` for a catalog repo). Additive only —
+  never move or rename existing skill/guide paths that installed users
+  already reference. Note: ChatGPT desktop (Work) marketplace registration
+  additionally requires the `.claude-plugin/{marketplace.json, plugin.json}`
+  PAIR at repo root (empirically verified 2026-07: `.codex-plugin` alone is
+  rejected), and Codex CLI plugin names only allow ASCII letters, digits, `_`, `-`
+  (dots included in the rejects) — use `name-2-0` style.
+- When a public-repo push changes **model-lineup or coverage wording** in the
+  README/skills, update the repo's About (description/topics) in the same
+  session (`gh repo edit --description`) — About is the search/first-impression
+  surface; letting it lag the README is stale advertising.
 - Rule / operating-principle changes in the source repo sync to this
   deploy bundle's rules/ **at session-end** — else the bundle drifts
   from the source rules (a standing operator directive).
