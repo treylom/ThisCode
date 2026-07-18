@@ -9,6 +9,14 @@ an automated experiment loop; delegating to a sub-agent.
   applies, invoke it.
 - Priority: process skill (brainstorming · debugging) first → implementation
   skill. Conflict: **explicit user instruction > skill > default**.
+- **Commissioned tool = center of the process (no silent abandonment)**: when
+  the user names a specific skill/tool in a commission, that tool anchors the
+  workflow. If the output gets rejected, the first move is "use the tool
+  differently" — dropping the tool is not on the menu (rejection usually
+  targets the content, not the tool). If a real capability limit forces a
+  switch, ask first ("tool X can't do Y — switch to Z?") instead of quietly
+  swapping; and make per-step tool usage visible in plans so the user can see
+  the commissioned tool at work.
 
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding
