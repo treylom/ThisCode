@@ -24,10 +24,14 @@ $report = [ordered]@{}
 # --- thiscode-setup-lib start (extracted by tests/init/windows-setup-ps1.test.mjs — keep markers) ---
 function Get-PolicyOverrideScope {
   # Microsoft 정본 우선순위: MachinePolicy > UserPolicy > Process > CurrentUser > LocalMachine.
-  # GPO 스코프(Machine/User)가 Restricted/AllSigned 면 CurrentUser 설정·Process Bypass 로 덮을 수 없다.
+  # 유효 정책 = 가장 상위의 '정의된' 스코프 하나 — MachinePolicy 가 정의돼 있으면
+  # (허용이든 차단이든) UserPolicy 는 평가되지 않는다. 차단 판정도 그 유효 정책 기준.
   param($MachinePolicy, $UserPolicy)
-  if ($MachinePolicy -in @('Restricted','AllSigned')) { return 'MachinePolicy' }
-  if ($UserPolicy    -in @('Restricted','AllSigned')) { return 'UserPolicy' }
+  if ($MachinePolicy -ne 'Undefined' -and $null -ne $MachinePolicy -and $MachinePolicy -ne '') {
+    if ($MachinePolicy -in @('Restricted','AllSigned')) { return 'MachinePolicy' }
+    return $null   # 상위 스코프가 허용 정책으로 정의됨 — 하위는 무효
+  }
+  if ($UserPolicy -in @('Restricted','AllSigned')) { return 'UserPolicy' }
   return $null
 }
 
@@ -50,6 +54,7 @@ function Step($name, [scriptblock]$body, $manualHint) {
 }
 # --- thiscode-setup-lib end ---
 
+# --- thiscode-policy-step start (extracted by tests — keep markers) ---
 Step 'ExecutionPolicy (프로필 로드 전제)' {
   $cur = Get-ExecutionPolicy -Scope CurrentUser
   if ($cur -in @('Restricted','Undefined','AllSigned')) {
@@ -66,6 +71,7 @@ Step 'ExecutionPolicy (프로필 로드 전제)' {
     $script:StepStatus = "MANUAL_REQUIRED: 조직 그룹 정책($blocked) 우선 — IT 관리자에게 실행 정책 변경 요청"
   }
 } 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
+# --- thiscode-policy-step end ---
 
 Step 'Bun 런타임 (Discord 플러그인 필수)' {
   $existing = Get-Command bun -ErrorAction SilentlyContinue
