@@ -20,8 +20,8 @@ test('feature-test harness file is shipped', () => {
 test('no-arg = sweep of all features EXCEPT graphrag-bench, exit 0', () => {
   const { code, out } = run([]);
   assert.equal(code, 0, `expected exit 0, got ${code}\n${out}`);
-  assert.match(out, /sweep \(7 features\)/);
-  for (const id of ['memory', 'tmux', 'graphrag', 'meeting', 'rules', 'hooks', 'install']) {
+  assert.match(out, /sweep \(8 features\)/);
+  for (const id of ['memory', 'tmux', 'discord-gate', 'graphrag', 'meeting', 'rules', 'hooks', 'install']) {
     assert.match(out, new RegExp(`\\b${id}\\b`), `sweep missing ${id}`);
   }
   assert.doesNotMatch(out, /\bgraphrag-bench\b/, 'default sweep must EXCLUDE graphrag-bench');
@@ -37,7 +37,7 @@ test('graphrag-bench is separately runnable', () => {
 test('all / --bench includes graphrag-bench', () => {
   const { code, out } = run(['all']);
   assert.equal(code, 0, out);
-  assert.match(out, /all \(8 features\)/);
+  assert.match(out, /all \(9 features\)/);
   assert.match(out, /graphrag-bench/);
 });
 
@@ -56,7 +56,7 @@ test('unknown arg → exit 2 and lists known feature ids', () => {
   const { code, out } = run(['definitelynotafeature']);
   assert.equal(code, 2, `expected exit 2, got ${code}\n${out}`);
   assert.match(out, /no feature matched/);
-  assert.match(out, /memory, tmux, graphrag/);
+  assert.match(out, /memory, tmux, discord-gate, graphrag/);
 });
 
 test('multi-run determinism: two sweeps produce identical stdout (test code must be stable)', () => {

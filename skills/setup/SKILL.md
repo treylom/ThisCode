@@ -19,8 +19,8 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 
 1. Run `thiscode init` for guided setup.
 2. Confirm repo root and any bot working directory before generating aliases.
-3. Use tmux for Discord bot runtime windows on macOS/WSL/Linux. Do not use
-   cmux for this flow. On Windows native (PowerShell), do NOT introduce
+3. Use tmux for Discord bot runtime windows on macOS/WSL/Linux. Do not use cmux
+   for this flow. On Windows native (PowerShell), do NOT introduce
    tmux/WSL — follow `docs/10-windows-powershell-bots.md`: one PowerShell
    window per bot, and generate a `$PROFILE` function (e.g. `function mybot
    { $env:DISCORD_STATE_DIR=...; claude ... }`) as the alias equivalent.
