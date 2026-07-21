@@ -8,7 +8,7 @@ description: Use when the user asks for /thiscode setup, step-by-step ThisCode o
 Generated through the mandatory `/prompt` workflow:
 
 ```text
-/prompt --batch GPT-5.5 상세 ThisCode setup skill: create a step-by-step installer-facing skill that invokes thiscode init, explains tmux-only Discord connection, safe-vs-YOLO mode, and asks progress_report_cadence.
+/prompt --batch GPT-5.6 상세 ThisCode setup skill: create a step-by-step installer-facing skill that invokes thiscode init, explains tmux-only Discord connection, safe-vs-YOLO mode, and asks progress_report_cadence.
 ```
 
 ## Goal

@@ -1,11 +1,13 @@
 ---
 name: prompt-engineering-guide
 description: 단일 통합 AI 프롬프트 엔지니어링 스킬. 모델별 전략, 이미지/동영상, 리서치/팩트체크, 슬라이드, 전문가 도메인 프라이밍, Context Engineering을 모두 이 파일에서 관리합니다.
-version: 3.0.0
-updated: 2026-05-12
+version: 3.0.1
+updated: 2026-07-21
 ---
 
 # AI 프롬프트 엔지니어링 통합 가이드
+
+> 🆕 **세대 안내 (2026-07-21)**: 본문 중 GPT-5.2/5.4·Claude 4.5/4.6 기준 설명은 작성 당시 세대 기준으로 보존된 것입니다. 현행 디폴트 = **GPT-5.6 Sol**(Markdown lean outcome-first) · **Claude Opus 4.8**(디폴트) · **Fable 5**(최고난도) · **Sonnet 5**. 최신 전체 전략은 tofukyung-plugins 마켓플레이스의 `prompt-engineering-skills` 플러그인(v2.11+) 참조.
 
 > 이 가이드는 AI 모델별로 최적화된 프롬프트를 작성하는 방법을 안내합니다.
 > 전문 용어가 어렵다면 아래 "용어 해설" 섹션을 먼저 확인하세요.
