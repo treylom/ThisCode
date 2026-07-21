@@ -125,7 +125,11 @@ EOF
 )
 
 # 기존 hook 보존 + thiscode hook append
-jq -s '.[0] * .[1] | .hooks.SessionStart = ((.[0].hooks.SessionStart // []) + (.[1].hooks.SessionStart // []) | unique_by(.hooks[0].command)) | .hooks.UserPromptSubmit = ((.[0].hooks.UserPromptSubmit // []) + (.[1].hooks.UserPromptSubmit // []) | unique_by(.hooks[0].command)) | .hooks.Stop = ((.[0].hooks.Stop // []) + (.[1].hooks.Stop // []) | unique_by(.hooks[0].command))' \
+jq -s 'def mergeEv($a; $b): ($a + $b) | group_by(.matcher // "") | map({matcher: (.[0].matcher // ""), hooks: ([.[].hooks[]] | unique_by([.type, .command, .timeout]))});
+. as [$s, $p] | ($s * $p)
+| .hooks.SessionStart     = mergeEv($s.hooks.SessionStart // [];     $p.hooks.SessionStart // [])
+| .hooks.UserPromptSubmit = mergeEv($s.hooks.UserPromptSubmit // []; $p.hooks.UserPromptSubmit // [])
+| .hooks.Stop             = mergeEv($s.hooks.Stop // [];             $p.hooks.Stop // [])' \
   "$SETTINGS" <(echo "$PATCH") > "$SETTINGS.tmp"
 mv "$SETTINGS.tmp" "$SETTINGS"
 ```
@@ -135,20 +139,27 @@ mv "$SETTINGS.tmp" "$SETTINGS"
 > **jq 부재 시 (Windows 등) node 폴백** — jq 를 설치하지 못하는 환경이면 agent 가 같은 merge 를 node 로 수행한다 (동일 보존 규칙: 기존 hook + thiscode hook, command 기준 dedupe):
 >
 > ```bash
+> # $PATCH = Step 3 의 heredoc 문자열 그대로 (파일 불필요 — 문자열 인자로 전달)
 > node -e '
 > const fs = require("fs");
-> const [a, b] = [process.argv[1], process.argv[2]].map(f => JSON.parse(fs.readFileSync(f, "utf8")));
-> const merged = { ...a, ...b, hooks: { ...(a.hooks || {}) } };
+> const a = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+> const b = JSON.parse(process.argv[2]);
+> const merged = { ...a, hooks: { ...(a.hooks || {}) } };
 > for (const ev of ["SessionStart", "UserPromptSubmit", "Stop"]) {
->   const seen = new Set(), out = [];
->   for (const h of [...(a.hooks?.[ev] || []), ...(b.hooks?.[ev] || [])]) {
->     const k = h.hooks?.[0]?.command || JSON.stringify(h);
->     if (!seen.has(k)) { seen.add(k); out.push(h); }
+>   const groups = new Map();  // matcher별 바깥 그룹 병합
+>   for (const g of [...(a.hooks?.[ev] || []), ...(b.hooks?.[ev] || [])]) {
+>     const m = g.matcher || "";
+>     if (!groups.has(m)) groups.set(m, { ...g, matcher: m, hooks: [] });
+>     const tgt = groups.get(m);
+>     for (const h of g.hooks || []) {  // 내부 hook 단위 dedupe (순서 보존)
+>       const k = [h.type, h.command, h.timeout].join("\u0000");
+>       if (!tgt.hooks.some(x => [x.type, x.command, x.timeout].join("\u0000") === k)) tgt.hooks.push(h);
+>     }
 >   }
->   merged.hooks[ev] = out;
+>   merged.hooks[ev] = [...groups.values()];
 > }
 > fs.writeFileSync(process.argv[3], JSON.stringify(merged, null, 2));
-> ' "$SETTINGS" "$THISCODE_HOOKS" "$SETTINGS.new" && mv "$SETTINGS.new" "$SETTINGS"
+> ' "$SETTINGS" "$PATCH" "$SETTINGS.new" && mv "$SETTINGS.new" "$SETTINGS"
 > ```
 
 복잡 시 fallback (manual merge 안내):

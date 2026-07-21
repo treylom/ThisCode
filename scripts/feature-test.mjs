@@ -66,7 +66,7 @@ const FEATURES = [
   {
     id: 'discord-gate',
     aliases: ['discord', 'channels', 'bot', '봇', 'bun'],
-    desc: 'Discord bot 3-gate: plugin enabled + bun runtime (+ --channels reminder)',
+    desc: 'Discord bot prerequisites: plugin enabled + bun runtime (static checks; --channels launch flag is a reminder — not verifiable here)',
     bench: false,
     run() {
       const home = process.env.HOME || process.env.USERPROFILE || '';

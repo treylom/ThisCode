@@ -116,8 +116,11 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 봇 디렉터리에 `ac
 ```powershell
 # 사용자 ID: Discord 설정 → 고급 → 개발자 모드 ON → 프로필 우클릭 → "사용자 ID 복사"
 $botDir = "$HOME\.claude\channels\discord-research"
-Set-Content "$botDir\access.json" '{ "allowFrom": ["<사용자 ID>"], "ackReaction": "" }'
+$json = '{ "allowFrom": ["<사용자 ID>"], "ackReaction": "" }'
+[IO.File]::WriteAllText("$botDir\access.json", $json, (New-Object Text.UTF8Encoding($false)))
 ```
+
+> `Set-Content` 대신 `WriteAllText`(UTF-8 no BOM)를 쓰는 이유: Windows PowerShell 5.1의 `Set-Content` 기본 인코딩은 ANSI 코드페이지라 `ackReaction` 에 이모지를 넣으면 손상된다 (PS 7은 UTF-8 기본 — 버전별 결과가 달라지는 것도 방지).
 
 - `ackReaction` 에 이모지를 넣으면 수신 즉시 리액션으로 "읽음" 표시 (예: `"👀"`).
 - 분할·스레딩 등 추가 옵션: `replyToMode`(first/all/off) · `textChunkLimit`(기본 2000) · `chunkMode`(newline/length).

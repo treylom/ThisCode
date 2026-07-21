@@ -1,5 +1,5 @@
 ---
-description: Feature smoke test — verify shipped ThisCode features are wired (memory / tmux / graphrag / graphrag-bench / meeting / rules / hooks / install). Natural-language arg runs one; no arg runs all (except the heavy bench).
+description: Feature smoke test — verify shipped ThisCode features are wired (memory / tmux / discord-gate / graphrag / graphrag-bench / meeting / rules / hooks / install). Natural-language arg runs one; no arg runs all (except the heavy bench).
 allowed-tools: Bash
 disable-model-invocation: true
 ---
@@ -23,7 +23,7 @@ $ARGUMENTS
 | `/thiscode:test graphrag-bench` | The heavy GraphRAG benchmark only (separately runnable, by design) |
 | `/thiscode:test all` (or `--bench`) | Everything **including** `graphrag-bench` |
 
-Features: `memory`, `tmux`, `graphrag`, `graphrag-bench`, `meeting`, `rules`,
+Features: `memory`, `tmux`, `discord-gate`, `graphrag`, `graphrag-bench`, `meeting`, `rules`,
 `hooks`, `install`.
 
 ## Run

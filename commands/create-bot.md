@@ -110,7 +110,7 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allo
 
 ```bash
 USER_ID="<복사한 사용자 ID>"
-node -e "require('fs').writeFileSync(process.argv[1] + '/access.json', JSON.stringify({allowFrom: [process.argv[2]], ackReaction: ''}, null, 2))" "$BOT_DIR" "$USER_ID"
+node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.error('❌ Discord 사용자 ID 형식이 아님 (17~20자리 숫자): ' + id); process.exit(1); } require('fs').writeFileSync(require('path').join(process.argv[1], 'access.json'), JSON.stringify({allowFrom: [id], ackReaction: ''}, null, 2)); console.log('✅ access.json 등록: ' + id)" "$BOT_DIR" "$USER_ID"
 ```
 
 - `ackReaction` 에 이모지(예: `"👀"`)를 넣으면 봇이 메시지 수신 즉시 리액션으로 "읽음"을 표시한다.
