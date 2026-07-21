@@ -64,6 +64,24 @@ const FEATURES = [
     },
   },
   {
+    id: 'discord-gate',
+    aliases: ['discord', 'channels', 'bot', '봇', 'bun'],
+    desc: 'Discord bot 3-gate: plugin enabled + bun runtime (+ --channels reminder)',
+    bench: false,
+    run() {
+      const home = process.env.HOME || process.env.USERPROFILE || '';
+      let pluginOn = false;
+      try {
+        const st = JSON.parse(readFileSync(join(home, '.claude', 'settings.json'), 'utf8'));
+        pluginOn = st.enabledPlugins && st.enabledPlugins['discord@claude-plugins-official'] === true;
+      } catch { /* settings unreadable → treated as not enabled */ }
+      const bun = hasBin('bun');
+      if (pluginOn && bun) return { status: PASS, detail: 'discord plugin enabled + bun present (launch with --channels plugin:discord@claude-plugins-official)' };
+      const miss = [!pluginOn && 'discord plugin not enabled (/plugin → discord@claude-plugins-official)', !bun && 'bun missing (bun.sh / windows-setup.ps1)'].filter(Boolean).join('; ');
+      return { status: SKIP, detail: 'not a bot host yet — ' + miss };
+    },
+  },
+  {
     id: 'graphrag',
     aliases: ['graphrag', 'graph rag', 'graph-rag', '그래프', 'search tier'],
     desc: 'GraphRAG Tier-1 installer + setup doc shipped',

@@ -132,6 +132,25 @@ mv "$SETTINGS.tmp" "$SETTINGS"
 
 ⚠️ jq merge 정확성 보장 — agent 가 사용자 기존 settings.json 의 hook 들을 보존하면서 thiscode hook 만 추가.
 
+> **jq 부재 시 (Windows 등) node 폴백** — jq 를 설치하지 못하는 환경이면 agent 가 같은 merge 를 node 로 수행한다 (동일 보존 규칙: 기존 hook + thiscode hook, command 기준 dedupe):
+>
+> ```bash
+> node -e '
+> const fs = require("fs");
+> const [a, b] = [process.argv[1], process.argv[2]].map(f => JSON.parse(fs.readFileSync(f, "utf8")));
+> const merged = { ...a, ...b, hooks: { ...(a.hooks || {}) } };
+> for (const ev of ["SessionStart", "UserPromptSubmit", "Stop"]) {
+>   const seen = new Set(), out = [];
+>   for (const h of [...(a.hooks?.[ev] || []), ...(b.hooks?.[ev] || [])]) {
+>     const k = h.hooks?.[0]?.command || JSON.stringify(h);
+>     if (!seen.has(k)) { seen.add(k); out.push(h); }
+>   }
+>   merged.hooks[ev] = out;
+> }
+> fs.writeFileSync(process.argv[3], JSON.stringify(merged, null, 2));
+> ' "$SETTINGS" "$THISCODE_HOOKS" "$SETTINGS.new" && mv "$SETTINGS.new" "$SETTINGS"
+> ```
+
 복잡 시 fallback (manual merge 안내):
 
 ```
@@ -180,7 +199,8 @@ claude
 
 | 증상 | 원인 | 대응 |
 |---|---|---|
-| `jq: command not found` | jq 미설치 | `brew install jq` (Mac) / `apt install jq` (Linux) |
+| `jq: command not found` | jq 미설치 | `brew install jq` (Mac) / `apt install jq` (Linux) / **Windows: winget install jqlang.jq — 또는 jq 없이 node 폴백**: agent 가 아래 node 한 줄로 동일 merge 수행 (Windows 의 `jq`/`python` 은 스토어 스텁일 수 있어 node/bun 이 안전) |
+| Windows에서 chmod 실패 | NTFS 는 POSIX chmod 미적용 (정상) | 무시하고 진행 — 검증 항목 아님 |
 | SessionStart hook 작동 안 함 | settings.json 의 `hooks.SessionStart[].matcher` 가 다른 값 | matcher: "" (전체 match) 확인 |
 | soul.md 안 inject | DISCORD_STATE_DIR 미설정 | claude 시동 시 `export DISCORD_STATE_DIR="$HOME/.claude/channels/discord-<bot-name>"` 명시 |
 | 사용자 기존 hook 충돌 | jq merge unique_by 가 같은 command 매칭 못 함 | manual 검토 |

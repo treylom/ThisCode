@@ -67,7 +67,7 @@ if [ -d "$BOT_DIR" ]; then
 fi
 
 mkdir -p "$BOT_DIR"
-chmod 700 "$BOT_DIR"
+chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 — 실패해도 진행
 ```
 
 ### Step 3. Discord 봇 생성 안내 (Developer Portal)
@@ -96,10 +96,25 @@ agent 가 사용자에게 토큰 입력 요청. 다음 위치 저장:
 cat > "$BOT_DIR/.env" <<EOF
 DISCORD_BOT_TOKEN=<입력 토큰>
 EOF
-chmod 600 "$BOT_DIR/.env"
+chmod 600 "$BOT_DIR/.env" 2>/dev/null || true   # Windows는 무의미 — 검증 단계에서 실패 처리하지 말 것
 ```
 
 ⚠️ 토큰 Discord 본문 / git / screenshot 노출 X.
+
+### Step 4.7. access.json 직접 생성 — 페어링(/discord:access) 생략 경로 (권장)
+
+DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allowFrom` 에 사용자 Discord ID 를 직접 등록한다. 서버는 **매 인바운드 메시지마다 access.json 을 재독**하므로 수정 즉시 반영(재시작 불필요).
+
+1. 사용자 Discord ID(스노우플레이크) 확인: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
+2. 생성 (jq·python 불요 — node 한 줄, Windows 스토어 스텁 이슈 회피):
+
+```bash
+USER_ID="<복사한 사용자 ID>"
+node -e "require('fs').writeFileSync(process.argv[1] + '/access.json', JSON.stringify({allowFrom: [process.argv[2]], ackReaction: ''}, null, 2))" "$BOT_DIR" "$USER_ID"
+```
+
+- `ackReaction` 에 이모지(예: `"👀"`)를 넣으면 봇이 메시지 수신 즉시 리액션으로 "읽음"을 표시한다.
+- 이 파일이 있으면 첫 DM 부터 바로 응답 — 페어링 코드 단계가 통째로 생략된다. (기존 페어링 흐름도 계속 유효 — access.json 이 없을 때의 기본 경로.)
 
 ### Step 4.5. 페르소나·직무 프롬프트 고도화 (`/prompt` 연동 — 설치 권장)
 
@@ -150,7 +165,8 @@ if [ -z "${PLUGIN_DIR:-}" ] || [ ! -d "$PLUGIN_DIR/templates" ]; then
     "$HOME/.claude/plugins/thiscode" \
     "$HOME/.claude/plugins/cache/local/thiscode" \
     "$HOME/code/thiscode" \
-    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/* \
+    "$HOME"/.claude/plugins/cache/*/thiscode/*; do
     if [ -d "$_cand/templates" ]; then PLUGIN_DIR="$_cand"; break; fi
   done
 fi
@@ -206,26 +222,53 @@ agent 가 WD 안 `CLAUDE.md` 생성 (메타 + soul.md reference):
 | Working Directory | <WD> |
 ```
 
+### Step 6.7. 봇 연결 3게이트 선검사 (무반응 예방 — Windows 실측 회귀 반영)
+
+"토큰·soul.md 정상인데 무반응"의 실측 1~3순위는 Intent 가 아니라 아래 3개다. 시동 안내 전에 검사해 미비 항목을 함께 안내한다:
+
+```bash
+# ① discord 플러그인 설치 여부 (create-bot 은 로컬 파일만 만든다 — 플러그인은 별도)
+grep -q '"discord@claude-plugins-official"[[:space:]]*:[[:space:]]*true' "$HOME/.claude/settings.json" 2>/dev/null \
+  && echo "✅ discord 플러그인 enabled" \
+  || echo "❌ discord 플러그인 미설치 — claude 안에서 /plugin 으로 discord@claude-plugins-official 설치"
+
+# ② Bun 런타임 (공식 discord 플러그인 MCP 서버가 bun 으로 뜬다)
+command -v bun >/dev/null 2>&1 \
+  && echo "✅ bun $(bun -v)" \
+  || echo "❌ bun 미설치 — mac/linux: curl -fsSL https://bun.sh/install | bash / Windows: irm bun.sh/install.ps1 | iex"
+
+# ③ --channels 플래그 — 시동 명령에 반드시 포함 (Step 7 명령이 정본)
+echo "ℹ️  시동 시 --channels plugin:discord@claude-plugins-official 누락 = 무반응 최종 관문"
+```
+
 ### Step 7. claude 시동 안내
+
+**`--channels` 플래그가 없으면 Discord 게이트웨이에 접속하지 않는다** — 아래 명령을 그대로 복사해 쓴다.
 
 ```bash
 echo ""
 echo "✅ 봇 디렉토리 생성 완료: $BOT_DIR"
 echo ""
-echo "다음 step — claude 시동:"
+echo "다음 step — claude 시동 (macOS/Linux/WSL):"
 echo ""
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
 echo "  cd <봇 WD>"
-echo "  claude"
+echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "tmux session 안에서 운영 권장:"
 echo "  tmux new-session -s ${BOT_NAME}"
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
 echo "  cd <봇 WD>"
-echo "  claude"
+echo "  claude --channels plugin:discord@claude-plugins-official"
+echo ""
+echo "Windows (PowerShell — tmux 불요, docs/10 참조):"
+echo "  \$env:DISCORD_STATE_DIR = \"$BOT_DIR\""
+echo "  cd <봇 WD>"
+echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "첫 대화 검증:"
-echo "  Discord 앱에서 봇에 DM → 페어링 코드 발급 → 페어링 → 첫 응답"
+echo "  access.json 등록했으면(Step 4.7) → 봇에 DM → 바로 첫 응답"
+echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 → 첫 응답"
 ```
 
 ---
@@ -249,6 +292,8 @@ echo "  Discord 앱에서 봇에 DM → 페어링 코드 발급 → 페어링 �
 | 페어링 코드 만료 | 봇에 다시 DM | 새 코드 발급 |
 | soul.md 안 inject | DISCORD_STATE_DIR 미export 또는 SessionStart hook 미등록 | `/thiscode:install-hooks` 먼저 실행 |
 | 같은 봇 이름 디렉토리 충돌 | 이미 존재 | 다른 이름 또는 기존 정리 |
+| 토큰·soul.md 정상인데 DM 무반응 | ①discord 플러그인 미설치 ②bun 미설치 ③`--channels` 플래그 누락 (실측 빈도순) | Step 6.7 선검사 3게이트 순서대로 — 플러그인 enable → bun 설치 → `--channels plugin:discord@claude-plugins-official` 포함 재시동 |
+| Windows에서 chmod/permission 검증 실패 | NTFS 는 POSIX chmod 미적용 (정상) | 실패 무시 — 검증 항목에서 제외 |
 
 ---
 

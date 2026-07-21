@@ -12,6 +12,23 @@ ThisCode의 Discord 봇 = **Claude Code 세션 + Discord plugin + channels 디�
 
 macOS/WSL 문서에서 tmux가 자주 보이는 이유 = 유닉스에서 **창 여러 개를 한 터미널에 접어두는 편의**일 뿐이다. Windows에서는 PowerShell 창(또는 Windows Terminal 탭)이 그 역할을 그대로 한다.
 
+## 빠른 시작: 설치 킷 — 더블클릭 한 번 (권장)
+
+신규 Windows 환경의 전제조건(실행 정책·Bun·Python 실설치·PATH·$PROFILE)을 자동으로 정리한다 — 관리자 권한 불요, 각 단계는 실패해도 수동 명령을 출력하고 계속 진행:
+
+1. [`windows-setup.bat`](https://raw.githubusercontent.com/treylom/ThisCode/main/scripts/windows-setup.bat) 을 내려받는다 (링크 우클릭 → 다른 이름으로 저장, 또는 배포받은 파일 사용).
+2. **더블클릭** — 창이 뜨고 자동 진행된다 (소담 One-Click Kit 과 같은 방식).
+
+터미널을 직접 쓰는 사용자는 PowerShell 한 줄로도 동일:
+
+```powershell
+irm https://raw.githubusercontent.com/treylom/ThisCode/main/scripts/windows-setup.ps1 | iex
+```
+
+끝나면 진단표(bun / python / claude 상태)가 출력된다. **이후 새 터미널을 열어야** PATH·정책이 반영된다.
+
+> 강의장 실측(2026-07-21) 근거: "토큰 정상인데 무반응"의 실제 원인 1~3순위 = ①discord 플러그인 미설치 ②Bun 미설치 ③`--channels` 플래그 누락. 이 킷 + 아래 실행 명령이 셋 다 막는다.
+
 ## 설치 (PowerShell)
 
 ```powershell
@@ -36,8 +53,9 @@ Copy-Item templates\soul-custom.md "$HOME\.claude\channels\discord-research\soul
 
 ```powershell
 # 4. 봇 세션 = 환경변수 + claude. 이 창이 곧 봇이다.
+#    ⚠️ --channels 플래그가 없으면 Discord 게이트웨이에 접속하지 않는다 (무반응 최종 관문).
 $env:DISCORD_STATE_DIR = "$HOME\.claude\channels\discord-research"
-claude
+claude --channels plugin:discord@claude-plugins-official
 ```
 
 - 봇을 2개 돌리려면 → PowerShell 창을 하나 더 열고 `DISCORD_STATE_DIR`만 다른 봇 디렉터리로 바꿔 `claude` 실행.
@@ -59,8 +77,9 @@ notepad $PROFILE
 ```powershell
 function mybot {
   $env:DISCORD_STATE_DIR = "$HOME\.claude\channels\discord-research"
+  if ($env:Path -notlike "*\.bun\bin*") { $env:Path = "$HOME\.bun\bin;$env:Path" }
   Set-Location "$HOME\내-볼트"
-  claude --dangerously-skip-permissions
+  claude --dangerously-skip-permissions --channels plugin:discord@claude-plugins-official
 }
 ```
 
@@ -82,13 +101,26 @@ Windows Terminal `settings.json`의 `profiles.list`에 봇당 하나씩:
 ```json
 {
   "name": "bot: research",
-  "commandline": "pwsh -NoExit -Command \"$env:DISCORD_STATE_DIR='C:\\Users\\<you>\\.claude\\channels\\discord-research'; claude\""
+  "commandline": "pwsh -NoExit -Command \"$env:DISCORD_STATE_DIR='C:\\Users\\<you>\\.claude\\channels\\discord-research'; claude --channels plugin:discord@claude-plugins-official\""
 }
 ```
 
 > `pwsh` = PowerShell 7. 설치돼 있지 않다면(내장 PowerShell 5.1만 있는 환경) `pwsh`를 `powershell`로 바꾸면 그대로 동작한다 — 본문 명령들은 5.1에서도 전부 유효하다.
 
 탭 하나 = 봇 하나. 이것이 Windows에서 tmux의 온전한 대체다.
+
+## 페어링 생략: access.json 직접 등록 (권장)
+
+DM 페어링 코드 왕복 없이 바로 연결하려면 봇 디렉터리에 `access.json` 을 직접 만든다 — 서버는 매 인바운드 메시지마다 이 파일을 재독하므로 수정 즉시 반영:
+
+```powershell
+# 사용자 ID: Discord 설정 → 고급 → 개발자 모드 ON → 프로필 우클릭 → "사용자 ID 복사"
+$botDir = "$HOME\.claude\channels\discord-research"
+Set-Content "$botDir\access.json" '{ "allowFrom": ["<사용자 ID>"], "ackReaction": "" }'
+```
+
+- `ackReaction` 에 이모지를 넣으면 수신 즉시 리액션으로 "읽음" 표시 (예: `"👀"`).
+- 분할·스레딩 등 추가 옵션: `replyToMode`(first/all/off) · `textChunkLimit`(기본 2000) · `chunkMode`(newline/length).
 
 ## 하지 말 것 (AI 어시스턴트용 명시 금지 목록)
 

@@ -29,7 +29,14 @@ Features: `memory`, `tmux`, `graphrag`, `graphrag-bench`, `meeting`, `rules`,
 ## Run
 
 ```bash
-node scripts/feature-test.mjs $ARGUMENTS
+# node 우선, 없으면 bun 폴백 (Windows 신규 환경엔 node 가 없고 bun 만 있는 경우가 흔함)
+if command -v node >/dev/null 2>&1; then
+  node scripts/feature-test.mjs $ARGUMENTS
+elif command -v bun >/dev/null 2>&1; then
+  bun scripts/feature-test.mjs $ARGUMENTS
+else
+  echo "❌ node/bun 둘 다 없음 — windows-setup.ps1(또는 bun.sh) 로 bun 설치 후 재시도"
+fi
 ```
 
 - Exit `0` = no FAIL (SKIP never fails the run).
