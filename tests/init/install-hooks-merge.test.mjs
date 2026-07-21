@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 
-const DOC = readFileSync(new URL('../../commands/install-hooks.md', import.meta.url), 'utf8');
+const DOC = readFileSync(new URL('../../commands/install-hooks.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows CRLF checkout
 
 function extractJq() {
   const m = DOC.match(/jq -s '([\s\S]*?)' \\\n {2}"\$SETTINGS"/);
