@@ -44,6 +44,37 @@ claude
 - 창을 닫으면 봇이 내려간다. 재기동 = 4번 반복 (Windows Terminal 프로필로 원클릭화 가능 — 아래).
 - 영구 환경변수를 원하면 `[Environment]::SetEnvironmentVariable("DISCORD_STATE_DIR", "...", "User")` — 단 봇을 여러 개 돌릴 거면 창별 `$env:` 방식이 맞다.
 
+## 편의 (권장): PowerShell 함수 alias — 한 단어로 봇 열기
+
+일반 PowerShell / Windows Terminal에서 `mybot` 한 단어로 봇이 열리게 하려면, PowerShell 프로필에 함수를 등록한다 (유닉스 셸 alias의 Windows 등가물):
+
+```powershell
+# 1. 프로필 파일 열기 (없으면 만들어짐)
+if (!(Test-Path $PROFILE)) { New-Item -ItemType File -Force $PROFILE }
+notepad $PROFILE
+```
+
+프로필에 봇당 함수 하나씩 추가:
+
+```powershell
+function mybot {
+  $env:DISCORD_STATE_DIR = "$HOME\.claude\channels\discord-research"
+  Set-Location "$HOME\내-볼트"
+  claude --dangerously-skip-permissions
+}
+```
+
+```powershell
+# 2. 저장 후 현재 창에 적용 (새 창은 자동 적용)
+. $PROFILE
+```
+
+- `--dangerously-skip-permissions` = 허락 질문 없이 진행하는 Skip permission(YOLO) 모드 — **명시적 opt-in**이다. 확인 질문을 받으며 쓰려면 이 플래그를 빼면 된다.
+- 처음 `. $PROFILE` 실행 시 "스크립트 실행이 비활성화" 오류가 나면(기본 ExecutionPolicy):
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` 1회 실행 후 다시.
+- 봇이 여러 개면 함수를 여러 개(`mybot2` 등) — `DISCORD_STATE_DIR`만 다르게.
+- 직접 쓰기 어렵다면 Claude Code에게 그대로 부탁해도 된다: "파워셸에서 mybot 한 단어로 봇이 Skip permission 모드로 열리게 프로필에 등록해줘."
+
 ## 편의 (선택): Windows Terminal 프로필
 
 Windows Terminal `settings.json`의 `profiles.list`에 봇당 하나씩:

@@ -19,7 +19,11 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 
 1. Run `thiscode init` for guided setup.
 2. Confirm repo root and any bot working directory before generating aliases.
-3. Use tmux for Discord bot runtime windows. Do not use cmux for this flow.
+3. Use tmux for Discord bot runtime windows on macOS/WSL/Linux. Do not use
+   cmux for this flow. On Windows native (PowerShell), do NOT introduce
+   tmux/WSL — follow `docs/10-windows-powershell-bots.md`: one PowerShell
+   window per bot, and generate a `$PROFILE` function (e.g. `function mybot
+   { $env:DISCORD_STATE_DIR=...; claude ... }`) as the alias equivalent.
 4. Present safe mode first. YOLO/danger-full-access requires explicit opt-in.
 5. Ask `progress_report_cadence`: `per_task`, `1m`, `3m`, `5m`, `off`, or
    `custom`. `per_task` means a meaningful subtask or milestone completion,
@@ -36,7 +40,10 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
    adopt (e.g. the Stop-hook output contract).
 8. When aliases are generated, tell the user to `source` the generated alias
    script/block; only add it to a shell rc file if they explicitly want it
-   permanent.
+   permanent. On Windows the target is the PowerShell profile: write the
+   function into `$PROFILE` and apply with `. $PROFILE` (if blocked by
+   ExecutionPolicy, `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
+   once).
 9. Finish with `thiscode doctor` or the nearest available verify command.
 
 ## Guardrails
