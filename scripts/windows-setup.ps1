@@ -13,8 +13,10 @@
 # Designed for managed/GPO lab machines: nothing here requires admin, and any
 # blocked step degrades to a printed manual alternative instead of aborting.
 # Error contract: inside each Step, errors are promoted to terminating
-# ($ErrorActionPreference='Stop') and native commands are checked via
-# $LASTEXITCODE — so a failed step can never be recorded as OK.
+# ($ErrorActionPreference='Stop'), native commands are checked via
+# $LASTEXITCODE, body stdout goes to the host (never captured as status),
+# and non-OK outcomes travel only through $script:StepStatus —
+# so a failed step can never be recorded as OK.
 
 $ErrorActionPreference = 'Continue'
 $report = [ordered]@{}
@@ -22,10 +24,11 @@ $report = [ordered]@{}
 function Step($name, [scriptblock]$body, $manualHint) {
   Write-Host "`n== $name" -ForegroundColor Cyan
   $prevEap = $ErrorActionPreference
-  try {
+  $script:StepStatus = $null          # 상태는 이 변수로만 전달 (stdout 혼입 차단 —
+  try {                               #  scriptblock 반환값은 native stdout 전체를 배열로 포획하므로 쓰지 않는다)
     $ErrorActionPreference = 'Stop'   # cmdlet non-terminating errors → catch
-    $status = & $body                 # body returns 'OK' or 'PENDING_RESTART'
-    if (-not $status) { $status = 'OK' }
+    & $body | Out-Host                # native/cmdlet stdout은 화면으로만
+    $status = if ($script:StepStatus) { $script:StepStatus } else { 'OK' }
     $script:report[$name] = $status
   } catch {
     Write-Host "   실패(계속 진행): $($_.Exception.Message)" -ForegroundColor Yellow
@@ -43,19 +46,22 @@ Step 'ExecutionPolicy (프로필 로드 전제)' {
     if ((Get-ExecutionPolicy -Scope CurrentUser) -ne 'RemoteSigned') { throw "CurrentUser 정책이 변경되지 않음 (조직 정책 의심)" }
     Write-Host "   CurrentUser → RemoteSigned"
   } else { Write-Host "   이미 $cur — 변경 없음" }
-  # GPO(MachinePolicy)가 우선하면 CurrentUser 변경이 무력할 수 있음 — 진단만 남긴다
+  # GPO(MachinePolicy)가 우선하면 CurrentUser 변경이 무력 — false OK 금지, 수동 상태로 기록
   $gpo = Get-ExecutionPolicy -Scope MachinePolicy
-  if ($gpo -notin @('Undefined')) {
-    Write-Host "   ⚠ 조직 정책(MachinePolicy=$gpo)이 우선입니다 — 프로필이 계속 안 읽히면:" -ForegroundColor Yellow
+  if ($gpo -in @('Restricted','AllSigned')) {
+    Write-Host "   ⚠ 조직 정책(MachinePolicy=$gpo)이 우선입니다 — 프로필 로드가 계속 막히면:" -ForegroundColor Yellow
     Write-Host "     powershell -ExecutionPolicy Bypass 로 창을 열어 사용하세요" -ForegroundColor Yellow
+    $script:StepStatus = 'MANUAL_REQUIRED: 조직 정책 우선 — powershell -ExecutionPolicy Bypass 창 사용'
   }
-  'OK'
 } 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
 
 Step 'Bun 런타임 (Discord 플러그인 필수)' {
-  if (Get-Command bun -ErrorAction SilentlyContinue) {
-    Write-Host "   이미 설치됨: $(bun -v)"
-    return 'OK'
+  $existing = Get-Command bun -ErrorAction SilentlyContinue
+  if ($existing) {
+    $v = & $existing -v
+    if ($LASTEXITCODE -ne 0) { throw "bun 이 있으나 실행 실패 (exit $LASTEXITCODE)" }
+    Write-Host "   이미 설치됨: $v"
+    return
   }
   irm bun.sh/install.ps1 | iex
   $env:Path = "$HOME\.bun\bin;$env:Path"
@@ -64,20 +70,19 @@ Step 'Bun 런타임 (Discord 플러그인 필수)' {
   $v = & $bunExe -v
   if ($LASTEXITCODE -ne 0) { throw "bun 실행 실패 (exit $LASTEXITCODE)" }
   Write-Host "   설치 완료: $v"
-  'OK'
 } 'irm bun.sh/install.ps1 | iex'
 
 Step 'Python 실설치 (스토어 스텁 감지)' {
   $py = Get-Command python -ErrorAction SilentlyContinue
   if ($py -and $py.Source -notlike '*WindowsApps*') {
     Write-Host "   이미 실설치: $($py.Source)"
-    return 'OK'
+    return
   }
   if ($py) { Write-Host "   WindowsApps 스텁 감지 ($($py.Source)) — 실설치 진행" }
   winget install -e --id Python.Python.3.12 --accept-source-agreements --accept-package-agreements
   if ($LASTEXITCODE -ne 0) { throw "winget 설치 실패 (exit $LASTEXITCODE)" }
   Write-Host "   winget 설치 완료 — PATH 반영은 새 터미널부터"
-  'PENDING_RESTART'
+  $script:StepStatus = 'PENDING_RESTART'
 } 'winget install -e --id Python.Python.3.12  (winget 불가 시 https://python.org 설치 파일)'
 
 Step 'PATH (bun · claude)' {
@@ -92,7 +97,6 @@ Step 'PATH (bun · claude)' {
       Write-Host "   User PATH에 추가: $p"
     }
   }
-  'OK'
 } '[Environment]::SetEnvironmentVariable("Path", "$HOME\.bun\bin;" + [Environment]::GetEnvironmentVariable("Path","User"), "User")'
 
 Step '$PROFILE 생성' {
@@ -100,7 +104,6 @@ Step '$PROFILE 생성' {
     New-Item -ItemType File -Force $PROFILE | Out-Null
     Write-Host "   생성: $PROFILE"
   } else { Write-Host "   이미 있음: $PROFILE" }
-  'OK'
 } 'New-Item -ItemType File -Force $PROFILE'
 
 # ---- 최종 진단 -------------------------------------------------------------

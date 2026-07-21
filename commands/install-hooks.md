@@ -125,7 +125,14 @@ EOF
 )
 
 # 기존 hook 보존 + thiscode hook append
-jq -s 'def mergeEv($a; $b): ($a + $b) | group_by(.matcher // "") | map({matcher: (.[0].matcher // ""), hooks: ([.[].hooks[]] | unique_by([.type, .command, .timeout]))});
+# 순서 보존 병합: matcher별 그룹 유지(등장 순), 내부 hook은 type+command+timeout 키로 첫 등장만
+jq -s 'def uniqHooks: reduce .[] as $x ([]; if (map(.type == $x.type and .command == $x.command and .timeout == $x.timeout) | any) then . else . + [$x] end);
+def mergeEv($a; $b):
+  reduce (($a + $b) | .[]) as $g ({order: [], map: {}};
+    (($g.matcher // "")) as $m
+    | if (.map | has($m)) then (.map[$m].hooks += ($g.hooks // []))
+      else (.order += [$m] | .map[$m] = ($g + {matcher: $m, hooks: ($g.hooks // [])})) end)
+  | [ .map[.order[]] | (.hooks |= uniqHooks) ];
 . as [$s, $p] | ($s * $p)
 | .hooks.SessionStart     = mergeEv($s.hooks.SessionStart // [];     $p.hooks.SessionStart // [])
 | .hooks.UserPromptSubmit = mergeEv($s.hooks.UserPromptSubmit // []; $p.hooks.UserPromptSubmit // [])
