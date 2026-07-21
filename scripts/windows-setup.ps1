@@ -21,6 +21,16 @@
 $ErrorActionPreference = 'Continue'
 $report = [ordered]@{}
 
+# --- thiscode-setup-lib start (extracted by tests/init/windows-setup-ps1.test.mjs — keep markers) ---
+function Get-PolicyOverrideScope {
+  # Microsoft 정본 우선순위: MachinePolicy > UserPolicy > Process > CurrentUser > LocalMachine.
+  # GPO 스코프(Machine/User)가 Restricted/AllSigned 면 CurrentUser 설정·Process Bypass 로 덮을 수 없다.
+  param($MachinePolicy, $UserPolicy)
+  if ($MachinePolicy -in @('Restricted','AllSigned')) { return 'MachinePolicy' }
+  if ($UserPolicy    -in @('Restricted','AllSigned')) { return 'UserPolicy' }
+  return $null
+}
+
 function Step($name, [scriptblock]$body, $manualHint) {
   Write-Host "`n== $name" -ForegroundColor Cyan
   $prevEap = $ErrorActionPreference
@@ -38,6 +48,7 @@ function Step($name, [scriptblock]$body, $manualHint) {
     $ErrorActionPreference = $prevEap
   }
 }
+# --- thiscode-setup-lib end ---
 
 Step 'ExecutionPolicy (프로필 로드 전제)' {
   $cur = Get-ExecutionPolicy -Scope CurrentUser
@@ -46,12 +57,13 @@ Step 'ExecutionPolicy (프로필 로드 전제)' {
     if ((Get-ExecutionPolicy -Scope CurrentUser) -ne 'RemoteSigned') { throw "CurrentUser 정책이 변경되지 않음 (조직 정책 의심)" }
     Write-Host "   CurrentUser → RemoteSigned"
   } else { Write-Host "   이미 $cur — 변경 없음" }
-  # GPO(MachinePolicy)가 우선하면 CurrentUser 변경이 무력 — false OK 금지, 수동 상태로 기록
-  $gpo = Get-ExecutionPolicy -Scope MachinePolicy
-  if ($gpo -in @('Restricted','AllSigned')) {
-    Write-Host "   ⚠ 조직 정책(MachinePolicy=$gpo)이 우선입니다 — 프로필 로드가 계속 막히면:" -ForegroundColor Yellow
-    Write-Host "     powershell -ExecutionPolicy Bypass 로 창을 열어 사용하세요" -ForegroundColor Yellow
-    $script:StepStatus = 'MANUAL_REQUIRED: 조직 정책 우선 — powershell -ExecutionPolicy Bypass 창 사용'
+  # GPO 스코프(MachinePolicy·UserPolicy)가 우선하면 CurrentUser 변경이 무력 — false OK 금지.
+  # Process Bypass 도 GPO 를 덮지 못한다 (about_Execution_Policies) → 처방 = IT 관리자 문의.
+  $blocked = Get-PolicyOverrideScope -MachinePolicy (Get-ExecutionPolicy -Scope MachinePolicy) -UserPolicy (Get-ExecutionPolicy -Scope UserPolicy)
+  if ($blocked) {
+    Write-Host "   ⚠ 조직 그룹 정책($blocked)이 우선이라 이 설정으로는 프로필 로드가 풀리지 않습니다." -ForegroundColor Yellow
+    Write-Host "     IT 관리자에게 PowerShell 실행 정책(RemoteSigned) 허용을 요청하세요." -ForegroundColor Yellow
+    $script:StepStatus = "MANUAL_REQUIRED: 조직 그룹 정책($blocked) 우선 — IT 관리자에게 실행 정책 변경 요청"
   }
 } 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
 
