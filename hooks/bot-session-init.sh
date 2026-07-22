@@ -177,9 +177,17 @@ SECTIONS+='=== 필수 규율 (매 응답 자가 점검) ===
 
 '
 
-# JSON 인코딩 (python3 — 특수문자 안전)
+# JSON 인코딩 — 특수문자 안전. Windows(Git Bash)엔 python3 이름이 없고
+# WindowsApps 스토어 스텁이 걸릴 수 있어 python3 → python → bun → node 폴백.
+_PY=""
+for _c in python3 python; do
+  _p="$(command -v "$_c" 2>/dev/null || true)"
+  case "$_p" in ''|*WindowsApps*) continue;; esac
+  _PY="$_p"; break
+done
 export SECTIONS
-python3 -c '
+if [ -n "$_PY" ]; then
+"$_PY" -c '
 import json, os
 content = os.environ["SECTIONS"]
 print(json.dumps({
@@ -189,6 +197,11 @@ print(json.dumps({
     }
 }))
 '
+elif command -v bun >/dev/null 2>&1; then
+  bun -e 'console.log(JSON.stringify({hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:process.env.SECTIONS}}))'
+elif command -v node >/dev/null 2>&1; then
+  node -e 'console.log(JSON.stringify({hookSpecificOutput:{hookEventName:"SessionStart",additionalContext:process.env.SECTIONS}}))'
+fi
 
 # ----------------------------------------------------------------------
 # (옵션) Memory Load Audit — 로드된 memory 의 checksum 기록
@@ -199,7 +212,7 @@ print(json.dumps({
   mkdir -p "$AUDIT_DIR" 2>/dev/null
   AUDIT_FILE="$AUDIT_DIR/${BOT}-$(date -u +%Y-%m-%dT%H-%M-%S).json"
   export AUDIT_BOT="$BOT" AUDIT_FILE AUDIT_SOUL="$SOUL_FILE" AUDIT_MEM="$MEM_INDEX" AUDIT_SHARED="$SHARED_INDEX"
-  python3 -c '
+  [ -n "$_PY" ] && "$_PY" -c '
 import json, os, hashlib, datetime
 def stat(p):
     if not p or not os.path.isfile(p): return None

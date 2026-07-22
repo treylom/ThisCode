@@ -26,7 +26,16 @@ set -uo pipefail
 
 INPUT=$(cat)
 
-PROMPT=$(echo "$INPUT" | python3 -c '
+# Windows(Git Bash): python3 이름 부재/스토어 스텁 대응 — python3 → python 폴백
+_PY=""
+for _c in python3 python; do
+  _p="$(command -v "$_c" 2>/dev/null || true)"
+  case "$_p" in ''|*WindowsApps*) continue;; esac
+  _PY="$_p"; break
+done
+[ -n "$_PY" ] || exit 0   # 인코더 없으면 fail-open (매칭 포기, 세션 방해 X)
+
+PROMPT=$(echo "$INPUT" | "$_PY" -c '
 import json, sys
 try:
     d = json.load(sys.stdin)
@@ -60,7 +69,7 @@ SLASH COMMAND DETECTED: 사용자 프롬프트 첫 줄이 \`/${CMD}\` 로 시작
 </system-reminder>"
 
   export REMINDER
-  python3 -c '
+  "$_PY" -c '
 import json, os
 print(json.dumps({
     "hookSpecificOutput": {

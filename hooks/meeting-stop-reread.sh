@@ -13,10 +13,17 @@ set -uo pipefail
 
 input="$(cat 2>/dev/null || true)"
 
-command -v python3 >/dev/null 2>&1 || exit 0
+# Windows(Git Bash): python3 이름 부재/스토어 스텁 대응 — python3 → python 폴백
+_PY=""
+for _c in python3 python; do
+  _p="$(command -v "$_c" 2>/dev/null || true)"
+  case "$_p" in ''|*WindowsApps*) continue;; esac
+  _PY="$_p"; break
+done
+[ -n "$_PY" ] || exit 0
 
 export HOOK_INPUT="$input"
-python3 - <<'PY'
+"$_PY" - <<'PY'
 import json, os, pathlib, sys
 
 try:

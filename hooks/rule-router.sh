@@ -12,9 +12,22 @@
 #
 # Register (~/.claude/settings.json) under UserPromptSubmit — see commands/install-hooks.md:
 #   {"type":"command","command":"bash ~/.claude/plugins/thiscode/hooks/rule-router.sh","timeout":3}
-command -v jq >/dev/null 2>&1 || exit 0
 INPUT="$(cat 2>/dev/null || true)"
-P="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
+# .prompt 추출: jq → (Windows 등 jq 부재 시) python3 → python 폴백. 전부 없으면 fail-open.
+if command -v jq >/dev/null 2>&1; then
+  P="$(printf '%s' "$INPUT" | jq -r '.prompt // empty' 2>/dev/null || true)"
+else
+  _PY=""
+  for _c in python3 python; do
+    _p="$(command -v "$_c" 2>/dev/null || true)"
+    case "$_p" in ''|*WindowsApps*) continue;; esac
+    _PY="$_p"; break
+  done
+  [ -n "$_PY" ] || exit 0
+  P="$(printf '%s' "$INPUT" | "$_PY" -c 'import json,sys
+try: print(json.load(sys.stdin).get("prompt",""), end="")
+except Exception: pass' 2>/dev/null || true)"
+fi
 [ -n "$P" ] || exit 0
 
 m() { printf '%s' "$P" | grep -iqE "$1"; }
