@@ -21,12 +21,14 @@ $ARGUMENTS
 ```bash
 # thiscode 설치 위치 자동 detect — self-update 는 git 갱신 대상이므로
 # .git 보유 clone 우선. 실제 설치 위치 전부 순서대로 probe.
+# 마켓플레이스 이름은 설치처마다 다름(예: tofukyung-plugins — 2026-07-22 실측) — 고정명 ❌, glob probe.
 TARGET=""
 for _cand in \
-  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+  "$HOME/.claude/plugins/marketplaces/"* \
   "$HOME/.claude/plugins/thiscode" \
   "$HOME/.claude/plugins/cache/local/thiscode" \
-  "$HOME/code/thiscode"; do
+  "$HOME/code/thiscode" \
+  "$HOME/code/ThisCode"; do
   if [ -d "$_cand/.git" ]; then TARGET="$_cand"; break; fi
 done
 
@@ -51,9 +53,12 @@ fi
 ```bash
 cd "$TARGET"
 git fetch origin --quiet
+# 기본 브랜치 main 고정 가정 ❌ (main/master 혼재 — 2026-07-22 tofukyung-plugins=master 실측)
+DEF=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || echo "origin/main")
+git rev-parse --verify --quiet "$DEF" >/dev/null || DEF="origin/master"
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/main)
-BEHIND=$(git rev-list --count HEAD..origin/main)
+REMOTE=$(git rev-parse "$DEF")
+BEHIND=$(git rev-list --count "HEAD..$DEF")
 ```
 
 ### Step 3. 결과 보고
