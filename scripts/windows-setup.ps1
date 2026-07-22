@@ -4,11 +4,12 @@
 #
 # What it does (every step is NON-FATAL — on failure it prints the manual command and moves on):
 #   1. PowerShell ExecutionPolicy (CurrentUser RemoteSigned) so $PROFILE loads
-#   2. Bun runtime (required by the official Discord plugin's MCP server)
-#   3. Real Python (detects the WindowsApps store stub that pretends to run)
-#   4. PATH for this session + profile (~/.bun/bin, ~/.local/bin where claude.exe lives)
-#   5. Creates $PROFILE if missing
-#   6. Final diagnosis table: OK / PENDING_RESTART / MANUAL_REQUIRED per step
+#   2. Git (required by Claude Code — "command git not found" otherwise)
+#   3. Bun runtime (required by the official Discord plugin's MCP server)
+#   4. Real Python (detects the WindowsApps store stub that pretends to run)
+#   5. PATH for this session + profile (~/.bun/bin, ~/.local/bin where claude.exe lives)
+#   6. Creates $PROFILE if missing
+#   7. Final diagnosis table: OK / PENDING_RESTART / MANUAL_REQUIRED per step
 #
 # Designed for managed/GPO lab machines: nothing here requires admin, and any
 # blocked step degrades to a printed manual alternative instead of aborting.
@@ -73,6 +74,20 @@ Step 'ExecutionPolicy (프로필 로드 전제)' {
 } 'Set-ExecutionPolicy -Scope CurrentUser RemoteSigned'
 # --- thiscode-policy-step end ---
 
+Step 'Git (Claude Code 필수)' {
+  $existing = Get-Command git -ErrorAction SilentlyContinue
+  if ($existing) {
+    & $existing --version | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "git 이 있으나 실행 실패 (exit $LASTEXITCODE)" }
+    Write-Host "   이미 설치됨: $($existing.Source)"
+    return
+  }
+  winget install -e --id Git.Git --accept-source-agreements --accept-package-agreements
+  if ($LASTEXITCODE -ne 0) { throw "winget 설치 실패 (exit $LASTEXITCODE)" }
+  Write-Host "   winget 설치 완료 — PATH 반영은 새 터미널부터"
+  $script:StepStatus = 'PENDING_RESTART'
+} 'winget install -e --id Git.Git  (winget 불가 시 https://git-scm.com 설치 파일)'
+
 Step 'Bun 런타임 (Discord 플러그인 필수)' {
   $existing = Get-Command bun -ErrorAction SilentlyContinue
   if ($existing) {
@@ -129,6 +144,9 @@ Write-Host "`n===== 단계 요약 (OK / PENDING_RESTART=새 터미널 필요 / M
 foreach ($k in $report.Keys) { Write-Host ("  {0}: {1}" -f $k, $report[$k]) }
 
 $diag = [ordered]@{
+  'git'    = & {
+    $g = Get-Command git -ErrorAction SilentlyContinue
+    if ($g) { "OK $($g.Source)" } else { 'X 새 터미널에서 재확인 — winget install -e --id Git.Git' } }
   'bun'    = if (Get-Command bun -ErrorAction SilentlyContinue) { "OK $(bun -v)" } else { 'X 새 터미널에서 재확인' }
   'python' = & {
     $py = Get-Command python -ErrorAction SilentlyContinue
