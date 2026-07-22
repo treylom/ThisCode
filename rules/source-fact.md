@@ -36,5 +36,15 @@ Trigger: about to assert a fact / proper noun / system state; about to say
 - When mentioning another bot/agent, never generate the name. Keep a fixed
   roster; cross-check the roster source before mentioning.
 
+## 5. Ambiguous commission-target gate (conditional)
+- When a commission's target name can map to **multiple system entities**
+  (same-named repos, a skill vs. the plugin that ships it, multi-layer deploy
+  surfaces) AND the work **mutates state or acts publicly**, confirm one
+  canonical `TARGET: <path/repo>` line before starting — either re-ask the
+  user, or state your resolved interpretation after checking the real system.
+- Single-entity targets and read-only work are exempt (don't over-harden).
+  Origin: an orchestrator misread "the X plugin" three layers deep (internal
+  lab → bundled skill → public marketplace) and needed two user corrections.
+
 ▶ Fill in: your roster/source-of-truth paths; your token-optimizer's raw-bypass
 command; per-topic hub/index locations to cross-check.
