@@ -6,6 +6,8 @@ disable-model-invocation: true
 
 # /thiscode:install-hooks — hook 등록
 
+> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 문서 요약·소개 출력이나 "실행할까요?" 확인 질문으로 멈추지 말고 **아래 단계를 지금 즉시 실행**한다. (본문이 명시하는 인터뷰·AskUserQuestion 단계는 그 지점에서 그대로 수행 — 그 외 추가 확인 ❌)
+
 > 순정 Claude Code 에서 soul.md / WD memory / 슬래시 detect / 회귀 self-check 자동 작동을 위해 hooks 를 `~/.claude/settings.json` 에 등록. 기존 사용자 hook 보존 (jq merge).
 
 $ARGUMENTS
