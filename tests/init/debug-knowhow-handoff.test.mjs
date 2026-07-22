@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
 const debugDoc = read('../../docs/08-debug-노하우.md');
-const createBot = read('../../commands/create-bot.md');
+const createBot = read('../../skills/create-bot/SKILL.md');
 const start = read('../../commands/start.md');
 
 test('J-2: debug doc documents the discord server.ts msg.author.bot blanket-drop', () => {

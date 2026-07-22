@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
-const installHooks = read('../../commands/install-hooks.md');
-const selfUpdate = read('../../commands/self-update.md');
-const createBot = read('../../commands/create-bot.md');
+const installHooks = read('../../skills/install-hooks/SKILL.md');
+const selfUpdate = read('../../skills/self-update/SKILL.md');
+const createBot = read('../../skills/create-bot/SKILL.md');
 
 test('A: install-hooks.md PLUGIN_DIR detect covers manual clone + install cache', () => {
   assert.match(

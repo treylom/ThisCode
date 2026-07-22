@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const md = readFileSync(
-  fileURLToPath(new URL('../../commands/install-hooks.md', import.meta.url)),
+  fileURLToPath(new URL('../../skills/install-hooks/SKILL.md', import.meta.url)),
   'utf8',
 );
 

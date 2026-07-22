@@ -160,7 +160,7 @@ const FEATURES = [
     desc: 'install/setup surface: install-hooks command + setup skill',
     bench: false,
     run() {
-      const ok = nonEmpty('commands/install-hooks.md') && nonEmpty('skills/setup/SKILL.md');
+      const ok = nonEmpty('skills/install-hooks/SKILL.md') && nonEmpty('skills/setup/SKILL.md');
       return ok
         ? { status: PASS, detail: 'install-hooks command + setup skill shipped' }
         : { status: FAIL, detail: 'install-hooks or setup skill missing' };

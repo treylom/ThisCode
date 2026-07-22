@@ -23,7 +23,7 @@ test('meeting-protocol rule is routed from rules INDEX', () => {
 });
 
 test('install-hooks command wires the meeting Stop hook', () => {
-  const install = normalize(readFileSync('commands/install-hooks.md', 'utf8'));
+  const install = normalize(readFileSync('skills/install-hooks/SKILL.md', 'utf8'));
   assert.match(install, /"Stop"/);
   assert.match(install, /meeting-stop-reread\.sh/);
 });

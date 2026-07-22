@@ -1,5 +1,5 @@
 // Contract tests for the install-hooks settings merge (jq path + node fallback).
-// The snippets are extracted from commands/install-hooks.md so the doc IS the
+// The snippets are extracted from skills/install-hooks/SKILL.md so the doc IS the
 // tested artifact — no drift between documentation and verified behavior.
 // Contract: (1) no hook loss (2) first-occurrence order preserved
 // (3) idempotent re-run (4) node/jq parity. (2026-07-21 post-review HIGH-2)
@@ -10,7 +10,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 
-const DOC = readFileSync(new URL('../../commands/install-hooks.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows CRLF checkout
+const DOC = readFileSync(new URL('../../skills/install-hooks/SKILL.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows CRLF checkout
 
 function extractJq() {
   const m = DOC.match(/jq -s '([\s\S]*?)' \\\n {2}"\$SETTINGS"/);

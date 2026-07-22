@@ -1,12 +1,13 @@
 ---
+name: self-update
 description: thiscode 플러그인 자가 업데이트 체크 (git fetch + behind 알림) — 메인봇 SessionStart 시 자동 호출 가능
-allowed-tools: Bash Read
 disable-model-invocation: true
+allowed-tools: Bash Read
 ---
 
-# /thiscode:self-update — 자가 업데이트 체크
+사용자가 이 스킬을 호출했다 — 아래 단계를 순서대로 지금 수행한다.
 
-> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 문서 요약·소개 출력이나 "실행할까요?" 확인 질문으로 멈추지 말고 **아래 단계를 지금 즉시 실행**한다. (본문이 명시하는 인터뷰·AskUserQuestion 단계는 그 지점에서 그대로 수행 — 그 외 추가 확인 ❌)
+# /thiscode:self-update — 자가 업데이트 체크
 
 > 메인봇 시작 시 또는 수동으로 thiscode 레포의 latest commit 과 로컬 차이를 점검.
 
