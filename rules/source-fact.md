@@ -53,8 +53,8 @@ command; per-topic hub/index locations to cross-check.
 
 A full-day audit of 20+ retractions found **zero wrong values** — what died every time was the label: *whose value, as of when, counting what*.
 
-1. Claims of separation / completeness / currency / limits ("independent", "exhaustive", "current", "ceiling") must **name the axis** — an axis-less word covers a safe axis and a dangerous one with one term (e.g. "isolated": identity axis split, backend axis shared).
+1. Claims of separation / completeness / currency / limits ("independent", "exhaustive", "current", "ceiling") must **name the axis** — an axis-less word lets one term cover both a safe axis and a dangerous one (e.g. "isolated": identity axis split, backend axis shared).
 2. **Deprecate by label, not by value string.** Most prose values carry only an implicit label (position stands in for it), so deprecation is two steps: ① make the implicit label explicit (annotate as-of / ownership / status — this creates the target) ② retire that label. Parser-read fields are the exception: remove the value itself (only one role lives there).
 3. Split "unknown" three ways: undetermined (measured, no rule yet) ≠ unmeasured ≠ out-of-scope (our tools cannot open it) — the axis tells the next person where to start measuring.
 
-Case-based (2026-07-25, three independent retraction lists converging); re-judge per situation; maintainer's call wins.
+Case-based (2026-07-25, three independent retraction lists, every item dying at the label); re-judge per situation; the maintainer's call wins.

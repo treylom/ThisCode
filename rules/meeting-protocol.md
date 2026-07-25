@@ -167,4 +167,4 @@ meeting cadence.
 
 ## Liveness 4th axis — outage vs idle
 
-Even when all idle signals agree (no ledger append + idle terminal + silent thread), check one more axis: **are other bots / other paths silent at the same moment?** If yes, it is an *outage*, not idle — wake-pings and re-dispatches are no-ops there. See the upstream-outage rung in discord-comms. Case-based (2026-07-25); maintainer's call wins.
+Even when all idle signals agree (no ledger append + idle terminal + silent thread), check one more axis: **are other bots / other paths silent at the same moment?** If yes, it is an *outage*, not idle — wake-pings and re-dispatches are no-ops there. Applies to automated daemons and manual probes alike. See the upstream-outage rung in discord-comms. Case-based (2026-07-25); re-judge per situation; the maintainer's call wins.
