@@ -75,3 +75,18 @@ an automated experiment loop; delegating to a sub-agent.
 ▶ Fill in: which skill system you use + how to invoke it; your debugging
 process doc; your sub-agent vs. worker delegation tools; your automated-loop
 tool(s) and where the diversity check is recorded.
+
+## 7. Solo work needs a written plan it keeps re-reading (2026-07-26)
+- Meeting-based work has a shared ledger (context files, progress log) that keeps
+  agents anchored; **solo work has no anchor unless you make one.** A plan that
+  exists only as chat output evaporates, and mid-task purpose drift follows.
+- For any non-trivial solo task: (a) generate the plan via your planning/prompt
+  tooling, (b) **land it in a file** at a known spec location (never chat-only),
+  (c) **re-read that file at every milestone or change of direction** — it plays
+  the role the meeting progress log plays for group work, (d) patch the file in
+  the same turn any scope change arrives (live-spec discipline).
+- Whatever planning path produced it (interview pipeline or prompt generator),
+  the landing contract is the same: known location + a deadline stamp + a stated
+  done-condition. Small one-shot tasks are exempt — don't over-harden.
+
+▶ Fill in: your spec directory for solo plans; your planning tool names.
