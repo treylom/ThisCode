@@ -107,3 +107,9 @@ Trigger: any moment you respond/report/notify to an external channel
 
 ▶ Fill in: your reply tool name; your bots' user_ids + roster source; your
 completion-report channel/thread id; which channels are meeting vs. main.
+
+## Upstream-outage rung (escalation ladders assume the bot is asleep)
+
+Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge surgery — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25 global Codex outage); re-judge per situation; the maintainer's call wins.
+
+▶ Fill in: your independent probe path (isolated account/HOME) used for outage discrimination.

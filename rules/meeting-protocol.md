@@ -164,3 +164,7 @@ meeting cadence.
 - The dated progress log remains the append-only source of truth; LATEST.md is a *pointer/summary* — on conflict the log wins.
 - **Atomic update + no-op duty**: write temp file → `mv` swap (never expose partial writes). If content is unchanged, do **not** rewrite (mtime noise reads as a false "something changed" signal). Real file only — no symlink (breaks across machines/sync).
 - Owner = the chairing agent, updated at milestones (lock/dispatch/gate-passed/hold-resume). Short one-shot meetings may skip it.
+
+## Liveness 4th axis — outage vs idle
+
+Even when all idle signals agree (no ledger append + idle terminal + silent thread), check one more axis: **are other bots / other paths silent at the same moment?** If yes, it is an *outage*, not idle — wake-pings and re-dispatches are no-ops there. See the upstream-outage rung in discord-comms. Case-based (2026-07-25); maintainer's call wins.

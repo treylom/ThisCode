@@ -84,3 +84,9 @@ its dispatch channel lives; your progress-log path for the judgment note.
 
 ▶ Fill in: your security-verifier lineage (bot/engine); grandfathered
 in-flight tracks; your maintainer-confirmation channel.
+
+## Deferred instructions — re-check the ledger at fire time
+
+A scheduled instruction (cron, reminder, queued dispatch) is a **snapshot of the world at registration time** — and it is the *whole instruction* that goes stale, not just one value. Before executing any deferred instruction, re-read the tail of the relevant ledger/SoT: if a correction, cancellation, or resolution has been recorded since, **hold and report instead of executing** (a hold is a normal branch, not a failure). Stamp every scheduled instruction with its as-of time in the payload. Case-based (2026-07-25: an errand scheduled at 13:04 was resolved at 15:00 and cancelled in the ledger at 18:05, yet fired and executed verbatim at 19:00 — a counterpart's refusal gate contained the damage); re-judge per situation; maintainer's call wins.
+
+▶ Fill in: your ledger/SoT path that fire-time re-checks must read.

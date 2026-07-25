@@ -65,3 +65,7 @@ Before reporting a UI/feature implementation "done" (or cutting over), three axe
 
 ### §4 reinforcement (2026-07-05)
 - **"The file never existed" only after `git log --all`**: don't conclude that a file absent from the working tree/HEAD "never existed" — it may have landed on another branch (real case: an auto-commit hook committed docs onto a feature branch that happened to be checked out). The git flavor of boundary expansion.
+
+## Detectors ≠ gates — ask the action question separately
+
+A detector asks "is this value wrong?"; a gate asks "may this action happen?". They fail on different layers: an instruction can pass every value check and still be wrong at the action layer (stale premise, missing authority, non-exportable secret). Before risky actions (credentials, exports, destructive ops, outbound orders) ask the gate question once, **independently of value truth**. When a defense works as a **by-product** (built for another purpose), record that it was not designed for this — by-product defenses fail together at the next variant. Case-based (2026-07-25: a full day's errors passed value detectors 0/9 and were stopped only by a refusal gate 1/1); maintainer's call wins.
