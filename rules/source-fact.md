@@ -49,7 +49,7 @@ Trigger: about to assert a fact / proper noun / system state; about to say
 ▶ Fill in: your roster/source-of-truth paths; your token-optimizer's raw-bypass
 command; per-topic hub/index locations to cross-check.
 
-## Label discipline — usually it's the name that dies, not the value
+## 6. Label discipline — usually it's the name that dies, not the value
 
 Across a day of retractions, most of what died was the **label** — *whose value, as of when, counting what* — rather than the number itself.
 
