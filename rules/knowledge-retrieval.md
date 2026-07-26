@@ -55,12 +55,10 @@ triggers carries one line naming what was searched:
 **A no-hit is a success** — record it as no-hit rather than inventing a
 recollection to fill the line.
 
-Why the marker and not just the habit: if enforcement lives only in a hook
-and the rule is never written down, a fail-open miss looks like *absence*
-rather than *violation* — there is nothing to compare against, so no one can
-detect the gap. The written rule is what gives the check a target. (Observed
-as a mirror-image state: a hook enforcing the marker existed while the rule
-text did not, and the resulting zero-marker runs went unnoticed.)
+Why write it down when a hook already enforces it: with enforcement but no
+rule text, a fail-open miss reads as absence rather than violation — there is
+nothing to compare against, so the gap is undetectable. The written rule is
+what gives the check a target.
 
 ▶ Fill in: your memory/KB search command; your shared-vs-local memory split;
 the exact store names your marker's `targets=` should list.
