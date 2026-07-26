@@ -17,6 +17,14 @@ an automated experiment loop; delegating to a sub-agent.
   switch, ask first ("tool X can't do Y — switch to Z?") instead of quietly
   swapping; and make per-step tool usage visible in plans so the user can see
   the commissioned tool at work.
+- **A spec/seed pipeline needs a stated end time.** When work is commissioned
+  through a structured pipeline (interview → spec → run → evaluate), write the
+  cutoff into the spec. Without one, refinement becomes the goal: the loop
+  keeps improving the measurement and eats the deliverable it was supposed to
+  produce. Reaching the cutoff means reporting with whatever exists at that
+  moment; extending it is the human's call, not the loop's. (Origin: a night
+  where building an exhaustive measurement apparatus displaced the repair it
+  was meant to serve, and took three human interventions to redirect.)
 
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding

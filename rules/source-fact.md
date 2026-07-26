@@ -49,12 +49,16 @@ Trigger: about to assert a fact / proper noun / system state; about to say
 ▶ Fill in: your roster/source-of-truth paths; your token-optimizer's raw-bypass
 command; per-topic hub/index locations to cross-check.
 
-## Label discipline — values rarely die; names do
+## Label discipline — the name usually dies before the value
 
-A full-day audit of 20+ retractions found **zero wrong values** — what died every time was the label: *whose value, as of when, counting what*.
+Across a day of retractions, most of what died was the **label** — *whose value, as of when, counting what* — rather than the number itself.
+
+> ⚠️ **Scope, corrected the next morning.** This section first read "zero wrong values; every item died at the label." Both halves were wrong. The lists were **each author's own enumeration**, not one agreed sweep — so "exhaustive" had no denominator. And wrong values did occur: a stated interval that re-measured differently, a one-digit identifier typo, and a character count that was actually bytes because the shell locale was unset. What survives is a **tendency in that sample**, not a law. Note the asymmetry — a ratio can stay true inside its own population after the generalization drawn from it is withdrawn: **a refutation reaches the generalization, not the scoped measurement underneath it.** Retract the sweep; keep the sample.
 
 1. Claims of separation / completeness / currency / limits ("independent", "exhaustive", "current", "ceiling") must **name the axis** — an axis-less word lets one term cover both a safe axis and a dangerous one (e.g. "isolated": identity axis split, backend axis shared).
 2. **Deprecate by label, not by value string.** Most prose values carry only an implicit label (position stands in for it), so deprecation is two steps: ① make the implicit label explicit (annotate as-of / ownership / status — this creates the target) ② retire that label. Parser-read fields are the exception: remove the value itself (only one role lives there).
 3. Split "unknown" three ways: undetermined (measured, no rule yet) ≠ unmeasured ≠ out-of-scope (our tools cannot open it) — the axis tells the next person where to start measuring.
+4. **Cite with five fields**: `metric + value + observed_at + source revision (mtime or SHA) + measurement environment`. None substitutes for another. In particular, never quote a character count from `wc -m` without declaring the locale — under a C locale it counts bytes, not characters (characters: `LC_ALL=C.UTF-8 wc -m` or a runtime's string length; bytes: `wc -c`).
+5. **A correction must reach every place the value was quoted**, including derived arithmetic. Fixing only the measurement line leaves summaries and verdicts citing the old number. **Sign flips** (a dropped negation) are a separate failure mode — value and name both look intact, so no checksum, grep, or length check catches them; quote **verbatim with a source id**.
 
-Case-based (2026-07-25, three independent retraction lists, every item dying at the label); re-judge per situation; the maintainer's call wins.
+Case-based (one day's audit; the retraction lists were per-author, not exhaustive); re-judge per situation; the maintainer's call wins.
