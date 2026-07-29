@@ -62,3 +62,23 @@ what gives the check a target.
 
 ▶ Fill in: your memory/KB search command; your shared-vs-local memory split;
 the exact store names your marker's `targets=` should list.
+
+## 3. Active exploration before starting a task — three axes + peer-agent memory (added 2026-07-29)
+Commissioned directly by the user after three recurring symptoms: an agent
+hand-rolling what an installed tool already did; low-context output because
+the agent never read the owner's published repos; thin expertise because the
+knowledge sat in *another agent's* memory.
+- **Tool sweep** — search the existing tool inventory (skills, scripts, MCP
+  servers, plugins) for the tool this task needs *before* hand-rolling
+  anything (complements porting-infra's "check upstream before hand-rolling").
+- **Repo sweep** — read the owner's/organization's relevant repos before
+  producing; don't re-invent what's already published or produce output that
+  ignores it.
+- **Expert agent + peer memory** — when the needed expertise lives outside
+  your own memory, actively convene the domain-expert agent (a real
+  meeting/consult, not a guess), and read peer agents' memory stores
+  **read-only** — the domain-to-agent roster decides whose memory to consult.
+Situational judgment; the user's call wins.
+
+▶ Fill in: your tool-inventory locations; the repo namespace to sweep;
+peer-agent memory paths + the roster mapping domains to agents.

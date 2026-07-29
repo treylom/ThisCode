@@ -25,6 +25,13 @@ an automated experiment loop; delegating to a sub-agent.
   moment; extending it is the human's call, not the loop's. (Origin: a night
   where building an exhaustive measurement apparatus displaced the repair it
   was meant to serve, and took three human interventions to redirect.)
+- **Questions a pipeline generates for the human go to the human — enforce it
+  mechanically (added 2026-07-29).** When an interview/spec pipeline produces
+  questions for the user, relay them verbatim and wait; self-answering the
+  "obvious" ones defeats the pipeline's purpose. If the soft rule alone keeps
+  failing (ours failed twice in one night, and the transcripts showed the gap
+  was model-independent — a gate defect, not a model quirk), promote the relay
+  check to a fail-open hook instead of re-emphasizing the prose.
 
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding
