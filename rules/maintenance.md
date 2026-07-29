@@ -28,6 +28,12 @@ index row pointing at a renamed file, a model note three upgrades stale.
    transcripts record the actual model per message) against what the docs
    claim, and list **every startup surface** the model value lives on — the
    stale one is usually the surface the update routine didn't know about.
+   Compare the surfaces **mechanically** (a diff/sweep command), not by eye —
+   a value that *looks* explicit can still be wrong (measured: an eyeball pass
+   would have accepted a freshly-pinned-but-stale ID that the mechanical
+   comparison caught). Record the model ID **separately from launcher flags**
+   — a context-window or effort flag appended to the launch argument is not
+   part of the model ID, and transcripts report the bare ID.
    Startup convention: explicit model IDs + one startup log line of the
    resolved model. Note the trade-off explicitly where the ID lives: an
    explicit ID gives up alias auto-upgrade, so it only stays correct if this
