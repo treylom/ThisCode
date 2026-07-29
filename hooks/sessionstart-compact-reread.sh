@@ -15,6 +15,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/hookkit.sh"
 hk_failopen
 hk_read_input
 
+# Housekeeping (every SessionStart, any source): GC manifests of finished
+# meetings so stale registrations stop feeding session injection / re-read
+# lists / compact markers. fail-open.
+python3 "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/../scripts/meeting-manifest-gc.py" >/dev/null 2>&1 || true
+
 SOURCE="$(hk_json '.source // empty')"
 [ "$SOURCE" = "compact" ] || exit 0          # only the post-compact start
 
