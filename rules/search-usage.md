@@ -41,5 +41,35 @@ KB CLI); a search just failed or came back empty.
 - When search infra changes (server, channels, weights, schedule), update
   this rule's latency envelope **in the same change**.
 
+## 4. Result-consumption contract (added 2026-07-29)
+Retrieval quality and answer quality are different layers: external + local
+benchmarks show recall can rise sharply while answer quality barely moves —
+retrieved-but-unread evidence, evidence buried late in the prompt, and
+candidate-pool inflation are consumption-layer failures no retriever tuning
+fixes. This section governs what happens *after* the search returns.
+- **C1 Read the top hits before claiming.** When search results back a
+  factual claim, a verdict, or a deliverable, actually open and read the top
+  ~3 results — never judge existence/absence/cause from titles + snippets.
+  Casual reference lookups and mid-exploration probes are exempt. If the top
+  hits merely repeat the same claim, keep opening further results (within the
+  existing fallback chain) until a different evidence type appears. Cite only
+  documents actually read.
+- **C2 Front-load the evidence.** In follow-up prompts and delegation
+  messages, put the load-bearing evidence first (`doc — 1-line finding —
+  1-line relation`), supporting material after. Do not repeat the same
+  evidence in body + appendix + summary. (Positional-decay numbers are
+  single-dataset, single-model findings — treat as direction, not a fixed
+  threshold.)
+- **C3 Widen top_k only to verify absence.** Do not raise top_k hoping for
+  better answers (measured: pool inflation pushes gold hits *out*). Widen
+  only when you must check that something is truly absent, and label those
+  results "boundary check", separate from top evidence.
+- **C4 Multi-doc handoffs carry a relation line.** Passing 3+ documents to
+  another agent/prompt: one line stating how they relate (e.g. `A=root-cause
+  measurement · B=our repro · C=operating rule`). Never serialize a whole
+  graph.
+- Effect of C1–C4 is not yet measured here — treat as operating discipline,
+  not a new hard gate; situational judgment and the user's call win.
+
 ▶ Fill in: your KB search endpoint/skill name; your KB CLI binary; your
 measured latency envelope.

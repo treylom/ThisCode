@@ -71,8 +71,10 @@ grep -lE '^type:.*-?MOC|^\s*-\s*MOC\b|MOC/' "{source_note}" 2>/dev/null || \
 ### 1차 — FastAPI 서버 (port 8400):
 ```bash
 QUERY_ENCODED=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "${QUERY}")
-curl -s "http://127.0.0.1:8400/api/search?q=${QUERY_ENCODED}&top_k=${TOP_K}&mode=hybrid&dense_weight=0.3&sparse_weight=0.4&decomposed_weight=0.15&entity_weight=0.15" --connect-timeout 3
+curl -s "http://127.0.0.1:8400/api/search?q=${QUERY_ENCODED}&top_k=${TOP_K}&mode=hybrid" --connect-timeout 3
 ```
+
+> Weight params removed 2026-07-29 (contract v0.2.0): hard-coded client weights silently overrode the server's launch-config weights (the SoT). Clients MUST NOT pass channel weights.
 
 ### 2차 — Obsidian CLI fallback (GraphRAG 불가·실패 시):
 ```bash

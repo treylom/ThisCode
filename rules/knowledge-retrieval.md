@@ -32,8 +32,26 @@ Decide by query shape:
   engine is unavailable (full-text, unranked — degraded but
   functional; do not drop it from the recall path).
 
+## 1.5 Two-store routing — conversation memory vs curated KB (added 2026-07-29)
+If the deployment has BOTH a conversation-memory store (indexed past
+sessions/decisions) and a curated KB (notes/docs/graph), split by what the
+question asks *before* picking a tool:
+- **Past conversations, who said what, decision provenance, prior-failure
+  precedent → conversation-memory store first.**
+- **Current canonical docs, concepts, maps-of-content, relations → ranked
+  KB search first.**
+- **Mixed questions → query both**, then: current norms/state/wording
+  prefer the canonical doc; who/when/why-decided prefers the original
+  conversation; if they disagree, surface the conflict as `current canon`
+  vs `historical provenance` — never silently merge.
+- **Never widen one store's no-hit into "absent everywhere"** — the other
+  corpus may hold it.
+- Marker integration: list only the stores actually queried in the
+  attestation marker's `targets=` (§2).
+
 ▶ Fill in: your KB CLI binary + path; your graph/semantic search skill
-name; which stores count as "our docs" vs plain code.
+name; which stores count as "our docs" vs plain code; your
+conversation-memory store name (if any) for §1.5 routing.
 
 ## 2. Active recall — search before planning, search on failure, propagate after
 The knowledge base is for active recall, not just storage. Three triggers:
