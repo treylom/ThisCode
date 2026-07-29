@@ -29,9 +29,10 @@ an automated experiment loop; delegating to a sub-agent.
   mechanically (added 2026-07-29).** When an interview/spec pipeline produces
   questions for the user, relay them verbatim and wait; self-answering the
   "obvious" ones defeats the pipeline's purpose. If the soft rule alone keeps
-  failing (ours failed twice in one night, and the transcripts showed the gap
-  was model-independent — a gate defect, not a model quirk), promote the relay
-  check to a fail-open hook instead of re-emphasizing the prose.
+  failing (ours failed twice in one night, and the transcripts showed the
+  failures weren't tied to the suspected model — a gate defect, not a model
+  quirk), promote the relay check to a fail-open hook instead of
+  re-emphasizing the prose.
 
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding

@@ -65,7 +65,8 @@ the exact store names your marker's `targets=` should list.
 
 ## 3. Active exploration before starting a task — three axes + peer-agent memory (added 2026-07-29)
 Commissioned directly by the user after three recurring symptoms: an agent
-hand-rolling what an installed tool already did; low-context output because
+failing to find — and then hand-rolling — what an installed tool already
+provided; low-context output because
 the agent never read the owner's published repos; thin expertise because the
 knowledge sat in *another agent's* memory.
 - **Tool sweep** — search the existing tool inventory (skills, scripts, MCP
