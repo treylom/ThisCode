@@ -173,9 +173,9 @@ meeting cadence.
   actually read it and post defects / additions / counter-evidence through
   their own lens — a bare "agree" summary does not count as a review (aim for
   ≥2 concrete items per lens; support quantitative claims with at least one
-  actual measurement — the fold-back and measurement clauses below are derived
+  actual measurement — the fold-back and measurement clauses are derived
   team practice, not the operator's literal words; the hard rule itself is the
-  ≥2 cross-domain reviewers + debate + escalation).
+  ≥2 cross-domain reviewers + debate + escalation + sub-room split).
 - Corrections are folded back by the **original author** (annotated, not
   silently rewritten); diverging points get a debate round in the meeting
   thread; divergence that remains after debate escalates to the operator —
@@ -184,7 +184,7 @@ meeting cadence.
   numbered doc anchors), but keep **one** canonical 4-file record.
 - Why (operator hard rule, 2026-08-01): round one ran as single-owner
   distribution, so defects sat unchallenged inside finished docs; the moment
-  mandatory cross-review was inserted mid-meeting it caught stale cited values
+  mandatory cross-review was inserted mid-meeting, it caught stale cited values
   and self-contradictions the authors had missed. Format precedent = a reviewer
   matrix in the meeting spec (doc × 2 reviewers × lens). Case-based
   (2026-08-01); re-judge per situation; the operator's explicit instruction
