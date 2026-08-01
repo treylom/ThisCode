@@ -62,3 +62,29 @@ Across a day of retractions, most of what died was the **label** — *whose valu
 5. **A correction must reach every place the value was quoted**, including derived arithmetic. Fixing only the measurement line leaves summaries and verdicts citing the old number. **Sign flips** (a dropped negation) are a separate failure mode — value and name both look intact, so no checksum, grep, or length check catches them; quote **verbatim with a source id**.
 
 Case-based (one day's audit; the retraction lists were per-author, not exhaustive); re-judge per situation; the maintainer's call wins.
+
+## 7. Counting discipline — confirm counts through a second measurement layer
+
+1. Before a count is used in a claim, judgment, or deliverable — **and before it
+   is retracted, corrected, or restored** — confirm it via a second path whose
+   *measurement layer* differs (inside vs outside a tool wrapper, a different
+   process boundary). Two syntaxes through the same layer (e.g. two glob
+   spellings into the same tool) are not a second path. Rationale: retractions,
+   prescriptions, and recovery edits are themselves measurements, and teams
+   that gate the original count routinely leave the follow-ups ungated.
+2. **Resolve the executable name once** (`type -a <cmd>` / `which <cmd>`) for
+   non-trivial counts or absence judgments: shell shims can bind a familiar
+   name (e.g. `grep`) to a different binary with silent filters — ignore-file
+   lists that drop allowlisted trees, or binary-skip flags that drop any file
+   containing a stray NUL or invalid-UTF-8 byte. Prefer a known-clean binary
+   (`command grep`, an absolute path) and record the resolution with the value.
+3. **Aggregation prints per-item lines, not just totals** — a total that hides
+   its items cannot show where it went wrong. Aggregated values carry their
+   `aggregation_rule` (which cells count, keyed how); without it, a correct
+   table still double-counts on re-derivation.
+4. **Detectors can die silently — ship every check with a positive control.**
+   Seed a known defect once and confirm the check catches it before trusting
+   its zero (an empty-pattern grep returns line counts, not NUL counts). An
+   inclusion invariant (whole ≥ sum of parts) catches partial observation, and
+   a violated invariant means the *instrument* is broken: adopt neither value;
+   re-measure through an independent path.

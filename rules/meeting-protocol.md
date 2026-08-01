@@ -28,6 +28,26 @@ bot's progress, or stopping while an active meeting is open.
   keeps only decisions, pointers, and gate states — test: "does reading
   the progress file alone give the flow?" (guards against spilling so
   much that the source of truth scatters).
+- **Cross-check mandate (no single-bot assignment)**: never hand a meeting
+  agenda item to one bot end-to-end. Every substantial output gets ≥2 reviewers
+  from *other* domains who actually read it and must surface concrete defects,
+  gaps, or counter-evidence (agreement summaries don't count); disputed points
+  converge in a discussion round, and unresolved ones escalate to the human
+  owner. Large meetings may split into sub-threads per agenda group while
+  keeping one canonical progress file.
+- **Append integrity**: never append to a progress/SoT file via shell `echo` —
+  escape interpretation can inject literal control bytes (a single NUL byte can
+  make the whole file invisible to grep-class search). Use `printf '%s\n'`,
+  `print -r --`, or a python append. After appending, check once for NUL /
+  invalid UTF-8 — but not with `grep -c $'\x00'` (most shells cannot pass NUL
+  in argv; the empty pattern then matches every line, returning a line count
+  regardless of content). Use
+  `python3 -c "import sys;print(open(sys.argv[1],'rb').read().count(bytes([0])))" <file>`
+  or `tr -dc '\000' < <file> | wc -c`. When introducing or distributing any
+  check command, ship it with a positive control (seed the defect once and
+  confirm the check catches it). When reporting a live file's state, include
+  hash + mtime + observed-at together, and name the comparison hash when
+  claiming before/after.
 - **Same-account dual-instance owner declaration**: if the same bot account can
   run as two instances (e.g. terminal + channel), declare the owner on the first
   progress-file row (`owner=<which> <bot>`); a non-owner instance must not write,
