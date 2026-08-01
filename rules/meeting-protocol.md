@@ -168,22 +168,30 @@ meeting cadence.
 ## 9. Cross-check & debate — no single-owner agendas (operator hard rule)
 
 - **Never run a multi-agent meeting as a pile of solo assignments** (each agent
-  writes its own doc and the meeting just concatenates them). Every substantive
-  prep/output doc gets **≥2 reviewers from *other* domains** who actually read
-  it and post defects / additions / counter-evidence through their own lens —
-  a bare "agree" summary does not count as a review (aim for ≥2 concrete items
-  per lens; back measurable claims with one measurement).
+  writes its own doc and the meeting output is just their concatenation). Every
+  substantive prep/output doc gets **≥2 reviewers from *other* domains** who
+  actually read it and post defects / additions / counter-evidence through
+  their own lens — a bare "agree" summary does not count as a review (aim for
+  ≥2 concrete items per lens; support quantitative claims with at least one
+  actual measurement — the fold-back and measurement clauses below are derived
+  team practice, not the operator's literal words; the hard rule itself is the
+  ≥2 cross-domain reviewers + debate + escalation).
 - Corrections are folded back by the **original author** (annotated, not
   silently rewritten); diverging points get a debate round in the meeting
-  thread; divergence that does not converge escalates to the operator — never
-  resolved by silent majority or the chair's solo call.
+  thread; divergence that remains after debate escalates to the operator —
+  never resolved by silent majority or the chair's solo call.
 - Large meetings may split into sub-rooms (per agenda-group sub-threads +
   numbered doc anchors), but keep **one** canonical 4-file record.
-- Why (operator hard rule, 2026-08-01): single-owner distribution left each
-  doc unreviewed; mandatory cross-review immediately caught stale cited values
+- Why (operator hard rule, 2026-08-01): round one ran as single-owner
+  distribution, so defects sat unchallenged inside finished docs; the moment
+  mandatory cross-review was inserted mid-meeting it caught stale cited values
   and self-contradictions the authors had missed. Format precedent = a reviewer
-  matrix in the meeting spec (doc × 2 reviewers × lens). Case-based framing
-  applies; the operator's explicit instruction always wins.
+  matrix in the meeting spec (doc × 2 reviewers × lens). Case-based
+  (2026-08-01); re-judge per situation; the operator's explicit instruction
+  always wins.
+
+▶ Fill in: where your reviewer matrix lives (meeting spec section), who the
+escalation counterpart is, and when sub-rooms are worth opening.
 
 ## Liveness 4th axis — outage vs idle
 
