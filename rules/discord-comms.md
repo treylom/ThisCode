@@ -26,7 +26,14 @@ Trigger: any moment you respond/report/notify to an external channel
   file and run it instead (Python string literals bypass the shell); verify
   message integrity by re-fetching, and correct via edit, not a duplicate send.
 
-
+- **Review/decision lists = link every referenced document**: when you post a
+  morning review list, decision queue, or any checklist the user will read,
+  each document they need to open gets a **direct link right where it is
+  named** — a wikilink (`[[doc-name]]`) for vault-resident notes, or a
+  clickable path or URL on your platform — never a bare path string the user
+  must copy and resolve by hand. Files that a wikilink cannot resolve to
+  (rule files outside the vault, code-repo internals) keep a plain path.
+  Case-based (2026-08-03); re-judge per situation; the maintainer's call wins.
 - **Structured reports = embed cards**: morning briefings, completion cards, and
   status summaries read far better as rich embed cards than flat text. Use the
   bundled helper — `python3 scripts/discord-embed-send.py --bot <bot>
