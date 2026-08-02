@@ -69,7 +69,7 @@ bot's progress, or stopping while an active meeting is open.
   same-account instances **through the progress file only** — a channel mention
   does not reach your own account's other instance. An unfamiliar row under your
   own bot name = dual-instance signal → verify (mtime/tmux/fetch) before acting.
-- **Idle judged on 3 axes + append-race tail-verify**: don't conclude "idle" from
+- **Idle judged on 3 axes + append-race row-survival check**: don't conclude "idle" from
   a silent progress file + idle terminal alone → also weigh the token/context
   gauge (rising = working) and the thread's fetched messages. Concurrent appends
   can lose a row (read-modify-write race), so after appending, confirm once that
