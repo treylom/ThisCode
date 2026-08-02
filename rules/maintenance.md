@@ -40,6 +40,29 @@ index row pointing at a renamed file, a model note three upgrades stale.
    periodic review actually runs. **Model *selection* stays the human's call —
    this item is bookkeeping and observation only.**
 
+6. **Skill vs sub-agent scope precedence (they resolve in opposite
+   directions)**: when the same name exists in personal (`~/.claude/`) and
+   project (`.claude/`) scope, the two systems disagree — skills resolve
+   `enterprise > personal > project` (**personal wins**); sub-agents resolve
+   `managed > CLI flag > project > user > plugin` (**project wins**). Nested
+   collisions differ too: a nested skill stays available under a
+   directory-qualified name while the bare name always resolves to the
+   project-root skill, whereas for sub-agents the definition closest to the
+   working directory wins outright and the others disappear.
+   - **The dangerous direction is skills.** Project-scope rule skills are
+     silently overridden by a same-named personal skill — no warning, no
+     error, no log line. A rule set that lives in project scope can be
+     disabled by one file in a personal folder.
+   - Run the check with a **positive control built in**: if either side counts
+     zero skills, the script must report *check failed*, not *no collisions*.
+     A broken path must never read as a clean bill of health.
+   - Read a zero result as "no duplicate names right now", **not** "the design
+     prevents duplicates". If the only reason a system is safe is that nobody
+     happened to reuse a name, that is luck, not a defence.
+   - Structural fix worth considering: give rule skills a plugin namespace
+     (`plugin:skill`), which the documentation states cannot collide across
+     levels.
+
 ## Cadence · ownership · log
 - Once after each major model release + roughly quarterly.
 - Log each review (date · drift found/fixed) at the bottom of this file — an

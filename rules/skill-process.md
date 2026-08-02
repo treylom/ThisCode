@@ -34,6 +34,13 @@ an automated experiment loop; delegating to a sub-agent.
   quirk), promote the relay check to a fail-open hook instead of
   re-emphasizing the prose.
 
+- **Before creating a personal-scope skill, check project scope for the same
+  name.** Skill precedence is `personal > project` — the *opposite* of
+  sub-agents — so a single personal skill silently disables a same-named
+  project rule skill, with no warning or error. Checking costs one command;
+  the failure mode is invisible. See the periodic-review rule for the standing
+  check and for why nested collisions behave differently again.
+
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding
   or implementation. Exception: if the user explicitly said "proceed" under a
