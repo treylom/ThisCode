@@ -81,6 +81,29 @@ what gives the check a target.
 ▶ Fill in: your memory/KB search command; your shared-vs-local memory split;
 the exact store names your marker's `targets=` should list.
 
+## 2.5 Injection is not lookup — two different layers (added 2026-08-02)
+If the deployment auto-injects "relevant past decisions" into each prompt
+(a conversation-memory injector), treat the injected block as a **hint**,
+not as a lookup:
+- Do not make factual claims / verdicts from injected content alone --
+  run one canonical lookup first (same axis as the answer-time
+  verification gate in source-fact.md).
+- When injected content and a fresh lookup disagree, **the lookup wins**:
+  injection is a snapshot, the canon is current.
+- Extend the §2 marker with `injected=yes|no` so a later audit can tell
+  "injection present but unread" from "no injection at all".
+- If injections run empty for days, that is not "no memories" -- **the
+  injector may be dead**; check its error log once.
+- Detector-side corollary: any compliance detector counting §2 markers
+  must scan only the agent's own output for that turn and exclude
+  injected / rule-file text -- otherwise the marker template that rules
+  and injectors themselves carry counts as compliance (a detector that
+  can never fail, i.e. fail-never).
+Case-based (dual-injection-surface incident, 2026-08-02); situational
+judgment; the user's call wins.
+
+▶ Fill in: your injector's name + its error-log path.
+
 ## 3. Active exploration before starting a task — three axes + peer-agent memory (added 2026-07-29)
 Commissioned directly by the user after three recurring symptoms: an agent
 failing to find — and then hand-rolling — what an installed tool already
