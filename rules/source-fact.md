@@ -15,11 +15,11 @@ Trigger: about to assert a fact / proper noun / system state; about to say
   internal_measurement | external_primary | external_secondary`. Origin is
   orthogonal to the claim's *role* (fact / inference / uncertainty /
   delegated): an external primary source can ground a fact, and your own
-  measurement can stay uncertain — so never promote origin to a fifth role.
+  measurement can stay uncertain — so never treat origin as another role.
   Why: a team's own benchmark result was once quoted in its rules as
-  "(external: …)", and every agent then read its own scorecard as someone
-  else's benchmark. A dedicated origin slot blocks that relabeling
-  structurally.
+  "(external: …)", and every agent on that team then read the team's own scorecard as
+  someone else's benchmark. A dedicated origin slot blocks that relabeling
+  structurally. Case-based; re-judge per situation.
 
 ## 2. No single-grep trap
 - Do not stop at one grep. Cross-check: the topic's hub/index + the relevant
@@ -67,7 +67,7 @@ Across a day of retractions, most of what died was the **label** — *whose valu
 1. Claims of separation / completeness / currency / limits ("independent", "exhaustive", "current", "ceiling") must **name the axis** — an axis-less word lets one term cover both a safe axis and a dangerous one (e.g. "isolated": identity axis split, backend axis shared).
 2. **Deprecate by label, not by value string.** Most prose values carry only an implicit label (position stands in for it), so deprecation is two steps: ① make the implicit label explicit (annotate as-of / ownership / status — this creates the target) ② retire that label. Parser-read fields are the exception: remove the value itself (only one role lives there).
 3. Split "unknown" three ways: undetermined (measured, no rule yet) ≠ unmeasured ≠ out-of-scope (our tools cannot open it) — the axis tells the next person where to start measuring.
-4. **Cite with six fields**: `target_path + metric + value + observed_at + content_revision (mtime or SHA) + environment (locale etc.)`. None substitutes for another. (The earlier five-field form — no `target_path`, "source revision" — is historical; do not use it for new citations.) Values merged from several sources additionally carry `+ source + aggregation_rule`; history/attribution claims carry `+ provenance_role + introducing_commit + author` — these are separate contracts, not one slot. In particular, never quote a character count from `wc -m` without declaring the locale — under a C locale it counts bytes, not characters (characters: `LC_ALL=C.UTF-8 wc -m` or a runtime's string length; bytes: `wc -c`).
+4. **Cite with six fields**: `target_path + metric + value + observed_at + content_revision (mtime or SHA) + environment (locale etc.)`. None substitutes for another; quoted measurements additionally carry `+ origin` (§1). (The earlier five-field form — no `target_path`, "source revision" — is historical; do not use it for new citations.) Values merged from several sources additionally carry `+ source + aggregation_rule`; history/attribution claims carry `+ provenance_role + introducing_commit + author` — these are separate contracts, not one slot. In particular, never quote a character count from `wc -m` without declaring the locale — under a C locale it counts bytes, not characters (characters: `LC_ALL=C.UTF-8 wc -m` or a runtime's string length; bytes: `wc -c`).
 5. **A correction must reach every place the value was quoted**, including derived arithmetic. Fixing only the measurement line leaves summaries and verdicts citing the old number. **Sign flips** (a dropped negation) are a separate failure mode — value and name both look intact, so no checksum, grep, or length check catches them; quote **verbatim with a source id**.
 
 Case-based (one day's audit; the retraction lists were per-author, not exhaustive); re-judge per situation; the maintainer's call wins.
