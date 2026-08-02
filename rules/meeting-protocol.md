@@ -40,19 +40,22 @@ bot's progress, or stopping while an active meeting is open.
   make the whole file invisible to grep-class search). Use `printf '%s\n'`,
   `print -r --`, or a python append. **The command is only half of it — the
   quoting matters too.** `printf` and `print -r` still perform command
-  substitution on backticks and `$` inside *double* quotes, so the substituted
-  token silently vanishes from what you wrote. Do not rely on stderr or exit
-  status to catch this: if the backticked text happens to be a valid command,
-  stderr is empty, exit is 0, and a plausible-looking value lands in the file;
-  if it is not a valid command, exit is *still* 0, and in a simple command the
-  error escapes `2>` entirely because expansion runs before the redirection is
-  installed (wrapping the append in `{ …; } 2>file` or a subshell does capture
-  it, but only for that invalid-command half). The NUL / UTF-8 checks below pass
-  in every one of these cases. So: **put such content in single quotes or a
-  quoted heredoc (`<<'EOF'`), and verify by confirming that one or two distinctive
-  anchor tokens from your text actually survived in the file** — that anchor check
-  is the only detector covering both halves, and "the file looks fine" is not
-  evidence. After appending, check once for NUL /
+  substitution on backticks and `$` inside *double* quotes, so what lands in the
+  file is that command's output, not the text you wrote. Do not rely on stderr
+  or exit status to catch this: if the backticked text happens to be a valid
+  command, stderr is empty, exit is 0, and a plausible-looking value lands in
+  the file; if it is not a valid command, exit is *still* 0, and in a simple
+  command the error escapes `2>` entirely because expansion runs before the
+  redirection is installed (wrapping the append in `{ …; } 2>file` or a subshell
+  does capture it, but only when the substitution was an invalid command). The
+  NUL / UTF-8 checks below pass in every one of these cases. So: **put such
+  content in single quotes or a quoted heredoc (`<<'EOF'`), and verify by
+  confirming that one or two distinctive anchor tokens from your text actually
+  survived in the file** — that anchor check is the only detector covering both
+  halves, and "the file looks fine" is not evidence. A wrapper that captures
+  stderr would catch only the invalid-command half — it does not replace the
+  anchor check. **Separately — for the `echo` failure above —** check once after
+  appending for NUL /
   invalid UTF-8 — but not with `grep -c $'\x00'` (most shells cannot pass NUL
   in argv; the empty pattern then matches every line, returning a line count
   regardless of content). Use

@@ -37,9 +37,10 @@ an automated experiment loop; delegating to a sub-agent.
 - **Before creating a personal-scope skill, check project scope for the same
   name.** Skill precedence is `personal > project` — the *opposite* of
   sub-agents — so a single personal skill silently disables a same-named
-  project rule skill, with no warning or error. Checking costs one command;
+  project rule skill, with no warning or error. Checking costs one command
+  (`bash scripts/scope-collision-check.sh <project-root>`);
   the failure mode is invisible. See the periodic-review rule for the standing
-  check and for why nested collisions behave differently again.
+  check and for why nested collisions behave differently.
 
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding

@@ -54,11 +54,11 @@ index row pointing at a renamed file, a model note three upgrades stale.
      error, no log line. A rule set that lives in project scope can be
      disabled by one file in a personal folder.
    - Run the check with a **positive control built in**: if either side counts
-     zero skills, the script must report *check failed*, not *no collisions*.
+     zero, the script must report *check failed*, not *no collisions*.
      A broken path must never read as a clean bill of health.
    - Read a zero result as "no duplicate names right now", **not** "the design
      prevents duplicates". If the only reason a system is safe is that nobody
-     happened to reuse a name, that is luck, not a defence.
+     happened to reuse a name, that is luck, not a defense.
    - Structural fix worth considering: give rule skills a plugin namespace
      (`plugin:skill`), which the documentation states cannot collide across
      levels.
