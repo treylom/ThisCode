@@ -38,7 +38,21 @@ bot's progress, or stopping while an active meeting is open.
 - **Append integrity**: never append to a progress/SoT file via shell `echo` —
   escape interpretation can inject literal control bytes (a single NUL byte can
   make the whole file invisible to grep-class search). Use `printf '%s\n'`,
-  `print -r --`, or a python append. After appending, check once for NUL /
+  `print -r --`, or a python append. **The command is only half of it — the
+  quoting matters too.** `printf` and `print -r` still perform command
+  substitution on backticks and `$` inside *double* quotes, so the substituted
+  token silently vanishes from what you wrote. Do not rely on stderr or exit
+  status to catch this: if the backticked text happens to be a valid command,
+  stderr is empty, exit is 0, and a plausible-looking value lands in the file;
+  if it is not a valid command, exit is *still* 0, and in a simple command the
+  error escapes `2>` entirely because expansion runs before the redirection is
+  installed (wrapping the append in `{ …; } 2>file` or a subshell does capture
+  it, but only for that invalid-command half). The NUL / UTF-8 checks below pass
+  in every one of these cases. So: **put such content in single quotes or a
+  quoted heredoc (`<<'EOF'`), and verify by confirming that one or two distinctive
+  anchor tokens from your text actually survived in the file** — that anchor check
+  is the only detector covering both halves, and "the file looks fine" is not
+  evidence. After appending, check once for NUL /
   invalid UTF-8 — but not with `grep -c $'\x00'` (most shells cannot pass NUL
   in argv; the empty pattern then matches every line, returning a line count
   regardless of content). Use
@@ -58,8 +72,18 @@ bot's progress, or stopping while an active meeting is open.
 - **Idle judged on 3 axes + append-race tail-verify**: don't conclude "idle" from
   a silent progress file + idle terminal alone → also weigh the token/context
   gauge (rising = working) and the thread's fetched messages. Concurrent appends
-  can lose a row (read-modify-write race), so after appending, tail the file once
-  to confirm your row survived; re-append if lost (race ≠ idle).
+  can lose a row (read-modify-write race), so after appending, confirm once that
+  your row survived; re-append if lost (race ≠ idle). **Do not run that check
+  with `tail`.** A live progress file keeps being written after your own write —
+  if another participant appends in the seconds between your write and your
+  check, `tail` hands you *their* row, and reading it as yours produces a false
+  "my row was lost" (and then a duplicate re-append, or worse, a "recovery" that
+  edits the wrong row). Locate your row by its timestamp or a distinctive anchor
+  string instead of by position. **If a recovery step deletes or rewrites rows,
+  guard it with an assertion that the target row is the one you think it is** —
+  when a filter built from assumptions meets a file that has moved on, that
+  assertion is the only thing standing between you and deleting someone else's
+  record.
 
 ## 4. Stop-hook reread
 - A Stop hook may request continuation only when all are true: bot session,
