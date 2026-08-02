@@ -11,6 +11,15 @@ Trigger: about to assert a fact / proper noun / system state; about to say
 - Gloss hard English or abbreviations on first use, for example
   `thread/inject_items` = a Codex app-server API that injects a message into a
   session log so another client can attach cleanly.
+- **Carry an `origin` tag alongside quoted measurements** — `origin =
+  internal_measurement | external_primary | external_secondary`. Origin is
+  orthogonal to the claim's *role* (fact / inference / uncertainty /
+  delegated): an external primary source can ground a fact, and your own
+  measurement can stay uncertain — so never promote origin to a fifth role.
+  Why: a team's own benchmark result was once quoted in its rules as
+  "(external: …)", and every agent then read its own scorecard as someone
+  else's benchmark. A dedicated origin slot blocks that relabeling
+  structurally.
 
 ## 2. No single-grep trap
 - Do not stop at one grep. Cross-check: the topic's hub/index + the relevant
