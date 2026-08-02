@@ -45,16 +45,32 @@ index row pointing at a renamed file, a model note three upgrades stale.
    project (`.claude/`) scope, the two systems disagree — skills resolve
    `enterprise > personal > project` (**personal wins**); sub-agents resolve
    `managed > CLI flag > project > user > plugin` (**project wins**). Nested
-   collisions differ too: a nested skill stays available under a
-   directory-qualified name while the bare name always resolves to the
-   project-root skill, whereas for sub-agents the definition closest to the
-   working directory wins outright and the others disappear.
+   collisions differ again, and the difference is naming rather than priority:
+   the bare name always resolves to the project-root skill, and a nested
+   same-named skill is reachable *only* by its directory-qualified name — there
+   is no way to select it by the short name at all. That qualified name is not
+   listed until something in that directory has been touched, so "the skill
+   isn't there" can mean *not yet exposed* rather than *absent* — worth knowing
+   before concluding a skill is missing. For sub-agents the definition closest
+   to the working directory wins outright and the others disappear. Newer CLI
+   versions inject a mitigation notice next to the skill list telling you to
+   invoke the qualified variant instead — **do not count that notice as a
+   defense**: it appears only from CLI `v2.1.203` onward (older versions get
+   nothing at all), and it is phrased as an instruction to act, so a session
+   may flag it as prompt-injection and refuse it. A notice that has to be
+   obeyed is not a mechanism. (measured: a fixture under a nested directory,
+   comparing the skill list and short-name invocation before and after
+   touching a file in it)
    - **The dangerous direction is skills.** Project-scope rule skills are
      silently overridden by a same-named personal skill — no warning, no
      error, no log line. A rule set that lives in project scope can be
      disabled by one file in a personal folder.
    - Run the check with a **positive control built in**: if either side counts
-     zero, the script must report *check failed*, not *no collisions*.
+     zero, the script must report *check failed*, not *no collisions*. Its exit
+     codes are `0` clean · `1` collision found · `2` check broken — a detector
+     that finds something must be able to say so in its exit status, or a hook
+     passes silently. The code is a signal, not a policy: whether a `1` blocks
+     anything is the caller's decision, not the script's.
      A broken path must never read as a clean bill of health.
    - Read a zero result as "no duplicate names right now", **not** "the design
      prevents duplicates". If the only reason a system is safe is that nobody

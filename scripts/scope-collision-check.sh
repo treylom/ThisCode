@@ -29,5 +29,8 @@ agc=$(comm -12 <(grep -h '^name:' "$UA"/*.md 2>/dev/null | sed 's/^name: *//' | 
                <(grep -h '^name:' "$PA"/*.md 2>/dev/null | sed 's/^name: *//' | sort -u))
 [ -n "$skc" ] && { echo "COLLISION (skills — personal wins, project rule skill is shadowed):"; echo "$skc" | sed 's/^/   /'; }
 [ -n "$agc" ] && { echo "COLLISION (sub-agents — project wins):"; echo "$agc" | sed 's/^/   /'; }
-[ -z "$skc" ] && [ -z "$agc" ] && echo "OK — no collisions (totals verified, so this zero is meaningful)"
-exit 0
+[ -z "$skc" ] && [ -z "$agc" ] && { echo "OK — no collisions (totals verified, so this zero is meaningful)"; exit 0; }
+
+# exit codes: 0 = clean · 1 = collision found · 2 = check broken (a side counted zero).
+# The code is a signal, not a policy — a caller decides whether 1 should block anything.
+exit 1
