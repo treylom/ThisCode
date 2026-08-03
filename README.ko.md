@@ -294,7 +294,7 @@ thiscode/
 │   ├── bot-session-init.sh                # SessionStart → soul.md 자동 inject
 │   ├── discord-slash-cmd.sh               # UserPromptSubmit → 슬래시 강제
 │   └── regression-self-check.sh           # 4-gate self-check 표 주입
-├── templates/                             # 봇 페르소나 template
+├── templates/                             # 봇 페르소나 5종 + bot-roles-matrix · bot-checkup-checklist
 │   ├── soul-general-assistant.md          # default 범용 비서
 │   ├── soul-research-bot.md               # 자료조사·교차검증
 │   ├── soul-writing-bot.md                # 글쓰기·퇴고
@@ -309,6 +309,8 @@ thiscode/
     ├── 06-claude-code-server.md           # headless + MCP server
     └── 08-debug-노하우.md                  # 디버깅 24+ 카테고리
 ```
+
+`templates/bot-checkup-checklist.md` — 만든 봇이 적어둔 대로 움직이는지 7항으로 자가 점검(봇 생성 직후 1회, 이후 월 1회 권장).
 
 ---
 

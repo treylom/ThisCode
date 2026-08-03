@@ -307,7 +307,7 @@ thiscode/
 │   ├── meetings/                          # 4-file meeting protocol
 │   └── shared-memory/                     # 4-tier memory policy
 ├── hooks/                                 # Bot operations hooks
-├── templates/                             # 5 soul.md personas
+├── templates/                             # 5 soul personas + bot-roles-matrix · bot-checkup-checklist
 ├── configs/                               # tmux.conf.local
 ├── benchmark/                             # 4-Tier benchmark (run-all.sh + fixtures)
 ├── contracts/                             # search-fallback-4tier.md
@@ -315,6 +315,8 @@ thiscode/
 ├── scripts/                               # install-graphrag.sh / install-obsidian-cli.sh / route-model.mjs
 └── docs/                                  # SETUP / SETUP-BEGINNER / AGENTS / GLOSSARY / BENCHMARK / ARCHITECTURE / MANUAL
 ```
+
+`templates/bot-checkup-checklist.md` — 7-item self-checkup that your bot behaves as written (run once after creating a bot, then monthly).
 
 ---
 
