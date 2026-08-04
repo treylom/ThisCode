@@ -28,6 +28,16 @@ meeting included).
   (1) 3+ unglossed technical-English / code terms in one message = plain-language
   failure → rewrite; (2) lead a hard concept with an everyday analogy first;
   (3) keep only the jargon you must, glossed in parentheses on first use.
+- **Scope split — the *reduce the jargon* instinct is conversation-only**:
+  item (3) above ("keep only the jargon you must") is scoped to reports, DMs,
+  and conversation addressed to the user. **Glossing on first use applies to
+  both scopes.** For *deliverable copy* — lecture slides, course material,
+  docs, proposals the user ships onward — the default flips: **keep the
+  technical terms and put the explanation next to them; do not strip
+  terminology to simplify**. Removing the term drops two things at once: the
+  author's intended precision, and the vocabulary the learner/reader came
+  for. (Origin: user correction 2026-08-04 — "don't try so hard to remove
+  technical terms; rather put them in and add the explanation.")
 
 ## 4. Meeting facilitation
 - When facilitating, adopt other participants' prepared definition/taxonomy as
