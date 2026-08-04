@@ -83,6 +83,58 @@ ThisCode ships hook helpers for active meetings. They become active **only after
 The helpers intentionally avoid maintainer-local vault paths and Discord thread
 IDs — the shipped contract is path-parameterized and fail-open.
 
+### Hook scope: settings do NOT walk up (register global + guard by cwd)
+
+Claude Code resolves *instruction* surfaces (`CLAUDE.md`, front-loaded rule files) by
+walking **up** from the session's working directory — but *settings hooks* do not walk
+up. A session whose WD is a **subdirectory** carrying its own `.claude/settings.json`
+(a per-bot WD is the common case) loads **none** of the parent project's hooks, and
+nothing signals the gap: the instruction layer keeps walking up, so the session *looks*
+fully governed. Measured in production (multi-bot vault deployment, 2026-08-04,
+n=6 subdirectory-WD bot sessions): hooks registered **only** in the project root
+had never fired in any of them. One such hook logged 2,064 injections in root-WD
+sessions over the same window against 0 in the subdirectory sessions counted; a
+second logged 287 against 0 across all six. The finding is scoped to root-only
+registrations — hooks that already shipped a per-WD copy fired normally.
+
+Consequences for a deployment:
+
+1. **Mandatory hooks belong in user-global settings** (`~/.claude/settings.json`) —
+   exactly where `/thiscode:install-hooks` merges them. Never rely on a
+   project-root `settings.json` to cover nested bot WDs.
+2. **Globally registered hooks fire in every project**, so scope workspace-specific hooks
+   with a cwd guard wrapper (generalized from the production fix):
+
+   ```bash
+   #!/bin/bash
+   # scope-guard: run <hook-basename> only inside $WORKSPACE_ROOT; fail-open elsewhere.
+   IN=$(cat 2>/dev/null)
+   CWD=$(printf '%s' "$IN" | jq -r '.cwd // empty' 2>/dev/null)  # `// empty` — a bare `.cwd` yields the *string* "null"
+   [ -n "$CWD" ] || CWD="$PWD"
+   case "$CWD" in "$WORKSPACE_ROOT"|"$WORKSPACE_ROOT"/*) ;; *) exit 0 ;; esac  # exact + /* — a single "$WORKSPACE_ROOT"* glob would also match siblings like /x/myroot-backup
+   B="${1##*/}"                                  # basename only — blocks path injection
+   H="$WORKSPACE_ROOT/.claude/hooks/$B"
+   STATE_DIR="${THISCODE_STATE_DIR:-$HOME/.claude-state}"
+   if [ ! -f "$H" ]; then
+     mkdir -p "$STATE_DIR" 2>/dev/null
+     echo "$(date +%FT%T) MISSING_HOOK $B" >> "$STATE_DIR/scope-guard-missing.log" 2>/dev/null
+     exit 0
+   fi
+   printf '%s' "$IN" | bash "$H"                 # relay stdin, stdout, and the exit code (deny/inject preserved)
+   ```
+
+   The production wrapper additionally falls back to a `.claude/scripts/`
+   directory for hooks that live there.
+
+3. Settings **live-reload** per hook event — but reloading applies to the files
+   the session already loaded at start, not to newly discovered ones.
+   `~/.claude/settings.json` is always in that set, so a new entry there reaches
+   a running subdirectory session on its next event; a project-root
+   `settings.json` the session never loaded stays unreachable no matter how many
+   events pass. Verify a migration on both layers: a wrapper smoke test proves
+   the guard, but only a **natural firing inside a real subdirectory-WD session**
+   proves the settings-loading layer (the two are not substitutes).
+
 ## Applying to a Codex bot (ThisCodex)
 
 The Codex companion ([ThisCodex](https://github.com/treylom/ThisCodex)) applies
