@@ -271,6 +271,7 @@ agent 가 WD 안 `CLAUDE.md` 생성 (메타 + soul.md reference):
 
 > 본 디렉토리는 <bot-name> 봇의 작업 공간.
 > Session 시작 시 `~/.claude/channels/discord-<bot-name>/soul.md` 자동 inject (SessionStart hook).
+> **공용 운영 규율 로딩**: 프로젝트 루트 `CLAUDE.md`(와 그 최상단 `@AGENTS.md` import)가 자동 chain 로드로 본 세션에 함께 주입된다 — 본 파일에 중복 `@import` ❌ (같은 본문이 두 번 들어가는 이중 주입 방지, 여기는 포인터 1줄만).
 
 ## 봇 메타
 
@@ -278,9 +279,12 @@ agent 가 WD 안 `CLAUDE.md` 생성 (메타 + soul.md reference):
 |---|---|
 | 봇 이름 | <bot-name> |
 | 역할 | <역할> |
+| 모델·effort | <실기동 플래그 그대로 — 예: `--model 'claude-opus-5[1m]' --effort xhigh`> (정본 = 기동 alias/스크립트 — `opus[1m]` 같은 축약 표기는 alias 가 새 세대로 옮겨가면 조용히 낡는다) |
 | Discord channels | discord-<bot-name> |
 | Working Directory | <WD> |
 ```
+
+> 📌 **미러 규약**: 이 CLAUDE.md 를 사람이 읽는 위키/볼트에 미러한다면 반드시 sync 스크립트의 미러 명단에 등록한다(verbatim + `AUTO-MIRROR` 헤더). 손 복사 1회로 만든 고아 사본은 조용히 낡아서, 소유자가 stale 규칙·모델명을 현행으로 오독하게 만든다 (2026-08-05 실증 — docs/rules-system.md caveat 4).
 
 ### Step 6.7. 봇 연결 3게이트 선검사 (무반응 예방 — Windows 실측 회귀 반영)
 
