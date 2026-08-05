@@ -46,6 +46,20 @@ reached partial / blocked / awaiting-permission state.
   (countdown / pre-warning). Don't over-apply — skip for small or
   event-irrelevant work; situational judgment, user's final call wins.
 
+## 2.8 Right before declaring "done/success" = one line of deliverable-vs-brief comparison
+
+- Immediately before saying "done / success / all set", surface **one line
+  comparing the deliverable against the brief / outline / canonical source**
+  (e.g. "outline 8 items ↔ body 8 sections — match"). A completion claim with
+  no comparison line has not passed the gate.
+- Why: in a 38-failure census (40 submitted, 2 success controls; 2026-08-05), 7 failures sat exactly at the
+  declaration point — writing that ignored the approved outline, final copy
+  shipped unreviewed, "it works" asserted without a measurement. The step of
+  *re-opening one's own deliverable* was missing entirely. Judge the fix by
+  changed behavior, not by a hook existing.
+- Case-based (skip for trivial one-shot work); re-judge per situation; the
+  maintainer's call wins.
+
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
   follow-ups. Report the state, then stop. Don't poll the user.

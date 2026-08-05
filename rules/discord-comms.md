@@ -125,6 +125,26 @@ Trigger: any moment you respond/report/notify to an external channel
 ▶ Fill in: your reply tool name; your bots' user_ids + roster source; your
 completion-report channel/thread id; which channels are meeting vs. main.
 
+## 6. Outbound deliverables — cross-review trigger + split-part follow-through
+
+- If an outbound message carries **prescriptions, coordinates, numbers, or
+  verdict labels** (= something the receiver may execute without re-verifying;
+  opinions, questions, and progress notes are out of scope) and the
+  never-close-alone trigger (orchestration §5) is met → one cross-review
+  before sending, or state "cross-review not performed (reason)" in the
+  message. Time-critical alerts keep their immediacy: their counter-check is
+  limited to "re-measure the current clock".
+- **A `sent N parts` return with N>1 AND substantive content in a follow-up
+  part = an unfinished item for that turn** — follow-up parts without the
+  target mention are silently dropped, and "being careful" does not fix it
+  (three same-day recurrences under full awareness). Precision guard: a
+  follow-up that is only a signature line is not substantive — re-send only
+  when a real payload rode in the unmentioned part (one fetch of that part
+  settles it; measured false-positive rate of the bare N>1 rule: 1 in 5). A
+  detector whose return value nobody reads is exactly the failure shape this
+  blocks.
+- Case-based (2026-08-05); re-judge per situation; the maintainer's call wins.
+
 ## Upstream-outage rung (escalation ladders assume the bot is asleep)
 
 Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge debugging — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25, a global outage at a model provider); re-judge per situation; the maintainer's call wins.

@@ -243,3 +243,17 @@ escalation counterpart is, and when sub-rooms are worth opening.
 ## Liveness 4th axis — outage vs idle
 
 Even when all idle signals agree (no ledger append + idle terminal + silent thread), check one more axis: **are other bots / other paths silent at the same moment?** If yes, it is an *outage*, not idle — wake-pings and re-dispatches are no-ops there. Applies to automated daemons and manual probes alike. See the upstream-outage rung in discord-comms. Case-based (2026-07-25); re-judge per situation; the maintainer's call wins.
+
+
+## Liveness: two rulers, two questions
+
+The ledger's (02-progress) **mtime answers "is this meeting alive"**
+(file-level — cheap and sufficient for that question). **"Has this bot acted"
+(bot-level) = the timestamp of that bot's own last row**
+(`grep "] <bot> |" <ledger> | tail -1`). Using shared-file mtime for
+bot-level liveness produces false positives — any other bot's append
+refreshes it (live incident: two idle bots judged "just active"). Print "the
+question this check answers" next to the check (see source-fact checker
+discipline): the ruler was not wrong, it stood in the wrong spot with no
+question attached. Case-based (2026-08-05); re-judge per situation; the
+maintainer's call wins.

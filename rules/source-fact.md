@@ -97,3 +97,38 @@ Case-based (one day's audit; the retraction lists were per-author, not exhaustiv
    inclusion invariant (whole ≥ sum of parts) catches partial observation, and
    a violated invariant means the *instrument* is broken: adopt neither value;
    re-measure through an independent path.
+
+
+## 8. Checker discipline — pass messages, signal placement, transcription
+
+When building a checker (health check, gate, counter, verification script) or
+consuming its output:
+
+1. **Two lines in every pass message**: "what question this check answers" +
+   "what the answer was compared against". An enumeration only gives you places
+   to look; the verdict comes from comparing against the canonical source.
+   Count-based passes ("N or more = ok") are out — use a named expectation set
+   plus canonical comparison.
+2. **Signal placement**: never mix warnings or incomplete-work signals into the
+   body of a success message — separate line, separate label, or promote to
+   exit status. **"Quantity 0" must not print as a pass** (`injected 0`,
+   `matched 0` = a failure wearing a success sentence), and a plausible-looking
+   substitute value is a warning too (a likely number ≠ a measured number).
+   Three shapes of "failure printed as success": warnings inline, zero/no
+   wearing a value's face, exit-code vs body divergence (a wrapper's exit code
+   must feed the failure tally).
+3. **Transcription audit**: any number copied between tables gets a column-sum
+   check against its origin — transcription is unchecked replication
+   (double-count incidents occur on both the submitting and the aggregating
+   side). When a transcript is the measuring stick, design out
+   **self-reference contamination** (the act of measuring appearing inside the
+   thing being measured).
+4. Checker survival = built-in positive *and* negative controls, and **the kind
+   of decoy determines the kind of defect you can detect** — decoys that only
+   vary identifiers will not catch phrasing-level blind spots (in one live day,
+   five checker deaths — four caught by positive controls, one by "the number
+   looked like an answer" suspicion of an empty-pattern OR matching every
+   line. Positive controls are necessary, not sufficient).
+
+Case-based (2026-08-05 40-case census); re-judge per situation; the
+maintainer's call wins.

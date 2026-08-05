@@ -85,6 +85,45 @@ its dispatch channel lives; your progress-log path for the judgment note.
 ▶ Fill in: your security-verifier lineage (bot/engine); grandfathered
 in-flight tracks; your maintainer-confirmation channel.
 
+## 5. Never close alone — cross-review before hard-to-reverse sends
+
+- **Trigger = `hard-to-reverse × reach` (+ authority-label bonus)** — a
+  "clean/reviewed/final" label aggravates but is not required: receivers add
+  authority while reading even when you did not attach it. Concretely: public
+  pushes, factual statements in reports to the maintainer, "doesn't exist /
+  unsupported" verdicts, prescriptions/coordinates/verdicts another agent will
+  execute without re-verification, and issuing "clean / review complete /
+  final" labels. **Explicitly excluded: observational relays** (liveness
+  pings, schedule alerts, status forwarding).
+- Form = one cross-review by another agent before sending — and **ask them to
+  bring a different measuring stick**. The gate is **bidirectional**:
+  reviewers' and fixers' outputs are themselves reviewable (a one-way gate
+  leaves the reviewer as the blind spot). If no reviewer is reachable, context
+  is nearly exhausted, or a deadline is immediate: **send anyway, marked
+  "cross-review not performed (reason)"** — the goal is preventing invisible
+  solo closure, not blocking sends.
+- **Direction = "attack their claim with *your* data"** — not opening their
+  sources for them. A verifier refutes the counterpart's hypothesis with data
+  the verifier can access.
+- **Name the refutation coordinates**: when issuing a hypothesis or
+  prescription, also write "whose data, which dataset, refutes this". Without
+  it, cross-review dies in mutual deferral ("not my data" ↔ "your domain").
+  Live evidence: hypotheses with named coordinates were refuted immediately;
+  an unrefuted wrong number flowed into a meeting agenda.
+- Coverage note: what cross-review buys is **comprehension** (did you read
+  what you opened; is the cited basis actually right). Mechanical gates buy
+  **access** only (was it opened, was a basis attached, is the format
+  present) — a wrong-but-present basis and a restated (non-verbatim) copy are
+  beyond the current class of mechanical gates, so this layer is not optional
+  overhead; it is bound into the mechanical layer's coverage definition.
+- "Pre-review" labels on outputs **travel with every quotation**. Cross-review
+  outranks self-checking because *the false negative of suspicion (not
+  suspecting at all) is structurally discovered only by others* — in the same
+  census, every agent's own errors were found by someone else, never by their
+  author ("your own sentence never trips you").
+- Case-based (2026-08-05 census); re-judge per situation; the maintainer's
+  call wins.
+
 ## Deferred instructions — re-check the ledger at fire time
 
 A scheduled instruction (cron, reminder, queued dispatch) is a **snapshot of the world at registration time** — and it is the *whole instruction* that goes stale, not just one value. Before executing any deferred instruction, re-read the tail of the relevant ledger/SoT: if a correction, cancellation, or resolution has been recorded since, **hold and report instead of executing** (a hold is a normal branch, not a failure). Stamp every scheduled instruction with its as-of time in the payload. Case-based (2026-07-25: an errand scheduled at 13:04 was resolved at 15:00 and cancelled in the ledger at 18:05, yet fired and executed verbatim at 19:00, emitting a stale credential request — a counterpart's refusal gate contained the damage); re-judge per situation; the maintainer's call wins.
