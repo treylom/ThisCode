@@ -50,7 +50,7 @@ Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgre
 
 **Windows 사용자:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) 는 install.sh 안 detect 되며 WSL 사용 안내. PowerShell port = 후속 cycle 예정.
 
-**Dependency provenance:** 19 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero) — Slack bridge 항목은 저작권자 결정으로 MIT 통일(2026-08-06), 본 repo와 동일.
+**의존성 출처(Dependency provenance):** 20 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + optional GUI guide 1 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero) — Slack bridge 항목은 저작권자 결정으로 MIT 통일(2026-08-06), 본 repo와 동일.
 
 ## 🚀 Quickstart (vault-first)
 

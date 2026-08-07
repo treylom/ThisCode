@@ -272,7 +272,9 @@ Slack meetings):
   board whenever a substantive point or agreement lands. A single end-of-meeting
   dump is a partial failure of this rule. Contributions from bots without write
   access are folded in by the scribe — their thread messages are the
-  contribution medium.
+  contribution medium. Keep the minutes' lists flat (one level): Slack's canvas
+  API rejects nested lists (`canvas_editing_failed`, measured 2026-08-08), and
+  the rejection names no line — budget for bisecting if you ignore this.
 - **Close**: on conclusion, push the final decisions/follow-ups to the canvas,
   then post the minutes summary (`[회의록]`-style, agenda/roster/decisions/
   follow-ups) to the thread with the minutes file path.
