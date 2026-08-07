@@ -181,6 +181,8 @@ your message text
 
 react 도 reply 와 같은 outbound allowlist 를 탄다 — 인바운드를 받은 적 있는 대화에만 반응할 수 있다(미지의 대화에 반응 = 존재 누출).
 
+**scope 함정(공유 사실 — ThisCodex 판과 동시 갱신 계약)**: manifest 의 `reactions:write` 는 **선언**이고, 이미 설치된 앱 토큰의 **실부여**가 아니다 — 선언 추가 후 재설치(승인 목록에 `reactions:write` 가 보이는)까지 해야 토큰에 붙는다. 순서 함정 실측(2026-08-08): 선언 없이 재설치를 먼저 승인하면 scope 는 그대로다 — **선언이 항상 먼저**. `react` 콜백은 `missing_scope` 를 조용히 건너뛰므로 이 함정에 빠져도 메시지 응답 본선은 계속 동작한다(= 무징후 — scope 는 `auth.test` 응답 헤더 `x-oauth-scopes` 로 실측하라). 라이브 e2e 검증 기록: ThisCodex 판(Bolt Python)은 2026-08-08 GREEN(반응+정상 답변 동시 확인) — 본 판(MCP `react`) 자체의 라이브 계측 기록은 아직 없다.
+
 ## DM · 채널 · 사용자주도 스레드 (실제 동작 — 2026-08-06 정정)
 
 - **채널 게이트**(`server.ts` `handleSlackEvent`, L299): `event.channel === SLACK_CHANNEL_ID` **이거나** `event.channel_type === 'im'`(DM)이면 통과. 그 외는 버림.
