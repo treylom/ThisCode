@@ -259,6 +259,15 @@ Slack meetings):
   find it (canvases created via API surface no channel message at all). A bot
   without canvas write access must **request** the canvas opening in its own
   first utterance instead of silently proceeding to the agenda.
+- **Titled document per meeting** (operator rule, 2026-08-08 — measured): each meeting
+  gets its **own canvas document carrying the meeting title** — derive the
+  title automatically (first `# ` heading of the minutes file, else the
+  filename stem) and set it at creation. Do not reuse one untitled channel canvas
+  across meetings: overwriting erases the previous meeting's minutes, and an
+  untitled document is unfindable in the canvas list. (On Slack this means a
+  standalone `canvases.create` with `title` + channel share via
+  `canvases.access.set`, not `conversations.canvases.create`; the title is
+  fixed at creation — the API offers no title edit.)
 - **Update during the meeting**: the scribe (canvas-capable) bot re-pushes the
   board whenever a substantive point or agreement lands. A single end-of-meeting
   dump is a partial failure of this rule. Contributions from bots without write
