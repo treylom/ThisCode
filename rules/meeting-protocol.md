@@ -272,9 +272,13 @@ Slack meetings):
   board whenever a substantive point or agreement lands. A single end-of-meeting
   dump is a partial failure of this rule. Contributions from bots without write
   access are folded in by the scribe — their thread messages are the
-  contribution medium. Keep the minutes' lists flat (one level): Slack's canvas
-  API rejects nested lists (`canvas_editing_failed`, measured 2026-08-08), and
-  the rejection names no line — budget for bisecting if you ignore this.
+  contribution medium. Keep the minutes' lists flat (one level) and avoid
+  numbering inside a bullet line: Slack's canvas API rejects nested lists and
+  rejected the `- 1)` bullet-numbering form (the one variant measured,
+  2026-08-08). Symbol markers (①/㉠) are the measured-safe alternative — a
+  same-day live push accepted 11 list lines carrying them. Both rejections
+  surface as `canvas_editing_failed` naming no line — budget for bisecting if
+  you ignore this.
 - **Close**: on conclusion, push the final decisions/follow-ups to the canvas,
   then post the minutes summary (`[회의록]`-style, agenda/roster/decisions/
   follow-ups) to the thread with the minutes file path.
