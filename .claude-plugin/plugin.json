@@ -1,6 +1,6 @@
 {
   "name": "thiscode",
-  "description": "Claude Code 환경 + Discord 봇 + tmux/oh-my-tmux 통합 셋업 플러그인. WSL/Linux/macOS 자동 detect. 슬래시: /thiscode:start, /thiscode:init, /thiscode:add-bot, /thiscode:create-bot, /thiscode:install-hooks, /thiscode:open-meeting, /thiscode:km, /thiscode:km-bootstrap, /thiscode:search, /thiscode:test, /thiscode:codex-check, /thiscode:self-update.",
+  "description": "Claude Code 환경 + Discord/Slack 봇 + tmux/oh-my-tmux 통합 셋업 플러그인. WSL/Linux/macOS 자동 detect. 슬래시: /thiscode:start, /thiscode:init, /thiscode:create-bot, /thiscode:create-discord-bot, /thiscode:add-bot, /thiscode:create-slack-bot, /thiscode:slack-configure, /thiscode:install-hooks, /thiscode:open-meeting, /thiscode:km, /thiscode:km-bootstrap, /thiscode:search, /thiscode:test, /thiscode:codex-check, /thiscode:self-update.",
   "version": "1.2.0",
   "author": {
     "name": "treylom",

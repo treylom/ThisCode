@@ -203,17 +203,35 @@ apply_our_tmux_conf() {
     return
   fi
 
-  printf "\n  Use thiscode's tmux.conf.local? (y/N) "
-  read -r ans
-  if [[ "$ans" =~ ^[Yy]$ ]]; then
-    if [ -f "$HOME/.tmux.conf.local" ]; then
-      cp "$HOME/.tmux.conf.local" "$HOME/.tmux.conf.local.bak"
-      ok "Backed up existing file: ~/.tmux.conf.local.bak"
+  if [ ! -t 0 ]; then
+    # Non-interactive run (e.g. curl | bash) — no terminal to answer a prompt, so
+    # don't block waiting on stdin. Keep the existing (safe) default of not
+    # touching ~/.tmux.conf.local, but surface why this step was skipped.
+    warn "Non-interactive run detected (no TTY on stdin) → skipping optional tmux.conf.local step, keeping any existing ~/.tmux.conf.local untouched. Re-run install.sh directly in a terminal to apply thiscode's tmux.conf.local."
+    return
+  fi
+
+  if [ -f "$HOME/.tmux.conf.local" ]; then
+    warn "You already have ~/.tmux.conf.local. Applying thiscode's version will back it up to ~/.tmux.conf.local.bak and then replace it."
+    printf "\n  Back up and apply thiscode's tmux.conf.local? (Y/n) "
+    read -r ans
+    if [[ "$ans" =~ ^[Nn]$ ]]; then
+      ok "Kept your existing ~/.tmux.conf.local — skipping this step"
+      return
     fi
+    cp "$HOME/.tmux.conf.local" "$HOME/.tmux.conf.local.bak"
+    ok "Backed up existing file: ~/.tmux.conf.local.bak"
     cp "$src" "$HOME/.tmux.conf.local"
     ok "Applied thiscode's tmux.conf.local"
   else
-    ok "Kept user override (~/.tmux.conf.local)"
+    printf "\n  Use thiscode's tmux.conf.local? (y/N) "
+    read -r ans
+    if [[ "$ans" =~ ^[Yy]$ ]]; then
+      cp "$src" "$HOME/.tmux.conf.local"
+      ok "Applied thiscode's tmux.conf.local"
+    else
+      ok "Kept user override (~/.tmux.conf.local)"
+    fi
   fi
 }
 

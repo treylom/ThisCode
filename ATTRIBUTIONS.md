@@ -61,11 +61,11 @@ thiscode v2.3 가 의존하는 모든 외부 패키지 / repo 의 출처 / licen
 
 ## Vendored Python runtime (thiscode/vendor/graphrag/)
 
-GraphRAG core 21 file (`.py` 18 + `.sh` 2 + `requirements.txt` 1) = obsidian-ai-vault `.team-os/graphrag/scripts/` 와 동등 vendor 박제.
+GraphRAG core 26 file (`.py` 23 + `.sh` 2 + `requirements.txt` 1) + method 문서 1 = 추적 27. obsidian-ai-vault `.team-os/graphrag/scripts/` 와 동등 vendor 박제.
 
-- 출처: 비공개 vault `.team-os/graphrag/scripts/` (private vault, 2026-05-13 snapshot)
-- License: thiscode 본 repo license (MIT) 와 동등 (treylom own)
-- Update 정책: pin version (vault SoT 변경 시 manual sync, v2.4 cycle 안 변경)
+- **출처**: 동일 코드가 **공개 플러그인 레포 [treylom/tofugraph](https://github.com/treylom/tofugraph)** 로도 배포된다(`engine/scripts/` 13 file = 본 vendor 의 **부분집합** — 본 vendor 가 상위집합이며 benchmark·test 계열 11 file 을 더 갖는다). 원본 SoT = 비공개 vault `.team-os/graphrag/scripts/`.
+- **License: MIT** (treylom own — thiscode 본 repo 와 동일). `tofugraph` README 의 License 절도 MIT 로 동일 선언.
+- Update 정책: pin version (vault SoT 변경 시 manual sync). ⚠️ **판본이 셋(vault SoT · tofugraph · 본 vendor)이므로 동기화 시 세 곳 다 확인** — 강의 Part4 는 수강생에게 `tofugraph@tofukyung-plugins` 마켓 설치를 안내하므로, 수강생 손에 가는 것은 tofugraph 쪽이다.
 
 ## License compatibility 검증 (Phase 1 + Phase 2 GPT-5.5)
 
@@ -82,6 +82,25 @@ GraphRAG core 21 file (`.py` 18 + `.sh` 2 + `requirements.txt` 1) = obsidian-ai-
 ---
 
 본 매트릭스 변경 시: spec doc §5 동시 update. CI smoke test 안 `pip install -r vendor/graphrag/scripts/requirements.txt` 자동 검증.
+
+## Vendored Slack bridge (vendor/claude-channel-server/)
+
+`claude-channel-server` = Claude Code 공식 `claude/channel` MCP 프로토콜의 Slack 브리지 구현(`server.ts`+`mcp.ts`, `src/*.ts` 7 file). ThisCode로 Slack을 연결하려는 모든 사용자에게 필요해 vendor 동봉(2026-08-06 결정 ⓐ, [slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md) 참고).
+
+- 출처: 비공개 저장소 `slack-agent-bridge/claude-channel-server`(treylom 소유, 2026-08-06 snapshot)
+- **License: MIT** — 저작권자(treylom) 결정으로 thiscode 본 repo와 동일한 MIT로 통일(2026-08-06 승인). `vendor/claude-channel-server/LICENSE` = thiscode 루트 `LICENSE`와 바이트 동일, `package.json`에 `"license": "MIT"` 명시(구 `"private": true`는 배포 대상이므로 제거).
+- 빌드 산출물(`dist/`)은 동봉하지 않는다 — 소스↔빌드본 drift 방지. `slack:configure` Step 0이 설치·빌드를 자동 수행한다(사람 관문 아님).
+- Update 정책: pin snapshot (upstream `slack-agent-bridge` 변경 시 manual sync)
+
+## Vendored vault-search MCP (vendor/vault-search-mcp/)
+
+`vault-search-mcp` = vault GraphRAG 검색을 MCP 서버로 노출하는 stdio/HTTP 브리지(`src/index.ts`·`auth.ts`·`http.ts`, 추적 13 file). `install-vault-search.sh` 가 설치 시점에 빌드한다(`dist/` 는 `.gitignore` 제외 — 소스↔빌드본 drift 방지).
+
+- 출처: treylom own (thiscode 와 동일 저작권자)
+- **License: MIT** (2026-08-06 저작권자 결정 — `LICENSE` 파일 + `package.json` `"license": "MIT"`, 구 `"private": true` 제거)
+- Update 정책: pin snapshot (manual sync)
+
+> 본 항목은 2026-08-06 이전 **매트릭스에서 누락**돼 있었다(vendor 에는 있는데 attribution 0건). 「전체 목록」 주장이 실제 커버리지보다 넓었던 자리 — 글재경 r3 ⓓ 발견.
 
 ## Vendored prompt skill (skills/prompt/)
 

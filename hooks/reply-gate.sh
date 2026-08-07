@@ -39,7 +39,12 @@ for ln in lines:
     content = msg.get("content")
     if role == "user":
         try:
-            blob = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False)
+            if isinstance(content, str):
+                blob = content
+            elif isinstance(content, list) and not any(isinstance(b, dict) and b.get("type") == "tool_result" for b in content):
+                blob = json.dumps(content, ensure_ascii=False)
+            else:
+                blob = ""  # tool_result 등 비-인바운드 = 인용된 <channel source=> 유령 인바운드 회귀 차단 (2026-08-06)
         except Exception:
             blob = ""
         if "<channel source=" in blob:        # 외부 채널 인바운드 (tool_result 등은 미해당)

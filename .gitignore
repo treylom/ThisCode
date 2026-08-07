@@ -4,6 +4,16 @@ node_modules/
 # Vendored MCP build output (built at install time by install-vault-search.sh)
 vendor/vault-search-mcp/dist/
 
+# Vendored Slack bridge build output (built at setup time by slack-configure skill)
+vendor/claude-channel-server/dist/
+
+# Secrets backstop — real tokens belong in ~/.claude/channels/slack/.env, outside this repo.
+# This line exists in case someone drops one inside the tree by habit (the upstream
+# claude-channel-server repo carried the same backstop in its own .gitignore).
+.env
+.env.*
+!.env.example
+
 # Benchmark intermediates (keep date-stamped results only)
 benchmark/results/tier?-test.json
 benchmark/results/tier?-*.tmp.json
@@ -19,3 +29,4 @@ benchmark/results/tier?-*.tmp.json
 *.thiscode.bak
 __pycache__/
 *.pyc
+.ouroboros/

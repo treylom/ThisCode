@@ -20,6 +20,12 @@ reached partial / blocked / awaiting-permission state.
 - On finishing a directed deliverable (proposal / delivery / milestone /
   public-repo change), pre-report to your completion channel **before** saying
   "done" to the requester. Repeating ops loops exempt.
+- **An agent that cannot physically reach the completion channel
+  (cross-machine account, Missing Access) must not skip the gate — relay the
+  report verbatim through an agent that can reach it, labeled as proxied**
+  (`[proxied pre-report — <agent>'s behalf, relayed by <proxy>; reason]`).
+  A gate that some agents cannot walk is a rule without a path — fix the path,
+  don't waive the rule (measured 2026-08-07).
 
 ## 2.5 Continuous execution
 - No "turn-limit / I'll stop here / next turn" speeches. If work remains and

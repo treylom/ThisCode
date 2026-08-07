@@ -1,0 +1,27 @@
+{
+  "name": "claude-channel-server",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "Slack Socket Mode bridge that implements the Claude Code channel protocol (claude/channel): a resident Slack process relaying messages over a Unix socket to a thin MCP stdio proxy per Claude Code session.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/server.js",
+    "mcp": "node dist/mcp.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@slack/socket-mode": "3.0.0",
+    "@slack/web-api": "8.0.0",
+    "koffi": "3.1.4",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.9.4",
+    "typescript": "5.9.3"
+  }
+}

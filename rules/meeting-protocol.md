@@ -245,6 +245,75 @@ escalation counterpart is, and when sub-rooms are worth opening.
 Even when all idle signals agree (no ledger append + idle terminal + silent thread), check one more axis: **are other bots / other paths silent at the same moment?** If yes, it is an *outage*, not idle — wake-pings and re-dispatches are no-ops there. Applies to automated daemons and manual probes alike. See the upstream-outage rung in discord-comms. Case-based (2026-07-25); re-judge per situation; the maintainer's call wins.
 
 
+## 10. Live meeting canvas (channel shared surface)
+
+When the meeting channel offers a shared document surface (e.g. a Slack channel
+canvas), treat it as the meeting's **live shared board**, not a post-hoc
+archive (operator rule, 2026-08-07 — measured in the first live bot-to-bot
+Slack meetings):
+
+- **Open first**: the canvas-capable bot opens/initializes the meeting canvas
+  **with its first utterance** (agenda / roster / discussion-log / decisions
+  skeleton) and posts the **canvas link** into the meeting thread — an
+  "the canvas is open" announcement without the link leaves humans unable to
+  find it (canvases created via API surface no channel message at all). A bot
+  without canvas write access must **request** the canvas opening in its own
+  first utterance instead of silently proceeding to the agenda.
+- **Update during the meeting**: the scribe (canvas-capable) bot re-pushes the
+  board whenever a substantive point or agreement lands. A single end-of-meeting
+  dump is a partial failure of this rule. Contributions from bots without write
+  access are folded in by the scribe — their thread messages are the
+  contribution medium.
+- **Close**: on conclusion, push the final decisions/follow-ups to the canvas,
+  then post the minutes summary (`[회의록]`-style, agenda/roster/decisions/
+  follow-ups) to the thread with the minutes file path.
+- **Final archive = each participant's own knowledge base**: the canvas is the
+  shared working surface; each bot mirrors the final minutes to its **own
+  machine's** vault/KB — the authoring bot from its file, the others from the
+  thread-posted minutes (absent canvas-read tooling, the thread post is the
+  transfer medium). This is how cross-machine bots share one meeting record
+  without sharing a filesystem. **Archive filenames must carry the writing
+  bot's identifier** (`YYYY-MM-DD-<topic>--<bot>.md`): each participant
+  archives its *own rendition* of the same meeting, so identical filenames
+  mean any cross-machine vault sync lets one rendition silently overwrite the
+  other (measured 2026-08-07: a sync replaced one bot's 5439-byte minutes with
+  the other bot's 3599-byte transcription under the same name; the original
+  survived in the repo copy — zero loss by luck, not by design).
+- **Roster reality**: the minutes list only accounts that actually spoke or
+  were tagged **in this thread** — never a name recalled from an earlier
+  session (measured regression: a bot addressed an absent participant
+  remembered from a prior test, self-corrected only after a human pointed it
+  out).
+- **"During the meeting" is a timing verdict — overlay two rulers**: the
+  thread's message timestamps (complete, untruncated) and the canvas push
+  log's timestamps. First push minus first utterance ≈ opened at start;
+  pushes interleaved with message timestamps = live updates; pushes clustered
+  after the last utterance = end-dump (partial failure). Neither ruler alone
+  can make the call.
+
+▶ Fill in: your canvas tooling (push command + push-log path) and each bot's
+final-archive path.
+
+## 11. Restarting an agent while a meeting may be live
+
+Rule-file swaps and harness changes tempt an immediate restart — but a restart
+kills the session's in-flight turn and its meeting memory. Two measured
+incidents on 2026-08-07: one restart cut an unprocessed inbound mid-meeting;
+one operator nearly killed a session that a wrong ruler reported as "296s
+idle" while the meeting was active in thread replies.
+
+- **Before restarting a resident agent session, check for an active meeting
+  with a ruler that can actually see it**: a channel-history call that returns
+  only top-level messages is blind to thread replies — use a thread-reply-aware
+  read (`conversations.replies`-class) or look at the live session surface
+  (tmux pane / gauge movement). "No new top-level messages" is not "idle."
+- If a meeting is (or may be) live: defer the restart — a one-line rule delta
+  can ride the next natural restart. Restart mid-meeting only for a defect
+  that is itself breaking the meeting.
+- The failure shape is the same early-stop family as detector truncation: the
+  tool reports "nothing" about a region it cannot see, and the operator reads
+  that as "nothing is happening."
+
 ## Liveness: two rulers, two questions
 
 The ledger's (02-progress) **mtime answers "is this meeting alive"**

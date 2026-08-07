@@ -50,7 +50,7 @@ Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgre
 
 **Windows 사용자:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) 는 install.sh 안 detect 되며 WSL 사용 안내. PowerShell port = 후속 cycle 예정.
 
-**Dependency provenance:** 16 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero).
+**Dependency provenance:** 19 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero) — Slack bridge 항목은 저작권자 결정으로 MIT 통일(2026-08-06), 본 repo와 동일.
 
 ## 🚀 Quickstart (vault-first)
 
@@ -85,6 +85,7 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 - `/thiscode:start` — 초기 셋업 wizard (환경 인식, 봇 페어링, 검증)
 - `/thiscode:init` — 경험자용 경량 셋업
 - `/thiscode:create-bot` — 새 Discord 봇 생성 (soul.md 템플릿 포함)
+- `/thiscode:create-slack-bot` — Discord 대신(또는 추가로) Slack에 봇 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
 - `/thiscode:km` — 지능형 variant 라우팅 knowledge manager (lite/at/plain)
 - `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
@@ -100,6 +101,8 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 ## 선택: Discord 봇 + Agent Teams
 
 본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. vault-first 검색만으로도 완전히 작동하며, Discord 페어링 및 tmux 세션은 advanced use case 용입니다.
+
+> **Slack을 쓰고 싶다면?** Discord 대신(또는 추가로) Slack으로도 봇을 페어링할 수 있습니다 — `/thiscode:create-slack-bot`(별칭: `/thiscode:slack-configure`) 실행 시 CLI 로그인·앱 설치 승인·토큰 입력 같은 사람 관문만 안내받고 나머지는 자동으로 처리됩니다. 상세: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). 운영·트러블슈팅 참조: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 
 ### Discord로 할 수 있는 것
 
@@ -187,7 +190,8 @@ cd ~/code/thiscode && bash install.sh
 - `/thiscode:start` — 메인 wizard (환경 인식 + 봇 셋업 + 첫 대화)
 - `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop(활성 회의 재독)** hook merge (~/.claude/settings.json 안전 병합, 기존 hook 보존). SessionStart 가 soul.md + 메모리 + `rules/INDEX.md` 주입, Stop 훅이 최근 규칙/회의 변경을 자동 반영하는 경로 — [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md) 참조
 - `/thiscode:create-bot` — 신규 봇 디렉토리 + .env + soul.md template 자동 셋업
-- `/thiscode:add-bot` — 추가 봇 1개 신설
+- `/thiscode:create-discord-bot` — 추가 Discord 봇 1개 신설 (별칭: `/thiscode:add-bot`)
+- `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 검증 (호출 layer 활성 확인)
 - `/thiscode:self-update` — 자가 업데이트 체크 (git fetch behind 비교)
@@ -387,6 +391,16 @@ git push
 
 봇에 다시 DM → 새 코드 발급.
 
+### soul.md 페르소나 "유령" (페르소나가 안 실림)
+
+봇 답변에 페르소나가 반영되지 않는다면 SessionStart 훅이 등록되지 않았을 가능성이 큽니다:
+
+```
+/thiscode:install-hooks
+```
+
+기존 훅을 보존하면서 bot-session-init.sh 훅을 `~/.claude/settings.json`에 안전하게 병합합니다.
+
 ### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 
 ```bash
@@ -401,6 +415,38 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
 - entry = `uvicorn search_server:app --host 127.0.0.1 --port 8400` (background nohup)
 - log = `~/.cache/thiscode/graphrag/run/graphrag.log`
+
+---
+
+## 🔬 내부 구조 (advanced)
+
+### 훅 3종
+
+- **`bot-session-init.sh`** (SessionStart) — `DISCORD_STATE_DIR` env 로 봇 자동 감지 → soul.md + 봇별 WD 메모리 + 공용 규율 주입
+- **`discord-slash-cmd.sh`** (UserPromptSubmit) — 사용자 프롬프트 첫 줄이 `/cmd` 면 Skill 도구 호출 강제
+- **`regression-self-check.sh`** (UserPromptSubmit) — 회귀 패턴 방지용 4게이트 자가점검 표 주입
+
+### 스킬 (agentskills.io 표준)
+
+- `init` — 온보딩 wizard (env 감지 + 8-Phase 추천)
+- `bootstrap` — 설치 wizard 도우미
+- `shared-memory` — 4-tier 메모리 정책 + Read-before-Edit
+- `meetings` — 4-file 회의 프로토콜 + 출처 기반 크로스체크 + Discord REST API 스레드
+- `slack-bridge` — Slack 브리지 운영·트러블슈팅 (발신자 게이트, 봇간 통신 허용목록, 라이브 회의 캔버스 레시피)
+- `codex-exec-bridge` — Codex CLI 서브프로세스 + `/tofu-at-codex` 참조
+- `knowledge-manager-at` — km-at Mode R 사전점검 (읽기 전용 진단 + dry-run 적용)
+
+### Codex CLI 브리지
+
+thiscode 는 Codex CLI 를 1급 브리지 층으로 포함합니다:
+
+- `codex --version`·`codex exec --no-stream --model gpt-5.5` 를 서브프로세스로 실행
+- 용도: 적대 검토, 코드 세컨드 오피니언, 대규모 병렬 리서치
+- 검증: `/thiscode:codex-check`
+
+### Custom Hybrid v1.0 에이전트 스펙
+
+`schemas/agent-spec.json` 이 agentskills.io 기본 + Hermes `provides_*` + thiscode classroom 정책 + 동적 게이트 + 벤치마크 통합을 묶은 에이전트별 계약 레지스트리를 정의합니다. v1.0 은 `tier: core`(init wizard)와 km-at Mode R 사전점검 워크플로우용 `phases:` 를 추가했습니다.
 
 ---
 

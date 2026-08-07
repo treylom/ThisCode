@@ -50,7 +50,7 @@ After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers 
 
 **Windows users:** two paths. **(a) Bot pairing only** — native **PowerShell works today**: Claude Code + the Discord plugin's *channels* directories (`~/.claude/channels/discord-<bot>/`) need **no tmux, no cmux, no daemon**; a bot session is just a PowerShell window running `claude` with `DISCORD_STATE_DIR` set ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) Full `install.sh` environment** (oh-my-tmux, multi-session helpers) — WSL 2 (Ubuntu 22.04+). If an AI assistant is driving your install on Windows, point it at path (a) — it must not try to recreate tmux with daemons or background services.
 
-**Dependency provenance:** full attribution matrix (16 entries — Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero).
+**Dependency provenance:** full attribution matrix (19 entries — Plugin 1 + Spec doc 2 + External tools 8 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero); the Slack bridge entry is MIT by copyright-holder decision (2026-08-06), matching this repo.
 
 **Lessons learned (consolidated into the v1.0 first integrated release):** This cycle's learnings are persisted in the vault under `AI_Second_Brain/.claude-memory/shared/feedback_*`:
 - `feedback_no_student_term` — learner / user / participant terminology
@@ -115,6 +115,7 @@ Run `/thiscode:help` inside Claude Code to see all available commands and when t
 - `/thiscode:start` — Initial setup wizard (environment detection, bot pairing, validation)
 - `/thiscode:init` — Alternative lightweight setup for experienced users
 - `/thiscode:create-bot` — Create a new Discord bot with soul.md template
+- `/thiscode:create-slack-bot` — Connect a bot to Slack instead of (or in addition to) Discord (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
 - `/thiscode:km` — Knowledge manager with intelligent variant routing (lite/at/plain)
 - `/thiscode:search` — 4-tier vault search with quick or deep modes
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
@@ -130,6 +131,8 @@ Each skill (bootstrap, knowledge-manager, search, meetings, etc.) includes a **"
 ## Optional: Discord bot + Agent Teams
 
 Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The 4-Tier vault search works standalone — Discord pairing is for advanced multi-bot orchestration.
+
+> **Prefer Slack?** You can pair a bot over Slack instead of (or in addition to) Discord — run `/thiscode:create-slack-bot` (alias: `/thiscode:slack-configure`); it walks you through the human gates (CLI login, workspace install approval, token paste) and automates the rest. Details: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). Ops & troubleshooting reference: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 
 ### What you can do from Discord
 
@@ -219,7 +222,8 @@ Plugin slash commands auto-detected after install:
 - `/thiscode:start` — main wizard (env detect + bot setup + first conversation)
 - `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hook safe-merge into `~/.claude/settings.json` (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md))
 - `/thiscode:create-bot` — new bot directory + .env + soul.md template
-- `/thiscode:add-bot` — add one additional bot
+- `/thiscode:create-discord-bot` — add one additional Discord bot (alias: `/thiscode:add-bot`)
+- `/thiscode:create-slack-bot` — connect a Slack workspace (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
 - `/thiscode:open-meeting` — create a meeting folder (multi-bot 4-file standard)
 - `/thiscode:codex-check` — Codex CLI bridge verification
 - `/thiscode:self-update` — self-update check (git fetch behind)
@@ -430,6 +434,7 @@ The `--apply` mode:
 - `bootstrap` — installer wizard helper
 - `shared-memory` — 4-tier memory policy + Read-before-Edit
 - `meetings` — 4-file meeting protocol + source-backed cross-check + Discord REST API threads
+- `slack-bridge` — Slack bridge operations & troubleshooting (sender gates, bot-interop allowlist, live meeting canvas recipes)
 - `codex-exec-bridge` — Codex CLI subprocess + `/tofu-at-codex` reference
 - `knowledge-manager-at` — km-at Mode R preflight (read-only diagnostics + dry-run apply)
 
