@@ -1,1 +1,2 @@
 DISCORD_STATE_DIR=/x/discord-karpathy
+ORCHESTRATOR_BOT=karpathy
