@@ -117,11 +117,23 @@ if ! command -v slack >/dev/null 2>&1; then
 fi
 ```
 
-⚠️ **설치가 성공해도 그 셸에서 바로 안 잡힐 수 있다** — 공식 문서 자인: "the `slack` command might not be available in the current shell... a symbolic link... needs to be added to your path." 그래서 재확인 + PATH 보정까지가 이 자동 단계다:
+> codex 짝 = ThisCodex `skills/slack-bridge/SKILL.md` 0단계 (교차 갱신 계약 — 설치 공정·PATH 함정·실측 라벨은 양쪽 동시 반영).
+
+⚠️ **설치가 성공해도 그 셸에서 바로 안 잡힐 수 있다** — 공식 문서 자인이었던 이 함정은 2026-08-08 클린룸 실측으로 재현 확인됐다(WSL2 · Ubuntu 24.04.1 · x86_64 · v4.6.0 — 설치 5초, 직후 새 셸에서 `slack` = not found. 설치기는 Required manual setup 으로 PATH 등록을 사람에게 미룬다). 그래서 재확인 + PATH 보정 + **영구 등록까지가 이 자동 단계다**(2026-08-08 재경님 결정 "slack cli 는 알아서 설치하도록 동봉" — 사람에게 남기던 등록 안내를 자동화로 승격):
 
 ```bash
 if ! command -v slack >/dev/null 2>&1; then
   export PATH="$HOME/.local/bin:$PATH"
+  if command -v slack >/dev/null 2>&1; then
+    # 새 셸에서도 잡히게 영구 등록(중복 추가 없음)
+    persisted=0
+    for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+      [ -f "$profile" ] || continue
+      grep -qs 'HOME/.local/bin' "$profile" || printf '\n# Slack CLI PATH (ThisCode slack:configure Step 1)\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$profile"
+      persisted=1
+    done
+    [ "$persisted" = 1 ] || grep -qs 'HOME/.local/bin' "$HOME/.profile" || printf '\n# Slack CLI PATH (ThisCode slack:configure Step 1)\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.profile"
+  fi
 fi
 
 if command -v slack >/dev/null 2>&1; then
@@ -130,7 +142,7 @@ else
   echo "❌ slack CLI 를 찾을 수 없습니다."
   echo ""
   echo "1. 네트워크 연결(downloads.slack-edge.com 접근)을 확인해 주세요 — 위 curl 자체가 실패했다면 그 에러가 원인입니다."
-  echo "2. \$HOME/.local/bin 을 셸 프로필에 영구 등록해 주세요(예: ~/.bashrc):"
+  echo "2. 위 자동 PATH 등록이 실패한 경우 — \$HOME/.local/bin 을 셸 프로필에 직접 등록해 주세요(예: ~/.bashrc):"
   echo "     export PATH=\"\$HOME/.local/bin:\$PATH\""
   echo "   등록 후 새 셸을 열고 'slack --version' 을 다시 확인해 주세요."
   echo "3. 그래도 안 되면 수동 설치(sudo 불필요) — 공식 Linux 바이너리(.tar.gz, x86_64/ARM64)를 내려받아 \$HOME/.slack 에 풀고 \$HOME/.local/bin 에 심볼릭 링크를 만드는 절차가 공식 문서에 있습니다:"
@@ -843,7 +855,7 @@ claude --dangerously-load-development-channels server:slack-channel
 | 증상 | 1순위 원인 | 대응 |
 |---|---|---|
 | `npm run build` → `Missing script: "run"` | 셸 래퍼·프록시(토큰 절약 도구 등)가 `npm run` 을 다른 명령으로 재작성 — 번들 결함 아님(package.json 에 `build` 스크립트 실재, 2026-08-06 WSL 실측) | 우회: `./node_modules/.bin/tsc -p tsconfig.json` 직접 실행(= `build` 스크립트의 실체). `npm start` 가 같은 증상이면 `node dist/server.js` 직접 실행 |
-| `slack: command not found` (Step 1 자동 설치 후에도) | ①네트워크가 `downloads.slack-edge.com`에 못 닿음 ②설치는 됐는데 `$HOME/.local/bin`이 PATH에 없음 | ①curl 에러 메시지 확인(프록시·방화벽) ②`export PATH="$HOME/.local/bin:$PATH"`를 셸 프로필에 추가 후 새 셸 재시작 ③그래도 안 되면 공식 문서의 수동 tar.gz 설치(sudo 불요) — [설치 가이드](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/). 🔴 `sudo apt install`류로 우회하지 말 것 — 무-sudo 환경(WSL 등)에서 관문 앞 탈락 재현됨(2026-08-06 실측) |
+| `slack: command not found` (Step 1 자동 설치 후에도) | ①네트워크가 `downloads.slack-edge.com`에 못 닿음 ②설치는 됐는데 `$HOME/.local/bin`이 PATH에 없음(Step 1 이 프로필 영구 등록까지 자동 수행하나, 비표준 프로필 구성이면 빗나갈 수 있음) | ①curl 에러 메시지 확인(프록시·방화벽) ②`export PATH="$HOME/.local/bin:$PATH"`를 실제 사용하는 셸 프로필에 직접 추가 후 새 셸 재시작 ③그래도 안 되면 공식 문서의 수동 tar.gz 설치(sudo 불요) — [설치 가이드](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/). 🔴 `sudo apt install`류로 우회하지 말 것 — 무-sudo 환경(WSL 등)에서 관문 앞 탈락 재현됨(2026-08-06 실측) |
 | DM 보냈는데 반응 0 | `message.im` 이벤트 미구독 | Step 4 매니페스트 `bot_events`에 `message.im` 있는지, `slack manifest diff`로 원격 반영 재확인 |
 | DM 반응 0(이벤트는 옴, 로그엔 찍힘) | `ALLOWED_SLACK_USER_ID` 불일치 | 보낸 사람의 실제 Slack user ID와 `.env` 값 대조(`slack auth list`가 아니라 DM 보낸 계정 기준) |
 | 채널 메시지만 무반응(DM은 됨) | 채널 게이트 불일치 | `.env`의 `SLACK_CHANNEL_ID`와 실제 채널 ID 대조(`server.ts:299`) |
