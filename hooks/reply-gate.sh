@@ -55,7 +55,10 @@ for ln in lines:
             for b in content:
                 if isinstance(b, dict) and b.get("type") == "tool_use":
                     name = b.get("name", "") or ""
-                    if "discord" in name and "reply" in name and last_inbound >= 0:
+                    # react (non-verbal ack) also counts as reaching the user (2026-08-08):
+                    # a deliberate emoji-ack to a pure acknowledgement is not "no response" —
+                    # treating it as a violation pushed agents into infinite thank-you loops.
+                    if "discord" in name and ("reply" in name or "react" in name) and last_inbound >= 0:
                         reply_after = True
     idx += 1
 print("VIOLATION" if (last_inbound >= 0 and not reply_after) else "OK")

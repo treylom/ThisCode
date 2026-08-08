@@ -22,6 +22,16 @@ bot's progress, or stopping while an active meeting is open.
   the meeting progress file.
 - Use KST timestamps for human-facing rows unless a repository-specific
   protocol states otherwise.
+- **No time placeholders (2026-08-08)**: the moment a document needs a
+  timestamp, **call your clock first and write the real value** — never write
+  `17:0x`-style placeholders to "fix later", and never hand-write a future
+  time (the moment you type and the moment it runs are different moments).
+  Why prevention rather than better detection: in the observed run, detection
+  caught the placeholder before sending *every single time* — three times for
+  one agent, once for a second, independent agent — and the incidence still
+  didn't fall. Two agents, same defect = process flaw, not a personal habit.
+  Owner: the agent writing the timestamp, inside the same command that writes
+  the document (a later "replace pass" is exactly the turn that gets forgotten).
 - **Spill rule**: when the progress file exceeds ~100 rows, move detail
   blocks (long analyses, logs, tables) into a numbered doc (`NN-*.md`)
   and leave one row: `[KST] <bot> | spill | →NN-doc`. The progress file

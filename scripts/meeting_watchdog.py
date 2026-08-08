@@ -255,6 +255,13 @@ def _parse_progress(
                 if not m:
                     continue
                 bracket, bot, status = (g.strip() for g in m.groups())
+                # Key normalization (2026-08-08): the same bot signing rows under
+                # spelling variants (case, localized name) used to split into two
+                # liveness keys — each half then looked "long quiet" and produced
+                # false-stale alarms. Fold case here; if your team signs progress
+                # rows in more than one language/alias, extend this fold with an
+                # alias→canonical map so one bot is always one key.
+                bot = bot.lower()
                 tm = time_re.search(bracket)
                 epoch = None
                 if tm:

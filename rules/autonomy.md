@@ -66,6 +66,21 @@ reached partial / blocked / awaiting-permission state.
 - Case-based (skip for trivial one-shot work); re-judge per situation; the
   maintainer's call wins.
 
+## 2.9 Feedback arriving after you declared convergence = explicit "applied" or "deferred (reason)" (2026-08-08)
+
+- Once you've declared a task converged/closed, any critique that arrives after
+  that declaration gets **one of two explicit answers**: "applied" or
+  "deferred (because …)". **Silence is not an option** — silence reads as
+  *applied* to some and *dismissed* to others, and the sender moves on without
+  knowing which.
+- Why: in the observed case the late critique happened to land seconds before
+  the close and was caught by luck — **the fact that a cross-review occurred is
+  not evidence that its findings were applied.**
+- Habit layer: the thing being enforced is a conversational move; machine
+  detection of "a convergence declaration" would require mandatory markers that
+  cost more than they save.
+- Owner: the agent who declared convergence, in their very next message.
+
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
   follow-ups. Report the state, then stop. Don't poll the user.

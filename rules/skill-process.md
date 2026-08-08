@@ -114,3 +114,33 @@ tool(s) and where the diversity check is recorded.
   done-condition. Small one-shot tasks are exempt — don't over-harden.
 
 ▶ Fill in: your spec directory for solo plans; your planning tool names.
+
+## 8. Every rule needs a named owner and a place where it gets exercised (2026-08-08)
+
+- When writing a new rule, fill three slots **inside the rule's own paragraph**:
+  ①who acts ②when (which turn) ③where it lands. **A rule that can't fill them
+  is incomplete — hold adoption** until it can.
+- Why: a rule with no named actor gets done by nobody. And when no owner is
+  named, the *default* wins — and defaults favor the common path, not the safe
+  one. Observed across three independent agents in one audit: whether the agent
+  *authored* the rule was not the variable; **having a designated place to step
+  was**. This is rule design, not personal diligence.
+- Optional check layer: a warning-only lint on rule-file edits that flags a new
+  section with no owner slot. Keep it advisory — a blocking gate here slows
+  rule-making more than it saves.
+- Owner of this entry: the rule's author, in the rule's own paragraph (a
+  separate registry table just creates a new empty slot).
+
+## 9. Detection → prevention promotion review (three-strikes, 2026-08-08)
+
+- Judgment sentence: **"if a detection process is attached and the incidence
+  doesn't fall, the process makes metrics — not fewer defects."**
+- Criterion: after detection exists, the **third recurrence of the same defect**
+  makes that item a *candidate for review* for promotion to a prevention-layer
+  fix (change the workflow so the defect can't be typed, rather than catching it
+  after). **Review, not auto-promotion** — detection is the right layer for many
+  items; "move everything to prevention" is over-hardening. The "3" threshold is
+  a working floor (distinguishes from two coincidences), tune it to your data.
+- Owner of the entry: **the agent who observes the third recurrence** writes one
+  line in the shared progress log ("promotion candidate: <item>, 3rd time").
+  The observer is the recorder — a separate tally-keeper slot just goes empty.

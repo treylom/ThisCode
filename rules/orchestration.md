@@ -124,6 +124,19 @@ in-flight tracks; your maintainer-confirmation channel.
 - Case-based (2026-08-05 census); re-judge per situation; the maintainer's
   call wins.
 
+## 6. Time estimates handed to others = ranges, not point numbers (2026-08-08)
+
+- When you hand someone else a duration estimate, give **a range plus what it
+  depends on** — "30s–5min, front-loaded if the cache is warm" — never a bare
+  point number ("30 seconds").
+- Why: the *receiver* pays for a wrong estimate — they build their waiting plan
+  on your number (observed: a "30 seconds" answer that ran 40 minutes while the
+  requester sat on it). A range with its driver lets them plan both branches.
+- Habit-layer rule (no enforcement): a wrong estimate changes waiting plans, not
+  deliverable content, so the lightest layer that works is the right one.
+  Escalate only if recurrence accumulates across domains.
+- Owner: the agent stating the estimate, inside that same sentence.
+
 ## Deferred instructions — re-check the ledger at fire time
 
 A scheduled instruction (cron, reminder, queued dispatch) is a **snapshot of the world at registration time** — and it is the *whole instruction* that goes stale, not just one value. Before executing any deferred instruction, re-read the tail of the relevant ledger/SoT: if a correction, cancellation, or resolution has been recorded since, **hold and report instead of executing** (a hold is a normal branch, not a failure). Stamp every scheduled instruction with its as-of time in the payload. Case-based (2026-07-25: an errand scheduled at 13:04 was resolved at 15:00 and cancelled in the ledger at 18:05, yet fired and executed verbatim at 19:00, emitting a stale credential request — a counterpart's refusal gate contained the damage); re-judge per situation; the maintainer's call wins.

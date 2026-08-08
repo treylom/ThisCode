@@ -130,5 +130,24 @@ consuming its output:
    looked like an answer" suspicion of an empty-pattern OR matching every
    line. Positive controls are necessary, not sufficient).
 
+## 9. Live counts run as positive–negative pairs — decoy inside the very command (2026-08-08)
+
+- §8 covers building a checker; this covers **every ad-hoc count or absence
+  claim you make in daily work**. Run it as a pair: plant a decoy you *know*
+  exists (positive) and one you know doesn't (negative) **inside the same
+  command that produces the count** — a separate verification call splits the
+  measurement into two layers, and the person running it cannot feel the split.
+  (Observed: the same log counted 4 with a loose pattern and 3 with a
+  line-structure anchor — the discrepancy was only visible because the decoy
+  rode in the same command.)
+- Speak the count with its control attached: "N items (decoy 2/2 caught)" — by
+  the agent making the claim, in that same message. A count arriving without its
+  ruler invites the reader to trust a number nobody proved alive.
+- Rule layer, not a hook: a machine cannot see whether you planted a decoy, and
+  forcing a self-declared checkbox recreates the empty-slot disease (§ owner-slot
+  rule in skill-process). Not habit layer either — this one was already tried as
+  a habit and re-occurred the next day; "your own ruler is invisible to you" is
+  structural.
+
 Case-based (2026-08-05 40-case census); re-judge per situation; the
 maintainer's call wins.
