@@ -5,7 +5,7 @@ description: Use when connecting a Claude Code session to Slack via the official
 
 # Slack Agent Bridge — Claude Code ↔ Slack (공식 `claude/channel` 프로토콜)
 
-> codex 짝 문서 = ThisCodex `skills/slack-bridge/SKILL.md`. 겉보기엔 "같은 걸 두 엔진으로" 처럼 보이지만 **프로토콜부터 다르다** — 이쪽은 Claude Code 공식 채널 프로토콜(MCP), codex 쪽은 Slack Bolt Python·로컬 엔진 호출이다. 코드도 완전히 분리된 별도 프로젝트이고, 이 문서는 codex를 다루지 않는다. **교차 갱신 계약**: Slack scope의 선언↔실부여·재설치 의미, 검증 급, 보안 경계처럼 공유되는 사실은 양쪽에 동시에 반영하고, 구현 고유 코드는 각 소유 문서에만 둔다.
+> codex 짝 문서 = ThisCodex `skills/slack-bridge/SKILL.md`. 겉보기엔 "같은 걸 두 엔진으로" 처럼 보이지만 **프로토콜부터 다르다** — 이쪽은 Claude Code 공식 채널 프로토콜(MCP), codex 쪽은 Slack Bolt Python·로컬 엔진 호출이다. 코드도 완전히 분리된 별도 프로젝트이고, 이 문서는 codex를 다루지 않는다. **교차 갱신 계약**: Slack scope의 선언↔실부여·재설치 의미, 검증 급, 보안 경계처럼 공유되는 사실은 양쪽에 동시에 반영하고, 구현 고유 코드·실행 환경(엔진별 샌드박스·플래그 등)은 각 소유 문서에만 둔다.
 
 Claude Code 세션이 Slack 채널·DM 메시지를 자기 컨텍스트로 직접 받고, `reply` 도구로 그 대화에 답하게 만드는 공정이다. 핵심은 **브리지가 Claude Code CLI를 대신 실행해주는 게 아니라는 것** — 이미 떠 있는 Claude Code 세션에 Slack이라는 채널 하나를 "연결"하는 것뿐이다(공식 채널 프로토콜, [channels-reference](https://code.claude.com/docs/en/channels-reference)).
 
