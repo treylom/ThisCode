@@ -112,7 +112,8 @@ fi
 🔴 **패키지 매니저(apt/dnf/`sudo` 동반 설치) 경유로 짜지 않는다** — 대상 환경이 무-sudo일 수 있다(2026-08-06 루돌프 WSL 실측: `sudo -n true` → `a password is required`, round 2에서 sudo 경로는 관문 앞에서 그대로 탈락한다). 공식 설치 스크립트는 sudo를 요구하지 않는다 — 문서 전문에 "sudo"라는 단어가 한 번도 등장하지 않고, 기본 설치 경로 자체가 홈 디렉토리다(`$HOME/.slack`에 다운로드 후 `$HOME/.local/bin`에 심볼릭 링크 — 2026-08-06 공식 문서 확인: [Installing the Slack CLI for Mac & Linux](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/)):
 
 ```bash
-if ! command -v slack >/dev/null 2>&1; then
+# 존재 판정은 두 자로: PATH + 실파일 — 비대화형 셸은 PATH 만으로 「미설치」 오판 → 불필요 재다운로드 (2026-08-08 WSL E2E 실측)
+if ! command -v slack >/dev/null 2>&1 && [ ! -x "$HOME/.local/bin/slack" ]; then
   curl -fsSL https://downloads.slack-edge.com/slack-cli/install.sh | bash
 fi
 ```
@@ -122,17 +123,21 @@ fi
 ⚠️ **설치가 성공해도 그 셸에서 바로 안 잡힐 수 있다** — 공식 문서 자인이었던 이 함정은 2026-08-08 클린룸 실측으로 재현 확인됐다(WSL2 · Ubuntu 24.04.1 · x86_64 · v4.6.0 — 설치 5초, 직후 새 셸에서 `slack` = not found. 설치기는 Required manual setup 으로 PATH 등록을 사람에게 미룬다). 그래서 재확인 + PATH 보정 + **영구 등록까지가 이 자동 단계다**(2026-08-08 재경님 결정 "slack cli 는 알아서 설치하도록 동봉" — 사람에게 남기던 등록 안내를 자동화로 승격):
 
 ```bash
-if ! command -v slack >/dev/null 2>&1; then
-  export PATH="$HOME/.local/bin:$PATH"
-  if command -v slack >/dev/null 2>&1; then
-    # 새 셸에서도 잡히게 영구 등록(중복 추가 없음)
-    persisted=0
-    for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
-      [ -f "$profile" ] || continue
+export PATH="$HOME/.local/bin:$PATH"   # 현재 셸 보정 — 설치 여부와 무관(중복 무해)
+if command -v slack >/dev/null 2>&1; then
+  # 새 셸에서도 잡히게 영구 등록(중복 추가 없음)
+  persisted=0
+  for profile in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    [ -f "$profile" ] || continue
+    grep -qs 'HOME/.local/bin' "$profile" || printf '\n# Slack CLI PATH (ThisCode slack:configure Step 1)\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$profile"
+    persisted=1
+  done
+  if [ "$persisted" != 1 ]; then
+    # 프로필 전무 환경: .profile(로그인 셸용)만 만들면 대화형 비로그인 셸(bash -ic)이 못 읽는다(실측 exit 127 —
+    # 이때 우분투 command-not-found 가 «sudo snap install slack»[데스크톱 앱, CLI 아님]을 오권유) → 둘 다 기록
+    for profile in "$HOME/.bashrc" "$HOME/.profile"; do
       grep -qs 'HOME/.local/bin' "$profile" || printf '\n# Slack CLI PATH (ThisCode slack:configure Step 1)\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$profile"
-      persisted=1
     done
-    [ "$persisted" = 1 ] || grep -qs 'HOME/.local/bin' "$HOME/.profile" || printf '\n# Slack CLI PATH (ThisCode slack:configure Step 1)\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.profile"
   fi
 fi
 
