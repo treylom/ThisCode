@@ -9,7 +9,7 @@
     {
       "name": "thiscode",
       "description": "Claude Code 환경 + Discord 봇 + tmux/oh-my-tmux 통합 셋업 플러그인. WSL/Linux/macOS 자동 detect.",
-      "version": "1.2.4",
+      "version": "1.2.5",
       "source": "./",
       "author": {
         "name": "treylom",
