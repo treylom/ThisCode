@@ -31,11 +31,32 @@ Features: `memory`, `tmux`, `discord-gate`, `graphrag`, `graphrag-bench`, `meeti
 ## Run
 
 ```bash
+# thiscode plugin 위치 detect — 낡은 사본 회피 (2026-08-10 핫픽스 B, 루돌프 실측
+# 1536053876: 이전엔 cwd 상대 `node scripts/feature-test.mjs` 를 그대로 불러서, cwd 가
+# 낡은 수동 clone(~/.claude/plugins/thiscode, discord-gate 항목 부재) 안이면 그 낡은
+# 사본을 집어 7/7 을 냄 — 설치판(1.2.5, scripts/feature-test.mjs 직접 실행)은 8/8.
+# install-hooks.md/create-bot.md 와 동일한 순서 probe 재사용(새 자동화 발명 ❌) — 단
+# 실제 소비 파일(scripts/feature-test.mjs)의 실재로 판정, hooks/ 실재가 아니다.
+PLUGIN_DIR=""
+for _cand in \
+  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+  "$HOME/.claude/plugins/thiscode" \
+  "$HOME/.claude/plugins/cache/local/thiscode" \
+  "$HOME/code/thiscode" \
+  "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+  if [ -f "$_cand/scripts/feature-test.mjs" ]; then PLUGIN_DIR="$_cand"; break; fi
+done
+
+if [ -z "$PLUGIN_DIR" ]; then
+  echo "❌ thiscode 의 scripts/feature-test.mjs 못 찾음 — plugin install (또는 git clone) 먼저"
+  exit 1
+fi
+
 # node 우선, 없으면 bun 폴백 (Windows 신규 환경엔 node 가 없고 bun 만 있는 경우가 흔함)
 if command -v node >/dev/null 2>&1; then
-  node scripts/feature-test.mjs $ARGUMENTS
+  node "$PLUGIN_DIR/scripts/feature-test.mjs" $ARGUMENTS
 elif command -v bun >/dev/null 2>&1; then
-  bun scripts/feature-test.mjs $ARGUMENTS
+  bun "$PLUGIN_DIR/scripts/feature-test.mjs" $ARGUMENTS
 else
   echo "❌ node/bun 둘 다 없음 — windows-setup.ps1(또는 bun.sh) 로 bun 설치 후 재시도"
 fi
