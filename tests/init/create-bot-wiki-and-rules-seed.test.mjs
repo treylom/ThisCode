@@ -9,10 +9,8 @@
 // branch, not runtime behavior (there is none to run).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 
 function readSkill() {
   return readFileSync('skills/create-bot/SKILL.md', 'utf8').replace(/\r\n/g, '\n');
@@ -186,15 +184,33 @@ test('B4-③: reproduces the heredoc delimiter-collision defect when no guard is
   assert.equal(result.stdout, '/tmp/evil', 'the capture stops exactly at the embedded delimiter line, losing the rest of the answer');
 });
 
-test('B4-③: the documented guard (whole-line match against the delimiter) blocks the same colliding input with zero side effects', () => {
-  const marker = join(tmpdir(), `gljk-guarded-${process.pid}`);
-  const collidingAnswer = `/tmp/evil\nTHISCODE_WIKI_PATH_EOF\ntouch '${marker}'\necho unused <<'THISCODE_WIKI_PATH_EOF'`;
+// 🟡A (2026-08-10, 글재경 실증): the guard test below used to run a guard-check-ONLY
+// script that never attempted to build the heredoc from the colliding answer at all —
+// "no side effect" (existsSync(marker) === false) was true even with the grep condition
+// completely broken, because nothing downstream would have used `collidingAnswer` either
+// way. A no-change/invariant-shaped check: it passes whether the guard works or not.
+// Rewritten as a real differential — the SAME colliding input runs through two script
+// variants (guard present vs guard removed) and the two must produce DIFFERENT observable
+// outcomes. Reuses the version-independent truncation signal from the repro test above
+// (not a touch/marker side effect, which would reintroduce the bash-version CI flakiness
+// the earlier CI hotfix (fe51c06) already fixed).
+test('B4-③: the documented guard actually prevents the heredoc from ever being built — not a no-op check (differential: guard present vs removed)', () => {
+  const collidingAnswer = '/tmp/evil\nTHISCODE_WIKI_PATH_EOF';
+  const heredocBuild = `WIKI_PATH=$(cat <<'THISCODE_WIKI_PATH_EOF'\n${collidingAnswer}\nTHISCODE_WIKI_PATH_EOF\n)\nprintf 'CAPTURED=%s' "$WIKI_PATH"`;
   // Mirrors the guard condition documented in SKILL.md: grep -qxF (whole-line,
   // fixed-string) against the delimiter, evaluated BEFORE any heredoc is built.
-  const guardScript = `RAW_ANSWER=$(cat); if printf '%s\\n' "$RAW_ANSWER" | grep -qxF 'THISCODE_WIKI_PATH_EOF'; then echo TRIPPED; else echo PASSED; fi`;
-  const result = spawnSync('bash', ['-c', guardScript], { input: collidingAnswer, encoding: 'utf8' });
-  assert.equal(result.stdout.trim(), 'TRIPPED');
-  assert.equal(existsSync(marker), false, 'the guard must prevent the heredoc from ever being built — no side effect');
+  const guardCheck = `if printf '%s\\n' '${collidingAnswer}' | grep -qxF 'THISCODE_WIKI_PATH_EOF'; then echo TRIPPED; exit 0; fi\n`;
+
+  const withGuard = spawnSync('bash', ['-c', guardCheck + heredocBuild], { encoding: 'utf8' });
+  assert.equal(withGuard.stdout.trim(), 'TRIPPED', 'with the guard present, the script must stop at TRIPPED and never reach the heredoc build');
+  assert.doesNotMatch(withGuard.stdout, /CAPTURED=/, 'the guard must prevent the heredoc from ever being built — no CAPTURED output at all, i.e. a real side-effect difference');
+
+  const withoutGuard = spawnSync('bash', ['-c', heredocBuild], { encoding: 'utf8' }); // guard removed — simulates the guard being broken/bypassed
+  assert.match(
+    withoutGuard.stdout,
+    /^CAPTURED=\/tmp\/evil$/,
+    'without the guard, the SAME colliding input reaches the heredoc build and gets silently truncated — proves the guarded branch above is doing real work, not a no-op (this is the differential the prior version lacked)',
+  );
 });
 
 test('B4-③: the same guard passes a benign answer through unaffected', () => {
