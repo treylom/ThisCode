@@ -24,20 +24,24 @@ Claude Code 가 마켓플레이스로 설치된 플러그인을 로드하는 곳
 git 체크아웃을 아무리 당겨도 이 사본은 안 바뀐다. 실측된 3겹 함정:
 ① git pull "성공" → 표면 불변 ② `plugin marketplace update` "성공" → 플러그인 불변
 ③ `plugin update thiscode` → `not found` 실패. **유일하게 통하는 형태 =
-`claude plugin update thiscode@<마켓플레이스>`** (1.0.0→1.2.1 갱신 실측).
+`claude plugin update thiscode@<마켓플레이스>`** (1.0.0→1.2.1 갱신 실측 — **수동 터미널 실행 기준**.
+세션 내 자동 실행은 편의 경로라 오래 멈추면 중단하고 같은 명령을 터미널에서 직접 친다).
 
 ```bash
-INSTALL_KIND="git-checkout"; UPDATE_CMD=""
+INSTALL_KIND="git-checkout"; UPDATE_CMD=""; CACHE_VERS=""
 for _c in "$HOME"/.claude/plugins/cache/*/thiscode/*/; do
   [ -d "$_c" ] || continue
   [ -d "$_c/.git" ] && continue
   _mkt=$(basename "$(dirname "$(dirname "$_c")")")
   INSTALL_KIND="marketplace-cache"
   UPDATE_CMD="claude plugin update thiscode@${_mkt}"
-  break
+  CACHE_VERS="$CACHE_VERS$(basename "$_c") "
 done
-echo "install_kind=$INSTALL_KIND ${UPDATE_CMD:+update_cmd=$UPDATE_CMD}"
+echo "install_kind=$INSTALL_KIND ${UPDATE_CMD:+update_cmd=$UPDATE_CMD }${CACHE_VERS:+cache_versions=$CACHE_VERS}"
 ```
+
+버전 폴더 목록(`cache_versions`)이 갱신 판정의 **before 기준선**이다 — "새 명령이 보이는가"는
+before 없이는 답할 수 없는 질문이라, 판정은 사람 눈이 아니라 파일시스템(버전 폴더 증감)이 한다.
 
 ### Step 1. 로컬 plugin 위치 detect
 
@@ -117,11 +121,37 @@ if [ "$ARGUMENTS" = "pull" ]; then
   # J-2 재적용: 다봇 통신용 discord 플러그인 패치는 외부 플러그인이라
   # 업데이트로 덮어써질 수 있음. idempotent·fail-open(절대 self-update 안 깸).
   bash "$TARGET/scripts/patch-discord-bot-drop.sh" 2>&1 || true
-  if [ "$INSTALL_KIND" = "marketplace-cache" ]; then
-    # git 사본만 갱신됨 — 로드 표면은 아직 옛 버전. 실측된 유일 경로를 실행한다.
-    echo "git 사본 갱신 완료 — 이제 로드되는 설치본을 갱신합니다: $UPDATE_CMD"
-    $UPDATE_CMD || echo "자동 실행 실패 — 터미널에서 직접 실행하세요: $UPDATE_CMD"
-    echo "⚠ 갱신 판정 기준: Claude Code 재시작 후 자동완성에 새 명령이 보이는가 (성공 문구 아님)"
+
+  # ⚠ Step 0 재도출 — Claude Code 의 Bash 호출은 블록마다 별개 프로세스라
+  # 셸 변수가 계승되지 않는다(2026-08-09 글재경 R1: 미계승 시 조용히 else 로
+  # 떨어져 하필 "업데이트 완료"에 착지 — fail-open 방향 교정 포함).
+  INSTALL_KIND="git-checkout"; UPDATE_CMD=""; VERS_BEFORE=""
+  for _c in "$HOME"/.claude/plugins/cache/*/thiscode/*/; do
+    [ -d "$_c" ] || continue
+    [ -d "$_c/.git" ] && continue
+    _mkt=$(basename "$(dirname "$(dirname "$_c")")")
+    INSTALL_KIND="marketplace-cache"
+    UPDATE_CMD="claude plugin update thiscode@${_mkt}"
+    VERS_BEFORE="$VERS_BEFORE$(basename "$_c") "
+  done
+
+  if [ "$INSTALL_KIND" != "git-checkout" ]; then
+    # 미확정 포함 전부 이 정직 경로로 (백스톱: 조건을 뒤집어 fail-open = 정직 쪽)
+    echo "git 사본 갱신 완료 — 로드되는 설치본 갱신 실행: $UPDATE_CMD (현재 버전 폴더: $VERS_BEFORE)"
+    # 수동 터미널 실측(1.0.0→1.2.1) 기준 — 세션 내 자동 실행은 편의 경로. 갱신은 새 버전
+    # 폴더를 «추가»하고 실행 중 구버전 폴더는 존치한다(실측: 1.2.1/ 신규 생성·1.0.0 유지).
+    claude plugin update "thiscode@${_mkt}" || echo "자동 실행 실패 — 터미널에서 직접 실행하세요: $UPDATE_CMD"
+    VERS_AFTER=""
+    for _c in "$HOME"/.claude/plugins/cache/*/thiscode/*/; do
+      [ -d "$_c" ] || continue
+      [ -d "$_c/.git" ] && continue
+      VERS_AFTER="$VERS_AFTER$(basename "$_c") "
+    done
+    if [ "$VERS_AFTER" != "$VERS_BEFORE" ]; then
+      echo "✅ 설치본 갱신 확인(파일시스템 판정): [$VERS_BEFORE] → [$VERS_AFTER] — Claude Code 재시작 후 새 명령 사용 가능"
+    else
+      echo "⚠ 설치본 버전 폴더 불변([$VERS_BEFORE]) — 갱신 안 됨. 직접 실행: $UPDATE_CMD"
+    fi
   else
     echo "업데이트 완료. 새 commit:"
     git log --oneline HEAD~"$BEHIND".."$HEAD"
