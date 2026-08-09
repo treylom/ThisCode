@@ -274,11 +274,26 @@ AskUserQuestion:
 ```
 
 ```bash
-WIKI_PATH="<사용자 입력 — 트림, 빈 값 허용>"
+# 🔴 값으로만 착지 — AskUserQuestion 답변 원문을 셸 명령 텍스트에 직접 스플라이스하지 않는다.
+# quoted heredoc(<<'EOF' — delimiter 를 따옴표로 감쌈)은 본문을 셸 파싱·재해석 없이 그대로
+# 넘긴다: 값 안에 $()·백틱·큰따옴표가 있어도 명령으로 재해석되지 않는다(ThisCodex `shQuote` 와
+# 동일 계약 — wiki_path 는 free text 이므로 이 게이트가 없으면 악의적이거나 단순히 특수문자가
+# 낀 경로 하나로 이 스텝 이후의 Bash 실행이 그 문자열을 명령으로 재해석할 수 있다).
+WIKI_PATH=$(cat <<'THISCODE_WIKI_PATH_EOF'
+<AskUserQuestion 답변 원문 그대로 — 빈 값 허용>
+THISCODE_WIKI_PATH_EOF
+)
+# $(...) 명령 치환은 트레일링 개행을 자동으로 제거한다 — 별도 trim 불필요.
 if [ -n "$WIKI_PATH" ] && [ ! -d "$WIKI_PATH" ]; then
   echo "⚠️  경로가 아직 없습니다: $WIKI_PATH — 생성은 차단하지 않고 계속 진행"
 fi
 ```
+
+이후 모든 스텝에서 `$WIKI_PATH` 는 (위에서 안전하게 캡처된) **셸 변수 참조**로만 다룬다 — 값을
+다시 명령 텍스트로 스플라이스하지 않는 한 `"$WIKI_PATH"` 인용은 안전하다(변수 치환은 저장된
+값을 그대로 대입할 뿐 재파싱하지 않는다). Step 7 의 표시용 export 줄은 그래도 `printf '%q'`
+(PowerShell 은 작은따옴표 이스케이프)로 다시 감싼다 — 사람이 그대로 복사해 붙였을 때도 안전한
+문자열이 나오도록.
 
 - **빈 값 = 생성 계속.** 이 질문은 봇 생성을 막지 않는다 — 미응답을 다른 질문의 기본값·placeholder 로 흘려보내지 말고 **명시적으로 빈 문자열**로 취급한다(ThisCodex 판 회귀 방지: 자유 텍스트 질문에 enum 류 fallback 을 적용하면 존재하지도 않는 경로가 값으로 굳는다).
 - **경로가 있으면** → Step 6 의 CLAUDE.md 에 "위키 연결" 절을 넣고, Step 7 시동 명령에 `THISCODE_WIKI_PATH` export 를 포함한다.
@@ -386,20 +401,25 @@ echo ""
 echo "다음 step — claude 시동 (macOS/Linux/WSL):"
 echo ""
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
-[ -n "$WIKI_PATH" ] && echo "  export THISCODE_WIKI_PATH=\"$WIKI_PATH\""
+[ -n "$WIKI_PATH" ] && printf '  export THISCODE_WIKI_PATH=%q\n' "$WIKI_PATH"
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "tmux session 안에서 운영 권장:"
 echo "  tmux new-session -s ${BOT_NAME}"
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
-[ -n "$WIKI_PATH" ] && echo "  export THISCODE_WIKI_PATH=\"$WIKI_PATH\""
+[ -n "$WIKI_PATH" ] && printf '  export THISCODE_WIKI_PATH=%q\n' "$WIKI_PATH"
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "Windows (PowerShell — tmux 불요, docs/10 참조):"
 echo "  \$env:DISCORD_STATE_DIR = \"$BOT_DIR\""
-[ -n "$WIKI_PATH" ] && echo "  \$env:THISCODE_WIKI_PATH = \"$WIKI_PATH\""
+# PowerShell 작은따옴표 문자열은 완전 리터럴이다(값 안 $()·백틱도 재해석 ❌) — 내부 작은따옴표만
+# ''로 이중화하면 값으로만 착지한다. bash %q(위 두 블록)와 동일 계약의 PowerShell 등가.
+if [ -n "$WIKI_PATH" ]; then
+  _WIKI_PS_SAFE=$(printf '%s' "$WIKI_PATH" | sed "s/'/''/g")
+  printf "  \$env:THISCODE_WIKI_PATH = '%s'\n" "$_WIKI_PS_SAFE"
+fi
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""

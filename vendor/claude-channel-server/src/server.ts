@@ -117,6 +117,10 @@ function main(): void {
     if (imInboundThreadTsSet.has(threadTs)) return;
     imInboundThreadTsSet.add(threadTs);
     imInboundThreadTsOrder.push(threadTs);
+    // Bounded at 200 (FIFO): past that, the oldest tracked DM thread is evicted
+    // first. That thread's next reply then falls back to the DM body outside
+    // any thread instead of being echoed into it — still delivered, just no
+    // longer thread-anchored. Graceful degradation, not silent loss or misdelivery.
     if (imInboundThreadTsOrder.length > 200) {
       const evicted = imInboundThreadTsOrder.shift();
       if (evicted) imInboundThreadTsSet.delete(evicted);

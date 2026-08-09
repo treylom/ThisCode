@@ -71,3 +71,45 @@ test('templates/rules-seed.md exists with the v1.0.0 stamp, both rules, and the 
   assert.match(text, /위키.*저장|저장.*위키/, 'Rule 2 must state the wiki save policy');
   assert.match(text, /THISCODE_WIKI_PATH/);
 });
+
+// Follow-up order (same commit): the wiki path answer is FREE TEXT (like
+// ThisCodex's wiki_path, which ThisCodex protects with a `shQuote` helper —
+// see ThisCodex tests/init/materialize.test.mjs "embedded single quote
+// (exercises shQuote escaping itself)"). ThisCode has no equivalent JS
+// materializer for bots (create-bot is pure SKILL.md), so the same "land as
+// a value, never as code" contract has to be authored as a quoted-heredoc
+// capture + printf '%q' / PowerShell single-quote-escape re-emission
+// instead of a shQuote() call. These lock that the naive, re-interpretable
+// pattern does not silently creep back in.
+test('B4 (shell-safety parity with ThisCodex shQuote): the wiki path answer is captured via a quoted heredoc, not spliced into a double-quoted assignment', () => {
+  const text = readSkill();
+  assert.match(
+    text,
+    /WIKI_PATH=\$\(cat <<'THISCODE_WIKI_PATH_EOF'/,
+    'the answer must be captured through a quoted heredoc (no shell re-interpretation of $()/backticks/quotes inside the answer)',
+  );
+  assert.doesNotMatch(
+    text,
+    /WIKI_PATH="<사용자 입력/,
+    'the old double-quoted splice-in-place assignment must not reappear — that pattern lets shell metacharacters in the answer break out of the intended string',
+  );
+});
+
+test('B4 (shell-safety parity): the printed launch export lines re-quote WIKI_PATH instead of naively double-quoting it', () => {
+  const text = readSkill();
+  assert.match(
+    text,
+    /printf '  export THISCODE_WIKI_PATH=%q\\n' "\$WIKI_PATH"/,
+    'bash export lines must use printf %q (bash-safe re-quoting) so a copy-pasted value with quotes/$()/backticks still lands as one literal value',
+  );
+  assert.doesNotMatch(
+    text,
+    /echo "  export THISCODE_WIKI_PATH=\\"\$WIKI_PATH\\""/,
+    'the old naive double-quoted echo of THISCODE_WIKI_PATH must not reappear',
+  );
+  assert.match(
+    text,
+    /sed "s\/'\/''\/g"/,
+    'the PowerShell line must escape embedded single quotes by doubling them (PowerShell single-quoted strings are the only fully literal form there)',
+  );
+});
