@@ -9,7 +9,7 @@
 // branch, not runtime behavior (there is none to run).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, existsSync, rmSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -120,22 +120,40 @@ test('B4 (shell-safety parity): the printed launch export lines re-quote WIKI_PA
 // Follow-up order (255941b 보완, ③): 글재경's review found that the quoted-heredoc
 // capture above has its own hole — if the free-text answer contains a line that
 // exactly equals the heredoc delimiter (THISCODE_WIKI_PATH_EOF), the heredoc
-// terminates early right there and whatever text follows in the answer gets
-// executed as real shell commands (proven with a `touch` side-effect probe).
-// The fix is a pre-check, evaluated by the agent against its own copy of the
-// raw answer text (never through a second shell command — doing the check in
-// shell would just recreate the same early-termination hole in the check
-// itself). These lock (a) the vulnerability is real without the guard, (b) the
-// documented guard condition (grep -qxF: whole-line match, not substring)
-// actually neutralizes it with zero side effects, and (c) a benign answer is
-// unaffected.
-test('B4-③: reproduces the heredoc delimiter-collision defect when no guard is applied (proves the bug is real)', () => {
-  const marker = join(tmpdir(), `gljk-pwned-${process.pid}`);
-  const script = `WIKI_PATH=$(cat <<'THISCODE_WIKI_PATH_EOF'\n/tmp/evil\nTHISCODE_WIKI_PATH_EOF\ntouch '${marker}'\necho unused <<'THISCODE_WIKI_PATH_EOF'\n)\n`;
-  spawnSync('bash', ['-c', script]);
-  const injected = existsSync(marker);
-  if (injected) rmSync(marker, { force: true });
-  assert.equal(injected, true, 'without a guard, a delimiter-colliding answer must early-terminate the heredoc and execute the trailing text (this documents the bug the guard exists to close)');
+// terminates early right there and the captured value is silently truncated
+// (on some shells the orphaned trailing text can even run as commands — see
+// the CI-hotfix note on the repro test below for why that specific escalation
+// is NOT what's asserted here). The fix is a pre-check, evaluated by the agent
+// against its own copy of the raw answer text (never through a second shell
+// command — doing the check in shell would just recreate the same
+// early-termination hole in the check itself). These lock (a) the
+// vulnerability is real without the guard, (b) the documented guard condition
+// (grep -qxF: whole-line match, not substring) actually neutralizes it with
+// zero side effects, and (c) a benign answer is unaffected.
+test('B4-③: reproduces the heredoc delimiter-collision defect when no guard is applied (proves the capture boundary breaks)', () => {
+  // 2026-08-10 CI hotfix (카파시 root-cause, 루돌프 CI RED 실측): the original
+  // repro asserted a `touch` side effect from the text left over after the
+  // early heredoc close. That side effect is bash-VERSION-dependent —
+  // confirmed empirically: local bash 3.2 (macOS default) runs it, CI bash
+  // 5.x (ubuntu/windows runners) does not, even though the early close itself
+  // happens identically on both — heredoc terminator matching (a line exactly
+  // equal to the delimiter ends the body) is basic POSIX shell grammar, not a
+  // version quirk. Assert the version-independent part instead: the captured
+  // value is silently truncated at the embedded delimiter line. That
+  // truncation IS the vulnerability the guard exists to close — code
+  // execution on some shells is a downstream escalation of the same boundary
+  // break, not a separate defect. (Empirically re-verified on this machine's
+  // bash 3.2 after the rewrite: status 0, stdout exactly "/tmp/evil".)
+  const collidingAnswer = '/tmp/evil\nTHISCODE_WIKI_PATH_EOF';
+  const script = `WIKI_PATH=$(cat <<'THISCODE_WIKI_PATH_EOF'\n${collidingAnswer}\nTHISCODE_WIKI_PATH_EOF\n)\nprintf '%s' "$WIKI_PATH"`;
+  const result = spawnSync('bash', ['-c', script], { encoding: 'utf8' });
+  assert.equal(result.status, 0, 'the naive capture must not error out — it silently truncates, it does not fail loudly');
+  assert.notEqual(
+    result.stdout,
+    collidingAnswer,
+    'without a guard, a delimiter-colliding answer must be captured incomplete — the heredoc terminates at the first line matching the delimiter, silently dropping everything after it (the boundary break the guard exists to close, deterministic on every bash version)',
+  );
+  assert.equal(result.stdout, '/tmp/evil', 'the capture stops exactly at the embedded delimiter line, losing the rest of the answer');
 });
 
 test('B4-③: the documented guard (whole-line match against the delimiter) blocks the same colliding input with zero side effects', () => {
