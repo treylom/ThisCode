@@ -29,6 +29,36 @@ test('B4: the wiki path question is a first-class step, asked before WD/CLAUDE.m
   assert.match(text, /선택 사항/, 'the question must state it is optional');
 });
 
+// Fix E (2026-08-10, 루돌프 다봇 개발머신 실측): a "first-class question" that
+// silently inherits a value without ever presenting it as a real choice is not a
+// question at all — it is an assumption wearing the question's name. On a
+// multi-bot dev machine, the interviewing agent found an existing bot's
+// configured wiki path and adopted it for the NEW bot without truly asking,
+// which is invisible on a fresh student machine (no existing bots → this branch
+// never fires — an isolation-axis defect) but a real contract violation on
+// return/dev machines. SKILL.md is prose, not executable code, so this is an
+// existence+behavior (2-slot) check: the paragraph must exist (existence) AND
+// sit before the actual AskUserQuestion block, so it governs how that question
+// gets built rather than describing something after the fact (behavior/position).
+test('B4 (Fix E): an existing bot\'s wiki-path hint may only become an explicit AskUserQuestion option, never a silent default', () => {
+  const text = readSkill();
+  const introIdx = text.indexOf('`/thiscode:create-bot` 인터뷰의 **1급 질문**이다');
+  const hintIdx = text.indexOf('기존 봇 힌트');
+  const questionIdx = text.indexOf('AskUserQuestion:');
+  assert.ok(introIdx > -1 && hintIdx > -1 && questionIdx > -1, 'the intro, the existing-bot-hint paragraph, and the AskUserQuestion block must all exist');
+  assert.ok(
+    introIdx < hintIdx && hintIdx < questionIdx,
+    'the existing-bot-hint rule must sit between the "first-class question" framing and the actual AskUserQuestion block — it governs how that question is built',
+  );
+  // strip markdown bold markers before matching — the source text bolds mid-phrase
+  // (e.g. "그 값을 **AskUserQuestion 의 옵션 중 하나**로 명시 제시"), which a literal
+  // contiguous regex would miss at the "하나**로" boundary.
+  const hintBlock = text.slice(hintIdx, questionIdx).replace(/\*\*/g, '');
+  assert.match(hintBlock, /옵션 중 하나로 명시 제시/, 'an existing bot\'s wiki path may only be offered as one explicit option, not silently applied');
+  assert.match(hintBlock, /사용자가 실제로 그 옵션을 선택할 때만/, 'the hint must only be adopted on an explicit user selection of that option');
+  assert.match(hintBlock, /조용히 기본값.*금지/, 'silently flowing the hint into a default/placeholder must be explicitly forbidden');
+});
+
 test('B4: a blank wiki path answer is an explicit non-blocking branch, not a silent default', () => {
   const text = readSkill();
   assert.match(text, /빈 값 = 생성 계속/, 'blank answer must explicitly continue bot creation');
