@@ -45,15 +45,25 @@ $ARGUMENTS
 # thiscode plugin 위치 자동 detect — 실제 설치 위치 전부 순서대로 probe.
 # (정식 marketplace / 수동 clone / 정식 install cache / dev clone / 버전 cache)
 # bare `[ -d hooks ]` 아닌 hooks/bot-session-init.sh 실재로 판정 (stale dir 회피).
-PLUGIN_DIR=""
-for _cand in \
-  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
-  "$HOME/.claude/plugins/thiscode" \
-  "$HOME/.claude/plugins/cache/local/thiscode" \
-  "$HOME/code/thiscode" \
-  "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
-  if [ -f "$_cand/hooks/bot-session-init.sh" ]; then PLUGIN_DIR="$_cand"; break; fi
-done
+#
+# Fix F (2026-08-10, 루돌프 4차 실측): 첫 매치 승리 방식이라 후보 #1(마켓 클론)이 구판이면
+# 후보 #5(버전 캐시, freshest)를 두고도 구판이 이겨 rules-seed.md 를 무징후로 누락시켰다.
+# CLAUDE_PLUGIN_ROOT 를 1순위로 — 마크다운 원문 리터럴, Claude Code 가 이 문서를 로드하며
+# 실제 설치 경로로 치환한다(셸 풀이 ❌ — code.claude.com/docs/en/plugins-reference.md
+# "Environment variables": skill/command content 는 placeholder 등장 위치 전부 치환).
+# 미치환(빈 값)이면 아래 5-후보 폴백으로 무회귀 낙하.
+PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"
+if [ -z "$PLUGIN_DIR" ] || [ ! -f "$PLUGIN_DIR/hooks/bot-session-init.sh" ]; then
+  PLUGIN_DIR=""
+  for _cand in \
+    "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+    "$HOME/.claude/plugins/thiscode" \
+    "$HOME/.claude/plugins/cache/local/thiscode" \
+    "$HOME/code/thiscode" \
+    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+    if [ -f "$_cand/hooks/bot-session-init.sh" ]; then PLUGIN_DIR="$_cand"; break; fi
+  done
+fi
 
 if [ -z "$PLUGIN_DIR" ]; then
   echo "❌ thiscode 의 hooks/ 못 찾음 — plugin install (또는 git clone) 먼저"

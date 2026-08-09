@@ -37,15 +37,27 @@ Features: `memory`, `tmux`, `discord-gate`, `graphrag`, `graphrag-bench`, `meeti
 # 사본을 집어 7/7 을 냄 — 설치판(1.2.5, scripts/feature-test.mjs 직접 실행)은 8/8.
 # install-hooks.md/create-bot.md 와 동일한 순서 probe 재사용(새 자동화 발명 ❌) — 단
 # 실제 소비 파일(scripts/feature-test.mjs)의 실재로 판정, hooks/ 실재가 아니다.
-PLUGIN_DIR=""
-for _cand in \
-  "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
-  "$HOME/.claude/plugins/thiscode" \
-  "$HOME/.claude/plugins/cache/local/thiscode" \
-  "$HOME/code/thiscode" \
-  "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
-  if [ -f "$_cand/scripts/feature-test.mjs" ]; then PLUGIN_DIR="$_cand"; break; fi
-done
+#
+# Fix F (2026-08-10, 루돌프 4차 실측): 위 순서 probe 자체가 "첫 매치가 이긴다" 라
+# 후보 #1(마켓 클론)이 구판이면 후보 #5(버전 캐시, freshest)를 두고도 구판이 이겨
+# rules-seed.md 를 무징후로 누락시켰다(화면에 아무 신호도 안 남는다 — B3/Fix C 산출물의
+# 침묵 실패). CLAUDE_PLUGIN_ROOT 를 1순위로 — 이 줄은 마크다운 원문 리터럴이라 Claude
+# Code 가 이 문서를 로드하며 실제 설치 경로로 치환한다(셸이 이 값을 풀이하는 게 아니다
+# — 근거: code.claude.com/docs/en/plugins-reference.md "Environment variables", skill/
+# command content 는 placeholder 등장 위치 전부 치환). 치환되면 순서·최신성 경쟁 자체가
+# 사라진다 — 미치환(빈 값)이면 아래 5-후보 폴백으로 무회귀 낙하.
+PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"
+if [ -z "$PLUGIN_DIR" ] || [ ! -f "$PLUGIN_DIR/scripts/feature-test.mjs" ]; then
+  PLUGIN_DIR=""
+  for _cand in \
+    "$HOME/.claude/plugins/marketplaces/thiscode-marketplace" \
+    "$HOME/.claude/plugins/thiscode" \
+    "$HOME/.claude/plugins/cache/local/thiscode" \
+    "$HOME/code/thiscode" \
+    "$HOME"/.claude/plugins/cache/thiscode-marketplace/thiscode/*; do
+    if [ -f "$_cand/scripts/feature-test.mjs" ]; then PLUGIN_DIR="$_cand"; break; fi
+  done
+fi
 
 if [ -z "$PLUGIN_DIR" ]; then
   echo "❌ thiscode 의 scripts/feature-test.mjs 못 찾음 — plugin install (또는 git clone) 먼저"
