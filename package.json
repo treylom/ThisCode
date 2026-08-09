@@ -1,6 +1,7 @@
 {
   "name": "@treylom/thiscode",
   "version": "1.0.0",
+  "private": true,
   "type": "module",
   "description": "KM ingestion + 4-Tier vault search (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). Multi-harness: Claude Code / Hermes / Gemini / OpenCode.",
   "keywords": [

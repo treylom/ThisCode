@@ -61,7 +61,9 @@ for _cand in \
   # 무조건 break = 첫 매치 미끼(2026-08-09 WSL 실측: claude-dashboard 오탐 TARGET,
   # 마켓 9중 8이 .git 보유라 거의 확정 발생). origin 이 thiscode 일 때만 채택 —
   # Step 2 의 `git fetch origin` 이 origin 을 요구하므로 remote 없는 clone 제외도 정합.
-  git -C "$_cand" remote get-url origin 2>/dev/null | grep -qi thiscode || continue
+  # 앵커형(끝 고정)인 이유: 부분문자열 `thiscode` 는 ThisCodex 도 통과시킨다(글재경 A1).
+  # ⚠️ ThisCodex 쪽으로 이 줄을 복사할 땐 앵커를 thiscodex 로 바꿔야 한다(비대칭).
+  git -C "$_cand" remote get-url origin 2>/dev/null | grep -qiE '/thiscode(\.git)?/?$' || continue
   TARGET="$_cand"
   break
 done
