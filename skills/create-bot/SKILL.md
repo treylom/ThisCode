@@ -260,6 +260,30 @@ command grep -o '<[^>]*>' "$BOT_DIR/soul.md" | grep -v '^<@[0-9]' | grep -v '^<!
 
    허용 잔존 = 실 Discord ID(`<@숫자>`)와 **HTML 주석**(SOUL-CAPSULE 구조 마커 — 정상 요소, 삭제 금지). 그 외 꺾쇠 출력 = 이 단계 미완. (주석 예외 없이 재면 마커 2줄 때문에 게이트가 영원히 통과 불가 — slack-configure 쪽 2026-08-06 실측과 동일.)
 
+### Step 5.7. 옵시디언 위키(vault) 연결 (선택 — B4, PRD `59-pm-prd-night-batch` 성공기준 6~8)
+
+`/thiscode:create-bot` 인터뷰의 **1급 질문**이다 — soul.md 를 확정한 직후, WD·CLAUDE.md 를 굳히기 **전**에 묻는다 (ThisCodex `guided init` 의 `confirm_wiki_path` 가 `confirm_state_dir` 바로 앞에 오는 것과 동일한 순서 계약 — ThisCode·ThisCodex 는 같은 "위키 경로 우선" 계약을 쓴다).
+
+AskUserQuestion:
+
+```
+연결할 옵시디언 위키(vault) 경로 — 채팅으로 지시한 Markdown 산출물이 그 위키에 저장되고,
+응답에 저장 경로가 함께 표시됩니다.
+선택 사항: 비워두면 건너뛰고 나중에 샘플 위키로 시작할 수 있습니다.
+경로 (또는 Enter 로 건너뛰기):
+```
+
+```bash
+WIKI_PATH="<사용자 입력 — 트림, 빈 값 허용>"
+if [ -n "$WIKI_PATH" ] && [ ! -d "$WIKI_PATH" ]; then
+  echo "⚠️  경로가 아직 없습니다: $WIKI_PATH — 생성은 차단하지 않고 계속 진행"
+fi
+```
+
+- **빈 값 = 생성 계속.** 이 질문은 봇 생성을 막지 않는다 — 미응답을 다른 질문의 기본값·placeholder 로 흘려보내지 말고 **명시적으로 빈 문자열**로 취급한다(ThisCodex 판 회귀 방지: 자유 텍스트 질문에 enum 류 fallback 을 적용하면 존재하지도 않는 경로가 값으로 굳는다).
+- **경로가 있으면** → Step 6 의 CLAUDE.md 에 "위키 연결" 절을 넣고, Step 7 시동 명령에 `THISCODE_WIKI_PATH` export 를 포함한다.
+- **경로가 없으면** → Step 6 의 CLAUDE.md 에 위키 절을 생략하고, Step 7 완료 안내에 샘플 위키로 시작하는 법 1줄을 넣는다.
+
 ### Step 6. WD (Working Directory) 결정 + CLAUDE.md 생성 (선택)
 
 > **USER-PROFILE 의 본 정착지 (구조 층)** — 인터뷰 답은 페르소나가 아니라 *구조*로 내려간다:
@@ -285,6 +309,8 @@ agent 가 WD 안 `CLAUDE.md` 생성 (메타 + soul.md reference):
 > 본 디렉토리는 <bot-name> 봇의 작업 공간.
 > Session 시작 시 `~/.claude/channels/discord-<bot-name>/soul.md` 자동 inject (SessionStart hook).
 > **공용 운영 규율 로딩**: 프로젝트 루트 `CLAUDE.md`(와 그 최상단 `@AGENTS.md` import)가 자동 chain 로드로 본 세션에 함께 주입된다 — 본 파일에 중복 `@import` ❌ (같은 본문이 두 번 들어가는 이중 주입 방지, 여기는 포인터 1줄만).
+>
+> **규칙 시드**: 이 작업 디렉토리는 `rules-seed.md`(최초 guided 생성 시 한 번만 복사 — 본 파일과 동일한 never-overwrite 계약)도 함께 갖는다 — DM 답장 스레드 echo 정책과 위키 저장 정책. 본 파일과 나란히 읽을 것.
 
 ## 봇 메타
 
@@ -295,9 +321,36 @@ agent 가 WD 안 `CLAUDE.md` 생성 (메타 + soul.md reference):
 | 모델·effort | <실기동 플래그 그대로 — 예: `--model 'claude-opus-5[1m]' --effort xhigh`> (정본 = 기동 alias/스크립트 — `opus[1m]` 같은 축약 표기는 alias 가 새 세대로 옮겨가면 조용히 낡는다) |
 | Discord channels | discord-<bot-name> |
 | Working Directory | <WD> |
+
+<!-- WIKI_PATH 가 있을 때만 추가 (Step 5.7) -->
+## 위키 연결
+
+| 항목 | 값 |
+|---|---|
+| 경로 | <WIKI_PATH> |
+| 저장 정책 | 채팅으로 지시한 Markdown 산출물은 이 경로에 저장 — 응답에 저장 경로를 함께 명시(말없이 저장 금지) |
+| 읽기 대상 | 이 경로 하위 전체 (검색·참조 자유) |
+| 쓰기 대상 | 채팅 지시로 생성하는 Markdown 산출물만 (기존 파일의 임의 수정은 별도 지시 없이 하지 않음) |
+
+> 규칙 상세는 `rules-seed.md` (Rule 2) 참조.
+```
+
+**규칙 시드 설치 (B3 — copy-once, 절대 덮어쓰지 않음)**:
+
+```bash
+# PLUGIN_DIR: Step 5 에서 확보한 값을 재사용(같은 세션 안에서 이미 detect 됨).
+# 값이 비어 있으면 Step 5 의 후보 목록으로 재탐지한다.
+if [ ! -f "$WD/rules-seed.md" ] && [ -f "$PLUGIN_DIR/templates/rules-seed.md" ]; then
+  cp "$PLUGIN_DIR/templates/rules-seed.md" "$WD/rules-seed.md"
+fi
+# 이미 "$WD/rules-seed.md" 가 있으면(재생성·재실행 케이스) 절대 건드리지 않는다 —
+# 사용자가 그 사본을 직접 고쳐 뒀을 수 있다. 낡음 여부는 세션 시작 시 hook 이
+# 별도로 WARN 한다(아래 "낡음 경고" 참고), 여기서 자동 병합하지 않는다.
 ```
 
 > 📌 **미러 규약**: 이 CLAUDE.md 를 사람이 읽는 위키/볼트에 미러한다면 반드시 sync 스크립트의 미러 명단에 등록한다(verbatim + `AUTO-MIRROR` 헤더). 손 복사 1회로 만든 고아 사본은 조용히 낡아서, 소유자가 stale 규칙·모델명을 현행으로 오독하게 만든다 (2026-08-05 실증 — docs/rules-system.md caveat 4).
+
+> 🔎 **낡음 경고 (기준 4·5)**: `rules-seed.md` 버전 스탬프(`<!-- rules-seed vX.Y.Z -->`)가 제품 동봉본(`templates/rules-seed.md`)보다 오래되면, 이 봇의 **다음 세션 시작**(SessionStart hook = `hooks/bot-session-init.sh`) 시점에 `[thiscode][WARN] rules-seed vX -> vY available — update by explicit command only` 한 줄이 뜬다. ThisCode 는 ThisCodex 의 `infra-launch.sh` 같은 정적 기동 스크립트가 없어(바로 `claude` 를 기동) 이 SessionStart hook 이 실제 "매 기동" 검사 지점이다 — 자동 병합·자동 갱신은 없으며, 반영은 운영자/봇에 대한 명시적 지시로만 한다.
 
 ### Step 6.7. 봇 연결 3게이트 선검사 (무반응 예방 — Windows 실측 회귀 반영)
 
@@ -323,25 +376,37 @@ echo "ℹ️  시동 시 --channels plugin:discord@claude-plugins-official 누�
 **`--channels` 플래그가 없으면 Discord 게이트웨이에 접속하지 않는다** — 아래 명령을 그대로 복사해 쓴다.
 
 ```bash
+# WIKI_PATH 는 Step 5.7 의 답 그대로다. 아래 각 export 줄은 WIKI_PATH 가 비어있지
+# 않을 때만 echo 된다 — THISCODE_WIKI_PATH 를 빈 문자열로 export 하지 않는다
+# (미연결 상태를 "값이 빈 export" 가 아니라 "export 자체가 없음"으로 표현 — 하류에서
+# 연결 여부를 문자열 빈칸 비교가 아니라 변수 존재로 판별할 수 있게).
 echo ""
 echo "✅ 봇 디렉토리 생성 완료: $BOT_DIR"
 echo ""
 echo "다음 step — claude 시동 (macOS/Linux/WSL):"
 echo ""
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
+[ -n "$WIKI_PATH" ] && echo "  export THISCODE_WIKI_PATH=\"$WIKI_PATH\""
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "tmux session 안에서 운영 권장:"
 echo "  tmux new-session -s ${BOT_NAME}"
 echo "  export DISCORD_STATE_DIR=\"$BOT_DIR\""
+[ -n "$WIKI_PATH" ] && echo "  export THISCODE_WIKI_PATH=\"$WIKI_PATH\""
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
 echo ""
 echo "Windows (PowerShell — tmux 불요, docs/10 참조):"
 echo "  \$env:DISCORD_STATE_DIR = \"$BOT_DIR\""
+[ -n "$WIKI_PATH" ] && echo "  \$env:THISCODE_WIKI_PATH = \"$WIKI_PATH\""
 echo "  cd <봇 WD>"
 echo "  claude --channels plugin:discord@claude-plugins-official"
+echo ""
+if [ -z "$WIKI_PATH" ]; then
+  echo "ℹ️  위키 미연결 — 샘플 위키로 시작: \"\$PLUGIN_DIR/sample-vault\" 를 원하는 경로로 복사한 뒤,"
+  echo "    그 경로로 Step 5.7 을 다시 실행(또는 WD의 CLAUDE.md '위키 연결' 절 + rules-seed.md Rule 2 를 직접 채워) 연결하세요."
+fi
 echo ""
 echo "⚠️  새 WD 첫 기동 시 'Quick safety check: Is this a project you created or one you trust?'"
 echo "    프롬프트가 뜨고 Enter 전까지 멈춰 있습니다 (--dangerously-skip-permissions 를 줘도 뜹니다)."
@@ -363,6 +428,7 @@ echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 �
 - [ ] claude 시동 + DISCORD_STATE_DIR export 후 첫 응답에 페르소나 어휘 자연 포함
 - [ ] Discord DM → 봇 응답 ✅
 - [ ] 🔴 **soul.md 가 실제로 주입됐나** — 아래 별도 절차로 확인(파일 존재 ≠ 주입)
+- [ ] `<WD>/rules-seed.md` 존재 + `<!-- rules-seed vX.Y.Z -->` 스탬프가 `templates/rules-seed.md` 와 동일 버전(다르면 다음 세션 시작 시 WARN 예상 — 이상 아님). `WIKI_PATH` 를 줬다면 `<WD>/CLAUDE.md` 의 "위키 연결" 절도 함께 확인
 
 > ### soul.md 주입 검증 — 파일이 있는 것과 들어가는 것은 다르다
 >
@@ -410,4 +476,6 @@ echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 �
 - hook 등록: [install-hooks.md](install-hooks.md) — 반드시 본 명령 전에 실행
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - soul.md template: [../templates/soul-general-assistant.md](../templates/soul-general-assistant.md)
+- 규칙 시드 template (B3): [../templates/rules-seed.md](../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh)
+- 샘플 위키 (B4, WIKI_PATH 없을 때 안내): [../sample-vault/README.md](../sample-vault/README.md)
 - 메인 wizard: [start.md](start.md)

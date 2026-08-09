@@ -80,6 +80,26 @@ fi
 
 SECTIONS=""
 
+# --- 0.5) rules-seed staleness check (B3, PRD 59-pm-prd-night-batch 기준 4·5) ---
+# boot-time WARN only — never auto-merges, never auto-updates the bot's own
+# copy-once rules-seed.md (create-bot Step 6 owns the copy; this hook only
+# compares version stamps). ThisCode has no static per-bot launch script
+# (claude is started directly — see create-bot Step 7), so this SessionStart
+# hook is the actual "every boot" checkpoint (ThisCodex equivalent:
+# infra-launch.sh). Emitted to stderr, not stdout, so it never corrupts the
+# JSON hookSpecificOutput contract this hook prints below.
+_BOT_WD_EFF="${BOT_WD:-$PWD}"
+_HOOK_SELF="${BASH_SOURCE[0]:-$0}"
+_HOOK_DIR="$(cd "$(dirname "$_HOOK_SELF")" 2>/dev/null && pwd)"
+_PLUGIN_ROOT="$([ -n "$_HOOK_DIR" ] && cd "$_HOOK_DIR/.." 2>/dev/null && pwd)"
+if [ -n "$_PLUGIN_ROOT" ] && [ -f "${_BOT_WD_EFF}/rules-seed.md" ] && [ -f "${_PLUGIN_ROOT}/templates/rules-seed.md" ]; then
+  _BOT_RULES_VER=$(command grep -oE 'rules-seed v[0-9.]+' "${_BOT_WD_EFF}/rules-seed.md" | head -1 | awk '{print $2}')
+  _PRODUCT_RULES_VER=$(command grep -oE 'rules-seed v[0-9.]+' "${_PLUGIN_ROOT}/templates/rules-seed.md" | head -1 | awk '{print $2}')
+  if [ -n "$_BOT_RULES_VER" ] && [ -n "$_PRODUCT_RULES_VER" ] && [ "$_BOT_RULES_VER" != "$_PRODUCT_RULES_VER" ]; then
+    echo "[thiscode][WARN] rules-seed $_BOT_RULES_VER -> $_PRODUCT_RULES_VER available — update by explicit command only" >&2
+  fi
+fi
+
 # --- 1) soul.md (페르소나·말투 규율) ---
 if [ -f "$SOUL_FILE" ]; then
   SOUL_CONTENT=$(cat "$SOUL_FILE")
