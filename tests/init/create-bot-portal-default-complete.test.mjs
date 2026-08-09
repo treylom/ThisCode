@@ -119,6 +119,34 @@ test('B7 (Fix C): the "no tool" branch offers to attach playwright MCP (help:2.5
   );
 });
 
+// 🟡C-a (2026-08-10, 글재경 재검토 지시): Fix C reused help.md STEP 2.5's playwright-MCP
+// offer verbatim in create-bot rather than pointing at a shared source (SKILL.md is prose,
+// not executable, so there's no import mechanism — see the copy-coherence note in Fix C's
+// commit). That makes it an intentional DUAL COPY, not a copy-asymmetry: whichever file
+// changes first, the other must follow or the two silently disagree. This is a dedicated
+// machine check for that — it extracts the two shared literals from EACH file independently
+// and asserts they are byte-identical to EACH OTHER (not to a third hardcoded string in this
+// test, which would only catch one file drifting from the test, not the two files drifting
+// from each other while both still happen to match some independent literal).
+test('🟡C-a: the playwright-attach offer text and command stay byte-identical between create-bot and help.md (drift guard)', () => {
+  const createBotText = readSkill();
+  const helpText = readFileSync('skills/help/SKILL.md', 'utf8');
+
+  const attachRe = /`(claude mcp add playwright[^`]*)`/;
+  const createBotAttach = createBotText.match(attachRe)?.[1];
+  const helpAttach = helpText.match(attachRe)?.[1];
+  assert.ok(createBotAttach, 'create-bot must contain a backtick-quoted playwright attach command');
+  assert.ok(helpAttach, 'help.md must contain a backtick-quoted playwright attach command');
+  assert.equal(createBotAttach, helpAttach, 'the attach command must be identical between create-bot and help.md — a drift here (e.g. one side bumping the npx package spec) would silently break the reused suggestion');
+
+  const offerRe = /"(브라우저를 같이 볼 수 있는[^"]*)"/;
+  const createBotOffer = createBotText.match(offerRe)?.[1];
+  const helpOffer = helpText.match(offerRe)?.[1];
+  assert.ok(createBotOffer, 'create-bot must contain the quoted offer sentence');
+  assert.ok(helpOffer, 'help.md must contain the quoted offer sentence');
+  assert.equal(createBotOffer, helpOffer, 'the offer sentence must be identical between create-bot and help.md');
+});
+
 test('B7: commands/start.md points Step 2 at create-bot Step 3 as canonical instead of holding its own full copy', () => {
   const text = readFileSync('commands/start.md', 'utf8');
   assert.match(text, /### Step 2\. Discord 봇 생성 \(기본 = 자동 완주, B7\)/);
