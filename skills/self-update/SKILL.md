@@ -56,7 +56,14 @@ for _cand in \
   "$HOME/.claude/plugins/cache/local/thiscode" \
   "$HOME/code/thiscode" \
   "$HOME/code/ThisCode"; do
-  if [ -d "$_cand/.git" ]; then TARGET="$_cand"; break; fi
+  [ -d "$_cand/.git" ] || continue
+  # 소속 확인 필수 — marketplaces/* 글롭은 «남의» 마켓플레이스도 훑는다. 첫 .git 에서
+  # 무조건 break = 첫 매치 미끼(2026-08-09 WSL 실측: claude-dashboard 오탐 TARGET,
+  # 마켓 9중 8이 .git 보유라 거의 확정 발생). origin 이 thiscode 일 때만 채택 —
+  # Step 2 의 `git fetch origin` 이 origin 을 요구하므로 remote 없는 clone 제외도 정합.
+  git -C "$_cand" remote get-url origin 2>/dev/null | grep -qi thiscode || continue
+  TARGET="$_cand"
+  break
 done
 
 if [ -z "$TARGET" ]; then

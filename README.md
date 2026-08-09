@@ -460,6 +460,17 @@ This repo distills the author's (`treylom`) vault operations experience.
 - Debugging know-how contributions welcome
 - Course learner feedback welcome
 
+**Release discipline (2026-08-09)**: any skill/content change ships with a version
+bump in **every surface the user-delivery path reads** — today that is
+`.claude-plugin/plugin.json` **and** `.claude-plugin/marketplace.json`, in the same
+commit. Without the bump, `claude plugin update` answers "already at the latest
+version" and the fix never reaches installed users (measured 2026-08-09; the stale
+`1.1.5` marketplace entry was the same failure). Surfaces NOT on that path, kept at
+independent versions on purpose: `package.json` (npm-shape metadata, not published
+to npm) and `gemini-extension.json` (separate Gemini CLI/OpenCode distribution
+channel). If a new delivery surface appears, it joins the bump rule by the
+criterion above, not by being on this list.
+
 ---
 
 ## 📄 License
