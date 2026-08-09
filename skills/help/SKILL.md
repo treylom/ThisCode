@@ -1,6 +1,6 @@
 ---
 name: help
-description: Use when the user is stuck, confused, or asks what ThisCode can do — friendly diagnosis of where they got stuck, step-by-step recovery in plain language, hands-on assistance via browser/desktop AI tools when available, plus the full subcommand map.
+description: Use when the user is stuck, confused, or asks what ThisCode can do — friendly diagnosis of where they got stuck, step-by-step recovery in plain language, hands-on assistance via browser/desktop AI tools when available, plus a situation-grouped subcommand map.
 disable-model-invocation: true
 ---
 
@@ -40,6 +40,7 @@ disable-model-invocation: true
 | 토큰(출입증)을 어디 넣을지 모름 | `.env` 파일 위치 안내 | 토큰은 **사용자가 직접** 붙여넣는다 — 봇/AI 에게 토큰을 보여주거나 채팅에 붙이지 말 것 |
 | 봇을 서버에 초대했는데 안 보임 | 초대 링크 권한 확인 | 권한 미체크·다른 서버 초대 → 초대 링크 재생성 |
 | 봇이 대답을 안 함 | 봇 프로세스 살아있나 + 채널 규칙 | 멘션 필요한 채널에서 멘션 없이 말 걸었거나, 봇 꺼짐 → 재기동 후 1회 왕복 확인 |
+| 자료정리(km)·검색이 안 됨 — "config missing" 류 안내 | 에러 문구에 config/설정 언급이 있는지 | km 설정 파일 미생성 → `/thiscode:km-bootstrap` 1회 실행(필요한 설정을 자동 생성) 후 원래 명령 재시도 |
 | **TUI(터미널)를 재시작했더니 봇이 죽음** | 재기동 절차 밟았는지 | 세션 재시작 후엔 봇도 다시 켜야 한다 — 재기동 명령 안내 + 다시 왕복 확인 |
 | Slack 연결 관문에서 막힘 (로그인/앱 생성/토큰/첫 채널) | 어느 관문인지 특정 | `/thiscode:create-slack-bot` 은 사람 관문이 4+1개뿐 — 관문별 화면 기준 안내, 필요시 STEP 2.5 |
 | 위에 없는 증상 | 에러 문구 전문 확보 | STEP 2.5 직접 개입 또는 에러 문구 기반 개별 진단 |
@@ -85,7 +86,9 @@ disable-model-invocation: true
 | 명령 | 언제 |
 |---|---|
 | `/thiscode:km` | 자료를 옵시디언 금고(vault)에 정리해 넣기 |
+| `/thiscode:km-bootstrap` | km 이 "설정이 없다(config missing)"고 할 때 1회 — 설정 자동 생성 |
 | `/thiscode:search` | 금고 안 내용 검색 |
+| `/thiscode:prompt` | AI 프롬프트 생성기 |
 | `/thiscode:open-meeting` | 봇 여럿이 협업할 회의방 만들기 |
 | `/thiscode:codex-check` | Codex 연동 상태 점검 |
 
