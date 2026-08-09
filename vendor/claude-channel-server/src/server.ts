@@ -94,6 +94,35 @@ function main(): void {
     }
   }
 
+  // Outbound DM-thread guard (겹1, 2026-08-10 — 루돌프 실측 2026-08-09):
+  // defect 17 taught handleSlackEvent (below) to only put `thread_ts` in a
+  // DM's meta when the *inbound* message actually carried one — a DM the
+  // user never threaded gets none, so the model has nothing legitimate to
+  // echo. That is a code-side gate on the inbound path only, though; it does
+  // nothing to the outbound `reply` tool, which accepts whatever thread_ts
+  // argument the model hands it. When a model supplies one anyway (echoed
+  // from an unrelated event, hallucinated, or just not following the
+  // instruction), handleReply used to pass it straight to
+  // chat.postMessage and Slack folds the DM into a comment thread — the
+  // exact defect 17 symptom, resurrected through the tool-argument layer
+  // instead of the code layer. channelKindByChannel + imInboundThreadTsSet
+  // let handleReply veto that itself: only a thread_ts a real DM inbound
+  // actually carried may be echoed back into a DM. Channel (non-DM) replies
+  // are untouched — this guard only ever engages when the target channel is
+  // 'im'.
+  const channelKindByChannel = new Map<string, 'im' | 'other'>();
+  const imInboundThreadTsOrder: string[] = [];
+  const imInboundThreadTsSet = new Set<string>();
+  function rememberImInboundThreadTs(threadTs: string): void {
+    if (imInboundThreadTsSet.has(threadTs)) return;
+    imInboundThreadTsSet.add(threadTs);
+    imInboundThreadTsOrder.push(threadTs);
+    if (imInboundThreadTsOrder.length > 200) {
+      const evicted = imInboundThreadTsOrder.shift();
+      if (evicted) imInboundThreadTsSet.delete(evicted);
+    }
+  }
+
   // (B) bot-interop (2026-08-07): which OTHER bridge bots may speak to this
   // one. U…-space on purpose — the same id axis as ALLOWED_SLACK_USER_ID and
   // as the `<@U…>` mention text, so there is exactly one id space to reason
@@ -149,10 +178,16 @@ function main(): void {
     // but only if we've actually seen an allowed inbound from it; otherwise
     // fall back to the configured channel. Never post to an unseen chat_id.
     const target = msg.channel && allowedChannels.has(msg.channel) ? msg.channel : (lastInboundChannel ?? env.SLACK_CHANNEL_ID);
+    // 겹1: strip a model-supplied thread_ts on a DM target unless it is one a
+    // real DM inbound actually carried (see the guard comment above). Never
+    // touches non-DM targets — msg.thread_ts passes through unchanged there,
+    // same as before this fix.
+    const isImTarget = channelKindByChannel.get(target) === 'im';
+    const threadTs = isImTarget && !(msg.thread_ts && imInboundThreadTsSet.has(msg.thread_ts)) ? undefined : msg.thread_ts;
     try {
       await web.chat.postMessage({
         channel: target,
-        thread_ts: msg.thread_ts,
+        thread_ts: threadTs,
         text: msg.text,
       });
       sendAck(socket, msg.req_id, true);
@@ -345,6 +380,15 @@ function main(): void {
     if (event.channel) {
       allowedChannels.add(event.channel); // this conversation is now a valid reply target
       lastInboundChannel = event.channel; // ...and the active one for fallback routing
+      channelKindByChannel.set(event.channel, event.channel_type === 'im' ? 'im' : 'other'); // 겹1: which reply-target-guard branch applies
+    }
+
+    // 겹1: record a genuine DM thread_ts (the user actually opened a thread
+    // in this DM) so handleReply's guard above can tell that apart from a
+    // model-supplied one. Channels don't need this — the guard never strips
+    // their thread_ts.
+    if (event.channel_type === 'im' && event.thread_ts) {
+      rememberImInboundThreadTs(event.thread_ts);
     }
 
     // Defect 17: in a channel this conversation now lives in a thread rooted
