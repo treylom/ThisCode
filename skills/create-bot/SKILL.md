@@ -96,7 +96,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 11종 = `permissions=563345093688384` (URL 에 그대로 붙여도 된다)
+   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
 5. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대 → **승인(사람)**
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 처리한다. 브라우저만으로 강제할 방법은 실측에서 못 찾았다(3회 시도).
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
