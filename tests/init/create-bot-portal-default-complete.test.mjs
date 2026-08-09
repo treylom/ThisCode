@@ -70,6 +70,55 @@ test('B7: tool-availability detection gates the default vs. manual-fallback bran
   assert.match(text, /\*\*수동 안내 \(도구 없음/, 'a manual fallback branch must still exist for sessions with no browser automation');
 });
 
+// Fix C (2026-08-10, 카파시 root-cause + 루돌프 실측): Step 3's header claimed
+// "printing instructions and stopping is a defect in the default flow", but the
+// very next "가용성 탐지" branch said the opposite for the no-tool case — "not a
+// defect, an environment limit" — and a freshly-installed session has NO
+// browser automation by default, so most students landed exactly in that
+// branch. B7's "default completes" promise was false on a clean install. The
+// fix material already existed in skills/help/SKILL.md STEP 2.5 point 2 (offer
+// to attach playwright MCP, human approval gate kept) — reused verbatim rather
+// than inventing new automation. Existence+behavior 2-slot check: the offer
+// text exists (existence) AND sits in an approve/decline branch where only
+// decline reaches the "environment limit" label and only approve rejoins the
+// default flow (behavior/position).
+test('B7 (Fix C): the "no tool" branch offers to attach playwright MCP (help:2.5 wording reused verbatim) instead of falling straight back to manual guidance', () => {
+  const text = readSkill();
+  const helpText = readFileSync('skills/help/SKILL.md', 'utf8');
+  const offerLine = '브라우저를 같이 볼 수 있는 도구를 1분 안에 붙일 수 있어요. 붙일까요?';
+  const attachCmd = 'claude mcp add playwright -- npx @playwright/mcp@latest';
+  assert.ok(helpText.includes(offerLine), 'sanity: the offer text must still exist verbatim in help:2.5 (the source being reused)');
+  assert.ok(text.includes(offerLine), 'create-bot must reuse the exact help:2.5 offer wording, not paraphrase or invent new copy');
+  assert.ok(text.includes(attachCmd), 'create-bot must reuse the exact help:2.5 attach command');
+
+  const noToolIdx = text.indexOf('**없으면**');
+  const offerIdx = text.indexOf(offerLine);
+  const approveIdx = text.indexOf('**승인하면**');
+  const declineIdx = text.indexOf('**거부할 때만**');
+  assert.ok(
+    [noToolIdx, offerIdx, approveIdx, declineIdx].every((i) => i > -1),
+    'the no-tool branch, the offer, and both the approve and decline sub-branches must all exist',
+  );
+  assert.ok(
+    noToolIdx < offerIdx && offerIdx < approveIdx && approveIdx < declineIdx,
+    'order must be: no-tool branch → offer → approve sub-branch → decline sub-branch',
+  );
+
+  const approveBlock = text.slice(approveIdx, declineIdx);
+  assert.match(approveBlock, /재탐지.*기본 흐름을 그대로 실행/, 'approving must rejoin the default flow — B7 still completes');
+
+  const declineBlock = text.slice(declineIdx, text.indexOf('### Step 4.', declineIdx));
+  assert.match(declineBlock, /결함이 아니라 환경 한계/, 'the "not a defect, an environment limit" label must be scoped to the decline sub-branch');
+
+  // regression lock: the OLD unscoped label (applied to the whole no-tool
+  // branch regardless of whether an offer was even made) must not reappear.
+  assert.doesNotMatch(
+    text,
+    /없으면\*\* → 새 도구 설치를 여기서 강요하지 않는다.*이건 결함이 아니라 환경 한계다/s,
+    'the old unconditional "not a defect" framing (skipping the playwright offer entirely) must not reappear',
+  );
+});
+
 test('B7: commands/start.md points Step 2 at create-bot Step 3 as canonical instead of holding its own full copy', () => {
   const text = readFileSync('commands/start.md', 'utf8');
   assert.match(text, /### Step 2\. Discord 봇 생성 \(기본 = 자동 완주, B7\)/);
