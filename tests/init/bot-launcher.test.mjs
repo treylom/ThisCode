@@ -58,11 +58,13 @@ test('generated launcher uses exact tmux targets and contains no developer-machi
     sessionName: 'study-bot',
     botWd: '/confirmed/work dir',
     stateDir: '/confirmed/state',
+    wikiPath: '/confirmed/wiki path',
   });
   assert.match(text, /has-session -t "=\$SESSION_NAME"/);
   assert.match(text, /kill-session -t "=\$SESSION_NAME"/);
   assert.match(text, /attach-session -t "=\$SESSION_NAME"/);
   assert.match(text, /DISCORD_STATE_DIR/);
+  assert.match(text, /export THISCODE_WIKI_PATH='\/confirmed\/wiki path'/);
   assert.match(text, /--channels plugin:discord@claude-plugins-official/);
   assert.doesNotMatch(text, /kill-server/);
   const forbiddenMachinePaths = new RegExp([
@@ -123,7 +125,7 @@ test('without tmux, Discord and Slack launch in the confirmed WD with separated 
     const log = join(f.root, 'agent.log');
     mkdirSync(fakeBin);
     const fakeClaude = join(fakeBin, 'claude');
-    writeFileSync(fakeClaude, `#!/bin/bash\nprintf 'cwd=%s\\ndiscord=%s\\nslack=%s\\nargs=%s\\n' "$PWD" "${'$'}{DISCORD_STATE_DIR:-}" "${'$'}{CLAUDE_CHANNEL_SLACK_DIR:-}" "$*" > "$AGENT_LOG"\n`);
+    writeFileSync(fakeClaude, `#!/bin/bash\nprintf 'cwd=%s\\ndiscord=%s\\nslack=%s\\nwiki=%s\\nargs=%s\\n' "$PWD" "${'$'}{DISCORD_STATE_DIR:-}" "${'$'}{CLAUDE_CHANNEL_SLACK_DIR:-}" "${'$'}{THISCODE_WIKI_PATH:-}" "$*" > "$AGENT_LOG"\n`);
     chmodSync(fakeClaude, 0o755);
     const run = spawnSync('/bin/bash', [installed.launcherPath, channel === 'slack' ? 'safe' : 'start'], {
       encoding: 'utf8',
@@ -131,6 +133,7 @@ test('without tmux, Discord and Slack launch in the confirmed WD with separated 
         ...process.env,
         DISCORD_STATE_DIR: '/tmp/preexisting-discord-state',
         CLAUDE_CHANNEL_SLACK_DIR: '/tmp/preexisting-slack-state',
+        THISCODE_WIKI_PATH: '/tmp/preexisting-wiki-path',
         PATH: fakeBin,
         AGENT_LOG: log,
       },
@@ -138,6 +141,7 @@ test('without tmux, Discord and Slack launch in the confirmed WD with separated 
     assert.equal(run.status, 0, run.stderr);
     const actual = readFileSync(log, 'utf8');
     assert.match(actual, new RegExp(`cwd=${f.botWd.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    assert.match(actual, /wiki=\n/);
     if (channel === 'discord') {
       assert.match(actual, new RegExp(`discord=${f.stateDir.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
       assert.match(actual, /--channels plugin:discord@claude-plugins-official/);

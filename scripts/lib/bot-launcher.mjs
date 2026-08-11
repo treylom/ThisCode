@@ -54,7 +54,7 @@ export function launcherScript(input) {
   const cfg = normalizeConfig(input);
   const wikiExport = cfg.wikiPath
     ? `export THISCODE_WIKI_PATH=${shQuote(cfg.wikiPath)}`
-    : ':';
+    : 'unset THISCODE_WIKI_PATH';
   return `#!/usr/bin/env bash
 ${LAUNCHER_MARKER}
 # Generated only from paths confirmed during /thiscode bot creation.
@@ -95,6 +95,7 @@ run_agent() {
     exec claude --channels plugin:discord@claude-plugins-official
   fi
   unset DISCORD_STATE_DIR
+  unset THISCODE_WIKI_PATH
   export CLAUDE_CHANNEL_SLACK_DIR="$STATE_DIR"
   if [ "$ACTION" = safe ]; then
     exec claude --dangerously-load-development-channels server:slack-channel
