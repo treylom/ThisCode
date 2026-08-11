@@ -763,30 +763,44 @@ EOF
 fi
 ```
 
-**13-A-③ 기동 alias 생성 — 결함 18 수리** (2026-08-06 재경님 지시 "alias는 bypass도 걸어야 합니다" — 이전엔 alias 단계 자체가 0건이라 사용자가 매번 `cd … && claude --dangerously-load-development-channels …` 를 손으로 쳤다):
+**13-A-③ 재시작 안전 기동 런처 — 기본 추천, 명시적 거부만 건너뜀**
+
+봇 생성의 마무리로 "한 단어로 봇을 켜고, 같은 이름의 이전 tmux 세션이 있으면
+정확히 그 세션만 정리해 다시 띄우는 런처를 설치할까요? (Y/n, 기본값 Y)"라고 묻는다.
+Enter 또는 `Y`는 설치이며, 사용자가 `n`이라고 **명시적으로 거부한 경우에만
+건너뛴다**. 이 단계는 단순 `cd … && claude` alias를 rc에 직접 쓰지 않는다.
+Step 7-A와 Step 8이 확정한 경로를 제품 런처 설치기에 넘긴다.
 
 ```bash
 BOT_DIR=$(cat "$HOME/.claude/channels/.slack-configure-bot-dir" 2>/dev/null)
+STATE_DIR=$(cat "$HOME/.claude/channels/.slack-configure-target" 2>/dev/null)
 BOT_NAME=$(basename "$BOT_DIR")
+[ -n "$BOT_DIR" ] && [ -d "$BOT_DIR" ] || { echo "❌ 확인된 봇 WD가 없습니다 — Step 7-A로 돌아갑니다."; exit 1; }
+[ -n "$STATE_DIR" ] && [ -d "$STATE_DIR" ] || { echo "❌ 확인된 상태 디렉토리가 없습니다 — Step 8로 돌아갑니다."; exit 1; }
 case "$SHELL" in */zsh) RC="$HOME/.zshrc" ;; *) RC="$HOME/.bashrc" ;; esac
-if command grep -q "alias $BOT_NAME=" "$RC" 2>/dev/null; then
-  echo "⚠️ $RC 에 alias $BOT_NAME 이 이미 있습니다 — 내용을 확인하고 필요하면 수동 갱신하세요."
-else
-  cat >> "$RC" <<EOF
 
-# $BOT_NAME Slack 봇 기동 (thiscode:slack-configure 생성 — 기본 = bypass)
-alias $BOT_NAME='cd $BOT_DIR && claude --dangerously-skip-permissions --dangerously-load-development-channels server:slack-channel'
-# 승인 유지 변형(도구 실행마다 Slack 채널에서 yes/no 승인 — permission-relay 경로):
-alias $BOT_NAME-safe='cd $BOT_DIR && claude --dangerously-load-development-channels server:slack-channel'
-EOF
-  echo "✅ alias 생성 — $RC 에 $BOT_NAME(기본 bypass)·$BOT_NAME-safe(승인 유지) 2종"
-fi
+LAUNCHER_ARGS=(
+  --channel slack
+  --alias "$BOT_NAME"
+  --session "$BOT_NAME"
+  --bot-wd "$BOT_DIR"
+  --state-dir "$STATE_DIR"
+  --rc "$RC"
+)
+
+# 1) 동의 전 preview: 파일을 바꾸지 않는다.
+node "$PLUGIN_DIR/scripts/install-bot-launcher.mjs" "${LAUNCHER_ARGS[@]}"
+
+# 2) Enter/Y로 동의했을 때만 같은 인자에 --yes를 붙인다.
+node "$PLUGIN_DIR/scripts/install-bot-launcher.mjs" "${LAUNCHER_ARGS[@]}" --yes
 ```
 
-- **기본이 bypass 인 이유**(재경님 지시 + 실측 근거): 승인 대기로 멈춘 봇은 Slack 쪽에서 **무응답과 구별되지 않는다** — 결함 14(승인 프롬프트 누출)의 반대편 실패 모드(누출 vs 조용한 정지)를 둘 다 닫으려면 상시 봇은 bypass 가 기본이어야 한다. permission-relay(`handlePermissionAsk`·verdict 경로)는 은퇴가 아니라 `-safe` 변형이 쓴다 — 13-A-② allowlist 도 그 변형에서 유효.
-- 모델·effort 플래그는 하드코딩하지 않는다 — 사용자가 원하면 alias 에 `--model <원하는 모델>` 을 직접 덧붙인다.
-- **검증은 `bash -ic "alias $BOT_NAME"`** (zsh 는 `zsh -ic`) — ⚠️ `bash -lc` 는 `.bashrc` 를 읽지 않아 **정상 상태에서도 거짓 음성**이 난다(2026-08-06 실측).
-- 🔴 **첫 사용 안내 — `source ~/.bashrc && $BOT_NAME` 한 줄은 반드시 실패한다**(2026-08-06 실측: bash 는 줄 전체를 먼저 해석하므로 해석 시점에 없던 alias 가 명령으로 안 잡힘 → `command not found` — alias 가 안 만들어진 것으로 오해되기 딱 좋다). 사용자 안내는: **"새 터미널을 열거나, `source ~/.bashrc` 와 `$BOT_NAME` 을 따로(두 줄로) 입력하세요"**.
+- 설치기는 `$BOT_DIR/.thiscode-bot-launcher.sh`와 rc의 이름표 있는 관리 블록을 만들고 기존 rc를 먼저 백업한다. `$BOT_NAME`은 기본 bypass 시작/재시작, `$BOT_NAME-safe`는 승인 유지 시작/재시작, `$BOT_NAME-stop`은 종료다.
+- tmux가 있으면 `=<세션명>` exact target으로 **같은 이름의 세션만** 정리한 뒤 새 세션을 띄운다. tmux가 없는 macOS/Linux/WSL에서는 확인된 `$BOT_DIR`에서 foreground로 실행하며 Ctrl-C로 끈다. 다른 봇 세션이나 tmux server 전체를 종료하지 않는다.
+- **기본이 bypass 인 이유**(재경님 지시 + 실측 근거): 승인 대기로 멈춘 봇은 Slack 쪽에서 **무응답과 구별되지 않는다** — 결함 14(승인 프롬프트 누출)의 반대편 실패 모드(누출 vs 조용한 정지)를 둘 다 닫으려면 상시 봇은 bypass가 기본이어야 한다. permission-relay(`handlePermissionAsk`·verdict 경로)는 `-safe` 변형이 쓴다.
+- 모델·effort 플래그와 개발자 컴퓨터의 경로는 하드코딩하지 않는다. Step 7-A·8에서 확인된 절대경로와 사용자가 정한 이름만 쓴다.
+- **검증은 `bash -ic "alias $BOT_NAME"`** (zsh는 `zsh -ic`)와 런처 파일 확인으로 한다. `bash -lc`는 `.bashrc`를 읽지 않아 정상 상태에서도 거짓 음성이 난다.
+- 첫 사용은 새 터미널을 열거나 `source "$RC"`와 `$BOT_NAME`을 **서로 다른 두 줄**에 입력한다. 한 줄의 `source … && alias-name`은 해석 시점 때문에 실패할 수 있다.
 
 **허용 범위를 reply·react 둘로 좁힌 이유**: "답장·반응"은 매번 물으면 설계 모순이고, 나머지 도구 승인은 그대로 남겨야 사용자가 봇의 파일·셸 접근을 채널에서 통제할 수 있다(permission-relay 는 설계 기능 — `server.ts` `handlePermissionAsk`). 이 파일은 Step 14 **이전**에 만들어야 한다 — 세션이 뜬 뒤에 만들면 재기동 전까지 반영되지 않는다.
 
@@ -857,6 +871,8 @@ claude --dangerously-load-development-channels server:slack-channel
 - [ ] `$STATE_DIR/.env` 존재 + chmod 600 + 필수 키 4개 + 키당 줄 1개(중복 없음)
 - [ ] resident server 로그에 `bridge live — channel ..., allowed user ...`
 - [ ] `.mcp.json`에 `mcpServers.slack-channel` 등록
+- [ ] 13-A-③을 수락했다면 `$BOT_DIR/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-safe`·`$BOT_NAME-stop` 관리 블록 1개 + 재실행 중복 0
+- [ ] 런처 재호출 시 같은 이름의 tmux 세션만 교체되고, tmux가 없으면 확인된 `$BOT_DIR`에서 foreground로 기동
 - [ ] `slack manifest diff` 로컬↔원격 일치
 - [ ] `curl auth.test` → `ok:true`
 - [ ] Slack DM → 세션에 메시지 도착 → `reply` 도구 응답 → Slack에 표시 ✅

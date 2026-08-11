@@ -22,7 +22,7 @@ $ARGUMENTS
 
 ## 진행 흐름 (요약 — 전문은 스킬 본문)
 
-이 커맨드는 `slack-configure` 스킬을 그대로 호출한다 — **`Skill` 도구로 `slack-configure`를 invoke**해 아래 단계를 순서대로 수행한다. 상세 절차(브리지 자동 빌드 → 봇 이름/페르소나 확인 → Slack CLI 로그인 → 앱 매니페스트 생성·동기화 → 워크스페이스 설치 승인 → 상태 디렉토리 확보(기존 봇 보호) → 채널 확보 → 토큰 입력 → `.env` 검증 → `.mcp.json` 등록 → resident server 기동 → 첫 확인 다이얼로그 → 검증)의 정본은 [`../skills/slack-configure/SKILL.md`](../skills/slack-configure/SKILL.md)다 — 여기서 다시 옮겨 적지 않는다(정본 이원화·drift 방지).
+이 커맨드는 `slack-configure` 스킬을 그대로 호출한다 — **`Skill` 도구로 `slack-configure`를 invoke**해 아래 단계를 순서대로 수행한다. 상세 절차(브리지 자동 빌드 → 봇 이름/페르소나 확인 → Slack CLI 로그인 → 앱 매니페스트 생성·동기화 → 워크스페이스 설치 승인 → 상태 디렉토리 확보(기존 봇 보호) → 채널 확보 → 토큰 입력 → `.env` 검증 → `.mcp.json` 등록 → resident server 기동 → 기본 추천 재시작 안전 런처 → 첫 확인 다이얼로그 → 검증)의 정본은 [`../skills/slack-configure/SKILL.md`](../skills/slack-configure/SKILL.md)다 — 여기서 다시 옮겨 적지 않는다(정본 이원화·drift 방지).
 
 기술 참고서(프로토콜·아키텍처·보안 모델·트러블슈팅 전체 목록)는 [`../skills/slack-bridge/SKILL.md`](../skills/slack-bridge/SKILL.md).
 
@@ -39,6 +39,7 @@ $ARGUMENTS
 - [ ] `$STATE_DIR/.env` 존재 + chmod 600 + 필수 키 4개(`SLACK_BOT_TOKEN`·`SLACK_APP_TOKEN`·`ALLOWED_SLACK_USER_ID`·`SLACK_CHANNEL_ID`)
 - [ ] resident server 로그에 `bridge live — channel ..., allowed user ...`
 - [ ] `.mcp.json`에 `mcpServers.slack-channel` 등록
+- [ ] 기본 추천 런처 수락 시 시작·safe·stop alias가 생기고, 같은 이름의 이전 tmux 세션만 정리한 뒤 재기동
 - [ ] Slack DM → 세션에 메시지 도착 → `reply` 응답 → Slack에 표시 ✅
 
 ## 관련 자원

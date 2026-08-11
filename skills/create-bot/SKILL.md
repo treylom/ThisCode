@@ -505,6 +505,54 @@ echo "  access.json 등록했으면(Step 4.7) → 봇에 DM → 바로 첫 응�
 echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 → 첫 응답"
 ```
 
+### Step 7.5. 한 단어 봇 런처 설치 [기본 추천 — 명시적 거부만 건너뜀]
+
+봇 생성의 마무리로 **확인된 경로만 넣은 기동 런처를 기본 추천**한다. 질문은
+"한 단어로 봇을 켜고, 같은 이름의 이전 tmux 세션이 있으면 정확히 그 세션만 정리해
+다시 띄우는 런처를 설치할까요? (Y/n, 기본값 Y)"로 한다. Enter 또는 `Y`는 설치,
+사용자가 `n`이라고 **명시적으로 거부한 경우에만 이 단계를 건너뛴다**.
+
+먼저 Step 1의 `$BOT_NAME`, Step 4의 실제 `$BOT_DIR`, Step 6에서 사용자가 확정한
+절대경로 `$WD`를 다시 확인한다. `$WD`를 앞 단계에서 생략했다면 여기서 실제 작업
+폴더를 정하고 존재 여부를 확인한다. `<ThisCode 폴더>` 같은 placeholder나 개발자
+컴퓨터의 고정 경로를 rc 파일에 쓰지 않는다. 별칭 기본값과 tmux 세션 이름은
+`$BOT_NAME`이며, 사용자가 원하면 충돌하지 않는 한 단어로 바꾼다.
+
+```bash
+case "$SHELL" in */zsh) RC="$HOME/.zshrc" ;; *) RC="$HOME/.bashrc" ;; esac
+
+LAUNCHER_ARGS=(
+  --channel discord
+  --alias "$BOT_NAME"
+  --session "$BOT_NAME"
+  --bot-wd "$WD"
+  --state-dir "$BOT_DIR"
+  --rc "$RC"
+)
+[ -n "$WIKI_PATH" ] && LAUNCHER_ARGS+=(--wiki-path "$WIKI_PATH")
+
+# 1) 동의 전 preview: 파일을 바꾸지 않고 런처 경로와 rc 관리 블록만 보여준다.
+node "$PLUGIN_DIR/scripts/install-bot-launcher.mjs" "${LAUNCHER_ARGS[@]}"
+
+# 2) 위 질문에 Enter/Y로 동의했을 때만 같은 인자에 --yes를 붙여 반영한다.
+node "$PLUGIN_DIR/scripts/install-bot-launcher.mjs" "${LAUNCHER_ARGS[@]}" --yes
+```
+
+설치기는 `$WD/.thiscode-bot-launcher.sh`와 rc의 이름표 있는 관리 블록을 만들고,
+기존 rc가 있으면 먼저 백업한다. `$BOT_NAME`은 시작/재시작, `$BOT_NAME-stop`은 종료다.
+tmux가 있으면 `=<세션명>` exact target으로 같은 이름의 세션만 정리한 뒤 새 세션을
+띄운다. tmux가 없는 macOS/Linux/WSL에서는 확인된 `$WD`에서 Claude를 foreground로
+실행하므로, 그 터미널의 Ctrl-C로 끈다. PowerShell은 Step 7의 foreground 명령을
+유지하며 이 rc 자동 단계의 대상이 아니다.
+
+첫 사용은 새 터미널을 열거나 아래처럼 **두 줄로** 한다. 같은 줄의
+`source "$RC" && "$BOT_NAME"`은 셸이 alias를 먼저 해석해 실패할 수 있다.
+
+```bash
+source "$RC"
+$BOT_NAME
+```
+
 ---
 
 ## 검증
@@ -514,6 +562,8 @@ echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 �
 - [ ] **토큰이 실제로 먹히나** — `curl -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me` → `username` + `bot:true`
 - [ ] **초대가 실제로 됐나** — `curl -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me/guilds` → **서버 수 ≥ 1** (0 이면 Step 3-5 미완)
 - [ ] claude 시동 + DISCORD_STATE_DIR export 후 첫 응답에 페르소나 어휘 자연 포함
+- [ ] Step 7.5를 수락했다면 `$WD/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-stop` 관리 블록 1개 + 두 번째 설치 후 중복 0
+- [ ] 런처 재호출 시 같은 이름의 tmux 세션만 교체되고, tmux가 없으면 확인된 `$WD`에서 foreground로 기동
 - [ ] Discord DM → 봇 응답 ✅
 - [ ] 🔴 **soul.md 가 실제로 주입됐나** — 아래 별도 절차로 확인(파일 존재 ≠ 주입)
 - [ ] `<WD>/rules-seed.md` 존재 + `<!-- rules-seed vX.Y.Z -->` 스탬프가 `templates/rules-seed.md` 와 동일 버전(다르면 다음 세션 시작 시 WARN 예상 — 이상 아님). `WIKI_PATH` 를 줬다면 `<WD>/CLAUDE.md` 의 "위키 연결" 절도 함께 확인
