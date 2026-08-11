@@ -89,10 +89,12 @@ stop_session() {
 run_agent() {
   cd "$BOT_WD"
   if [ "$CHANNEL" = discord ]; then
+    unset CLAUDE_CHANNEL_SLACK_DIR
     export DISCORD_STATE_DIR="$STATE_DIR"
     ${wikiExport}
     exec claude --channels plugin:discord@claude-plugins-official
   fi
+  unset DISCORD_STATE_DIR
   export CLAUDE_CHANNEL_SLACK_DIR="$STATE_DIR"
   if [ "$ACTION" = safe ]; then
     exec claude --dangerously-load-development-channels server:slack-channel

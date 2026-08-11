@@ -268,7 +268,7 @@ agent 가 다음 5 template 중 사용자 선택 안내:
 # CLAUDE_PLUGIN_ROOT 를 1순위로 — 마크다운 원문 리터럴, Claude Code 가 이 문서를 로드하며
 # 실제 설치 경로로 치환한다(셸 풀이 ❌ — code.claude.com/docs/en/plugins-reference.md
 # "Environment variables": skill/command content 는 placeholder 등장 위치 전부 치환).
-# 미치환(빈 값)이면 아래 5-후보 폴백으로 무회귀 낙하.
+# 미치환(빈 값)이면 아래 6-후보 폴백으로 무회귀 낙하.
 if [ -z "${PLUGIN_DIR:-}" ] || [ ! -d "$PLUGIN_DIR/templates" ]; then
   PLUGIN_DIR="${CLAUDE_PLUGIN_ROOT}"
   if [ -z "$PLUGIN_DIR" ] || [ ! -d "$PLUGIN_DIR/templates" ]; then
@@ -531,7 +531,7 @@ LAUNCHER_ARGS=(
 )
 [ -n "$WIKI_PATH" ] && LAUNCHER_ARGS+=(--wiki-path "$WIKI_PATH")
 
-# 1) 동의 전 preview: 파일을 바꾸지 않고 런처 경로와 rc 관리 블록만 보여준다.
+# 1) 반영 전 preview: 파일을 바꾸지 않고 런처 경로와 rc 관리 블록만 보여준다.
 node "$PLUGIN_DIR/scripts/install-bot-launcher.mjs" "${LAUNCHER_ARGS[@]}"
 
 # 2) 위 질문에 Enter/Y로 동의했을 때만 같은 인자에 --yes를 붙여 반영한다.

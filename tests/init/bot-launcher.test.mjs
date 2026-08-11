@@ -127,7 +127,13 @@ test('without tmux, Discord and Slack launch in the confirmed WD with separated 
     chmodSync(fakeClaude, 0o755);
     const run = spawnSync('/bin/bash', [installed.launcherPath, channel === 'slack' ? 'safe' : 'start'], {
       encoding: 'utf8',
-      env: { ...process.env, PATH: fakeBin, AGENT_LOG: log },
+      env: {
+        ...process.env,
+        DISCORD_STATE_DIR: '/tmp/preexisting-discord-state',
+        CLAUDE_CHANNEL_SLACK_DIR: '/tmp/preexisting-slack-state',
+        PATH: fakeBin,
+        AGENT_LOG: log,
+      },
     });
     assert.equal(run.status, 0, run.stderr);
     const actual = readFileSync(log, 'utf8');
