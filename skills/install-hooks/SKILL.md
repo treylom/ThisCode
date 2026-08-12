@@ -251,7 +251,8 @@ mkdir -p "$STATE"
 cat > "$STATE/dispatch-gate.json" <<EOF
 {
   "top_channels": ["<공용 채널 id 1>", "<공용 채널 id 2>"],
-  "roster_path": "<bot-roster.yaml 절대경로 — user_id: \"<id>\" 항목 보유>"
+  "roster_path": "<bot-roster.yaml 절대경로 — user_id: \"<id>\" 항목 보유>",
+  "workspace_roots": ["<봇 WD/워크스페이스 절대경로 — 이 안(cwd)에서만 게이트 발화>"]
 }
 EOF
 

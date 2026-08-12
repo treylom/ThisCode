@@ -22,6 +22,15 @@ Contract highlights (v2.9):
   fence strict-read → ledger reread → selector(bot+wd+state==open) →
   claim persist. Any fence present/malformed/torn/generation-mismatch =
   reject that ledger fail-closed (claim 0, injection 0, alert 1).
+- Single-owner recovery (85-doc §D): plain recovery claims ONLY when
+  `claim_session` is empty or already the current session. An open ledger
+  claimed by another session is reported as `foreign` — no claim, no
+  injection. Taking over a foreign claim is a separate explicit path
+  (`takeover`) gated by a CAS under the same lock: expected current owner +
+  expected generation + an approval/evidence receipt string, all must match
+  or the takeover is refused. Chained-succession *policy* (leases, liveness
+  signals, operator approval UX) is a P4 lifecycle-wiring decision — this
+  core only provides the CAS primitive.
 - Path verification before injection: ⓐ realpath ⓑ containment under
   install-fixed allowed roots ⓒ non-symlink ⓓ same-room canonical basename
   binding (ⓐ~ⓒ fail = skip that path; ⓓ fail = skip whole ledger + log).
@@ -59,6 +68,7 @@ LEDGER_FIELDS = (
     "bot", "slug", "session_id", "wd", "started_iso",
     "room_path", "spec_path", "progress_path", "outcome_path",
     "state", "claim_session", "last_flush_iso", "generation",
+    "takeover_receipt",
 )
 
 _SANE = re.compile(r"^[a-z0-9][a-z0-9-]*$")
@@ -203,7 +213,7 @@ def create_ledger(sdir, bot, slug, session_id, wd, room_path):
         "progress_path": os.path.join(room, "02-progress.md"),
         "outcome_path": os.path.join(room, "03-outcome.md"),
         "state": "open", "claim_session": "", "last_flush_iso": "",
-        "generation": "0",
+        "generation": "0", "takeover_receipt": "",
     }
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
@@ -368,8 +378,11 @@ def _verify_paths(fields, roots, sdir, ledger):
 def recover_on_sessionstart(sdir, bot, wd, session_id):
     """Scan solo ledgers; claim matching open ones; return injection payloads.
     Whole per-ledger sequence (fence check → reread → selector → claim)
-    holds that ledger's lock — no lock-외부 pre-check is used for claim."""
-    results = {"claimed": [], "rejected": [], "injections": []}
+    holds that ledger's lock — no lock-외부 pre-check is used for claim.
+    Single-owner: an open ledger already claimed by ANOTHER session is
+    reported under `foreign` and left untouched (takeover() is the only
+    path that may transfer it — 85-doc §D)."""
+    results = {"claimed": [], "rejected": [], "foreign": [], "injections": []}
     roots = _allowed_roots()
     wd_real = os.path.realpath(wd)
     try:
@@ -398,6 +411,12 @@ def recover_on_sessionstart(sdir, bot, wd, session_id):
                     and os.path.realpath(fields.get("wd", "")) == wd_real
                     and fields.get("state") == "open"):
                 continue
+            cur_claim = fields.get("claim_session", "")
+            if cur_claim and cur_claim != session_id:     # single-owner 가드
+                results["foreign"].append(
+                    {"ledger": path, "owner": cur_claim,
+                     "generation": fields.get("generation", "")})
+                continue
             claim = _claim_in_lock(path, fields, session_id, sdir)
             if not claim:
                 results["rejected"].append(path)
@@ -408,6 +427,40 @@ def recover_on_sessionstart(sdir, bot, wd, session_id):
             if ledger_ok:
                 results["injections"].extend(paths)
     return results
+
+
+def takeover(path, session_id, expect_owner, expect_generation, receipt):
+    """Explicit foreign-claim transfer — CAS under the ledger lock.
+    All of {current owner == expect_owner, generation == expect_generation,
+    state == open, non-empty receipt} must hold or the takeover is refused
+    (fail-closed). The receipt string is persisted in the ledger so the
+    transfer carries its evidence (85-doc §D / 83-doc orphan 승인 미결)."""
+    sdir = os.path.dirname(path) or "."
+    if not receipt:
+        return {"ok": False, "reason": "empty receipt"}
+    with _Lock(path):
+        status, why = fence_status(path)
+        if status != "clear":
+            _alert_log(sdir, "takeover_fence_reject",
+                       {"ledger": path, "why": why})
+            return {"ok": False, "reason": "fence unresolved: %s" % why}
+        try:
+            fields = parse_fields(open(path, encoding="utf-8").read())
+        except (OSError, LedgerError) as exc:
+            return {"ok": False, "reason": "ledger unreadable: %s" % exc}
+        if fields.get("state") != "open":
+            return {"ok": False, "reason": "not open"}
+        if owner(fields) != expect_owner:
+            return {"ok": False,
+                    "reason": "owner CAS mismatch (now=%s)" % owner(fields)}
+        if str(fields.get("generation", "")) != str(expect_generation):
+            return {"ok": False,
+                    "reason": "generation CAS mismatch (now=%s)"
+                              % fields.get("generation", "")}
+        fields["takeover_receipt"] = receipt
+        fields["claim_session"] = session_id
+        ok = _claim_in_lock(path, fields, session_id, sdir)
+        return {"ok": ok, "reason": "takeover" if ok else "claim tx failed"}
 
 
 def _claim_in_lock(path, fields, session_id, sdir):
@@ -482,6 +535,11 @@ def main(argv):
         res = recover_on_sessionstart(sdir, argv[2], argv[3], argv[4])
         print(json.dumps(res, ensure_ascii=False))
         return 0
+    if cmd == "takeover":
+        # takeover <ledger_path> <session_id> <expect_owner> <expect_gen> <receipt>
+        res = takeover(argv[2], argv[3], argv[4], argv[5], argv[6])
+        print(json.dumps(res, ensure_ascii=False))
+        return 0 if res["ok"] else 1
     print("unknown command: %s" % cmd, file=sys.stderr)
     return 2
 

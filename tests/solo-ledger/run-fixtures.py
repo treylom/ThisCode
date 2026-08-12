@@ -219,7 +219,7 @@ def fixture_3_clear_states():
 
 # ---------------------------------------------------------------- fixture ④
 def fixture_4_lock_identity_orphan():
-    print("④ lock identity · orphan 승계 · 경로 검증 4종")
+    print("④ lock identity · single-owner claim/takeover · 경로 검증 4종")
     sdir, room = fresh_env()
     path = SL.create_ledger(sdir, "karpathy", "fix4", "sess-A", sdir, room)
     res = SL.update_ledger(path, "sess-A", {"last_flush_iso": "t0"}, "sess-A")
@@ -243,19 +243,24 @@ def fixture_4_lock_identity_orphan():
     check("④ owner 불일치 = 거부(열람만)", not res["ok"]
           and res["reason"] == "claim mismatch", str(res))
 
-    # orphan(죽은 세션 claim·state open) → 새 세션이 승계 claim
+    # 미claim(claim_session 빈칸) open 원장 → 최초 recovery 가 claim
     rec, _ = run_recover(sdir, "karpathy", sdir, "sess-NEW")
     POS_CTRL[0] += 1
-    check("④ [양성 미끼] orphan open 원장 승계 claim", rec["claimed"] == [path],
+    check("④ [양성 미끼] 미claim open 원장 최초 claim", rec["claimed"] == [path],
           str(rec))
     fields = SL.parse_fields(open(path).read())
     check("④ owner = claim_session 승계", SL.owner(fields) == "sess-NEW")
 
-    # selector 음성 3종: closed / 타 bot / 타 wd
-    SL.update_ledger(path, "sess-NEW", {"state": "closed"}, "sess-NEW")
-    rec2, _ = run_recover(sdir, "karpathy", sdir, "sess-X")
+    # single-owner (85-doc §D): 기claim open 원장에 두 번째 세션 recovery
+    # = foreign 보고·claim 0·injection 0 — «총 claim = 1» 계약
+    rec_f, _ = run_recover(sdir, "karpathy", sdir, "sess-X2")
     NEG_CTRL[0] += 1
-    check("④ state=closed → claim 0", rec2["claimed"] == [])
+    check("④ 기claim open 원장 → foreign·claim 0·injection 0(총 claim=1)",
+          rec_f["claimed"] == [] and rec_f["injections"] == []
+          and len(rec_f.get("foreign", [])) == 1
+          and rec_f["foreign"][0]["owner"] == "sess-NEW", str(rec_f))
+
+    # selector 음성 2종 (open 상태에서): 타 bot / 타 wd
     rec3, _ = run_recover(sdir, "otherbot", sdir, "sess-X")
     NEG_CTRL[0] += 1
     check("④ 타 bot → claim 0", rec3["claimed"] == [])
@@ -264,6 +269,34 @@ def fixture_4_lock_identity_orphan():
     NEG_CTRL[0] += 1
     check("④ 타 wd → claim 0", rec4["claimed"] == [])
     shutil.rmtree(other_wd)
+
+    # takeover CAS (85-doc §D / 83-doc orphan 승인 미결의 확정):
+    gen_now = SL.parse_fields(open(path).read())["generation"]
+    res = SL.takeover(path, "sess-TK", "sess-NEW", "999", "r-x")
+    NEG_CTRL[0] += 1
+    check("④ takeover generation CAS 불일치 → 거부",
+          not res["ok"] and "generation CAS" in res["reason"], str(res))
+    res = SL.takeover(path, "sess-TK", "sess-WRONG", gen_now, "r-x")
+    NEG_CTRL[0] += 1
+    check("④ takeover owner CAS 불일치 → 거부",
+          not res["ok"] and "owner CAS" in res["reason"], str(res))
+    res = SL.takeover(path, "sess-TK", "sess-NEW", gen_now, "")
+    NEG_CTRL[0] += 1
+    check("④ takeover receipt 공란 → 거부", not res["ok"], str(res))
+    res = SL.takeover(path, "sess-TK", "sess-NEW", gen_now,
+                      "approved-by-op-#123")
+    POS_CTRL[0] += 1
+    check("④ [양성 미끼] 정합 CAS+receipt takeover 성공", res["ok"], str(res))
+    fields = SL.parse_fields(open(path).read())
+    check("④ takeover 후 owner 이전 + receipt 영속",
+          SL.owner(fields) == "sess-TK"
+          and fields.get("takeover_receipt") == "approved-by-op-#123")
+
+    # closed → claim 0
+    SL.update_ledger(path, "sess-TK", {"state": "closed"}, "sess-TK")
+    rec2, _ = run_recover(sdir, "karpathy", sdir, "sess-X")
+    NEG_CTRL[0] += 1
+    check("④ state=closed → claim 0", rec2["claimed"] == [])
 
     # 경로 검증: ⓑ containment 밖 room → claim 은 되나 injection 0
     sdir5, _room5 = fresh_env()
@@ -311,14 +344,14 @@ def fixture_4_lock_identity_orphan():
 
 
 def main():
-    POS_CTRL[1] = 4   # 기대 양성 미끼 수
-    NEG_CTRL[1] = 13  # 기대 음성 미끼 수 (①2 ②1 ③3 ④7)
+    POS_CTRL[1] = 5   # 기대 양성 미끼 수 (②1 ③1 ④3)
+    NEG_CTRL[1] = 17  # 기대 음성 미끼 수 (①2 ②1 ③3 ④11)
     fixture_1_eio_restart()
     fixture_2_race()
     fixture_3_clear_states()
     fixture_4_lock_identity_orphan()
     total = len(PASS) + len(FAIL)
-    expected_min = 26
+    expected_min = 36
     print("—" * 60)
     print("검사 %d건 실행(기대 ≥%d) · PASS %d · FAIL %d" %
           (total, expected_min, len(PASS), len(FAIL)))

@@ -9,10 +9,17 @@ v1.1, 3/3 GREEN) — 제품 델타 = 하드코딩 채널/로스터 → install c
 Wiring (install-hooks): PreToolUse matcher
   "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message"
 Config: <state>/dispatch-gate.json
-  {"top_channels": ["<channel_id>", ...], "roster_path": "/abs/bot-roster.yaml"}
+  {"top_channels": ["<channel_id>", ...], "roster_path": "/abs/bot-roster.yaml",
+   "workspace_roots": ["/abs/workspace", ...]}
   state = $MEETING_WATCHDOG_STATE_DIR or ~/.claude-state.
-  config 부재/빈 top_channels = 게이트 비활성(exit 0) — 설치 완료 판정은
-  `--probe` 가 막는다(연결 증명 0번 칸: config 없이는 probe 가 FAIL).
+  config 부재/빈 top_channels/빈 workspace_roots = 게이트 비활성(exit 0) —
+  설치 완료 판정은 `--probe` 가 막는다(연결 증명 0번 칸: config 없이는 FAIL).
+
+cwd guard (D2 — user-global 등록 + cwd 가드가 «한» 계약): 이 훅은 user-global
+PreToolUse 라 모든 프로젝트에서 발화한다. 판정 전에 훅 입력 `cwd`(부재 시
+$PWD)를 realpath 정규화해 `workspace_roots` 에 결박 — exact root 또는
+`root/` 하위만 게이트 대상, prefix sibling(`/root-other`)·밖 = 통과(비활성).
+이게 없으면 무관 프로젝트의 Discord 발신까지 전역 차단된다(85-doc 차단 1).
 
 Origin (D5 v2.3): PreToolUse 는 구조상 model call-path 다 — tool_input 의
 `origin` 필드는 host wrapper 상수가 아니라 모델 payload 유래이므로 어떤
@@ -23,7 +30,9 @@ Origin (D5 v2.3): PreToolUse 는 구조상 model call-path 다 — tool_input �
 
 Probe (`--probe`): ①wiring — settings.json 에 본 훅 PreToolUse 등재
 ②양성 — synthetic 발주 payload 가 실제 decide() 경로에서 deny
-③음성(미끼) — 비-top 채널 동일 payload 가 pass. 3/3 아니면 exit 1.
+③음성(미끼) — 비-top 채널 payload 가 pass ④음성 — out-of-cwd payload 가
+pass(D2 cwd 가드 실증). 전 칸 PASS 아니면 exit 1. + 관측 로그 누적 행수를
+info 줄로 표기(판독 계약 보조 — 판정 칸 아님).
 """
 
 import json
@@ -49,9 +58,24 @@ def load_config():
         cfg = json.load(open(os.path.join(state_dir(), "dispatch-gate.json"),
                              encoding="utf-8"))
         return {"top_channels": set(map(str, cfg.get("top_channels", []))),
-                "roster_path": cfg.get("roster_path", "")}
+                "roster_path": cfg.get("roster_path", ""),
+                "workspace_roots": [os.path.realpath(r) for r in
+                                    cfg.get("workspace_roots", [])]}
     except Exception:
         return None
+
+
+def cwd_in_scope(data, cfg):
+    """D2 cwd guard: 훅 입력 cwd(부재 = $PWD)가 workspace_roots 결박 안인가.
+    exact root 또는 root/ 하위만 True — prefix sibling 통과 금지."""
+    cwd = data.get("cwd") or os.environ.get("PWD") or ""
+    if not cwd or not cfg["workspace_roots"]:
+        return False
+    real = os.path.realpath(cwd)
+    for root in cfg["workspace_roots"]:
+        if real == root or real.startswith(root.rstrip(os.sep) + os.sep):
+            return True
+    return False
 
 
 def load_roster_ids(roster_path):
@@ -65,10 +89,13 @@ def load_roster_ids(roster_path):
 
 
 def decide(data, cfg):
-    """(verdict, record) — verdict ∈ {'pass','deny'}; record = 로그/사유."""
+    """(verdict, record) — verdict ∈ {'pass','deny'}; record = 로그/사유.
+    pass record 에 'observe' 가 실리면 호출자가 관측 로그 1행을 남긴다."""
     tool = data.get("tool_name", "")
     if not tool.endswith("__reply") and not tool.endswith("__edit_message"):
         return "pass", {"why": "non-target tool"}
+    if not cwd_in_scope(data, cfg):
+        return "pass", {"why": "out of workspace scope (cwd guard)"}
     ti = data.get("tool_input", {}) or {}
     chat_id = str(ti.get("chat_id", ""))
     text = str(ti.get("text", "") or "")
@@ -78,8 +105,6 @@ def decide(data, cfg):
 
     if chat_id not in cfg["top_channels"]:
         return "pass", {"why": "not a top-level channel"}
-    if CARVEOUT.search(text):
-        return "pass", {"why": "carve-out tag"}
 
     roster_ids = load_roster_ids(cfg["roster_path"])
     mentioned = set(MENTION.findall(text))
@@ -88,6 +113,23 @@ def decide(data, cfg):
         bot_mentions = mentioned
     else:
         bot_mentions = mentioned & roster_ids
+
+    carveout = CARVEOUT.search(text)
+    if carveout:
+        # 계약: 자기선언 carve-out 태그 = pass (감사 가능 경로 — 태그가
+        # 발신문에 공개 표기된다. origin 과 달리 «의도 선언»이라 fail-closed
+        # 승격 = §1.2 프로토콜 폐지와 등가 → 게이트 사정거리 밖).
+        # 단 «태그 + 봇멘션 + 발주 마커» 조합은 오용 후보 — 관측 로그 1행
+        # (pass 유지). 판독 계약 = 70-doc §2 (카파시 · 주간/폐합/P4+7일).
+        rec = {"why": "carve-out tag"}
+        if bot_mentions and any(m in text for m in MARKERS):
+            rec["observe"] = {
+                "chat_id": chat_id, "tag": carveout.group(0),
+                "bot_mentions": sorted(bot_mentions),
+                "text_head": text[:120],
+            }
+        return "pass", rec
+
     if not bot_mentions:
         return "pass", {"why": "no bot mention"}
     if not any(m in text for m in MARKERS):
@@ -103,9 +145,9 @@ def decide(data, cfg):
     }
 
 
-def write_denial(record, probe=False):
+def _append_jsonl(basename, record, probe=False):
     try:
-        log_path = os.path.join(state_dir(), "dispatch-gate-denials.jsonl")
+        log_path = os.path.join(state_dir(), basename)
         os.makedirs(os.path.dirname(log_path), exist_ok=True)
         with open(log_path, "a", encoding="utf-8") as fh:
             fh.write(json.dumps(
@@ -114,6 +156,24 @@ def write_denial(record, probe=False):
                 ensure_ascii=False) + "\n")
     except Exception:
         pass
+
+
+def write_denial(record, probe=False):
+    _append_jsonl("dispatch-gate-denials.jsonl", record, probe)
+
+
+def write_observation(record, probe=False):
+    _append_jsonl("dispatch-gate-observations.jsonl", record, probe)
+
+
+def observation_count():
+    try:
+        with open(os.path.join(state_dir(),
+                               "dispatch-gate-observations.jsonl"),
+                  encoding="utf-8") as fh:
+            return sum(1 for line in fh if line.strip())
+    except OSError:
+        return 0
 
 
 DENY_REASON = (
@@ -132,10 +192,12 @@ def hook_main():
     except Exception:
         return 0
     cfg = load_config()
-    if not cfg or not cfg["top_channels"]:
+    if not cfg or not cfg["top_channels"] or not cfg["workspace_roots"]:
         return 0                      # 미설정 = 비활성 (probe 가 설치층에서 잡음)
     verdict, record = decide(data, cfg)
     if verdict == "pass":
+        if record.get("observe"):
+            write_observation(record["observe"])
         return 0
     write_denial(record)
     print(json.dumps({
@@ -149,7 +211,7 @@ def hook_main():
 
 
 def probe_main():
-    """연결 증명 0번 칸 — 3칸 전부 PASS 여야 설치 완료를 말할 수 있다."""
+    """연결 증명 0번 칸 — 전 칸 PASS 여야 설치 완료를 말할 수 있다."""
     results = []
 
     settings_path = os.environ.get("DISPATCH_GATE_SETTINGS") or \
@@ -167,31 +229,40 @@ def probe_main():
     results.append(("wiring(settings.json PreToolUse)", wired))
 
     cfg = load_config()
-    if not cfg or not cfg["top_channels"]:
-        results.append(("config(top_channels)", False))
-        results.append(("deny(양성)", False))
-        results.append(("pass(음성 미끼)", False))
+    if not cfg or not cfg["top_channels"] or not cfg["workspace_roots"]:
+        results.append(("config(top_channels+workspace_roots)", False))
+        results.append(("deny(양성 in-cwd)", False))
+        results.append(("pass(음성 비-top)", False))
+        results.append(("pass(음성 out-cwd)", False))
     else:
-        results.append(("config(top_channels)", True))
+        results.append(("config(top_channels+workspace_roots)", True))
         top = sorted(cfg["top_channels"])[0]
+        in_cwd = cfg["workspace_roots"][0]
         roster_ids = load_roster_ids(cfg["roster_path"])
         probe_id = sorted(roster_ids)[0] if roster_ids else "999999999999"
         payload = {"tool_name": "mcp__plugin_discord_discord__reply",
+                   "cwd": in_cwd,
                    "tool_input": {"chat_id": top,
                                   "text": "<@%s> 작업 착수 (probe)" % probe_id}}
         verdict, record = decide(payload, cfg)
         if verdict == "deny":
             write_denial(record, probe=True)
-        results.append(("deny(양성)", verdict == "deny"))
+        results.append(("deny(양성 in-cwd)", verdict == "deny"))
         neg = {"tool_name": "mcp__plugin_discord_discord__reply",
+               "cwd": in_cwd,
                "tool_input": {"chat_id": "000000000000000000",
                               "text": "<@%s> 작업 착수 (probe)" % probe_id}}
         verdict2, _ = decide(neg, cfg)
-        results.append(("pass(음성 미끼)", verdict2 == "pass"))
+        results.append(("pass(음성 비-top)", verdict2 == "pass"))
+        out = dict(payload, cwd="/tmp/dispatch-gate-probe-out-of-scope")
+        verdict3, _ = decide(out, cfg)
+        results.append(("pass(음성 out-cwd)", verdict3 == "pass"))
 
     ok = sum(1 for _n, r in results if r)
     for name, r in results:
         print("  [%s] %s" % ("PASS" if r else "FAIL", name))
+    # 판독 보조(판정 칸 아님): 관측 로그 누적 — 판독 계약(70-doc §2, 카파시)
+    print("  [info] carve-out 관측 로그 누적 %d행" % observation_count())
     print("PROBE %s %d/%d" % ("PASS" if ok == len(results) else "FAIL",
                               ok, len(results)))
     return 0 if ok == len(results) else 1
