@@ -22,6 +22,15 @@ import sys
 import tempfile
 import time
 
+# Windows 기본 stdout/stderr 는 cp1252 — ①~④·미끼 등 비ASCII 출력이
+# UnicodeEncodeError(exit 1) 로 죽는다. utf-8 강제 (POSIX 는 무해).
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        try:
+            _s.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 MODPATH = os.path.join(REPO, "scripts")
@@ -225,16 +234,31 @@ def fixture_4_lock_identity_orphan():
     res = SL.update_ledger(path, "sess-A", {"last_flush_iso": "t0"}, "sess-A")
     assert res["ok"], res
     lock_ino_before = os.stat(path + ".lock").st_ino
-    led_ino_before = os.stat(path).st_ino
-    for i in range(1, 3):
-        res = SL.update_ledger(path, "sess-A",
-                               {"last_flush_iso": "t%d" % i}, "sess-A")
-        assert res["ok"], res
+    # 대조축 재설계(2026-08-12 CI-fix): 구 판은 ledger st_ino 변화를 쟀는데
+    # inode 번호는 파일시스템이 즉시 재사용할 수 있어(ubuntu-22.04 CI 실측
+    # FAIL) 플랫폼을 시험하는 자였다. 진짜 불변량은 «쓰기가 항상 설계된
+    # 교체 시엄(SL._replace)을 지나고 in-place 로 쓰지 않는다» — 시엄 계수로
+    # 직접 잰다(교체 원자성 자체는 OS 계약).
+    n_replace = [0]
+    real_replace = SL._replace
+
+    def _counting_replace(src, dst):
+        n_replace[0] += 1
+        return real_replace(src, dst)
+
+    SL._replace = _counting_replace
+    try:
+        for i in range(1, 3):
+            res = SL.update_ledger(path, "sess-A",
+                                   {"last_flush_iso": "t%d" % i}, "sess-A")
+            assert res["ok"], res
+    finally:
+        SL._replace = real_replace
     lock_ino_after = os.stat(path + ".lock").st_ino
-    led_ino_after = os.stat(path).st_ino
     check("④ lock inode 불변(불교체 — update 2회 뒤 실측)",
           lock_ino_before == lock_ino_after)
-    check("④ ledger inode 는 교체됨(대조축)", led_ino_before != led_ino_after)
+    check("④ ledger 쓰기 = 교체 시엄으로만(대조축 — _replace 정확 2회 + 내용 t2)",
+          n_replace[0] == 2 and "t2" in open(path).read())
 
     # claim mismatch = 패자 열람만
     res = SL.update_ledger(path, "sess-WRONG", {"last_flush_iso": "x"},

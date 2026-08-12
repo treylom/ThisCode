@@ -271,6 +271,14 @@ def probe_main():
 
 
 if __name__ == "__main__":
+    # Windows 기본 stdout/stderr 는 cp1252 — probe 의 한국어 info 줄이
+    # UnicodeEncodeError 로 죽는다. utf-8 강제 (POSIX 는 무해).
+    for _s in (sys.stdout, sys.stderr):
+        if hasattr(_s, "reconfigure"):
+            try:
+                _s.reconfigure(encoding="utf-8")
+            except Exception:
+                pass
     if "--probe" in sys.argv:
         sys.exit(probe_main())
     sys.exit(hook_main())

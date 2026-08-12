@@ -42,11 +42,17 @@ scripts/meeting_watchdog.py L134~194; malformed = fail-closed.
 
 import errno
 import json
-import fcntl
 import os
 import re
 import sys
 import time
+
+try:
+    import fcntl                      # POSIX flock
+    _msvcrt = None
+except ImportError:                   # Windows: fcntl 부재 — msvcrt 바이트락으로
+    fcntl = None                      # (CI windows-latest 실측 ModuleNotFoundError,
+    import msvcrt as _msvcrt          #  2026-08-12 CI-fix 트랙)
 
 # --- injection points (fixtures may substitute; production leaves as-is) ---
 _fsync = os.fsync
@@ -227,18 +233,29 @@ def create_ledger(sdir, bot, slug, session_id, wd, room_path):
 
 # ---------------------------------------------------------------- update tx
 class _Lock:
-    """flock on the separate, never-replaced lock file."""
+    """Exclusive lock on the separate, never-replaced lock file.
+    POSIX = flock(LOCK_EX, 무한 대기). Windows = msvcrt.locking(LK_LOCK,
+    1바이트) — ~10초 재시도 후 OSError = 조용한 교착 대신 시끄러운 실패
+    (fail-closed 유지: 예외면 tx 자체가 안 열린다)."""
 
     def __init__(self, ledger_path):
         self._path = _lock_path(ledger_path)
 
     def __enter__(self):
         self._fd = os.open(self._path, os.O_RDWR | os.O_CREAT, 0o600)
-        fcntl.flock(self._fd, fcntl.LOCK_EX)
+        if fcntl is not None:
+            fcntl.flock(self._fd, fcntl.LOCK_EX)
+        else:
+            os.lseek(self._fd, 0, os.SEEK_SET)
+            _msvcrt.locking(self._fd, _msvcrt.LK_LOCK, 1)
         return self
 
     def __exit__(self, *exc):
-        fcntl.flock(self._fd, fcntl.LOCK_UN)
+        if fcntl is not None:
+            fcntl.flock(self._fd, fcntl.LOCK_UN)
+        else:
+            os.lseek(self._fd, 0, os.SEEK_SET)
+            _msvcrt.locking(self._fd, _msvcrt.LK_UNLCK, 1)
         os.close(self._fd)
 
 

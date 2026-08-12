@@ -16,6 +16,15 @@ import subprocess
 import sys
 import tempfile
 
+# Windows 기본 stdout/stderr 는 cp1252 — ⑤·미끼 등 비ASCII 출력이
+# UnicodeEncodeError(exit 1) 로 죽는다. utf-8 강제 (POSIX 는 무해).
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        try:
+            _s.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", ".."))
 GATE = os.path.join(REPO, "hooks", "dispatch-room-gate.py")
