@@ -97,7 +97,7 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
 - `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
 - `/thiscode:install-hooks` — SessionStart·UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (**플러그인 설치만으로 자동 등록되지 않음 — 한 번 직접 호출 필요**)
-- … 그 외 다수 (`/` → `thiscode:` 필터로 전량 확인. `/thiscode:help` 는 *막힌 상황 진단·대표 경로 안내*용이고 전체 색인이 아닙니다)
+- … 그 외 다수 — **`/thiscode:help` 가 설명과 함께 전량을 나열합니다** (문서에 박아둔 목록이 아니라, 실행 시점에 두 표면을 직접 훑습니다). `/` 를 입력해 `thiscode:` 로 필터해도 같습니다
 
 ### 스킬
 
@@ -195,7 +195,7 @@ cd ~/code/thiscode && bash install.sh
 
 Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` 를 둘 다** 슬래시로 발견합니다 — `skills/` 쪽도 `/thiscode:<name>` 으로 바로 호출됩니다.
 
-> **현재 세션에 실제 로드된 전체 목록**은 Claude Code 에서 **`/` 를 입력해 `thiscode:` 로 필터**하거나 **내장 `/help`** 에서 확인하십시오. (`/thiscode:help` 는 *막힌 상황 진단 + 대표 경로 안내*용이고 전체 색인이 아닙니다.)
+> **전체 목록은 `/thiscode:help` 로 보십시오** — 설명까지 붙여 전량을 나열합니다. 이 문서에 목록을 박아두지 않는 이유는, 박으면 명령이 하나 늘 때마다 낡고 그 낡음이 아무 신호도 내지 않기 때문입니다. `help` 는 **실행 시점에** `commands/*.md` 와 `skills/<이름>/SKILL.md` 를 직접 훑습니다. (Claude Code 에서 `/` 를 입력해 `thiscode:` 로 필터하거나 **내장 `/help`** 를 써도 같은 목록을 볼 수 있습니다.)
 
 아래는 **대표 진입점**입니다:
 

@@ -110,7 +110,7 @@ Each plugin command and skill has built-in help documentation:
 
 ### Plugin Commands
 
-Run `/thiscode:help` inside Claude Code to see all available commands and when to use each:
+Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as slash commands. Run `/thiscode:help` inside Claude Code for the full list with descriptions — it enumerates both surfaces from disk at run time, so it stays correct as commands are added. (You can also type `/` and filter by `thiscode:`.) Representative entry points:
 
 - `/thiscode:start` — Initial setup wizard (environment detection, bot pairing, validation)
 - `/thiscode:init` — Alternative lightweight setup for experienced users
@@ -120,7 +120,8 @@ Run `/thiscode:help` inside Claude Code to see all available commands and when t
 - `/thiscode:search` — 4-tier vault search with quick or deep modes
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
 - `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
-- And more — run `/thiscode:help` for the complete list
+- `/thiscode:install-hooks` — Merge the SessionStart / UserPromptSubmit hooks into `~/.claude/settings.json` (**installing the plugin does not register them — run this once**)
+- … and more — `/thiscode:help` lists every command with its description
 
 ### Skills
 
@@ -296,11 +297,12 @@ thiscode/
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
 │   └── plugin.json
-├── commands/                              # Slash commands (incl. /thiscode:init)
-├── skills/                                # skill dirs (vault-mirror policy)
-│   ├── knowledge-manager/                 # full vault 7-Layer Fusion (1161 lines)
-│   ├── knowledge-manager-at/              # Agent Teams variant (1189 lines)
-│   ├── knowledge-manager-lite/            # Lite single-agent (530 lines)
+├── commands/                              # Slash discovery surface ① (incl. /thiscode:init)
+├── skills/                                # Slash discovery surface ② — skills are callable as
+│                                          #   /thiscode:<name> too (vault-mirror policy)
+│   ├── knowledge-manager/                 # full vault 7-Layer Fusion
+│   ├── knowledge-manager-at/              # Agent Teams variant
+│   ├── knowledge-manager-lite/            # Lite single-agent
 │   ├── knowledge-manager-bootstrap/       # 4-Tier install bundle
 │   ├── knowledge-manager-plain/           # headless variant
 │   ├── search/                            # 4-Tier vault search
@@ -309,7 +311,8 @@ thiscode/
 │   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin install wizard
 │   ├── meetings/                          # 4-file meeting protocol
-│   └── shared-memory/                     # 4-tier memory policy
+│   ├── shared-memory/                     # 4-tier memory policy
+│   └── …                                  # run /thiscode:help for the full list
 ├── hooks/                                 # Bot operations hooks
 ├── templates/                             # 5 soul personas + bot-roles-matrix · bot-checkup-checklist
 ├── configs/                               # tmux.conf.local
