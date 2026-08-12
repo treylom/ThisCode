@@ -305,7 +305,7 @@ Each bot is just **its own Discord app + its own state dir + its own working
 directory**. To add a second bot:
 
 1. Create another Discord application in the Developer Portal (new token,
-   Message Content Intent ON, invite to your server — same steps as the first
+   Message Content + Server Members Intents ON, invite to your server — same steps as the first
    bot; every bot app needs its **own** OAuth invite).
 2. Run `/thiscode:create-bot` again with a different name → creates
    `~/.claude/channels/discord-<name2>/` (.env + soul.md).

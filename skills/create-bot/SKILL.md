@@ -107,9 +107,9 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
    - 🛑 **비밀번호/다단계 인증 모달이 뜨면 여기서 멈춘다** (하드 관문 3): "비밀번호(필요하면 인증 코드)만 입력해 주세요 — 그 다음은 제가 이어갑니다." 통과를 확인한 뒤 재개.
    - 토큰이 뜨면 Step 4 의 클립보드 경유 방식으로 저장(화면에 뜬 뒤로는 스크린샷·`read_page` 금지, 좌표만 계산) — "토큰을 저장합니다(값은 보지 않습니다)."
    - ⚠️ **앱 이름과 봇 사용자명은 별개 필드다.** "일반 정보"의 이름을 바꿔도 Discord 에 보이는 표시명(= "봇" 탭의 **사용자명**)은 안 바뀐다. 둘 다 고칠 것.
-4. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 를 ON** → Save — "메시지 내용 인텐트를 켭니다."
+4. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save — "메시지 내용·서버 멤버 인텐트를 켭니다."
    - ⚠️ 이걸 안 켜면 토큰·초대가 전부 정상이어도 **봇이 서버 채널 메시지 내용을 못 읽어** 무반응이 됩니다 (DM 은 예외적으로 읽힘). "토큰은 valid 한데 채널에서 답이 없다" 의 1순위 원인.
-   - (선택) 멤버 목록 조회가 필요하면 "Server Members Intent" 도 ON.
+   - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 5. OAuth2 → URL Generator — "초대 URL을 만듭니다":
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
@@ -122,7 +122,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
    - ⚠️ 서버 초대(6번)는 **서버 입장**일 뿐, 비공개 채널 접근권이 아니다. **이걸 빠뜨리면 아무 에러도 안 난다** — 봇 프로세스·토큰·초대가 전부 정상인데 그 채널 메시지만 애초에 배달되지 않는다(로그도 조용하다). 2026-08-05 실측에서 이 증상을 `access.json` 누락으로 오진했다(그것도 실제 결손이었으나 단독 원인은 아니었다) — 한 증상에 원인이 둘일 수 있다.
    - 진단 순서: ①봇이 서버에 있나(`/users/@me/guilds`) ②그 채널이 비공개인가 → 멤버에 봇이 있나 ③`access.json` 의 `groups` 에 채널 ID 가 있나.
 
-완료 후 **한 게 뭔지** 요약 보고(토큰 저장 완료·Intent ON 확인·초대 서버명·채널 노출 범위) — 사람에게 시킨 목록이 아니라 자기가 수행한 목록으로 보고한다.
+완료 후 **한 게 뭔지** 요약 보고(토큰 저장 완료·Intent 2종[Message Content·Server Members] ON 확인·초대 서버명·채널 노출 범위) — 사람에게 시킨 목록이 아니라 자기가 수행한 목록으로 보고한다.
 
 > ⚠️ **봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 앱이라 OAuth 초대도 봇 앱마다
 > 따로. 다봇 셋업에서 신규 봇 초대를 빠뜨리면 그 봇만 무반응 (로컬 설정은 정상인데
@@ -134,9 +134,9 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 1. "New Application" → 이름 = `<봇 이름 또는 별칭>` → **캡차 1회(사람)**
 2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 복사
    - ⚠️ **앱 이름과 봇 사용자명은 별개 필드다.** "일반 정보"의 이름을 바꿔도 Discord 에 보이는 표시명(= "봇" 탭의 **사용자명**)은 안 바뀐다. 둘 다 고칠 것.
-3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 를 ON** → Save
+3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save
    - ⚠️ 이걸 안 켜면 토큰·초대가 전부 정상이어도 **봇이 서버 채널 메시지 내용을 못 읽어** 무반응이 됩니다 (DM 은 예외적으로 읽힘). "토큰은 valid 한데 채널에서 답이 없다" 의 1순위 원인.
-   - (선택) 멤버 목록 조회가 필요하면 "Server Members Intent" 도 ON.
+   - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 4. OAuth2 → URL Generator:
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
@@ -601,6 +601,7 @@ $BOT_NAME
 | `permission denied` on .env | chmod 미적용 | `chmod 600 "$BOT_DIR/.env"` |
 | Discord 봇 토큰 invalid | 줄바꿈 포함 또는 reset 후 미저장 | 토큰 재 발급 + .env 한 줄 |
 | 토큰 정상인데 서버 채널에서 무반응 (DM 은 됨) | Message Content Intent OFF | Developer Portal → Bot → Privileged Gateway Intents → Message Content Intent ON |
+| 기동 즉시 `PrivilegedIntentsRequired` 크래시 | Server Members Intent OFF (템플릿이 `intents.members` 요청) | Developer Portal → Bot → Privileged Gateway Intents → Server Members Intent ON |
 | 페어링 코드 만료 | 봇에 다시 DM | 새 코드 발급 |
 | soul.md 안 inject | DISCORD_STATE_DIR 미export 또는 SessionStart hook 미등록 | `/thiscode:install-hooks` 먼저 실행 |
 | 같은 봇 이름 디렉토리 충돌 | 이미 존재 | 다른 이름 또는 기존 정리 |

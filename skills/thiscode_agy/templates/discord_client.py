@@ -101,6 +101,7 @@ class AgyDiscordBot:
         self.bridge = bridge
         intents = discord.Intents.default()
         intents.message_content = True
+        intents.members = True  # requires "Server Members Intent" ON in the Developer Portal (else PrivilegedIntentsRequired at startup)
         self.client = discord.Client(intents=intents)
         self.reply_adapter = reply_adapter or DiscordReplyAdapter(self.client)
         self.queue: asyncio.Queue[BridgeMessage] = asyncio.Queue()

@@ -12,7 +12,7 @@ Full walkthrough for a fresh Discord + Antigravity bot setup.
    - **Reset Token** → copy and save securely (you'll paste into `.env`)
    - Scroll to **Privileged Gateway Intents**:
      - ✅ **MESSAGE CONTENT INTENT** — REQUIRED (this template's `intents.message_content = True` requests it; without portal toggle, `msg.content` is empty)
-     - **SERVER MEMBERS INTENT** — leave OFF (this template doesn't set `intents.members` or perform member lookups)
+     - ✅ **SERVER MEMBERS INTENT** — REQUIRED (this template sets `intents.members = True`; without the portal toggle the client **fails at startup with `PrivilegedIntentsRequired`**)
      - **PRESENCE INTENT** — leave OFF (not used by this template)
 4. Left sidebar → **OAuth2** → **URL Generator**:
    - **Scopes (CRITICAL — must include `bot`)**:

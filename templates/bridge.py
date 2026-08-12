@@ -672,6 +672,7 @@ def _parse_batch(text: str, specs: list[dict], acc: dict) -> tuple[dict, list[st
 
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # requires "Server Members Intent" ON in the Developer Portal (else PrivilegedIntentsRequired at startup)
 client = discord.Client(intents=intents)
 
 

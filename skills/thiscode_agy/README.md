@@ -11,7 +11,7 @@
 - tmux 3.0+
 - `agy` CLI installed (Antigravity CLI 1.0+) — typically at `~/.local/bin/agy`
 - A Discord application with bot token (see `setup-guide.md` §1 if you don't have one yet)
-- A Discord guild you can invite the bot to (Message Content Intent enabled in Developer Portal — see `setup-guide.md` §1)
+- A Discord guild you can invite the bot to (Message Content + Server Members Intents enabled in Developer Portal — see `setup-guide.md` §1)
 
 ### Install
 
