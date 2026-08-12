@@ -89,16 +89,24 @@ test('installer writes one idempotent managed rc block and backs up an existing 
   assert.equal(first.launcherPath, second.launcherPath);
   assert.ok(readdirSync(f.root).some(name => name.startsWith('.zshrc.thiscode-backup-')));
   assert.equal((readFileSync(first.launcherPath, 'utf8').match(/thiscode-bot-launcher v1/g) || []).length, 1);
-  const sourced = spawnSync('/bin/bash', ['-c', 'source "$1"; alias 봇공부; alias 봇공부-stop', 'bash', f.rcPath], {
-    encoding: 'utf8',
-  });
-  assert.equal(sourced.status, 0, sourced.stderr);
-  assert.match(sourced.stdout, /\.thiscode-bot-launcher\.sh.*start/);
-  assert.match(sourced.stdout, /\.thiscode-bot-launcher\.sh.*stop/);
+  // POSIX-only probe: /bin/bash is not resolvable on native win32 (status null).
+  // The rc block is a shell artifact consumed inside WSL; the fs assertions above
+  // still validate installer behavior on win32, ubuntu covers the source probe.
+  if (process.platform !== 'win32') {
+    const sourced = spawnSync('/bin/bash', ['-c', 'source "$1"; alias 봇공부; alias 봇공부-stop', 'bash', f.rcPath], {
+      encoding: 'utf8',
+    });
+    assert.equal(sourced.status, 0, sourced.stderr);
+    assert.match(sourced.stdout, /\.thiscode-bot-launcher\.sh.*start/);
+    assert.match(sourced.stdout, /\.thiscode-bot-launcher\.sh.*stop/);
+  }
   rmSync(f.root, { recursive: true, force: true });
 });
 
-test('tmux replay kills only the exact stale session and starts its replacement', () => {
+// POSIX-only surface: spawns /bin/bash with shebang tmux stubs and colon-joined
+// PATH — not resolvable on native win32. Launcher runs inside WSL/tmux by contract;
+// the ubuntu job covers this behavior.
+test('tmux replay kills only the exact stale session and starts its replacement', { skip: process.platform === 'win32' ? 'POSIX-only runtime surface (WSL-first contract)' : false }, () => {
   const f = fixture();
   const installed = installBotLauncher({ ...f, apply: true });
   const fakeBin = join(f.root, 'bin');
@@ -120,7 +128,8 @@ test('tmux replay kills only the exact stale session and starts its replacement'
   rmSync(f.root, { recursive: true, force: true });
 });
 
-test('without tmux, Discord and Slack launch in the confirmed WD with separated state env', () => {
+// POSIX-only surface: same /bin/bash + shebang stub dependency as the replay test.
+test('without tmux, Discord and Slack launch in the confirmed WD with separated state env', { skip: process.platform === 'win32' ? 'POSIX-only runtime surface (WSL-first contract)' : false }, () => {
   for (const channel of ['discord', 'slack']) {
     const f = fixture(channel);
     const installed = installBotLauncher({ ...f, apply: true });
