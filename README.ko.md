@@ -86,7 +86,7 @@ wizard 가 vault 상태 / 도구 / 자원 detect 후 **8 Phase progressive journ
 
 ### 플러그인 커맨드
 
-Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 커맨드와 언제 사용하는지 확인할 수 있습니다:
+Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래시로 발견합니다. **현재 세션에 실제 로드된 전량**은 Claude Code 에서 **`/` 를 입력해 `thiscode:` 로 필터**하거나 **내장 `/help`** 로 확인하십시오. 아래는 대표 진입점입니다:
 
 - `/thiscode:start` — 초기 셋업 wizard (환경 인식, 봇 페어링, 검증)
 - `/thiscode:init` — 경험자용 경량 셋업
@@ -96,7 +96,8 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 - `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
 - `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
-- 그 외 다수 — `/thiscode:help` 로 전체 목록 확인
+- `/thiscode:install-hooks` — SessionStart·UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (**플러그인 설치만으로 자동 등록되지 않음 — 한 번 직접 호출 필요**)
+- … 그 외 다수 (`/` → `thiscode:` 필터로 전량 확인. `/thiscode:help` 는 *막힌 상황 진단·대표 경로 안내*용이고 전체 색인이 아닙니다)
 
 ### 스킬
 
@@ -189,10 +190,14 @@ cd ~/code/thiscode && bash install.sh
 | 5 | oh-my-tmux (`gpakosz/.tmux`) 자동 install | git |
 | 6 | (선택) thiscode `tmux.conf.local` 적용 | user confirm |
 | 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — 3-Tier 폴백 1순위 | brew / snap / 수동 |
-| 7 | Claude Code plugin install 안내 (marketplace 등록 + 슬래시 고유 30개 = commands 10 + skills 23 − 중복 3) | (Claude Code 안 슬래시) |
+| 7 | Claude Code plugin install 안내 (marketplace 등록 + `commands/`·`skills/` 두 발견 표면의 슬래시) | (Claude Code 안 슬래시) |
 | 8 | 첫 봇 wizard 안내 (`/thiscode:start`) | (Claude Code 안 슬래시) |
 
-플러그인 install 후 자동 인식되는 슬래시는 **고유 30개**입니다 — Claude Code 는 `commands/*.md`(10개)와 `skills/<name>/SKILL.md`(23개)를 **둘 다** 슬래시 표면으로 발견합니다(겹치는 이름 3개 제외). 전체 목록은 Claude Code 안에서 `/thiscode:help` 로 보십시오. 자주 쓰는 것만 추리면:
+Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` 를 둘 다** 슬래시로 발견합니다 — `skills/` 쪽도 `/thiscode:<name>` 으로 바로 호출됩니다.
+
+> **현재 세션에 실제 로드된 전체 목록**은 Claude Code 에서 **`/` 를 입력해 `thiscode:` 로 필터**하거나 **내장 `/help`** 에서 확인하십시오. (`/thiscode:help` 는 *막힌 상황 진단 + 대표 경로 안내*용이고 전체 색인이 아닙니다.)
+
+아래는 **대표 진입점**입니다:
 
 - `/thiscode:start` — 메인 wizard (환경 인식 + Discord 봇 셋업 + 첫 대화 검증)
 - `/thiscode:install-hooks` — SessionStart + UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (기존 hook 보존)
@@ -203,7 +208,7 @@ cd ~/code/thiscode && bash install.sh
 - `/thiscode:search` — vault 통합 검색 4-Tier (GraphRAG → Obsidian → MCP → grep)
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
-- 그 밖에 다수 — 전체는 `/thiscode:help`
+- … 그 밖에 다수 (`/` → `thiscode:` 필터로 현재 세션의 전량 확인)
 
 > ⚠️ **훅은 플러그인 설치만으로 자동 등록되지 않습니다.** `/thiscode:install-hooks` 를 **한 번 직접 호출**해야 `~/.claude/settings.json` 에 병합됩니다. 이걸 건너뛰면 soul.md 가 그냥 markdown 파일로 방치되어 페르소나가 주입되지 않습니다.
 
@@ -284,18 +289,16 @@ thiscode/
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
 │   └── plugin.json                        # thiscode v1.2.7
-├── commands/                              # 슬래시 표면 ① — 10개
+├── commands/                              # 슬래시 발견 표면 ①
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
-│   ├── init.md                            # 8 Phase progressive install wizard
 │   ├── add-bot.md                         # 추가 Discord 봇 신설
 │   ├── slack-configure.md                 # Slack 연결
-│   ├── km.md · km-bootstrap.md            # knowledge-manager 진입 · 검색환경 설치
-│   ├── search.md · open-meeting.md
-│   └── codex-check.md · test.md
-│                                          # ⚠️ install-hooks·create-bot·create-slack-bot·
-│                                          #    self-update·help 는 skills/ 쪽에 산다(아래)
-├── skills/                                # 슬래시 표면 ② — 23 skill (vault-mirror 정책)
+│   ├── open-meeting.md · codex-check.md
+│   └── …                                  # 전량은 `/` → thiscode: 필터로
+├── skills/                                # 슬래시 발견 표면 ② (vault-mirror 정책)
 │                                          #    skills 도 /thiscode:<name> 으로 직접 호출된다
+│                                          #    install-hooks · create-bot · create-slack-bot ·
+│                                          #    self-update · help 가 여기 산다
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 줄)
 │   ├── knowledge-manager-at/              # Agent Teams 변종 (1189 줄)
 │   ├── knowledge-manager-lite/            # Lite 단일 에이전트 (530 줄)
