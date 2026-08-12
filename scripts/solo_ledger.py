@@ -243,20 +243,30 @@ class _Lock:
 
     def __enter__(self):
         self._fd = os.open(self._path, os.O_RDWR | os.O_CREAT, 0o600)
-        if fcntl is not None:
-            fcntl.flock(self._fd, fcntl.LOCK_EX)
-        else:
-            os.lseek(self._fd, 0, os.SEEK_SET)
-            _msvcrt.locking(self._fd, _msvcrt.LK_LOCK, 1)
+        try:
+            if fcntl is not None:
+                fcntl.flock(self._fd, fcntl.LOCK_EX)
+            else:
+                os.lseek(self._fd, 0, os.SEEK_SET)
+                _msvcrt.locking(self._fd, _msvcrt.LK_LOCK, 1)
+        except BaseException:
+            # msvcrt 는 ~10초 재시도 후 OSError 가 설계된 정상 경로 —
+            # 잠금 실패 시 fd 를 반납해야 반복 경합이 fd 고갈로 번지지
+            # 않는다(코난 델타 재검 관측, 2026-08-12). fail-closed 불변:
+            # 예외 재전파로 with 블록(tx) 자체가 안 열린다.
+            os.close(self._fd)
+            raise
         return self
 
     def __exit__(self, *exc):
-        if fcntl is not None:
-            fcntl.flock(self._fd, fcntl.LOCK_UN)
-        else:
-            os.lseek(self._fd, 0, os.SEEK_SET)
-            _msvcrt.locking(self._fd, _msvcrt.LK_UNLCK, 1)
-        os.close(self._fd)
+        try:
+            if fcntl is not None:
+                fcntl.flock(self._fd, fcntl.LOCK_UN)
+            else:
+                os.lseek(self._fd, 0, os.SEEK_SET)
+                _msvcrt.locking(self._fd, _msvcrt.LK_UNLCK, 1)
+        finally:
+            os.close(self._fd)
 
 
 _process_quarantine = set()   # ledger paths with durability_unknown this run
