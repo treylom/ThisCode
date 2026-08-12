@@ -60,7 +60,12 @@ _replace = os.replace
 
 
 def _fsync_dir(path):
-    """Durably record directory entry changes (rename/unlink visibility)."""
+    """Durably record directory entry changes (rename/unlink visibility).
+    Windows: 디렉터리는 os.open 불가(PermissionError — CI win32 실측)이고
+    fsync-on-directory 의미론 자체가 없다 → no-op. dir-entry durability 는
+    그 플랫폼 OS 재량이 되며 나머지 원장 계약(fence·lock·replace)은 불변."""
+    if _msvcrt is not None:
+        return
     fd = os.open(path, os.O_RDONLY)
     try:
         _fsync(fd)

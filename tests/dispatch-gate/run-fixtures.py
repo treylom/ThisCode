@@ -49,12 +49,12 @@ def setup(with_config=True, with_roster=True, with_roots=True):
     os.makedirs(workspace)
     roster = os.path.join(sdir, "bot-roster.yaml")
     if with_roster:
-        open(roster, "w").write('bots:\n  konan:\n    user_id: "%s"\n' % BOT_ID)
+        open(roster, "w", encoding="utf-8").write('bots:\n  konan:\n    user_id: "%s"\n' % BOT_ID)
     if with_config:
         cfg = {"top_channels": [TOP], "roster_path": roster}
         if with_roots:
             cfg["workspace_roots"] = [workspace]
-        with open(os.path.join(sdir, "dispatch-gate.json"), "w") as fh:
+        with open(os.path.join(sdir, "dispatch-gate.json"), "w", encoding="utf-8") as fh:
             json.dump(cfg, fh)
     return sdir, workspace
 
@@ -64,7 +64,9 @@ def run_gate(sdir, payload, extra_env=None):
     if extra_env:
         env.update(extra_env)
     out = subprocess.run([sys.executable, GATE], input=json.dumps(payload),
-                        capture_output=True, text=True, env=env)
+                        capture_output=True, encoding="utf-8", errors="replace", env=env)
+    if out.stdout is None:
+        raise AssertionError("gate stdout=None — spawn/decode 실패는 조용히 못 지나간다")
     denied = "permissionDecision" in out.stdout and '"deny"' in out.stdout
     return denied, out
 
@@ -73,7 +75,7 @@ def rows(sdir, basename):
     p = os.path.join(sdir, basename)
     if not os.path.exists(p):
         return []
-    return [json.loads(l) for l in open(p) if l.strip()]
+    return [json.loads(l) for l in open(p, encoding="utf-8") if l.strip()]
 
 
 def payload(chat_id=TOP, text=None, tool="mcp__plugin_discord_discord__reply",
@@ -185,14 +187,14 @@ def main():
           not denied)
 
     print("⑤-5 연결 probe (D2 — 0번 칸)")
-    wired = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    wired = tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False)
     json.dump({"hooks": {"PreToolUse": [{"matcher": "mcp__plugin_discord",
                "hooks": [{"type": "command",
                           "command": "python3 %s" % GATE}]}]}}, wired)
     wired.close()
     sdir, ws = setup()
     out = subprocess.run([sys.executable, GATE, "--probe"],
-                        capture_output=True, text=True,
+                        capture_output=True, encoding="utf-8", errors="replace",
                         env={**os.environ, "MEETING_WATCHDOG_STATE_DIR": sdir,
                              "DISPATCH_GATE_SETTINGS": wired.name})
     POS_CTRL[0] += 1
@@ -201,11 +203,11 @@ def main():
     check("14 probe 관측 로그 누적 info 줄 표기(판독 보조)",
           "관측 로그 누적" in out.stdout, out.stdout)
 
-    unwired = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False)
+    unwired = tempfile.NamedTemporaryFile("w", encoding="utf-8", suffix=".json", delete=False)
     json.dump({"hooks": {}}, unwired)
     unwired.close()
     out = subprocess.run([sys.executable, GATE, "--probe"],
-                        capture_output=True, text=True,
+                        capture_output=True, encoding="utf-8", errors="replace",
                         env={**os.environ, "MEETING_WATCHDOG_STATE_DIR": sdir,
                              "DISPATCH_GATE_SETTINGS": unwired.name})
     NEG_CTRL[0] += 1
@@ -214,7 +216,7 @@ def main():
 
     sdir2, _ws2 = setup(with_roots=False)
     out = subprocess.run([sys.executable, GATE, "--probe"],
-                        capture_output=True, text=True,
+                        capture_output=True, encoding="utf-8", errors="replace",
                         env={**os.environ, "MEETING_WATCHDOG_STATE_DIR": sdir2,
                              "DISPATCH_GATE_SETTINGS": wired.name})
     NEG_CTRL[0] += 1

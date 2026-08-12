@@ -271,9 +271,11 @@ def probe_main():
 
 
 if __name__ == "__main__":
-    # Windows 기본 stdout/stderr 는 cp1252 — probe 의 한국어 info 줄이
-    # UnicodeEncodeError 로 죽는다. utf-8 강제 (POSIX 는 무해).
-    for _s in (sys.stdout, sys.stderr):
+    # Windows 기본 stdout/stderr/stdin 은 cp1252 — probe 의 한국어 info 줄
+    # (encode 축)과 훅 payload 의 비ASCII text(decode 축)가 죽는다. 같은
+    # 전제(플랫폼 기본 인코딩)를 공유하는 세 표면을 함께 utf-8 강제
+    # (POSIX 는 무해 · 2026-08-12 CI win32 실측 후 전수).
+    for _s in (sys.stdout, sys.stderr, sys.stdin):
         if hasattr(_s, "reconfigure"):
             try:
                 _s.reconfigure(encoding="utf-8")

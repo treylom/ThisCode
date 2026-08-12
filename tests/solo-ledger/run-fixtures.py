@@ -58,8 +58,8 @@ def fresh_env():
     room = os.path.join(room_root, "2026-08-12-fixture-room")
     os.makedirs(room)
     for base in ("01-spec.md", "02-progress.md", "03-outcome.md"):
-        open(os.path.join(room, base), "w").write("# %s\n" % base)
-    with open(os.path.join(sdir, "solo-gate.json"), "w") as fh:
+        open(os.path.join(room, base), "w", encoding="utf-8").write("# %s\n" % base)
+    with open(os.path.join(sdir, "solo-gate.json"), "w", encoding="utf-8") as fh:
         json.dump({"allowed_roots": [room_root]}, fh)
     return sdir, room
 
@@ -68,7 +68,7 @@ def run_recover(sdir, bot, wd, session):
     out = subprocess.run(
         [sys.executable, os.path.join(MODPATH, "solo_ledger.py"),
          "recover", bot, wd, session],
-        capture_output=True, text=True,
+        capture_output=True, encoding="utf-8", errors="replace",
         env={**os.environ, "MEETING_WATCHDOG_STATE_DIR": sdir})
     return json.loads(out.stdout), out
 
@@ -77,7 +77,7 @@ def alerts(sdir, kind=None):
     p = os.path.join(sdir, "solo-ledger-alerts.jsonl")
     if not os.path.exists(p):
         return []
-    rows = [json.loads(l) for l in open(p) if l.strip()]
+    rows = [json.loads(l) for l in open(p, encoding="utf-8") if l.strip()]
     return [r for r in rows if kind is None or r["kind"] == kind]
 
 
@@ -120,7 +120,7 @@ def fixture_1_eio_restart():
     # (c) ㉮ fence 부모-dir EIO (prepare stage 2) → pre-replace 처분
     sdir2, room2 = fresh_env()
     path2 = SL.create_ledger(sdir2, "karpathy", "fix1b", "sess-A", sdir2, room2)
-    before = open(path2).read()
+    before = open(path2, encoding="utf-8").read()
     calls2 = {"n": 0}
 
     def eio_on_1st(p):
@@ -133,7 +133,7 @@ def fixture_1_eio_restart():
     res3 = SL.update_ledger(path2, "sess-A", {"last_flush_iso": "z"}, "sess-A")
     SL._fsync_dir = real_fsync_dir
     check("①c fence-prepare 실패 = fail-closed", not res3["ok"])
-    check("①c 구 원장 보존(바이트 동일)", open(path2).read() == before)
+    check("①c 구 원장 보존(바이트 동일)", open(path2, encoding="utf-8").read() == before)
     rec2, _ = run_recover(sdir2, "karpathy", sdir2, "sess-C")
     NEG_CTRL[0] += 1
     check("①c 잔존 fence → 재시작 거부(safe quarantine)",
@@ -160,7 +160,7 @@ def fixture_2_race():
         "time.sleep(1.6)\n"          # crash: clear 없이 종료 → 락 자동 해제
     ) % (MODPATH, path)
     proc = subprocess.Popen([sys.executable, "-c", writer],
-                            stdout=subprocess.PIPE, text=True)
+                            stdout=subprocess.PIPE, encoding="utf-8", errors="replace")
     assert proc.stdout.readline().strip() == "FENCED"
     t0 = time.monotonic()
     rec, _ = run_recover(sdir, "karpathy", sdir, "sess-B")
@@ -199,7 +199,7 @@ def fixture_3_clear_states():
     # foreign-target fence: 결박 위반 = 미해제 취급
     sdir2, room2 = fresh_env()
     p_mis = SL.create_ledger(sdir2, "karpathy", "mis", "sess-A", sdir2, room2)
-    open(p_mis + ".fence", "w").write(json.dumps(
+    open(p_mis + ".fence", "w", encoding="utf-8").write(json.dumps(
         {"target": "/tmp/other-ledger.yaml", "generation": 1,
          "txid": "x", "ts": "t"}))
     rec2, _ = run_recover(sdir2, "karpathy", sdir2, "sess-B")
@@ -210,7 +210,7 @@ def fixture_3_clear_states():
     # torn fence: truncated json = fail-closed
     sdir3, room3 = fresh_env()
     p_torn = SL.create_ledger(sdir3, "karpathy", "torn", "sess-A", sdir3, room3)
-    open(p_torn + ".fence", "w").write('{"target": "/tm')
+    open(p_torn + ".fence", "w", encoding="utf-8").write('{"target": "/tm')
     rec3, _ = run_recover(sdir3, "karpathy", sdir3, "sess-B")
     NEG_CTRL[0] += 1
     check("③ torn fence → 거부", p_torn in rec3["rejected"]
@@ -219,7 +219,7 @@ def fixture_3_clear_states():
     # malformed ledger 자체도 fail-closed
     sdir4, _room4 = fresh_env()
     p_bad = os.path.join(sdir4, "solo-karpathy-bad-sess.yaml")
-    open(p_bad, "w").write("state: open\ngarbage line without colon key\n")
+    open(p_bad, "w", encoding="utf-8").write("state: open\ngarbage line without colon key\n")
     rec4, _ = run_recover(sdir4, "karpathy", sdir4, "sess-B")
     NEG_CTRL[0] += 1
     check("③ malformed 원장 → 거부+alert", p_bad in rec4["rejected"]
@@ -258,7 +258,7 @@ def fixture_4_lock_identity_orphan():
     check("④ lock inode 불변(불교체 — update 2회 뒤 실측)",
           lock_ino_before == lock_ino_after)
     check("④ ledger 쓰기 = 교체 시엄으로만(대조축 — _replace 정확 2회 + 내용 t2)",
-          n_replace[0] == 2 and "t2" in open(path).read())
+          n_replace[0] == 2 and "t2" in open(path, encoding="utf-8").read())
 
     # claim mismatch = 패자 열람만
     res = SL.update_ledger(path, "sess-WRONG", {"last_flush_iso": "x"},
@@ -281,7 +281,7 @@ def fixture_4_lock_identity_orphan():
     POS_CTRL[0] += 1
     check("④ [양성 미끼] 미claim open 원장 최초 claim", rec["claimed"] == [path],
           str(rec))
-    fields = SL.parse_fields(open(path).read())
+    fields = SL.parse_fields(open(path, encoding="utf-8").read())
     check("④ owner = claim_session 승계", SL.owner(fields) == "sess-NEW")
 
     # single-owner (85-doc §D): 기claim open 원장에 두 번째 세션 recovery
@@ -304,7 +304,7 @@ def fixture_4_lock_identity_orphan():
     shutil.rmtree(other_wd)
 
     # takeover CAS (85-doc §D / 83-doc orphan 승인 미결의 확정):
-    gen_now = SL.parse_fields(open(path).read())["generation"]
+    gen_now = SL.parse_fields(open(path, encoding="utf-8").read())["generation"]
     res = SL.takeover(path, "sess-TK", "sess-NEW", "999", "r-x")
     NEG_CTRL[0] += 1
     check("④ takeover generation CAS 불일치 → 거부",
@@ -320,7 +320,7 @@ def fixture_4_lock_identity_orphan():
     NEG_CTRL[0] += 1
     check("④ takeover receipt 공백-only → 거부·미영속(87-doc §D strip 게이트)",
           not res["ok"] and "receipt" in res["reason"]
-          and SL.parse_fields(open(path).read()).get("takeover_receipt") == "",
+          and SL.parse_fields(open(path, encoding="utf-8").read()).get("takeover_receipt") == "",
           str(res))
     res = SL.takeover(path, "   ", "sess-NEW", gen_now, "r-ok")
     NEG_CTRL[0] += 1
@@ -330,7 +330,7 @@ def fixture_4_lock_identity_orphan():
                       "approved-by-op-#123")
     POS_CTRL[0] += 1
     check("④ [양성 미끼] 정합 CAS+receipt takeover 성공", res["ok"], str(res))
-    fields = SL.parse_fields(open(path).read())
+    fields = SL.parse_fields(open(path, encoding="utf-8").read())
     check("④ takeover 후 owner 이전 + receipt 영속",
           SL.owner(fields) == "sess-TK"
           and fields.get("takeover_receipt") == "approved-by-op-#123")
@@ -345,7 +345,7 @@ def fixture_4_lock_identity_orphan():
     sdir5, _room5 = fresh_env()
     outside = tempfile.mkdtemp(prefix="outside-room-")
     for base in ("01-spec.md", "02-progress.md", "03-outcome.md"):
-        open(os.path.join(outside, base), "w").write("x\n")
+        open(os.path.join(outside, base), "w", encoding="utf-8").write("x\n")
     p5 = SL.create_ledger(sdir5, "karpathy", "out", "sess-A", sdir5, outside)
     rec5, _ = run_recover(sdir5, "karpathy", sdir5, "sess-B")
     NEG_CTRL[0] += 1
@@ -357,11 +357,11 @@ def fixture_4_lock_identity_orphan():
     sdir6, room6 = fresh_env()
     room_b = os.path.join(os.path.dirname(room6), "room-b")
     os.makedirs(room_b)
-    open(os.path.join(room_b, "01-spec.md"), "w").write("x\n")
+    open(os.path.join(room_b, "01-spec.md"), "w", encoding="utf-8").write("x\n")
     p6 = SL.create_ledger(sdir6, "karpathy", "mix", "sess-A", sdir6, room6)
-    fields6 = SL.parse_fields(open(p6).read())
+    fields6 = SL.parse_fields(open(p6, encoding="utf-8").read())
     fields6["spec_path"] = os.path.join(room_b, "01-spec.md")
-    open(p6, "w").write(SL.dump_fields(fields6))
+    open(p6, "w", encoding="utf-8").write(SL.dump_fields(fields6))
     rec6, _ = run_recover(sdir6, "karpathy", sdir6, "sess-B")
     NEG_CTRL[0] += 1
     check("④ ⓓ room 혼합 → 원장 전체 injection 스킵 + alert",
