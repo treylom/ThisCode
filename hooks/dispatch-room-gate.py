@@ -28,11 +28,13 @@ Origin (D5 v2.3): PreToolUse 는 구조상 model call-path 다 — tool_input �
 (브리지 장애 알림의 실제 경로 = templates/bridge.py 직접 발신 — PreToolUse
 비경유 = 구조적 음성. fixture 로 명기.)
 
-Probe (`--probe`): ①wiring — settings.json 에 본 훅 PreToolUse 등재
-②양성 — synthetic 발주 payload 가 실제 decide() 경로에서 deny
-③음성(미끼) — 비-top 채널 payload 가 pass ④음성 — out-of-cwd payload 가
-pass(D2 cwd 가드 실증). 전 칸 PASS 아니면 exit 1. + 관측 로그 누적 행수를
-info 줄로 표기(판독 계약 보조 — 판정 칸 아님).
+Probe (`--probe`) — 5칸(SKILL.md Step 6 완료 판정과 동일 계약):
+①wiring — settings.json 에 본 훅 PreToolUse 등재 ②config —
+top_channels+workspace_roots 로드 가능 ③양성 — synthetic 발주 payload 가
+실제 decide() 경로에서 deny ④음성(미끼) — 비-top 채널 payload 가 pass
+⑤음성 — out-of-cwd payload 가 pass(D2 cwd 가드 실증). 전 칸 PASS 아니면
+exit 1 (`PROBE PASS 5/5`). + 관측 로그 누적 행수를 info 줄로 표기(판독
+계약 보조 — 판정 칸 아님).
 """
 
 import json

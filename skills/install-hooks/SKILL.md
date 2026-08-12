@@ -256,7 +256,7 @@ cat > "$STATE/dispatch-gate.json" <<EOF
 }
 EOF
 
-# 연결 probe (D2 — 설치 완료 판정의 0번 칸): wiring(settings 등재)·config·
+# 연결 probe (D2 cwd 가드 축 — 설치 완료 판정의 0번 칸): wiring(settings 등재)·config·
 # in-cwd 양성 deny·비-top 음성 pass·out-cwd 음성 pass 5칸 전부 PASS 여야 완료
 python3 "$PLUGIN_DIR/hooks/dispatch-room-gate.py" --probe
 ```
