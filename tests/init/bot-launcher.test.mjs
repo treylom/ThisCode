@@ -34,14 +34,17 @@ function fixture(channel = 'discord') {
   };
 }
 
-test('skills make the launcher a default-yes bot-creation step, with explicit refusal as the only skip', () => {
+test('skills make the launcher a REQUIRED bot-creation step, with explicit refusal (recorded in bot.yaml) as the only skip', () => {
+  // 2026-08-12: «기본 추천(default-yes)» → «🔴 필수» 승격 (재경님 alias 생략
+  // 회귀 수리). 앵커도 승격 후 문구로 — 구 문구 앵커는 승격 커밋이 남긴
+  // 미스윕 회귀였다.
   const discord = readFileSync('skills/create-bot/SKILL.md', 'utf8');
   const slack = readFileSync('skills/slack-configure/SKILL.md', 'utf8');
   const entry = readFileSync('skills/create-slack-bot/SKILL.md', 'utf8');
   const legacy = readFileSync('commands/slack-configure.md', 'utf8');
   for (const text of [discord, slack]) {
-    assert.match(text, /기본 추천/);
-    assert.match(text, /명시.*거부.*건너/);
+    assert.match(text, /🔴 필수/);
+    assert.match(text, /명시적 거부만 예외/);
     assert.match(text, /install-bot-launcher\.mjs/);
   }
   assert.match(slack, /\.slack-configure-target/);

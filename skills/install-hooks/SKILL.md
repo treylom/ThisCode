@@ -120,6 +120,18 @@ PATCH=$(cat <<EOF
         ]
       }
     ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 '$PLUGIN_DIR/hooks/dispatch-room-gate.py'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
@@ -149,7 +161,8 @@ def mergeEv($a; $b):
 . as [$s, $p] | ($s * $p)
 | .hooks.SessionStart     = mergeEv($s.hooks.SessionStart // [];     $p.hooks.SessionStart // [])
 | .hooks.UserPromptSubmit = mergeEv($s.hooks.UserPromptSubmit // []; $p.hooks.UserPromptSubmit // [])
-| .hooks.Stop             = mergeEv($s.hooks.Stop // [];             $p.hooks.Stop // [])' \
+| .hooks.Stop             = mergeEv($s.hooks.Stop // [];             $p.hooks.Stop // [])
+| .hooks.PreToolUse       = mergeEv($s.hooks.PreToolUse // [];       $p.hooks.PreToolUse // [])' \
   "$SETTINGS" <(echo "$PATCH") > "$SETTINGS.tmp"
 mv "$SETTINGS.tmp" "$SETTINGS"
 ```
@@ -165,7 +178,7 @@ mv "$SETTINGS.tmp" "$SETTINGS"
 > const a = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
 > const b = JSON.parse(process.argv[2]);
 > const merged = { ...a, hooks: { ...(a.hooks || {}) } };
-> for (const ev of ["SessionStart", "UserPromptSubmit", "Stop"]) {
+> for (const ev of ["SessionStart", "UserPromptSubmit", "Stop", "PreToolUse"]) {
 >   const groups = new Map();  // matcher별 바깥 그룹 병합
 >   for (const g of [...(a.hooks?.[ev] || []), ...(b.hooks?.[ev] || [])]) {
 >     const m = g.matcher || "";
@@ -190,7 +203,7 @@ mv "$SETTINGS.tmp" "$SETTINGS"
 
 기존 hook 있는 경우:
 - 사용자 ~/.claude/settings.json 열기
-- "hooks" 키 안에 SessionStart + UserPromptSubmit 추가 (기존 항목 뒤에 append)
+- "hooks" 키 안에 SessionStart + UserPromptSubmit + Stop + PreToolUse 추가 (기존 항목 뒤에 append)
 ```
 
 ### Step 4. 검증
@@ -207,6 +220,7 @@ hooks = d.get("hooks", {})
 print("SessionStart hooks:", len(hooks.get("SessionStart", [])))
 print("UserPromptSubmit hooks:", len(hooks.get("UserPromptSubmit", [])))
 print("Stop hooks:", len(hooks.get("Stop", [])))
+print("PreToolUse hooks:", len(hooks.get("PreToolUse", [])))
 '
 ```
 
@@ -223,6 +237,32 @@ claude
 → SessionStart hook 이 첫 응답 직전 stdout 으로 soul.md / 메모리 / 공통 규율 inject. 사용자가 첫 메시지 보내면 4-gate self-check 표 stdout 주입.
 
 확인: 첫 응답에서 봇이 페르소나 어휘 + 시그니처 사용 → ✅
+
+### Step 6. (다봇 워크스페이스) 회의실 게이트 구성 + 연결 probe
+
+`dispatch-room-gate.py` 는 **top-level 공용 채널에서의 봇→봇 발주를 deny** 하는
+PreToolUse 훅이다 (rules-seed Rule 3 과 같은 판정 기준). 봇이 2개 이상인
+워크스페이스에서만 의미가 있다 — 단일 봇 설치면 이 Step 을 건너뛰어도 된다
+(설정 파일이 없으면 게이트는 조용히 비활성).
+
+```bash
+STATE="${MEETING_WATCHDOG_STATE_DIR:-$HOME/.claude-state}"
+mkdir -p "$STATE"
+cat > "$STATE/dispatch-gate.json" <<EOF
+{
+  "top_channels": ["<공용 채널 id 1>", "<공용 채널 id 2>"],
+  "roster_path": "<bot-roster.yaml 절대경로 — user_id: \"<id>\" 항목 보유>"
+}
+EOF
+
+# 연결 probe (D2 — 설치 완료 판정의 0번 칸):
+# wiring(settings 등재)·config·양성 deny·음성 pass 4칸 전부 PASS 여야 완료
+python3 "$PLUGIN_DIR/hooks/dispatch-room-gate.py" --probe
+```
+
+`PROBE PASS 4/4` 가 아니면 게이트 설치를 완료로 보고하지 않는다 — probe 가
+막는 것이 바로 «등록만 하고 발화 확인 없는 설치»다. denial 기록 =
+`$STATE/dispatch-gate-denials.jsonl` (probe 발 기록은 `"probe": true` 표기).
 
 ---
 

@@ -1,4 +1,4 @@
-<!-- rules-seed v1.0.0 -->
+<!-- rules-seed v1.1.0 -->
 # Rules Seed — copy-once bot defaults
 
 > 본 파일은 봇 생성 시(`create-bot`/`create-discord-bot` — Slack 은 `create-slack-bot`/`slack-configure`
@@ -25,3 +25,15 @@ Slack DM(1:1) 대화에서는 인바운드 메시지의 스레드 식별자(`thr
 이 봇에 옵시디언 위키(vault) 경로가 연결돼 있으면(봇 WD 의 `CLAUDE.md` "위키 연결" 절 ·
 env `THISCODE_WIKI_PATH` 참조), 채팅 지시로 만든 Markdown 산출물은 그 위키 경로에 저장한다.
 저장 후 응답에 저장 경로를 함께 명시한다 — 말없이 저장하지 않는다.
+
+## Rule 3 — 본문 채널 봇 발주 금지 (회의실 게이트, v1.1.0)
+
+봇이 다른 봇에게 작업을 위임(발주·검수·구현·테스트 지시 등)할 때는 **top-level 공용
+채널 본문에서 하지 않는다** — 전용 스레드를 만들고, 회의 기록 폴더(4-file:
+00-context/01-spec/02-progress/03-outcome)를 먼저 만든 뒤 그 스레드 안에서만 진행한다.
+단발 공지·생존 확인 핑은 본문에 보내되 `[공지]`/`[단발]`/`[핑]` 태그를 명기한다.
+사람 대상 메시지에는 봇 멘션을 넣지 않는다.
+
+설치가 구성되면 이 규칙은 `hooks/dispatch-room-gate.py`(PreToolUse deny 훅 +
+`<state>/dispatch-gate.json` 설정)가 기계적으로도 막는다 — 규칙 텍스트와 훅은 같은
+판정 기준을 공유하며, 훅 미설정 환경에서도 규칙 자체는 유효하다.

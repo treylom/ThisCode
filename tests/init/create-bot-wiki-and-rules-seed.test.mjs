@@ -93,14 +93,16 @@ test('B3 (기준 4-5): a staleness WARN is documented at the actual boot checkpo
   assert.match(text, /\[thiscode\]\[WARN\] rules-seed vX -> vY available — update by explicit command only/);
 });
 
-test('templates/rules-seed.md exists with the v1.0.0 stamp, both rules, and the Slack-only DM caveat (parity with ThisCodex examples/rules-seed.md)', () => {
+test('templates/rules-seed.md exists with the v1.1.0 stamp, all three rules, and the Slack-only DM caveat (parity with ThisCodex examples/rules-seed.md — Rule 3 lands there in P2)', () => {
   const text = readFileSync('templates/rules-seed.md', 'utf8');
-  assert.match(text, /^<!-- rules-seed v1\.0\.0 -->/);
+  assert.match(text, /^<!-- rules-seed v1\.1\.0 -->/);
   assert.match(text, /## Rule 1/);
   assert.match(text, /Slack DM 한정/, 'Rule 1 must scope the thread_ts echo rule to the Slack bridge');
   assert.match(text, /## Rule 2/);
   assert.match(text, /위키.*저장|저장.*위키/, 'Rule 2 must state the wiki save policy');
   assert.match(text, /THISCODE_WIKI_PATH/);
+  assert.match(text, /## Rule 3/);
+  assert.match(text, /dispatch-room-gate\.py/, 'Rule 3 must point at the enforcing hook');
 });
 
 // Follow-up order (same commit): the wiki path answer is FREE TEXT (like
