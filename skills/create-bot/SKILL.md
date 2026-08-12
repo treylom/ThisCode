@@ -367,7 +367,7 @@ fi
 - **경로가 있으면** → Step 6 의 CLAUDE.md 에 "위키 연결" 절을 넣고, Step 7 시동 명령에 `THISCODE_WIKI_PATH` export 를 포함한다.
 - **경로가 없으면** → Step 6 의 CLAUDE.md 에 위키 절을 생략하고, Step 7 완료 안내에 샘플 위키로 시작하는 법 1줄을 넣는다.
 
-### Step 6. WD (Working Directory) 결정 + CLAUDE.md 생성 (선택)
+### Step 6. WD (Working Directory) 결정 + CLAUDE.md 생성 [🔴 필수 — 생략 불가·명시적 거부만 예외(거부도 bot.yaml 에 기록, 2026-08-12 «(선택)» 격하 회귀 수리)]
 
 > **USER-PROFILE 의 본 정착지 (구조 층)** — 인터뷰 답은 페르소나가 아니라 *구조*로 내려간다:
 >
@@ -563,6 +563,9 @@ launcher:
   tmux_session: ${BOT_NAME}
   rc: ${RC}
   declined_reason: ""      # status=declined 일 때만 사유 기입(필수)
+wd_docs:
+  claude_md: created       # created | declined — Step 6 결과(빈 값 금지)
+  declined_reason: ""      # declined 일 때만 사유 기입(필수)
 EOF
 ```
 
@@ -585,6 +588,7 @@ $BOT_NAME
 - [ ] claude 시동 + DISCORD_STATE_DIR export 후 첫 응답에 페르소나 어휘 자연 포함
 - [ ] 🔴 **`$BOT_DIR/bot.yaml` 존재 + `launcher.status` ∈ {installed, declined}** — 파일 부재 = Step 7.5 생략 = 셋업 미완(완료 보고 금지 — 2026-08-12 yaml 규약). `declined` 면 `declined_reason` 이 비어 있지 않을 것
 - [ ] `launcher.status: installed` 면 `$WD/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-stop` 관리 블록 1개 + 두 번째 설치 후 중복 0
+- [ ] 🔴 **`bot.yaml` `wd_docs.claude_md` ∈ {created, declined}** — `created` 면 `<WD>/CLAUDE.md` 실재(soul 참조 + 공용 규율 포인터 포함), `declined` 면 사유 기록(빈 값 = Step 6 생략 = 셋업 미완)
 - [ ] 런처 재호출 시 같은 이름의 tmux 세션만 교체되고, tmux가 없으면 확인된 `$WD`에서 foreground로 기동
 - [ ] Discord DM → 봇 응답 ✅
 - [ ] 🔴 **soul.md 가 실제로 주입됐나** — 아래 별도 절차로 확인(파일 존재 ≠ 주입)
