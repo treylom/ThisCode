@@ -42,3 +42,5 @@ install:
       reason: 시크릿 값 취급 — 사용자가 직접
     - name: slack_messages_tab_toggle
       reason: 앱 설정 UI 토글 — 소유자 계정 세션에서만
+    - name: slack_dev_channels_confirm
+      reason: 권한 승인 다이얼로그 — 대신 눌러선 안 된다(동의는 사람 몫)

@@ -245,3 +245,55 @@ test('원장이 없어도 --audit 은 깨지지 않는다', () => {
     assert.match(r.out, /원장 없음/);
   });
 });
+
+// ─────────────────────────────────────────────── 문서 ↔ 계약 정합
+// 스킬 문서가 「이 이름은 exit 0 이다」라고 «적어» 두면, 그 문장은 계약 파일이
+// 바뀌어도 안 죽는다. 주석이 정본을 참칭하는 형태다 — 그래서 문서에 적힌 이름을
+// 실제로 게이트에 물어본다. 표를 고치고 명단을 안 고치면(또는 반대) 여기가 빨개진다.
+
+function namesFromTable(file, rowRe) {
+  const text = readFileSync(join(REPO, file), 'utf8');
+  const out = [];
+  for (const line of text.split('\n')) {
+    const m = line.match(rowRe);
+    if (m) out.push(m[1]);
+  }
+  return out;
+}
+
+test('slack-configure 관문 표에 적힌 이름은 실제로 게이트가 exit 0 을 준다', () => {
+  const names = namesFromTable(
+    join('skills', 'slack-configure', 'SKILL.md'),
+    /^\|\s*[A-E]\s*\|[^|]*\|\s*`([a-z_]+)`\s*\|\s*exit 0\s*\|/,
+  );
+  // 🔴 기대값 게이트: 추출이 0건이면 아래 for 문이 «아무것도 검사하지 않고» 통과한다.
+  //    표 형식이 바뀌어 정규식이 빗나가는 순간이 정확히 그 상황이다.
+  assert.ok(names.length >= 6, `관문 표에서 이름을 ${names.length}개만 뽑았다 — 표 형식이 바뀌었거나 정규식이 낡았다`);
+  withSandbox((box) => {
+    for (const n of names) {
+      assert.equal(run(box, [n], { mode: 'auto' }).code, 0,
+        `${n} 은 문서가 exit 0 이라 적어놨는데 계약 명단에 없다`);
+    }
+  });
+});
+
+test('create-bot 하드 관문 3곳의 계약상 이름도 실제로 exit 0 이다', () => {
+  const text = readFileSync(join(REPO, 'skills', 'create-bot', 'SKILL.md'), 'utf8');
+  const names = [...text.matchAll(/\b([1-3])\s*=\s*`(discord_[a-z_]+)`/g)].map((m) => m[2]);
+  assert.equal(names.length, 3, `하드 관문 이름을 ${names.length}개 뽑았다 — 3개여야 한다`);
+  withSandbox((box) => {
+    for (const n of names) {
+      assert.equal(run(box, [n], { mode: 'auto' }).code, 0, `${n} 은 등재돼 있어야 한다`);
+    }
+  });
+});
+
+// 반대 방향: 명단에 «없는» 이름을 문서가 exit 0 이라 적으면 위 시험이 잡는다.
+// 그 시험이 진짜로 잡는지(= 장식이 아닌지)를 여기서 확인한다 — 돌연변이 대신
+// 「명단에 절대 없을 이름」을 직접 물어 자가 살아 있음을 보인다.
+test('명단에 없는 이름은 exit 0 을 못 받는다 (위 두 시험이 장식이 아님을 보이는 대조군)', () => {
+  withSandbox((box) => {
+    assert.equal(run(box, ['slack_channel_id_lookup'], { mode: 'auto' }).code, 1);
+    assert.equal(run(box, ['discord_oauth_url_build'], { mode: 'auto' }).code, 1);
+  });
+});
