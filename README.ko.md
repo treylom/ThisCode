@@ -49,6 +49,12 @@ bash scripts/install.sh --apply
 Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
 
 **Windows 사용자:** 길이 둘입니다. **(a) 봇 페어링만 필요하면 — 네이티브 PowerShell 로 «지금» 됩니다.** Claude Code + Discord 플러그인의 *channels* 디렉터리(`~/.claude/channels/discord-<bot>/`)만 있으면 되고 **tmux·cmux·데몬이 전혀 필요 없습니다.** 봇 세션 = `DISCORD_STATE_DIR` 를 설정한 PowerShell 창에서 `claude` 를 띄운 것뿐입니다 ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) `install.sh` 전체 환경**(oh-my-tmux, 멀티세션 헬퍼)이 필요하면 — WSL 2 (Ubuntu 22.04+). Windows 에서 AI 어시스턴트가 설치를 대신 하고 있다면 **(a) 경로를 지정**하십시오 — 데몬이나 백그라운드 서비스로 tmux 를 재현하려 들면 안 됩니다.
+>
+> (a) 경로의 봇 기동은 PowerShell 창에서 이 두 줄입니다 — **`--channels` 플래그가 없으면 Discord 게이트웨이에 접속하지 않습니다**(무반응 최종 관문):
+> ```powershell
+> $env:DISCORD_STATE_DIR = "$HOME\.claude\channels\discord-<botname>"
+> claude --channels plugin:discord@claude-plugins-official
+> ```
 
 **의존성 출처(Dependency provenance):** 20 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + optional GUI guide 1 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero) — Slack bridge 항목은 저작권자 결정으로 MIT 통일(2026-08-06), 본 repo와 동일.
 
@@ -183,20 +189,23 @@ cd ~/code/thiscode && bash install.sh
 | 5 | oh-my-tmux (`gpakosz/.tmux`) 자동 install | git |
 | 6 | (선택) thiscode `tmux.conf.local` 적용 | user confirm |
 | 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — 3-Tier 폴백 1순위 | brew / snap / 수동 |
-| 7 | Claude Code plugin install 안내 (marketplace 등록 + 슬래시 10종) | (Claude Code 안 슬래시) |
+| 7 | Claude Code plugin install 안내 (marketplace 등록 + 슬래시 고유 30개 = commands 10 + skills 23 − 중복 3) | (Claude Code 안 슬래시) |
 | 8 | 첫 봇 wizard 안내 (`/thiscode:start`) | (Claude Code 안 슬래시) |
 
-플러그인 install 후 자동 인식되는 슬래시 10종 (= `commands/*.md` 실측):
+플러그인 install 후 자동 인식되는 슬래시는 **고유 30개**입니다 — Claude Code 는 `commands/*.md`(10개)와 `skills/<name>/SKILL.md`(23개)를 **둘 다** 슬래시 표면으로 발견합니다(겹치는 이름 3개 제외). 전체 목록은 Claude Code 안에서 `/thiscode:help` 로 보십시오. 자주 쓰는 것만 추리면:
+
 - `/thiscode:start` — 메인 wizard (환경 인식 + Discord 봇 셋업 + 첫 대화 검증)
-- `/thiscode:init` — 환경 감지 + 8 Phase progressive install wizard
-- `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설 (soul.md template + token + 페어링)
-- `/thiscode:slack-configure` — Claude Code 세션을 Slack 에 연결 (claude-channel-server 브리지 자동 셋업)
+- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (기존 hook 보존)
+- `/thiscode:create-bot` — 신규 봇 디렉토리 + soul.md template 셋업
+- `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설
+- `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
 - `/thiscode:km` — knowledge-manager 진입점 (variant 자동 라우팅 — lite / at / plain)
-- `/thiscode:km-bootstrap` — 검색 환경 초기 설치 (Obsidian CLI / vault-search MCP / GraphRAG 서버)
 - `/thiscode:search` — vault 통합 검색 4-Tier (GraphRAG → Obsidian → MCP → grep)
-- `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file — 00-context / 01-spec / 02-progress / 03-outcome)
+- `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
-- `/thiscode:test` — 배포된 기능이 실제로 물려 있는지 smoke test (memory / tmux / discord-gate / graphrag)
+- 그 밖에 다수 — 전체는 `/thiscode:help`
+
+> ⚠️ **훅은 플러그인 설치만으로 자동 등록되지 않습니다.** `/thiscode:install-hooks` 를 **한 번 직접 호출**해야 `~/.claude/settings.json` 에 병합됩니다. 이걸 건너뛰면 soul.md 가 그냥 markdown 파일로 방치되어 페르소나가 주입되지 않습니다.
 
 순정 Claude Code 부트스트랩 (hook + 봇 없는 상태):
 
@@ -275,15 +284,18 @@ thiscode/
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
 │   └── plugin.json                        # thiscode v1.2.7
-├── commands/                              # 슬래시 10종
+├── commands/                              # 슬래시 표면 ① — 10개
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
-│   ├── install-hooks.md                   # SessionStart + UserPromptSubmit hook merge
-│   ├── create-bot.md                      # 봇 디렉토리 + soul.md 자동 셋업
-│   ├── add-bot.md
-│   ├── open-meeting.md
-│   ├── codex-check.md
-│   └── self-update.md
-├── skills/                                # 23 skill (vault-mirror 정책)
+│   ├── init.md                            # 8 Phase progressive install wizard
+│   ├── add-bot.md                         # 추가 Discord 봇 신설
+│   ├── slack-configure.md                 # Slack 연결
+│   ├── km.md · km-bootstrap.md            # knowledge-manager 진입 · 검색환경 설치
+│   ├── search.md · open-meeting.md
+│   └── codex-check.md · test.md
+│                                          # ⚠️ install-hooks·create-bot·create-slack-bot·
+│                                          #    self-update·help 는 skills/ 쪽에 산다(아래)
+├── skills/                                # 슬래시 표면 ② — 23 skill (vault-mirror 정책)
+│                                          #    skills 도 /thiscode:<name> 으로 직접 호출된다
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 줄)
 │   ├── knowledge-manager-at/              # Agent Teams 변종 (1189 줄)
 │   ├── knowledge-manager-lite/            # Lite 단일 에이전트 (530 줄)
@@ -351,7 +363,7 @@ curl -fsSL https://raw.githubusercontent.com/treylom/ThisCode/main/install.sh | 
 | **WSL Ubuntu 20.04+** | ✅ primary | `install.sh` 가장 잘 테스트된 환경 |
 | **Linux native** (Debian / Ubuntu / Fedora / Arch) | ✅ | 패키지 매니저 자동 detect |
 | **macOS** | ✅ | brew 기반 |
-| **Windows native (PowerShell)** | ✅ 봇 페어링 | Discord 봇 페어링이 Claude Code **channels**(`~/.claude/channels/`)로 네이티브 동작 — **tmux / cmux / 데몬 불필요.** tmux 기반 부가물(oh-my-tmux, `install.sh` 멀티세션 헬퍼)만 여전히 WSL 필요 — [docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md) 참조 |
+| **Windows native (PowerShell)** | ✅ 봇 페어링 | Discord 봇 페어링이 Claude Code **channels**(`~/.claude/channels/`)로 네이티브 동작 — **tmux / cmux / 데몬 불필요.** 기동 = `$env:DISCORD_STATE_DIR` 설정 후 `claude --channels plugin:discord@claude-plugins-official` (**`--channels` 없으면 미접속**). tmux 기반 부가물(oh-my-tmux, `install.sh` 멀티세션 헬퍼)만 여전히 WSL 필요 — [docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md) 참조 |
 
 | Agent runtime | 호환 | 비고 |
 |---|---|---|
