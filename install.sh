@@ -247,15 +247,18 @@ install_plugin() {
       /plugin marketplace add treylom/ThisCode
       /plugin install thiscode@thiscode-marketplace
 
-  Slash commands recognized automatically after install (7):
+  Where to start (these are entry points, not the whole set):
 
+      /thiscode:help           — LIST EVERY command and skill, with descriptions
       /thiscode:start          — main wizard (env + bot + first chat)
       /thiscode:install-hooks  — SessionStart + UserPromptSubmit hook merge
       /thiscode:create-bot     — new-bot directory + .env + soul.md auto-setup
-      /thiscode:add-bot        — add one more bot
       /thiscode:open-meeting   — new meeting folder (multi-bot 4-file pattern)
-      /thiscode:codex-check    — verify Codex CLI (codex layer active)
-      /thiscode:self-update    — self-update (git fetch behind comparison)
+      …
+
+  Slash surfaces come from two places — commands/*.md AND skills/<name>/SKILL.md
+  — so no fixed list here can stay accurate. Run /thiscode:help after install;
+  it enumerates both directories at runtime.
 
   Or via local git clone (for testing / verification):
 
