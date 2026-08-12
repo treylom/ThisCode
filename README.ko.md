@@ -48,7 +48,7 @@ bash scripts/install.sh --apply
 
 Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
 
-**Windows 사용자:** WSL 2 (Ubuntu 22.04+) **required**. Native Windows (Cygwin / Git Bash / MSYS) 는 install.sh 안 detect 되며 WSL 사용 안내. PowerShell port = 후속 cycle 예정.
+**Windows 사용자:** 길이 둘입니다. **(a) 봇 페어링만 필요하면 — 네이티브 PowerShell 로 «지금» 됩니다.** Claude Code + Discord 플러그인의 *channels* 디렉터리(`~/.claude/channels/discord-<bot>/`)만 있으면 되고 **tmux·cmux·데몬이 전혀 필요 없습니다.** 봇 세션 = `DISCORD_STATE_DIR` 를 설정한 PowerShell 창에서 `claude` 를 띄운 것뿐입니다 ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) `install.sh` 전체 환경**(oh-my-tmux, 멀티세션 헬퍼)이 필요하면 — WSL 2 (Ubuntu 22.04+). Windows 에서 AI 어시스턴트가 설치를 대신 하고 있다면 **(a) 경로를 지정**하십시오 — 데몬이나 백그라운드 서비스로 tmux 를 재현하려 들면 안 됩니다.
 
 **의존성 출처(Dependency provenance):** 20 entries 매트릭스 (Plugin 1 + Spec doc 2 + External tools 8 + optional GUI guide 1 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) [ATTRIBUTIONS.md](ATTRIBUTIONS.md) 안 명기. Cross-license compatibility Phase 1 GPT-5.5 review 검증 (MIT + Apache 2.0 + BSD-3 + Unlicense — 모두 permissive, copyleft zero) — Slack bridge 항목은 저작권자 결정으로 MIT 통일(2026-08-06), 본 repo와 동일.
 
@@ -84,8 +84,8 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 
 - `/thiscode:start` — 초기 셋업 wizard (환경 인식, 봇 페어링, 검증)
 - `/thiscode:init` — 경험자용 경량 셋업
-- `/thiscode:create-bot` — 새 Discord 봇 생성 (soul.md 템플릿 포함)
-- `/thiscode:create-slack-bot` — Discord 대신(또는 추가로) Slack에 봇 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
+- `/thiscode:add-bot` — 추가 Discord 봇 1개 신설 (soul.md 템플릿 + token + 페어링)
+- `/thiscode:slack-configure` — Discord 대신(또는 추가로) Slack에 봇 연결 (claude-channel-server 브리지 자동 셋업)
 - `/thiscode:km` — 지능형 variant 라우팅 knowledge manager (lite/at/plain)
 - `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
@@ -102,7 +102,7 @@ Claude Code 내에서 `/thiscode:help` 를 실행하면 모든 사용 가능한 
 
 본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. vault-first 검색만으로도 완전히 작동하며, Discord 페어링 및 tmux 세션은 advanced use case 용입니다.
 
-> **Slack을 쓰고 싶다면?** Discord 대신(또는 추가로) Slack으로도 봇을 페어링할 수 있습니다 — `/thiscode:create-slack-bot`(별칭: `/thiscode:slack-configure`) 실행 시 CLI 로그인·앱 설치 승인·토큰 입력 같은 사람 관문만 안내받고 나머지는 자동으로 처리됩니다. 상세: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). 운영·트러블슈팅 참조: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
+> **Slack을 쓰고 싶다면?** Discord 대신(또는 추가로) Slack으로도 봇을 페어링할 수 있습니다 — `/thiscode:slack-configure` 실행 시 CLI 로그인·앱 설치 승인·토큰 입력 같은 사람 관문만 안내받고 나머지는 자동으로 처리됩니다. 상세: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). 운영·트러블슈팅 참조: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 
 ### Discord로 할 수 있는 것
 
@@ -183,24 +183,26 @@ cd ~/code/thiscode && bash install.sh
 | 5 | oh-my-tmux (`gpakosz/.tmux`) 자동 install | git |
 | 6 | (선택) thiscode `tmux.conf.local` 적용 | user confirm |
 | 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — 3-Tier 폴백 1순위 | brew / snap / 수동 |
-| 7 | Claude Code plugin install 안내 (marketplace 등록 + 슬래시 7종) | (Claude Code 안 슬래시) |
+| 7 | Claude Code plugin install 안내 (marketplace 등록 + 슬래시 10종) | (Claude Code 안 슬래시) |
 | 8 | 첫 봇 wizard 안내 (`/thiscode:start`) | (Claude Code 안 슬래시) |
 
-플러그인 install 후 자동 인식되는 슬래시 7종:
-- `/thiscode:start` — 메인 wizard (환경 인식 + 봇 셋업 + 첫 대화)
-- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop(활성 회의 재독)** hook merge (~/.claude/settings.json 안전 병합, 기존 hook 보존). SessionStart 가 soul.md + 메모리 + `rules/INDEX.md` 주입, Stop 훅이 최근 규칙/회의 변경을 자동 반영하는 경로 — [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md) 참조
-- `/thiscode:create-bot` — 신규 봇 디렉토리 + .env + soul.md template 자동 셋업
-- `/thiscode:create-discord-bot` — 추가 Discord 봇 1개 신설 (별칭: `/thiscode:add-bot`)
-- `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
-- `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
-- `/thiscode:codex-check` — Codex CLI 검증 (호출 layer 활성 확인)
-- `/thiscode:self-update` — 자가 업데이트 체크 (git fetch behind 비교)
+플러그인 install 후 자동 인식되는 슬래시 10종 (= `commands/*.md` 실측):
+- `/thiscode:start` — 메인 wizard (환경 인식 + Discord 봇 셋업 + 첫 대화 검증)
+- `/thiscode:init` — 환경 감지 + 8 Phase progressive install wizard
+- `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설 (soul.md template + token + 페어링)
+- `/thiscode:slack-configure` — Claude Code 세션을 Slack 에 연결 (claude-channel-server 브리지 자동 셋업)
+- `/thiscode:km` — knowledge-manager 진입점 (variant 자동 라우팅 — lite / at / plain)
+- `/thiscode:km-bootstrap` — 검색 환경 초기 설치 (Obsidian CLI / vault-search MCP / GraphRAG 서버)
+- `/thiscode:search` — vault 통합 검색 4-Tier (GraphRAG → Obsidian → MCP → grep)
+- `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file — 00-context / 01-spec / 02-progress / 03-outcome)
+- `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
+- `/thiscode:test` — 배포된 기능이 실제로 물려 있는지 smoke test (memory / tmux / discord-gate / graphrag)
 
 순정 Claude Code 부트스트랩 (hook + 봇 없는 상태):
 
 ```
 1. /thiscode:install-hooks   # SessionStart + UserPromptSubmit + Stop(회의 재독) hook 등록
-2. /thiscode:create-bot      # 첫 봇 디렉토리 + soul.md 셋업
+2. /thiscode:add-bot         # 첫 봇 디렉토리 + soul.md 셋업
 3. /thiscode:start           # 메인 wizard (Discord 페어링 + 첫 대화 검증)
 4. /thiscode:codex-check     # Codex CLI 활성 확인 (선택)
 ```
@@ -272,8 +274,8 @@ thiscode/
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v1.0
-├── commands/                              # 슬래시 7종
+│   └── plugin.json                        # thiscode v1.2.7
+├── commands/                              # 슬래시 10종
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── install-hooks.md                   # SessionStart + UserPromptSubmit hook merge
 │   ├── create-bot.md                      # 봇 디렉토리 + soul.md 자동 셋업
@@ -281,7 +283,7 @@ thiscode/
 │   ├── open-meeting.md
 │   ├── codex-check.md
 │   └── self-update.md
-├── skills/                                # 12 skill (vault-mirror 정책)
+├── skills/                                # 23 skill (vault-mirror 정책)
 │   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 줄)
 │   ├── knowledge-manager-at/              # Agent Teams 변종 (1189 줄)
 │   ├── knowledge-manager-lite/            # Lite 단일 에이전트 (530 줄)
@@ -349,7 +351,7 @@ curl -fsSL https://raw.githubusercontent.com/treylom/ThisCode/main/install.sh | 
 | **WSL Ubuntu 20.04+** | ✅ primary | `install.sh` 가장 잘 테스트된 환경 |
 | **Linux native** (Debian / Ubuntu / Fedora / Arch) | ✅ | 패키지 매니저 자동 detect |
 | **macOS** | ✅ | brew 기반 |
-| **Windows native** | ❌ | WSL 사용 권장 |
+| **Windows native (PowerShell)** | ✅ 봇 페어링 | Discord 봇 페어링이 Claude Code **channels**(`~/.claude/channels/`)로 네이티브 동작 — **tmux / cmux / 데몬 불필요.** tmux 기반 부가물(oh-my-tmux, `install.sh` 멀티세션 헬퍼)만 여전히 WSL 필요 — [docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md) 참조 |
 
 | Agent runtime | 호환 | 비고 |
 |---|---|---|
