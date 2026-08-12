@@ -1,6 +1,6 @@
 ---
 name: help
-description: Use when the user is stuck, confused, or asks what ThisCode can do — friendly diagnosis of where they got stuck, step-by-step recovery in plain language (Korean or English, following the user's language), hands-on assistance via browser/desktop AI tools when available, plus a situation-grouped subcommand map.
+description: Use when the user is stuck, confused, or asks what ThisCode can do — friendly diagnosis of where they got stuck, step-by-step recovery in plain language (Korean or English, following the user's language), hands-on assistance via browser/desktop AI tools when available, a situation-grouped subcommand map, plus a complete command listing enumerated from disk at run time (never a hard-coded list).
 disable-model-invocation: true
 ---
 
@@ -18,7 +18,7 @@ disable-model-invocation: true
 
 ## STEP 0 — 호출 형태 분기
 
-- **인자 없이 호출** (`/thiscode:help`): "어떤 걸 도와드릴까요?" + 아래 두 갈래 제시 — ⓐ 뭐가 있는지 궁금해요 → STEP 3 서브커맨드 지도 ⓑ 하다가 막혔어요 → STEP 1 진단.
+- **인자 없이 호출** (`/thiscode:help`): "어떤 걸 도와드릴까요?" + 아래 두 갈래 제시 — ⓐ 뭐가 있는지 궁금해요 → **STEP 3 서브커맨드 지도 + STEP 3-B 전량 나열(둘 다)** ⓑ 하다가 막혔어요 → STEP 1 진단.
 - **막힌 내용과 함께 호출** (예: `/thiscode:help 봇이 대답을 안 해요`): 바로 STEP 1 진단으로.
 
 ## STEP 1 — 상황 파악 (진단 인터뷰)
@@ -99,6 +99,25 @@ disable-model-invocation: true
 | 명령 | 언제 |
 |---|---|
 | `/thiscode:help` | 바로 이 명령 — 막힌 상황을 같이 풀어준다 |
+
+## STEP 3-B — 전량 나열 (빠짐없이 · **디스크에서 그 자리에 읽는다**)
+
+위 표는 **자주 쓰는 것을 상황별로 묶은 것**이지 전부가 아니다. 사용자가 "뭐가 있는지" 물었으면 **전량을 보여준다.**
+
+🔴 **여기에 목록을 박아두지 마라.** 목록을 문서에 적으면 명령이 하나 늘 때마다 낡고, 그 낡음은 아무 신호도 내지 않는다. **매번 디스크를 읽어라.**
+
+**수행 절차** (이 순서로 지금 실행한다):
+
+1. **플러그인 루트를 구한다** — 이 `SKILL.md` 의 두 단계 위(`skills/help/SKILL.md` → 루트). 확인: 그 자리에 `.claude-plugin/plugin.json` 이 있어야 한다.
+2. **두 발견 표면을 모두 훑는다** — Claude Code 는 둘 다 슬래시로 노출한다:
+   - `<루트>/commands/*.md`
+   - `<루트>/skills/*/SKILL.md`
+3. **각 항목의 설명을 뽑는다** — frontmatter 의 `description:` 을 우선 쓰고, 없으면 첫 헤딩 또는 첫 설명 줄. 이름은 파일명(commands) 또는 디렉터리명(skills)이고, 호출형은 둘 다 `/thiscode:<이름>` 이다.
+4. **중복을 접는다** — `commands/` 와 `skills/` 에 같은 이름이 있으면 한 줄로.
+5. **출력한다** — 위 상황별 표에 **이미 나온 것은 「위에서 소개함」으로 표시**하고, 안 나온 것은 설명과 함께 전부 낸다. 사용자에겐 네가 출력한 것만 보인다(STEP 3 의 출력 규칙 동일).
+6. **계수를 함께 말한다** — 「commands N개 + skills M개 = 고유 K개를 찾았습니다」. 🔴 **이 수는 세어서 말하는 것이지 외워둔 값이 아니다.** 열거가 0건이면 그건 "명령이 없다"가 아니라 **경로를 못 찾은 것**이다 — 그 땐 루트 탐색이 틀렸다고 말하고 `/` → `thiscode:` 필터를 안내한다.
+
+**왜 이렇게 하나**: 이 문서에 목록을 적어두면 «여기까지가 전부»로 읽히는데, 실제로는 늘 뒤처진다. 2026-08-13 에 이 레포의 README 가 정확히 그 결함으로 세 번 되돌려졌다(전칭 주장 → 정적 계수 → 닫힌 트리). 자세한 경위는 그날 커밋 이력에 있다.
 
 ## Learn More
 
