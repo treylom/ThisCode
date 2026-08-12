@@ -256,12 +256,12 @@ cat > "$STATE/dispatch-gate.json" <<EOF
 }
 EOF
 
-# 연결 probe (D2 — 설치 완료 판정의 0번 칸):
-# wiring(settings 등재)·config·양성 deny·음성 pass 4칸 전부 PASS 여야 완료
+# 연결 probe (D2 — 설치 완료 판정의 0번 칸): wiring(settings 등재)·config·
+# in-cwd 양성 deny·비-top 음성 pass·out-cwd 음성 pass 5칸 전부 PASS 여야 완료
 python3 "$PLUGIN_DIR/hooks/dispatch-room-gate.py" --probe
 ```
 
-`PROBE PASS 4/4` 가 아니면 게이트 설치를 완료로 보고하지 않는다 — probe 가
+`PROBE PASS 5/5` 가 아니면 게이트 설치를 완료로 보고하지 않는다 — probe 가
 막는 것이 바로 «등록만 하고 발화 확인 없는 설치»다. denial 기록 =
 `$STATE/dispatch-gate-denials.jsonl` (probe 발 기록은 `"probe": true` 표기).
 

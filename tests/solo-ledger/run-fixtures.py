@@ -243,7 +243,16 @@ def fixture_4_lock_identity_orphan():
     check("④ owner 불일치 = 거부(열람만)", not res["ok"]
           and res["reason"] == "claim mismatch", str(res))
 
+    # 공백 session recovery = fail-closed (87-doc §D — 빈 claim_session 은
+    # «미claim» 표지라 "" 가 claim 하면 원장이 임의 세션에 재개방된다)
+    rec_b, _ = run_recover(sdir, "karpathy", sdir, "   ")
+    NEG_CTRL[0] += 1
+    check("④ 공백 session recovery → claim 0·주입 0 + alert(87-doc §D)",
+          rec_b["claimed"] == [] and rec_b["injections"] == []
+          and len(alerts(sdir, "recovery_blank_session")) >= 1, str(rec_b))
+
     # 미claim(claim_session 빈칸) open 원장 → 최초 recovery 가 claim
+    # (위 공백-거부와 같은 원장 상태 = 거부가 상태를 안 바꿨다는 양성 대조)
     rec, _ = run_recover(sdir, "karpathy", sdir, "sess-NEW")
     POS_CTRL[0] += 1
     check("④ [양성 미끼] 미claim open 원장 최초 claim", rec["claimed"] == [path],
@@ -283,6 +292,16 @@ def fixture_4_lock_identity_orphan():
     res = SL.takeover(path, "sess-TK", "sess-NEW", gen_now, "")
     NEG_CTRL[0] += 1
     check("④ takeover receipt 공란 → 거부", not res["ok"], str(res))
+    res = SL.takeover(path, "sess-TK", "sess-NEW", gen_now, "   ")
+    NEG_CTRL[0] += 1
+    check("④ takeover receipt 공백-only → 거부·미영속(87-doc §D strip 게이트)",
+          not res["ok"] and "receipt" in res["reason"]
+          and SL.parse_fields(open(path).read()).get("takeover_receipt") == "",
+          str(res))
+    res = SL.takeover(path, "   ", "sess-NEW", gen_now, "r-ok")
+    NEG_CTRL[0] += 1
+    check("④ takeover session_id 공백 → 거부(claim_session 소거 차단)",
+          not res["ok"] and "session" in res["reason"], str(res))
     res = SL.takeover(path, "sess-TK", "sess-NEW", gen_now,
                       "approved-by-op-#123")
     POS_CTRL[0] += 1
@@ -345,13 +364,13 @@ def fixture_4_lock_identity_orphan():
 
 def main():
     POS_CTRL[1] = 5   # 기대 양성 미끼 수 (②1 ③1 ④3)
-    NEG_CTRL[1] = 17  # 기대 음성 미끼 수 (①2 ②1 ③3 ④11)
+    NEG_CTRL[1] = 20  # 기대 음성 미끼 수 (①2 ②1 ③3 ④14 — 87-doc §D 3종 포함)
     fixture_1_eio_restart()
     fixture_2_race()
     fixture_3_clear_states()
     fixture_4_lock_identity_orphan()
     total = len(PASS) + len(FAIL)
-    expected_min = 36
+    expected_min = 39
     print("—" * 60)
     print("검사 %d건 실행(기대 ≥%d) · PASS %d · FAIL %d" %
           (total, expected_min, len(PASS), len(FAIL)))

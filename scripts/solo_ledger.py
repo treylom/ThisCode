@@ -381,8 +381,15 @@ def recover_on_sessionstart(sdir, bot, wd, session_id):
     holds that ledger's lock — no lock-외부 pre-check is used for claim.
     Single-owner: an open ledger already claimed by ANOTHER session is
     reported under `foreign` and left untouched (takeover() is the only
-    path that may transfer it — 85-doc §D)."""
+    path that may transfer it — 85-doc §D). A blank/whitespace session_id
+    is refused fail-closed before any scan: an empty claim_session must
+    mean «unclaimed», so letting "" claim would re-open the ledger to any
+    later session (87-doc §D input-boundary bypass)."""
     results = {"claimed": [], "rejected": [], "foreign": [], "injections": []}
+    session_id = (session_id or "").strip()
+    if not session_id:
+        _alert_log(sdir, "recovery_blank_session", {"wd": wd})
+        return results
     roots = _allowed_roots()
     wd_real = os.path.realpath(wd)
     try:
@@ -432,10 +439,17 @@ def recover_on_sessionstart(sdir, bot, wd, session_id):
 def takeover(path, session_id, expect_owner, expect_generation, receipt):
     """Explicit foreign-claim transfer — CAS under the ledger lock.
     All of {current owner == expect_owner, generation == expect_generation,
-    state == open, non-empty receipt} must hold or the takeover is refused
-    (fail-closed). The receipt string is persisted in the ledger so the
-    transfer carries its evidence (85-doc §D / 83-doc orphan 승인 미결)."""
+    state == open, non-blank session_id, non-blank receipt} must hold or
+    the takeover is refused (fail-closed). session_id/receipt are stripped
+    first — whitespace-only values parse back as "" and would erase the
+    owner / void the evidence (87-doc §D). The normalized receipt is
+    persisted in the ledger so the transfer carries its evidence
+    (85-doc §D / 83-doc orphan 승인 미결)."""
     sdir = os.path.dirname(path) or "."
+    session_id = (session_id or "").strip()
+    receipt = (receipt or "").strip()
+    if not session_id:
+        return {"ok": False, "reason": "blank session_id"}
     if not receipt:
         return {"ok": False, "reason": "empty receipt"}
     with _Lock(path):
