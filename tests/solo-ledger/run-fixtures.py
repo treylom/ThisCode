@@ -146,18 +146,21 @@ def fixture_2_race():
     sdir, room = fresh_env()
     path = SL.create_ledger(sdir, "karpathy", "fix2", "sess-A", sdir, room)
 
-    # writer: lock 보유 + fence PREPARE 후 crash(잠금은 exit 때 해제).
+    # writer: lock 보유 + fence PREPARE 후 crash(잠금은 프로세스 종료 때 OS 가 해제).
     # recovery 가 락 밖 사전검사로 claim 하면 fence_present_at_claim race 재현.
+    # 잠금은 raw fcntl 이 아니라 SL._Lock 재사용 — 플랫폼 분기(fcntl/msvcrt)가
+    # 이미 된 코드라 win32 에서도 동일 시퀀스가 재현되고, 두 프로세스 경합에서
+    # 락 배타성까지 같이 시험된다. crash 시뮬이므로 with ❌ — __enter__ 만.
     writer = (
-        "import os,sys,fcntl,time,json\n"
+        "import sys,time\n"
         "sys.path.insert(0, %r)\n"
         "import solo_ledger as SL\n"
         "path=%r\n"
-        "fd=os.open(path+'.lock', os.O_RDWR|os.O_CREAT)\n"
-        "fcntl.flock(fd, fcntl.LOCK_EX)\n"
+        "lk=SL._Lock(path)\n"
+        "lk.__enter__()\n"
         "SL._fence_prepare(path, 1, 'race-tx')\n"
         "print('FENCED', flush=True)\n"
-        "time.sleep(1.6)\n"          # crash: clear 없이 종료 → 락 자동 해제
+        "time.sleep(1.6)\n"          # crash: __exit__ 없이 종료 → 락 자동 해제
     ) % (MODPATH, path)
     proc = subprocess.Popen([sys.executable, "-c", writer],
                             stdout=subprocess.PIPE, encoding="utf-8", errors="replace")
