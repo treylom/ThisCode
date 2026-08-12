@@ -505,12 +505,15 @@ echo "  access.json 등록했으면(Step 4.7) → 봇에 DM → 바로 첫 응�
 echo "  등록 안 했으면 → DM → 페어링 코드 발급 → 페어링 → 첫 응답"
 ```
 
-### Step 7.5. 한 단어 봇 런처 설치 [기본 추천 — 명시적 거부만 건너뜀]
+### Step 7.5. 한 단어 봇 런처 설치 [🔴 필수 — 생략 불가·명시적 거부만 예외(거부도 bot.yaml 에 기록)]
 
-봇 생성의 마무리로 **확인된 경로만 넣은 기동 런처를 기본 추천**한다. 질문은
+봇 생성의 마무리로 **확인된 경로만 넣은 기동 런처를 설치한다 — 이 단계는 필수다**
+(2026-08-12 적발: 실제 셋업 진행에서 이 단계가 조용히 생략되던 회귀 → 아래 yaml
+규약으로 강제). 질문은
 "한 단어로 봇을 켜고, 같은 이름의 이전 tmux 세션이 있으면 정확히 그 세션만 정리해
 다시 띄우는 런처를 설치할까요? (Y/n, 기본값 Y)"로 한다. Enter 또는 `Y`는 설치,
-사용자가 `n`이라고 **명시적으로 거부한 경우에만 이 단계를 건너뛴다**.
+사용자가 `n`이라고 **명시적으로 거부한 경우에만 설치를 건너뛰되, 그 경우에도 아래
+bot.yaml 기록은 생략할 수 없다**(거부가 기록으로 남아야 «생략»과 구분된다).
 
 먼저 Step 1의 `$BOT_NAME`, Step 4의 실제 `$BOT_DIR`, Step 6에서 사용자가 확정한
 절대경로 `$WD`를 다시 확인한다. `$WD`를 앞 단계에서 생략했다면 여기서 실제 작업
@@ -545,6 +548,24 @@ tmux가 있으면 `=<세션명>` exact target으로 같은 이름의 세션만 �
 실행하므로, 그 터미널의 Ctrl-C로 끈다. PowerShell은 Step 7의 foreground 명령을
 유지하며 이 rc 자동 단계의 대상이 아니다.
 
+**yaml 규약 (완료 게이트 — 2026-08-12 신설)**: 설치(또는 명시 거부) 직후
+`$BOT_DIR/bot.yaml` 에 결과를 기록한다. 이 파일이 없으면 Step 7.5 를 건너뛴
+것이며 **완료 보고를 하면 안 된다** — 되돌아가 수행한다(검증 절이 기계 확인).
+
+```bash
+cat > "$BOT_DIR/bot.yaml" <<EOF
+schema_version: bot-manifest-v1
+bot_name: ${BOT_NAME}
+launcher:
+  required: true
+  status: installed        # installed | declined — 빈 값 금지
+  alias: ${BOT_NAME}
+  tmux_session: ${BOT_NAME}
+  rc: ${RC}
+  declined_reason: ""      # status=declined 일 때만 사유 기입(필수)
+EOF
+```
+
 첫 사용은 새 터미널을 열거나 아래처럼 **두 줄로** 한다. 같은 줄의
 `source "$RC" && "$BOT_NAME"`은 셸이 alias를 먼저 해석해 실패할 수 있다.
 
@@ -562,7 +583,8 @@ $BOT_NAME
 - [ ] **토큰이 실제로 먹히나** — `curl -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me` → `username` + `bot:true`
 - [ ] **초대가 실제로 됐나** — `curl -H "Authorization: Bot $TOKEN" https://discord.com/api/v10/users/@me/guilds` → **서버 수 ≥ 1** (0 이면 Step 3-5 미완)
 - [ ] claude 시동 + DISCORD_STATE_DIR export 후 첫 응답에 페르소나 어휘 자연 포함
-- [ ] Step 7.5를 수락했다면 `$WD/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-stop` 관리 블록 1개 + 두 번째 설치 후 중복 0
+- [ ] 🔴 **`$BOT_DIR/bot.yaml` 존재 + `launcher.status` ∈ {installed, declined}** — 파일 부재 = Step 7.5 생략 = 셋업 미완(완료 보고 금지 — 2026-08-12 yaml 규약). `declined` 면 `declined_reason` 이 비어 있지 않을 것
+- [ ] `launcher.status: installed` 면 `$WD/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-stop` 관리 블록 1개 + 두 번째 설치 후 중복 0
 - [ ] 런처 재호출 시 같은 이름의 tmux 세션만 교체되고, tmux가 없으면 확인된 `$WD`에서 foreground로 기동
 - [ ] Discord DM → 봇 응답 ✅
 - [ ] 🔴 **soul.md 가 실제로 주입됐나** — 아래 별도 절차로 확인(파일 존재 ≠ 주입)

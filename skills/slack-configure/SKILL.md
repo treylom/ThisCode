@@ -763,12 +763,15 @@ EOF
 fi
 ```
 
-**13-A-③ 재시작 안전 기동 런처 — 기본 추천, 명시적 거부만 건너뜀**
+**13-A-③ 재시작 안전 기동 런처 — 🔴 필수(생략 불가·명시적 거부만 예외, 거부도 bot.yaml 에 기록)**
 
 봇 생성의 마무리로 "한 단어로 봇을 켜고, 같은 이름의 이전 tmux 세션이 있으면
 정확히 그 세션만 정리해 다시 띄우는 런처를 설치할까요? (Y/n, 기본값 Y)"라고 묻는다.
-Enter 또는 `Y`는 설치이며, 사용자가 `n`이라고 **명시적으로 거부한 경우에만
-건너뛴다**. 이 단계는 단순 `cd … && claude` alias를 rc에 직접 쓰지 않는다.
+Enter 또는 `Y`는 설치이며, 사용자가 `n`이라고 **명시적으로 거부한 경우에만 설치를
+건너뛰되, 그 경우에도 `$BOT_DIR/bot.yaml` 기록(create-bot Step 7.5 와 동일 yaml
+규약 — `launcher.status: declined` + `declined_reason`)은 생략할 수 없다**(2026-08-12
+적발: 셋업 진행에서 이 단계가 조용히 생략되던 회귀 — 기록이 있어야 «생략»과
+구분된다). 이 단계는 단순 `cd … && claude` alias를 rc에 직접 쓰지 않는다.
 Step 7-A와 Step 8이 확정한 경로를 제품 런처 설치기에 넘긴다.
 
 ```bash
@@ -871,7 +874,8 @@ claude --dangerously-load-development-channels server:slack-channel
 - [ ] `$STATE_DIR/.env` 존재 + chmod 600 + 필수 키 4개 + 키당 줄 1개(중복 없음)
 - [ ] resident server 로그에 `bridge live — channel ..., allowed user ...`
 - [ ] `.mcp.json`에 `mcpServers.slack-channel` 등록
-- [ ] 13-A-③을 수락했다면 `$BOT_DIR/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-safe`·`$BOT_NAME-stop` 관리 블록 1개 + 재실행 중복 0
+- [ ] 🔴 **`$BOT_DIR/bot.yaml` 존재 + `launcher.status` ∈ {installed, declined}** — 파일 부재 = 13-A-③ 생략 = 셋업 미완(완료 보고 금지, 2026-08-12 yaml 규약 — create-bot Step 7.5 와 동일)
+- [ ] `launcher.status: installed` 면 `$BOT_DIR/.thiscode-bot-launcher.sh` 존재 + rc에 `$BOT_NAME`·`$BOT_NAME-safe`·`$BOT_NAME-stop` 관리 블록 1개 + 재실행 중복 0
 - [ ] 런처 재호출 시 같은 이름의 tmux 세션만 교체되고, tmux가 없으면 확인된 `$BOT_DIR`에서 foreground로 기동
 - [ ] `slack manifest diff` 로컬↔원격 일치
 - [ ] `curl auth.test` → `ok:true`

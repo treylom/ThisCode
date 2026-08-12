@@ -38,18 +38,37 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 7. Read `docs/RECENT-CHANGES.md` and apply anything not yet reflected — it is
    the newest-first digest of contract/behavior changes a fresh install must
    adopt (e.g. the Stop-hook output contract).
-8. When aliases are generated, tell the user to `source` the generated alias
+8. Generate the shell aliases / launcher — **REQUIRED, never skip silently**
+   (2026-08-12 regression fix: real setups were observed ending without this
+   step; a setup with no alias is incomplete unless the user explicitly
+   declined, and the decline must be recorded in the completion contract
+   below). Then tell the user to `source` the generated alias
    script/block; only add it to a shell rc file if they explicitly want it
    permanent. On Windows the target is the PowerShell profile: write the
    function into `$PROFILE` and apply with `. $PROFILE` (if blocked by
    ExecutionPolicy, `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`
    once).
-9. Finish with `thiscode doctor` or the nearest available verify command.
+9. Finish with `thiscode doctor` or the nearest available verify command, and
+   echo the completion contract below in the final report.
+
+## Completion Contract (yaml 규약 — 2026-08-12)
+
+The final setup report MUST echo this block with real values. `aliases` may
+never be empty or omitted — a silent skip reads as an incomplete setup:
+
+```yaml
+setup_completion:
+  aliases: installed | declined(<reason>)   # step 8 — REQUIRED (bot 생성 흐름은 create-bot 의 $BOT_DIR/bot.yaml 이 정본)
+  hooks_wired: true                         # step 6 — install-hooks verify passed
+  doctor: pass                              # step 9
+```
 
 ## Guardrails
 
 - Do not turn a copied skill into a completed setup claim.
 - Missing decisions stop with the next command instead of guessed values.
+- A setup report without the completion contract (or with `aliases` empty) is
+  not a finished setup — go back and run the skipped step.
 
 ---
 
