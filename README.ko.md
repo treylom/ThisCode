@@ -299,9 +299,9 @@ thiscode/
 │                                          #    skills 도 /thiscode:<name> 으로 직접 호출된다
 │                                          #    install-hooks · create-bot · create-slack-bot ·
 │                                          #    self-update · help 가 여기 산다
-│   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion (1161 줄)
-│   ├── knowledge-manager-at/              # Agent Teams 변종 (1189 줄)
-│   ├── knowledge-manager-lite/            # Lite 단일 에이전트 (530 줄)
+│   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion
+│   ├── knowledge-manager-at/              # Agent Teams 변종
+│   ├── knowledge-manager-lite/            # Lite 단일 에이전트
 │   ├── knowledge-manager-bootstrap/       # 4-Tier install 합본
 │   ├── knowledge-manager-plain/           # headless variant
 │   ├── search/                            # 4-Tier vault search
@@ -310,7 +310,8 @@ thiscode/
 │   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin 설치 wizard
 │   ├── meetings/                          # 회의실 4-file protocol
-│   └── shared-memory/                     # 4-tier 메모리 정책
+│   ├── shared-memory/                     # 4-tier 메모리 정책
+│   └── …                                  # 전량은 `/` → thiscode: 필터로
 ├── hooks/                                 # 봇 운영 hook 3종
 │   ├── bot-session-init.sh                # SessionStart → soul.md 자동 inject
 │   ├── discord-slash-cmd.sh               # UserPromptSubmit → 슬래시 강제
