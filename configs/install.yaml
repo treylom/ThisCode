@@ -1,0 +1,44 @@
+# ThisCode 설치 계약 — 사람에게 넘기는 것을 «마지막 수단»으로 만든다
+#
+# 이 파일은 «배포되는 기본값 + 예외 명단»이다. 사용자의 실제 선택(auto/manual)은
+# 런타임 상태 파일에 기록된다: ~/.thiscode/install-state.yaml
+#
+# 조회 방법 (문서로 지키지 말고 이 명령을 실제로 부를 것):
+#   bash scripts/install-gate.sh <관문이름>
+#     exit 0 = 수동 안내를 바로 띄워도 된다 (아래 명단에 등재된 관문 또는 manual 모드)
+#     exit 1 = 먼저 «자동으로 한 번 시도»해야 한다. 시도 후 실패했을 때만 안내한다.
+#     exit 2 = 관문 이름을 모른다 → 기본값은 «시도»(exit 1 과 같게 취급)
+
+install:
+  # 배포 기본값. 사용자가 /thiscode:start 첫 질문에서 고른 값이 런타임 상태로 덮어쓴다.
+  default_mode: auto            # auto | manual
+
+  # R5 — 브라우저 관문에서 도구를 «시작만 하고» 사람에게 넘기는 것을 막는다.
+  #   true 이면 브라우저 도구 부재는 "그러니 수동"이 아니라 "설치를 먼저 시도"로 간다.
+  browser_tools_required: true
+
+  # 🔴 R2 예외 명단 — «여기 이름이 있는 관문만» 시도 없이 수동 안내를 띄울 수 있다.
+  #    등재되지 않은 관문의 기본값은 «시도»다. 그래야 새로 생긴 관문이
+  #    조용히 수동으로 새지 않는다(기본값이 이기고, 기본값은 흔한 쪽이다).
+  #
+  #    ⚠️ 이 명단을 늘리는 것은 R2 를 그만큼 뚫는 것이다. 늘릴 때 규칙:
+  #       - 늘리는 사람이 `reason` 을 같은 줄에 적는다 (비워두면 검토에서 반려)
+  #       - 「자동화가 어렵다」는 사유가 아니다. **「대신 하면 안 되는 것」만** 사유가 된다
+  #         (계정 자격증명 · 캡차 · 소유권 승인 · 결제)
+  manual_allowed_without_attempt:
+    - name: discord_portal_login
+      reason: 계정 자격증명 + 다단계 인증 — 대리 입력 금지 영역
+    - name: discord_hcaptcha
+      reason: 봇 감지 캡차 — 우회 금지
+    - name: discord_reset_token_modal
+      reason: 계정 비밀번호 + 다단계 인증 — 대리 입력 금지 영역
+    - name: slack_login
+      reason: 계정 자격증명 — 대리 입력 금지 영역
+    - name: slack_app_create
+      reason: 계정 소유권으로 앱을 만드는 행위 — 사용자 승인 필요
+    - name: slack_manifest_approve
+      reason: 권한 범위 승인 — 사용자가 읽고 동의해야 함
+    - name: slack_token_paste
+      reason: 시크릿 값 취급 — 사용자가 직접
+    - name: slack_messages_tab_toggle
+      reason: 앱 설정 UI 토글 — 소유자 계정 세션에서만
