@@ -204,6 +204,27 @@ bot's progress, or stopping while an active meeting is open.
   progress files) **before** speaking; do not run it in the main channel. The
   convening / chairing agent sets it up — don't defer ("someone will set it up
   later" → main-channel drift is exactly the violation this blocks).
+- **🚨 The room's spec document must name three things — pass criteria,
+  evaluation principles, stop conditions (operator instruction, 2026-08-13).**
+  A spec missing any of the three is incomplete.
+  - **Pass criteria**: what must be true to call it done, as a checkable
+    sentence. "It works well" ❌ / "given X, the output is Y" ✅.
+  - **Evaluation principles**: what separates good from bad, including the
+    priority order when two axes conflict (e.g. correctness > speed).
+  - **Stop conditions**: **both** the finish condition **and** the give-up /
+    defer condition. With only one, the loop never closes.
+  - **Measured basis (2026-08-13, all 26 spec files in one team's vault)**:
+    pass criteria **9/26 (35%)**, evaluation principles **0/26 (0%)**, stop
+    conditions **1/26 (4%)**. "Our specs already have these" was tested and
+    disproved — two of the three were effectively absent.
+  - **Regression that motivated it**: two agents each recorded the same
+    unfinished verification as "not performed" and handed it on. With no
+    stop condition, "who, by when" stays blank — and a limit written down
+    twice is not a limit, it is **work nobody owns**.
+  - If the plan came from a seed-generating planning tool, keep the seed
+    summary as a note in the same room and link it by document name, not by
+    path. Verify that tool actually persists its originals before relying on
+    them (measured case: only **2 of 10** referenced seeds still existed).
 - **Bridge-based teammates → prefer a monitored room**: when dispatching long
   or multi-step work to an agent that lives behind a bridge / different harness
   (e.g. a Codex CLI bot relayed through a channel bridge), prefer opening a
