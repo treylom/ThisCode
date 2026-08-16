@@ -126,7 +126,7 @@ triggers:
 
 ## ⑥ 위임·병렬화 기본값 포인터
 
-Delegation & parallelism defaults: see rules/orchestration.md (R1 docs 3+ = distribute · R2 3-stage+ = workflow · R3 specialty = delegate by decision table · R4 orchestrator 3+ active = hand one off · R5 search repo first + register output)
+위임·병렬화 기본값 5칙: rules/orchestration.md 참조 (R1 문서 3+ = 분배 · R2 3단계+ = workflow 관리 · R3 전문영역 = 결정표 위임 · R4 orchestrator 활성 3+ = 1건 이관 · R5 레포 선탐색 + 산출 등재)
 
 ## 변경 이력
 

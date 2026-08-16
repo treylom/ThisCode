@@ -263,7 +263,7 @@ Step 5/6 에서 placeholder 를 사용자 답변 그대로 박지 말고, 먼저
 
 ### Step 4.9. 기존 레포 우선 탐색 (soul.md·CLAUDE.md 생성 전 필수 — R5a)
 
-Search the existing repo first — before generating any bot document (soul.md 는 Step 5, CLAUDE.md 는 Step 6), search `templates/`, `rules/`, and existing bots' files for prior art; reuse/extend what exists instead of generating from scratch; record what was searched and what was reused.
+기존 레포 먼저 탐색 — 봇 문서를 생성하기 전에(soul.md 는 Step 5, CLAUDE.md 는 Step 6) `templates/`·`rules/`·기존 봇 파일에서 선례(prior art)를 탐색하고, 처음부터 새로 생성하는 대신 있는 것을 재사용·확장한다. 무엇을 탐색했고 무엇을 재사용했는지 기록한다.
 
 1. **탐색 3곳**: `$PLUGIN_DIR/templates/`(soul 템플릿 기존 변형·문구) · `$PLUGIN_DIR/rules/`(있으면 — 공용 규율 조각) · 기존 봇 디렉토리(`~/.claude/channels/discord-*/soul.md` · `~/.claude/channels/discord-*/CLAUDE.md` — 이번 세션에 이미 확인된 것 우선 + 필요시 신규 grep).
    ```bash
