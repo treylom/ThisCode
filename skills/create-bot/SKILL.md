@@ -261,6 +261,21 @@ Step 5/6 에서 placeholder 를 사용자 답변 그대로 박지 말고, 먼저
    - **실존 인물**: 퍼블리시티권 리스크 — **내부 전용 봇에만 권장**, 공개 산출물·레포에 코드네임·어록 노출 금지, 어록은 존중 톤 (조롱 맥락 ❌).
 4. 수집분을 Step 4.5 `/prompt` 입력에 넣고, 산출 트리거표를 `soul-custom.md` 의 **시그니처 — 2단 트리거표** 절에 주입한다.
 
+### Step 4.9. 기존 레포 우선 탐색 (soul.md·CLAUDE.md 생성 전 필수 — R5a)
+
+기존 레포 먼저 탐색 — 봇 문서를 생성하기 전에(soul.md 는 Step 5, CLAUDE.md 는 Step 6) `templates/`·`rules/`·기존 봇 파일에서 선례(prior art)를 탐색하고, 처음부터 새로 생성하는 대신 있는 것을 재사용·확장한다. 무엇을 탐색했고 무엇을 재사용했는지 기록한다.
+
+1. **탐색 3곳**: `$PLUGIN_DIR/templates/`(soul 템플릿 기존 변형·문구) · `$PLUGIN_DIR/rules/`(있으면 — 공용 규율 조각) · 기존 봇 디렉토리(`~/.claude/channels/discord-*/soul.md` · `~/.claude/channels/discord-*/CLAUDE.md` — 이번 세션에 이미 확인된 것 우선 + 필요시 신규 grep).
+   ```bash
+   command grep -rl "<검색어 — 역할/도메인 키워드>" \
+     "$PLUGIN_DIR/templates" "$PLUGIN_DIR/rules" \
+     ~/.claude/channels/discord-*/soul.md ~/.claude/channels/discord-*/CLAUDE.md 2>/dev/null
+   ```
+2. **재사용 우선**: 매치가 있으면 그 절·표·문구를 인용·확장(placeholder 만 교체)해 Step 5·Step 6 의 입력으로 쓰고, 처음부터 새로 생성하지 않는다. 매치가 없으면 "탐색했으나 재사용할 선례 없음"을 기록하고 신규 생성으로 진행한다.
+3. **기록 (필수)**: 무엇을 검색했고 무엇을 재사용했는지 한 줄을 `$BOT_DIR/bot.yaml`(없으면 세션 응답 말미)에 남긴다 — 예: `prior-art: searched templates/+rules/+기존 봇 3개, reused soul-general-assistant.md 시그니처 트리거표 절`.
+
+근거: 위임·병렬화 기본값 5칙 R5a (rules/orchestration.md §9 delegation defaults) — operator directive, 2026-08-16.
+
 ### Step 5. soul.md template 선택 + 채우기
 
 🟡 **Step 1 과 별도 호출 (fix D, 2026-08-10)**: 이 template 선택 질문은 Step 1(봇 이름) 과 **같은 AskUserQuestion 호출에 묶지 않는다** — 이유·상세는 Step 1 참조(번들 동반취소 blast-radius 완화, root fix 아님).
