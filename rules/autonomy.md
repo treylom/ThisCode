@@ -63,6 +63,14 @@ reached partial / blocked / awaiting-permission state.
   shipped unreviewed, "it works" asserted without a measurement. The step of
   *re-opening one's own deliverable* was missing entirely. Judge the fix by
   changed behavior, not by a hook existing.
+- **(b) Baseline = the topmost requirements doc in the dispatch chain,
+  checked 1:1** (2026-08-18 regression): comparing only against the latest
+  dispatch message lets requirements drop silently as orders get relayed —
+  a mid-chain message can pass while the original spec goes unmet. Trace
+  back to the top-level spec/plan the chain inherited from, check every
+  requirement 1:1; any unmet item = not complete (name it, carry it over
+  explicitly, or re-dispatch). Owner: the agent making the completion call
+  (including an orchestrator accepting a worker's report), same turn.
 - Case-based (skip for trivial one-shot work); re-judge per situation; the
   maintainer's call wins.
 
