@@ -73,3 +73,10 @@ fixes. This section governs what happens *after* the search returns.
 
 ▶ Fill in: your KB search endpoint/skill name; your KB CLI binary; your
 measured latency envelope.
+
+## 5. Kickoff onboarding · absence-assertion gate (2026-08-23)
+
+- **Kickoff onboarding (pull)**: at the start of any non-trivial task, run **one knowledge-base search** (precedents, canonical docs, existing outputs). Onboarding happens once — the knowledge graph (search index, MOC notes) already exists; open it instead of re-discovering. Rationale: "agents onboard blind every single time" — the overhead a code-graph tool removes for codebases, applied here to your knowledge base. Trivial one-shot tasks are out of scope (no blanket search mandate).
+- **`search checked:` marker**: an absence assertion about knowledge-base facts ("there is no X / X never existed / cannot find X") must carry, in the same message, `search checked: <top-hit-path-or-no-hit> | query="<actual query>"`. **no-hit counts as success** — it is the license for the absence claim, not a failure. Placeholder forms (`search checked: <...>`) do not count.
+- **Enforcement (if you wire it)**: a Stop hook that blocks a final utterance containing an unevidenced absence assertion, **plus** a PreToolUse hook on your outbound-message tool so the check runs *before* the message leaves — a Stop hook fires after an external send, too late to recall. Pass = search evidence in the recent window, or a valid marker, or an honest hedge label ("unverified / tentative"). Keep idiomatic negatives ("no problem", "no errors") and turn-status reports out of scope — false-positive control (measured 2.1% on a 140-utterance back-test).
+- Case-based; re-judge per situation; the user's explicit instruction always wins.
