@@ -33,6 +33,7 @@ adding an MCP server; writing API code.
 - Rule / operating-principle changes in the source repo sync to this
   deploy bundle's rules/ **at session-end** — else the bundle drifts
   from the source rules (a standing operator directive).
+- **File-tree syncs into a consumer store use one guarded entrypoint.** Strip the source project-root prefix from the destination mapping and reject any destination that repeats that project-root segment (the classic nested-shadow-tree failure). After the sync, verify that no prefixed shadow root exists; if one does, stop and report it without auto-deleting or overwriting. The operator performing the sync runs this postcondition in the same turn. Case-scoped; adapt the concrete wrapper/path to the deployment.
 
 ## 3. MCP servers
 - Before adding: list current MCPs. After adding: health-check. Remove on
