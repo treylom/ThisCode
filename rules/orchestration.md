@@ -56,7 +56,7 @@ your independent-review + second-track reviewers; your maintainer sign-off path.
   match criteria need explicit qualifiers — "all of", "only this file",
   "at least N", "exact match only". A missing qualifier gets filled by the
   receiver's default, and the default is whatever is most common — literal-minded
-  engines especially will drift scope without it.
+  engines especially will let scope drift without it.
 - Mind machine boundaries: a peer on another machine joins local-only repro
   work as the diagnosis/review axis; if the repo is on a shared remote, it can
   reproduce directly.

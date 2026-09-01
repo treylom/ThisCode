@@ -149,7 +149,7 @@ consuming its output:
   (`grep -c '^pattern'`) and keep **one role per flag** (`-l`+`-c` style
   conflicts pick one output silently: an expected 0 came back as 589). And write
   the **expected value next to the decoy before running it** — pre-stated
-  expectation is an independent verification axis besides self-checks and
+  expectation is an independent verification axis beyond self-checks and
   cross-review; in all six failures it was the only thing that caught the break.
 - **Declaring a gate/status label requires one live measurement of its target
   (2026-09-01)**: "consensus is not measurement" — three agents chorused a
