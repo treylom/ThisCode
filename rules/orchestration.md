@@ -52,6 +52,11 @@ your independent-review + second-track reviewers; your maintainer sign-off path.
   ① independent reproduction/diagnosis on a different hypothesis axis
   ② cross-review of the proposed fix ③ parallel repair on an isolated
   branch/worktree. State the shape explicitly in the dispatch (HOW-complete).
+- **Precision qualifiers in every dispatch (2026-09-01)**: quantities, scope and
+  match criteria need explicit qualifiers — "all of", "only this file",
+  "at least N", "exact match only". A missing qualifier gets filled by the
+  receiver's default, and the default is whatever is most common — literal-minded
+  engines especially will let scope drift without it.
 - Mind machine boundaries: a peer on another machine joins local-only repro
   work as the diagnosis/review axis; if the repo is on a shared remote, it can
   reproduce directly.

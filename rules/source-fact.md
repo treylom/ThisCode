@@ -69,6 +69,7 @@ Across a day of retractions, most of what died was the **label** — *whose valu
 3. Split "unknown" three ways: undetermined (measured, no rule yet) ≠ unmeasured ≠ out-of-scope (our tools cannot open it) — the axis tells the next person where to start measuring.
 4. **Cite with six fields**: `target_path + metric + value + observed_at + content_revision (mtime or SHA) + environment (locale etc.)`. None substitutes for another; quoted measurements additionally carry `+ origin` (§1). (The earlier five-field form — no `target_path`, "source revision" — is historical; do not use it for new citations.) Values merged from several sources additionally carry `+ source + aggregation_rule`; history/attribution claims carry `+ provenance_role + introducing_commit + author` — these are separate contracts, not one slot. In particular, never quote a character count from `wc -m` without declaring the locale — under a C locale it counts bytes, not characters (characters: `LC_ALL=C.UTF-8 wc -m` or a runtime's string length; bytes: `wc -c`).
 5. **A correction must reach every place the value was quoted**, including derived arithmetic. Fixing only the measurement line leaves summaries and verdicts citing the old number. **Sign flips** (a dropped negation) are a separate failure mode — value and name both look intact, so no checksum, grep, or length check catches them; quote **verbatim with a source id**.
+6. **Attribute work or a change only with a field that can answer “who.”** File `mtime` answers **when**, not who. For committed work, use the introducing commit and author; while work is uncommitted, ask the author or check **every** plausible active session. If neither is available, label the author `unknown` rather than inventing one. Checking only yourself among N candidates proves at most your own alibi. Runtime/process ownership and work ownership are separate questions, and automated output may have no human/agent owner. The speaker records the attribution ruler immediately before making the claim. Case-scoped to an uncommitted-change misattribution; re-judge per situation; the maintainer's call wins.
 
 Case-based (one day's audit; the retraction lists were per-author, not exhaustive); re-judge per situation; the maintainer's call wins.
 
@@ -143,6 +144,16 @@ consuming its output:
 - Speak the count with its control attached: "N items (decoy 2/2 caught)" — by
   the agent making the claim, in that same message. A count arriving without its
   ruler invites the reader to trust a number nobody proved alive.
+- **The decoy has its own ruler (2026-09-01, 6 recurrences in one corpus)**: for
+  absence/count verdicts never use bare `wc -l` — count the pattern itself
+  (`grep -c '^pattern'`) and keep **one role per flag** (`-l`+`-c` style
+  conflicts pick one output silently: an expected 0 came back as 589). And write
+  the **expected value next to the decoy before running it** — pre-stated
+  expectation is an independent verification axis beyond self-checks and
+  cross-review; in all six failures it was the only thing that caught the break.
+- **Declaring a gate/status label requires one live measurement of its target
+  (2026-09-01)**: "consensus is not measurement" — three agents chorused a
+  "still RED" label that had been false for four months.
 - Rule layer, not a hook: a machine cannot see whether you planted a decoy, and
   forcing a self-declared checkbox recreates the empty-slot disease (§ owner-slot
   rule in skill-process). Not habit layer either — this one was already tried as

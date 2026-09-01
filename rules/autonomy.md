@@ -63,6 +63,14 @@ reached partial / blocked / awaiting-permission state.
   shipped unreviewed, "it works" asserted without a measurement. The step of
   *re-opening one's own deliverable* was missing entirely. Judge the fix by
   changed behavior, not by a hook existing.
+- **(b) Baseline = the topmost requirements doc in the dispatch chain,
+  checked 1:1** (2026-08-18 regression): comparing only against the latest
+  dispatch message lets requirements drop silently as orders get relayed —
+  a mid-chain message can pass while the original spec goes unmet. Trace
+  back to the top-level spec/plan the chain inherited from, check every
+  requirement 1:1; any unmet item = not complete (name it, carry it over
+  explicitly, or re-dispatch). Owner: the agent making the completion call
+  (including an orchestrator accepting a worker's report), same turn.
 - Case-based (skip for trivial one-shot work); re-judge per situation; the
   maintainer's call wins.
 
@@ -80,6 +88,22 @@ reached partial / blocked / awaiting-permission state.
   detection of "a convergence declaration" would require mandatory markers that
   cost more than they save.
 - Owner: the agent who declared convergence, in their very next message.
+
+## 2.10 Deferring a decision requires a release condition (2026-08-21)
+
+- When you defer a decision that coexists with a live risk (resource pressure,
+  deadline, safety), the deferral statement must carry a **release condition** —
+  a resource threshold (e.g. swap > 30G, disk avail < 3GiB), a date, or a
+  trigger event. **Condition reached = deferral auto-expires + re-escalate
+  once.** Open-ended "later" is forbidden.
+- Why: three deferred decisions (reboot window, disk cleanup, service restart)
+  sat in "later" state while the risk they guarded kept growing — the machine
+  died 30 minutes before a delivery deadline. The defect was not deferring;
+  it was deferring **without an expiry**.
+- Owner: the agent declaring the deferral, written **inside the deferral
+  statement itself** (the escalation message / progress log line) — not in a
+  separate table.
+- Case-based; re-judge per situation; the maintainer's call wins.
 
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake

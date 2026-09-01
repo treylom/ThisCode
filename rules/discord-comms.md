@@ -151,6 +151,13 @@ completion-report channel/thread id; which channels are meeting vs. main.
   blocks.
 - Case-based (2026-08-05); re-judge per situation; the maintainer's call wins.
 
+## 7. Reports carry pointers to detail
+
+When a report or completion message mentions items whose detail lives in a separate document (deliverables, measurements, review records), attach the coordinate for each item — a file path, wiki-link, or URL pointing to that item's canonical detail. A summary with zero coordinates is an incomplete report.
+- Who/when: the bot **sending** the report checks **just before sending** — N detail mentions ↔ N coordinates.
+- Form: short reports use inline parenthesized paths; long reports use a shortcuts table at the top.
+- Case boundary: items whose one-line mention IS the full record need no coordinate — do not fabricate links; say the line is all there is.
+
 ## Upstream-outage rung (escalation ladders assume the bot is asleep)
 
 Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge debugging — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25, a global outage at a model provider); re-judge per situation; the maintainer's call wins.

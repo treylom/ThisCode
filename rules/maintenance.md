@@ -79,6 +79,11 @@ index row pointing at a renamed file, a model note three upgrades stale.
      (`plugin:skill`), which the documentation states cannot collide across
      levels.
 
+7. **Core→full-text pointer traversal (relational check)**: verify that every full-text rule file referenced by a core rule file actually exists, by traversing the pointers — never by comparing against a hardcoded count ("18/18"), which goes stale in both directions as files are added or removed. The only question: "does everything the core points at exist?"
+   - Check: `for c in rules/*.md; do for t in $(grep -o 'rules-full/[a-z-]*\.md' "$c" | sort -u); do [ -f "$t" ] || echo "MISSING: $c -> $t"; done; done` (adjust glob/paths to the repo's actual layout — verify the pattern matches at least one real pointer before trusting a zero).
+   - **Absent decoy required**: run the same expression against one pointer known not to exist and confirm MISSING fires — a zero output must be provable as "no gaps", not "check never ran".
+   - The failure class concentrates in derived machines (stale clones, stash conflicts, partial checkouts), not the primary — check this axis first on secondary machines and deployments.
+
 ## Cadence · ownership · log
 - Once after each major model release + roughly quarterly.
 - Log each review (date · drift found/fixed) at the bottom of this file — an

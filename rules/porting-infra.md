@@ -10,6 +10,11 @@ adding an MCP server; writing API code.
   matrix. Upstream has usually already solved it. Label provenance
   (file:line / source) on what you find.
 
+- **Absence from a support/compatibility list ≠ "cannot be used" (2026-09-01)**:
+  a docs list is a snapshot of what marketing/documentation covered, not a
+  capability boundary. Drop one layer down and measure the protocol/executable
+  surface directly once before declaring "unsupported".
+
 ## 2. Deploy sync
 - On "deploy/push", sync **all** companion repos that must stay in lockstep,
   not just one.
@@ -33,6 +38,12 @@ adding an MCP server; writing API code.
 - Rule / operating-principle changes in the source repo sync to this
   deploy bundle's rules/ **at session-end** — else the bundle drifts
   from the source rules (a standing operator directive).
+- **File-tree syncs into a consumer store use one guarded entrypoint.** Strip the source project-root prefix from the destination mapping and reject any destination that repeats that project-root segment (the classic nested-shadow-tree failure). After the sync, verify that no prefixed shadow root exists; if one does, stop and report it without auto-deleting or overwriting. The operator performing the sync runs this postcondition in the same turn. Case-scoped; adapt the concrete wrapper/path to the deployment.
+
+- **User-facing copy: grep for internal/course jargon before push (2026-09-01)**:
+  plugin READMEs, command help and onboarding copy leak internal names (course
+  numbering, in-house bot/channel names) easily; one grep line before push, by
+  the pushing agent, replaces them with public vocabulary.
 
 ## 3. MCP servers
 - Before adding: list current MCPs. After adding: health-check. Remove on
