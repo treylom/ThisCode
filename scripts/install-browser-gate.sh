@@ -117,7 +117,10 @@ mcp_list_exact() {
   cfg="${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-claude.XXXXXX")}" || return 1
   out="$(cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 1; }
-  printf '%s\n' "$out" | grep -E "^${MCP_NAME}: npx @playwright/mcp@latest - (✔ Connected|⏸ Pending approval)" >/dev/null
+  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
+    index($0, prefix) == 1 { found = 1 }
+    END { exit found ? 0 : 1 }
+  '
 }
 
 step2_check() {
@@ -206,67 +209,74 @@ step3() {
 config_changes_keep_watched_keys() {
   local before_file="$1" after_file="$2"
   [ -f "$before_file" ] && [ -f "$after_file" ] || return 0
-  python3 - "$before_file" "$after_file" <<'PY'
-import json, sys
+  node - "$before_file" "$after_file" <<'NODE'
+const fs = require('fs');
+const before = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+const after = JSON.parse(fs.readFileSync(process.argv[3], 'utf8'));
+const changed = [];
 
-with open(sys.argv[1], encoding="utf-8") as f:
-    before = json.load(f)
-with open(sys.argv[2], encoding="utf-8") as f:
-    after = json.load(f)
-
-changed = []
-def leaves(value, path):
-    if isinstance(value, dict):
-        if not value:
-            changed.append(path)
-        else:
-            for key, child in value.items():
-                leaves(child, path + (key,))
-    else:
-        changed.append(path)
-
-def walk(a, b, path=()):
-    if type(a) is not type(b):
-        changed.append(path); return
-    if isinstance(a, dict):
-        for key in set(a) | set(b):
-            if key not in a:
-                leaves(b[key], path + (key,))
-            elif key not in b:
-                leaves(a[key], path + (key,))
-            else:
-                walk(a[key], b[key], path + (key,))
-    elif isinstance(a, list):
-        if a != b: changed.append(path)
-    elif a != b:
-        changed.append(path)
-
-walk(before, after)
-top_level_watched = {
-    "mcpServers", "hooks", "permissions", "allowedTools",
-    "disabledTools", "enabledTools", "hasTrustDialogAccepted",
+function kind(value) {
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return 'array';
+  return typeof value;
 }
-project_watched = {
-    "mcpServers", "mcpContextUris", "enabledMcpjsonServers",
-    "disabledMcpjsonServers", "enabledMcpServers", "disabledMcpServers",
-    "allowedTools", "disabledTools", "enabledTools", "hooks", "permissions",
-    "hasTrustDialogAccepted", "hasClaudeMdExternalIncludesApproved",
-    "hasClaudeMdExternalIncludesWarningShown", "localSettingsSeenGitTracked",
-}
-def watched(path):
-    if path and path[0] in top_level_watched:
-        return True
-    return len(path) >= 3 and path[0] == "projects" and path[2] in project_watched
 
-watched_changes = sorted({p for p in changed if watched(p)})
-other_changes = sorted({p for p in changed if not watched(p)})
-for path in other_changes:
-    print("[WARN] 비감시 설정 변화: " + ".".join(path))
-if watched_changes:
-    for path in watched_changes:
-        print("감시 설정 변화: " + ".".join(path), file=sys.stderr)
-    raise SystemExit(1)
-PY
+function leaves(value, path) {
+  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+    const entries = Object.entries(value);
+    if (entries.length === 0) changed.push(path);
+    else for (const [key, child] of entries) leaves(child, [...path, key]);
+  } else {
+    changed.push(path);
+  }
+}
+
+function walk(a, b, path = []) {
+  if (kind(a) !== kind(b)) {
+    changed.push(path);
+    return;
+  }
+  if (a !== null && typeof a === 'object' && !Array.isArray(a)) {
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    for (const key of keys) {
+      if (!Object.hasOwn(a, key)) leaves(b[key], [...path, key]);
+      else if (!Object.hasOwn(b, key)) leaves(a[key], [...path, key]);
+      else walk(a[key], b[key], [...path, key]);
+    }
+  } else if (Array.isArray(a)) {
+    if (JSON.stringify(a) !== JSON.stringify(b)) changed.push(path);
+  } else if (!Object.is(a, b)) {
+    changed.push(path);
+  }
+}
+
+walk(before, after);
+const topLevelWatched = new Set([
+  'mcpServers', 'hooks', 'permissions', 'allowedTools',
+  'disabledTools', 'enabledTools', 'hasTrustDialogAccepted',
+]);
+const projectWatched = new Set([
+  'mcpServers', 'mcpContextUris', 'enabledMcpjsonServers',
+  'disabledMcpjsonServers', 'enabledMcpServers', 'disabledMcpServers',
+  'allowedTools', 'disabledTools', 'enabledTools', 'hooks', 'permissions',
+  'hasTrustDialogAccepted', 'hasClaudeMdExternalIncludesApproved',
+  'hasClaudeMdExternalIncludesWarningShown', 'localSettingsSeenGitTracked',
+]);
+function watched(path) {
+  if (path.length > 0 && topLevelWatched.has(path[0])) return true;
+  return path.length >= 3 && path[0] === 'projects' && projectWatched.has(path[2]);
+}
+
+const unique = (paths) => [...new Map(paths.map((path) => [JSON.stringify(path), path])).values()]
+  .sort((a, b) => a.join('.').localeCompare(b.join('.')));
+const watchedChanges = unique(changed.filter(watched));
+const otherChanges = unique(changed.filter((path) => !watched(path)));
+for (const path of otherChanges) console.log('[WARN] 비감시 설정 변화: ' + path.join('.'));
+if (watchedChanges.length > 0) {
+  for (const path of watchedChanges) console.error('감시 설정 변화: ' + path.join('.'));
+  process.exit(1);
+}
+NODE
 }
 
 step4_log_has_execution() {
@@ -381,7 +391,14 @@ JSON
   exit 0
 fi
 if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
-  echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval (run `claude` to approve)'; exit 0
+  case "${FAKE_MCP_LIST_VARIANT:-connected}" in
+    connected) echo 'playwright: npx @playwright/mcp@latest - ✔ Connected' ;;
+    localized) echo 'playwright: npx @playwright/mcp@latest - 연결됨' ;;
+    no_status) echo 'playwright: npx @playwright/mcp@latest' ;;
+    wrong_command) echo 'playwright: node @playwright/mcp@latest - ✔ Connected' ;;
+    wrong_name) echo 'other: npx @playwright/mcp@latest - ✔ Connected' ;;
+  esac
+  exit 0
 fi
 printf '%s\n' \
   '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"nav-1","name":"mcp__playwright__browser_navigate"}]}}' \
@@ -415,6 +432,16 @@ FAKE_NPX
   done
   node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["DOES-NOT-EXIST"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
   total=$((total + 1)); rc=0; "$0" 2 --check-only >/dev/null 2>&1 || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
+  node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["@playwright/mcp@latest"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
+  for variant in connected localized no_status; do
+    total=$((total + 1)); FAKE_MCP_LIST_VARIANT="$variant"; export FAKE_MCP_LIST_VARIANT
+    if mcp_list_exact; then passes=$((passes + 1)); else echo "[SELFTEST FAIL] mcp list $variant" >&2; fi
+  done
+  for variant in wrong_command wrong_name; do
+    total=$((total + 1)); FAKE_MCP_LIST_VARIANT="$variant"; export FAKE_MCP_LIST_VARIANT
+    rc=0; mcp_list_exact || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
+  done
+  unset FAKE_MCP_LIST_VARIANT
   decoy="$tmp/init-only.ndjson"
   printf '%s\n' \
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \

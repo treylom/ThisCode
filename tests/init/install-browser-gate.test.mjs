@@ -13,7 +13,13 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 test('browser gate isolated replay passes 0~4 and rejects a broken MCP command', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 11\/11 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 16\/16 passed/);
+});
+
+test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
+  const text = readFileSync(GATE, 'utf8');
+  assert.doesNotMatch(text, /\bpython3\b/);
+  assert.match(text, /node - "\$before_file" "\$after_file"/);
 });
 
 test('student command has one machine gate per step in 0→4 order', () => {
