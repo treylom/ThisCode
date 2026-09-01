@@ -13,7 +13,7 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 test('browser gate isolated replay passes 0~4 and rejects a broken MCP command', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 6\/6 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 7\/7 passed/);
 });
 
 test('student command has one machine gate per step in 0→4 order', () => {

@@ -249,6 +249,65 @@ if unsafe:
 PY
 }
 
+step4_log_has_execution() {
+  local log_file="$1"
+  node - "$log_file" <<'NODE'
+const fs = require('fs');
+const path = process.argv[2];
+const events = [];
+for (const line of fs.readFileSync(path, 'utf8').split(/\r?\n/)) {
+  if (!line.trim()) continue;
+  try { events.push(JSON.parse(line)); } catch {}
+}
+
+const navigate = 'mcp__playwright__browser_navigate';
+const snapshot = 'mcp__playwright__browser_snapshot';
+const snapshotIds = new Set();
+let navigateUses = 0;
+let snapshotUses = 0;
+
+function walk(value, visit) {
+  if (Array.isArray(value)) {
+    for (const item of value) walk(item, visit);
+  } else if (value && typeof value === 'object') {
+    visit(value);
+    for (const item of Object.values(value)) walk(item, visit);
+  }
+}
+
+for (const event of events) {
+  walk(event, (value) => {
+    if (value.type !== 'tool_use' || typeof value.id !== 'string') return;
+    if (value.name === navigate) navigateUses += 1;
+    if (value.name === snapshot) {
+      snapshotUses += 1;
+      snapshotIds.add(value.id);
+    }
+  });
+}
+
+function containsExampleDomain(value) {
+  if (typeof value === 'string') return value.includes('Example Domain');
+  if (Array.isArray(value)) return value.some(containsExampleDomain);
+  if (value && typeof value === 'object') return Object.values(value).some(containsExampleDomain);
+  return false;
+}
+
+let snapshotResultHasTitle = false;
+for (const event of events) {
+  walk(event, (value) => {
+    if (value.type === 'tool_result'
+        && snapshotIds.has(value.tool_use_id)
+        && containsExampleDomain(value.content)) {
+      snapshotResultHasTitle = true;
+    }
+  });
+}
+
+if (navigateUses < 1 || snapshotUses < 1 || !snapshotResultHasTitle) process.exit(1);
+NODE
+}
+
 step4() {
   local cfg="" log rc=0 before_copy before_hash after_hash
   step3_check >/dev/null || return 1
@@ -283,17 +342,13 @@ step4() {
     note '실계정 설정 변화는 런타임 카운터·원격 실험 캐시로만 한정됐고 MCP 항목 변화는 0건입니다'
   fi
   [ "$rc" -eq 0 ] || { fail 4 E "새 세션 실행이 exit ${rc}로 끝났습니다(로그: $log)"; return 1; }
-  grep -q 'mcp__playwright__browser_navigate' "$log" \
-    || { fail 4 E "페이지 열기 도구 이벤트가 없습니다(로그: $log)"; return 1; }
-  grep -q 'mcp__playwright__browser_snapshot' "$log" \
-    || { fail 4 E "스냅샷 도구 이벤트가 없습니다(로그: $log)"; return 1; }
-  grep -q 'TITLE=Example Domain' "$log" \
-    || { fail 4 E "제목 판정값이 없습니다(로그: $log)"; return 1; }
+  step4_log_has_execution "$log" \
+    || { fail 4 E "도구 실행 이벤트와 스냅샷 제목 결과를 확인하지 못했습니다(로그: $log)"; return 1; }
   pass "4단계 새 세션 실행 확인: navigate+snapshot+TITLE, log=$log"
 }
 
 self_test() {
-  local tmp fake project old_path passes=0 total=0 rc
+  local tmp fake project decoy old_path passes=0 total=0 rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -309,8 +364,10 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
   echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval (run `claude` to approve)'; exit 0
 fi
 printf '%s\n' \
-  '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__playwright__browser_navigate"}]}}' \
-  '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"mcp__playwright__browser_snapshot"}]}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"nav-1","name":"mcp__playwright__browser_navigate"}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"nav-1","content":"Page URL: https://example.com"}]}}' \
+  '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"snap-1","name":"mcp__playwright__browser_snapshot"}]}}' \
+  '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"snap-1","content":[{"type":"text","text":"Page Title: Example Domain"}]}]}}' \
   '{"type":"result","result":"TITLE=Example Domain"}'
 FAKE_CLAUDE
   cat >"$fake/npx" <<FAKE_NPX
@@ -338,6 +395,11 @@ FAKE_NPX
   done
   node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["DOES-NOT-EXIST"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
   total=$((total + 1)); rc=0; "$0" 2 --check-only >/dev/null 2>&1 || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
+  decoy="$tmp/init-only.ndjson"
+  printf '%s\n' \
+    '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \
+    '{"type":"result","result":"TITLE=Example Domain"}' >"$decoy"
+  total=$((total + 1)); rc=0; step4_log_has_execution "$decoy" || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
   export PATH="$old_path"
   printf '[SELFTEST] %s/%s passed\n' "$passes" "$total"
   [ "$passes" -eq "$total" ]
