@@ -144,3 +144,13 @@ tool(s) and where the diversity check is recorded.
 - Owner of the entry: **the agent who observes the third recurrence** writes one
   line in the shared progress log ("promotion candidate: <item>, 3rd time").
   The observer is the recorder — a separate tally-keeper slot just goes empty.
+- **The threshold ruler is the class memory file, not the session (2026-09-01)**:
+  count recurrences against the *cumulative record in that defect-class's memory
+  file* — a session tally is a "+N", never a total. The moment you confess the
+  same defect a second time, **open the class file before re-counting**: a whole
+  meeting once reconstructed a threshold debate whose answer was already written
+  in the file nobody opened.
+- **Sibling-gate pair rule (2026-09-01)**: before erecting a new gate, look for
+  sibling gates (other surfaces of the same defect) first; and never share a
+  waiver key across surfaces whose recoverability differs — the agent who coined
+  that principle violated it themselves three days later.

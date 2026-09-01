@@ -32,6 +32,14 @@ bot's progress, or stopping while an active meeting is open.
   didn't fall. Two agents, same defect = process flaw, not a personal habit.
   Owner: the agent writing the timestamp, inside the same command that writes
   the document (a later "replace pass" is exactly the turn that gets forgotten).
+- **Ask first: "does this timestamp change the meaning?" (2026-09-01 — after two
+  more prescriptions the incidence still didn't fall: 3→4→4 across three
+  sessions)**: if removing the time changes nothing ("collected the scout
+  results", "sent — msg id attached"), **omit it entirely** — most placeholder
+  slots were times nobody needed. Only when meaning depends on it is it a real
+  timestamp, and then you call the clock. "Measure it" added burden and was
+  skipped; "drop it" removes burden and sticks — when a rule keeps failing,
+  look at its cost, not at willpower.
 - **Spill rule**: when the progress file exceeds ~100 rows, move detail
   blocks (long analyses, logs, tables) into a numbered doc (`NN-*.md`)
   and leave one row: `[KST] <bot> | spill | →NN-doc`. The progress file

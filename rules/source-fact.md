@@ -144,6 +144,16 @@ consuming its output:
 - Speak the count with its control attached: "N items (decoy 2/2 caught)" — by
   the agent making the claim, in that same message. A count arriving without its
   ruler invites the reader to trust a number nobody proved alive.
+- **The decoy has its own ruler (2026-09-01, 6 recurrences in one corpus)**: for
+  absence/count verdicts never use bare `wc -l` — count the pattern itself
+  (`grep -c '^pattern'`) and keep **one role per flag** (`-l`+`-c` style
+  conflicts pick one output silently: an expected 0 came back as 589). And write
+  the **expected value next to the decoy before running it** — pre-stated
+  expectation is an independent verification axis besides self-checks and
+  cross-review; in all six failures it was the only thing that caught the break.
+- **Declaring a gate/status label requires one live measurement of its target
+  (2026-09-01)**: "consensus is not measurement" — three agents chorused a
+  "still RED" label that had been false for four months.
 - Rule layer, not a hook: a machine cannot see whether you planted a decoy, and
   forcing a self-declared checkbox recreates the empty-slot disease (§ owner-slot
   rule in skill-process). Not habit layer either — this one was already tried as
