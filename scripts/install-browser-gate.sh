@@ -203,7 +203,7 @@ step3() {
   step3_check
 }
 
-config_changes_are_runtime_counters_only() {
+config_changes_keep_watched_keys() {
   local before_file="$1" after_file="$2"
   [ -f "$before_file" ] && [ -f "$after_file" ] || return 0
   python3 - "$before_file" "$after_file" <<'PY'
@@ -215,13 +215,25 @@ with open(sys.argv[2], encoding="utf-8") as f:
     after = json.load(f)
 
 changed = []
+def leaves(value, path):
+    if isinstance(value, dict):
+        if not value:
+            changed.append(path)
+        else:
+            for key, child in value.items():
+                leaves(child, path + (key,))
+    else:
+        changed.append(path)
+
 def walk(a, b, path=()):
     if type(a) is not type(b):
         changed.append(path); return
     if isinstance(a, dict):
         for key in set(a) | set(b):
-            if key not in a or key not in b:
-                changed.append(path + (key,))
+            if key not in a:
+                leaves(b[key], path + (key,))
+            elif key not in b:
+                leaves(a[key], path + (key,))
             else:
                 walk(a[key], b[key], path + (key,))
     elif isinstance(a, list):
@@ -230,21 +242,29 @@ def walk(a, b, path=()):
         changed.append(path)
 
 walk(before, after)
-def allowed(path):
-    if path == ("numStartups",): return True
-    if path and path[0] in {
-        "cachedGrowthBookFeaturesAt", "cachedExperimentFeatures",
-        "cachedGrowthBookFeatures", "cachedExperimentData"
-    }:
+top_level_watched = {
+    "mcpServers", "hooks", "permissions", "allowedTools",
+    "disabledTools", "enabledTools", "hasTrustDialogAccepted",
+}
+project_watched = {
+    "mcpServers", "mcpContextUris", "enabledMcpjsonServers",
+    "disabledMcpjsonServers", "enabledMcpServers", "disabledMcpServers",
+    "allowedTools", "disabledTools", "enabledTools", "hooks", "permissions",
+    "hasTrustDialogAccepted", "hasClaudeMdExternalIncludesApproved",
+    "hasClaudeMdExternalIncludesWarningShown", "localSettingsSeenGitTracked",
+}
+def watched(path):
+    if path and path[0] in top_level_watched:
         return True
-    return len(path) == 3 and path[0] == "pluginUsage" and path[2] in {
-        "lastUsedAt", "lastUsedNumStartups", "usageCount"
-    }
+    return len(path) >= 3 and path[0] == "projects" and path[2] in project_watched
 
-unsafe = [p for p in changed if not allowed(p)]
-if unsafe:
-    for path in unsafe:
-        print("unexpected config change: " + ".".join(path), file=sys.stderr)
+watched_changes = sorted({p for p in changed if watched(p)})
+other_changes = sorted({p for p in changed if not watched(p)})
+for path in other_changes:
+    print("[WARN] 비감시 설정 변화: " + ".".join(path))
+if watched_changes:
+    for path in watched_changes:
+        print("감시 설정 변화: " + ".".join(path), file=sys.stderr)
     raise SystemExit(1)
 PY
 }
@@ -336,10 +356,10 @@ step4() {
       >"$log" 2>&1 || rc=$?
   fi
   after_hash="$(shasum -a 256 "$HOME/.claude.json" 2>/dev/null | awk '{print $1}')"
-  config_changes_are_runtime_counters_only "$before_copy" "$HOME/.claude.json" \
-    || { fail 4 E '실행 중 실계정 설정에 MCP 이외의 예상하지 못한 변경이 생겼습니다'; return 1; }
+  config_changes_keep_watched_keys "$before_copy" "$HOME/.claude.json" \
+    || { fail 4 E '실행 중 MCP·권한·훅·신뢰 감시 설정이 변경되었습니다'; return 1; }
   if [ "$before_hash" != "$after_hash" ]; then
-    note '실계정 설정 변화는 런타임 카운터·원격 실험 캐시로만 한정됐고 MCP 항목 변화는 0건입니다'
+    note '감시 설정 변화는 0건입니다. 비감시 변경은 위 WARN 목록으로 남겼습니다'
   fi
   [ "$rc" -eq 0 ] || { fail 4 E "새 세션 실행이 exit ${rc}로 끝났습니다(로그: $log)"; return 1; }
   step4_log_has_execution "$log" \
@@ -348,7 +368,7 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy old_path passes=0 total=0 rc
+  local tmp fake project decoy cfg_before cfg_after cfg_out old_path passes=0 total=0 rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -400,6 +420,20 @@ FAKE_NPX
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \
     '{"type":"result","result":"TITLE=Example Domain"}' >"$decoy"
   total=$((total + 1)); rc=0; step4_log_has_execution "$decoy" || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
+  cfg_before="$tmp/config-before.json"; cfg_after="$tmp/config-after.json"; cfg_out="$tmp/config-check.out"
+  printf '%s\n' '{"mcpServers":{},"projects":{"/tmp/course":{"mcpServers":{},"enabledMcpjsonServers":[],"disabledMcpjsonServers":[]}}}' >"$cfg_before"
+
+  printf '%s\n' '{"mcpServers":{"rogue":{"command":"false"}},"projects":{"/tmp/course":{"mcpServers":{},"enabledMcpjsonServers":[],"disabledMcpjsonServers":[]}}}' >"$cfg_after"
+  total=$((total + 1)); rc=0; config_changes_keep_watched_keys "$cfg_before" "$cfg_after" >"$cfg_out" 2>&1 || rc=$?; [ "$rc" -ne 0 ] && grep -q '감시 설정 변화: mcpServers.rogue.command' "$cfg_out" && passes=$((passes + 1))
+
+  printf '%s\n' '{"mcpServers":{},"projects":{"/tmp/course":{"mcpServers":{"rogue":{"command":"false"}},"enabledMcpjsonServers":[],"disabledMcpjsonServers":[]}}}' >"$cfg_after"
+  total=$((total + 1)); rc=0; config_changes_keep_watched_keys "$cfg_before" "$cfg_after" >"$cfg_out" 2>&1 || rc=$?; [ "$rc" -ne 0 ] && grep -q '감시 설정 변화: projects./tmp/course.mcpServers.rogue.command' "$cfg_out" && passes=$((passes + 1))
+
+  printf '%s\n' '{"mcpServers":{},"promptQueueUseCount":1,"skillUsage":{"thiscode:install-browser":{"lastUsedAt":1,"usageCount":1}},"projects":{"/tmp/course":{"mcpServers":{},"enabledMcpjsonServers":[],"disabledMcpjsonServers":[]}}}' >"$cfg_after"
+  total=$((total + 1)); rc=0; config_changes_keep_watched_keys "$cfg_before" "$cfg_after" >"$cfg_out" 2>&1 || rc=$?; [ "$rc" -eq 0 ] && grep -q '\[WARN\] 비감시 설정 변화: promptQueueUseCount' "$cfg_out" && grep -q '\[WARN\] 비감시 설정 변화: skillUsage.thiscode:install-browser.usageCount' "$cfg_out" && passes=$((passes + 1))
+
+  printf '%s\n' '{"mcpServers":{},"clientDataCacheSlots":{"slot":{"at":1}},"additionalModelOptionsCache":{},"migrationVersion":1,"additionalModelOptionsAnsweredAt":1,"projects":{"/tmp/course":{"mcpServers":{},"enabledMcpjsonServers":[],"disabledMcpjsonServers":[]}}}' >"$cfg_after"
+  total=$((total + 1)); rc=0; config_changes_keep_watched_keys "$cfg_before" "$cfg_after" >"$cfg_out" 2>&1 || rc=$?; [ "$rc" -eq 0 ] && grep -q '\[WARN\] 비감시 설정 변화: migrationVersion' "$cfg_out" && grep -q '\[WARN\] 비감시 설정 변화: clientDataCacheSlots.slot.at' "$cfg_out" && passes=$((passes + 1))
   export PATH="$old_path"
   printf '[SELFTEST] %s/%s passed\n' "$passes" "$total"
   [ "$passes" -eq "$total" ]
