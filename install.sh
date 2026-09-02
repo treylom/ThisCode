@@ -15,7 +15,7 @@
 #   5.   oh-my-tmux (gpakosz/.tmux) auto-install
 #   6.   (optional) Apply thiscode tmux.conf.local
 #   6.5  Obsidian CLI environment branching — vault 3-Tier fallback, tier 1
-#   7.   thiscode plugin install guidance (marketplace + 7 slash commands)
+#   7.   thiscode plugin automatic install (user scope, manual fallback)
 #   8.   First-bot wizard guidance (Claude Code, /thiscode:start)
 
 set -euo pipefail
@@ -237,15 +237,56 @@ apply_our_tmux_conf() {
 
 # ---------------------------------------------------------------- Step 7
 
-install_plugin() {
-  step 7 "thiscode plugin install guidance"
+plugin_installed_scope() {
+  local plugins_json
 
+  plugins_json="$(claude plugin list --json 2>/dev/null)" || return 1
+  printf '%s' "$plugins_json" | node -e '
+    let input = "";
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", (chunk) => { input += chunk; });
+    process.stdin.on("end", () => {
+      try {
+        const plugins = JSON.parse(input);
+        const found = Array.isArray(plugins) && plugins.find(
+          (plugin) => plugin && plugin.id === "thiscode@thiscode-marketplace"
+        );
+        if (!found) process.exit(1);
+        process.stdout.write(String(found.scope || "unknown"));
+      } catch {
+        process.exit(1);
+      }
+    });
+  '
+}
+
+last_nonempty_line() {
+  local text="$1"
+  local candidate=""
+  local last=""
+
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] && last="$candidate"
+  done <<< "$text"
+  printf '%s' "${last:-unknown error}"
+}
+
+print_plugin_manual_fallback() {
+  local reason="$1"
+
+  warn "Automatic thiscode plugin install could not finish: $reason"
   cat <<'EOF'
 
-  Inside Claude Code (after entering the REPL):
+  Manual fallback — inside Claude Code, run:
 
       /plugin marketplace add treylom/ThisCode
       /plugin install thiscode@thiscode-marketplace
+
+EOF
+}
+
+print_plugin_ready_guidance() {
+  cat <<'EOF'
 
   Where to start (these are entry points, not the whole set):
 
@@ -260,15 +301,49 @@ install_plugin() {
   — so no fixed list here can stay accurate. Run /thiscode:help after install;
   it enumerates both directories at runtime.
 
-  Or via local git clone (for testing / verification):
-
-      git clone https://github.com/treylom/ThisCode.git \
-        ~/.claude/plugins/cache/local/thiscode
-
   Prereq: jq (auto-installed in Step 2) — used by hook-merge slash commands
   for safe settings.json merging.
 
 EOF
+}
+
+install_plugin() {
+  step 7 "thiscode plugin automatic install"
+
+  if ! command -v claude >/dev/null 2>&1; then
+    print_plugin_manual_fallback "Claude Code executable was not found in PATH"
+    return 0
+  fi
+
+  local installed_scope
+  if installed_scope="$(plugin_installed_scope)"; then
+    ok "thiscode plugin already installed (scope: $installed_scope) → skip"
+    print_plugin_ready_guidance
+    warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+    return 0
+  fi
+
+  local output
+  log "Adding the thiscode marketplace (user scope)"
+  if ! output="$(claude plugin marketplace add treylom/ThisCode --scope user 2>&1)"; then
+    print_plugin_manual_fallback "$(last_nonempty_line "$output")"
+    return 0
+  fi
+  ok "thiscode marketplace ready"
+
+  log "Installing thiscode@thiscode-marketplace (user scope)"
+  if ! output="$(claude plugin install thiscode@thiscode-marketplace --scope user --yes 2>&1)"; then
+    print_plugin_manual_fallback "$(last_nonempty_line "$output")"
+    return 0
+  fi
+
+  if ! installed_scope="$(plugin_installed_scope)"; then
+    print_plugin_manual_fallback "claude plugin list did not show thiscode@thiscode-marketplace after installation"
+    return 0
+  fi
+
+  ok "thiscode plugin installed and verified (scope: $installed_scope)"
+  print_plugin_ready_guidance
   warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
 }
 
@@ -332,11 +407,100 @@ main() {
 
 # ---------------------------------------------------------------- Step 6.5
 
+OBSIDIAN_VERSION_RESULT=""
+
+obsidian_command_is_gui_app() {
+  local command_path="$1"
+  local resolved_path="$command_path"
+
+  if command -v realpath >/dev/null 2>&1; then
+    resolved_path="$(realpath "$command_path" 2>/dev/null || printf '%s' "$command_path")"
+  elif [ -L "$command_path" ]; then
+    resolved_path="$(readlink "$command_path" 2>/dev/null || printf '%s' "$command_path")"
+  fi
+
+  case "$command_path:$resolved_path" in
+    *'/Obsidian.app/Contents/MacOS/'*|*'/Caskroom/obsidian/'*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+stop_process_group() {
+  local parent_pid="$1"
+  local process_group=""
+
+  if command -v pkill >/dev/null 2>&1; then
+    pkill -TERM -P "$parent_pid" 2>/dev/null || true
+  fi
+  process_group="$(ps -o pgid= -p "$parent_pid" 2>/dev/null | tr -d ' ')"
+  if [ -n "$process_group" ] && [ "$process_group" = "$parent_pid" ]; then
+    kill -TERM "-$process_group" 2>/dev/null || true
+  else
+    kill "$parent_pid" 2>/dev/null || true
+  fi
+}
+
+obsidian_version_with_limit() {
+  local command_path="$1"
+  local output_file timeout_file child_pid guard_pid rc=0
+
+  OBSIDIAN_VERSION_RESULT=""
+  output_file="$(mktemp "${TMPDIR:-/tmp}/thiscode-obsidian-version.XXXXXX")" || return 1
+  timeout_file="${output_file}.timeout"
+  set -m
+  "$command_path" --version >"$output_file" 2>&1 &
+  child_pid=$!
+  set +m
+  (
+    sleep 5
+    if kill -0 "$child_pid" 2>/dev/null; then
+      : >"$timeout_file"
+      stop_process_group "$child_pid"
+    fi
+  ) >/dev/null 2>&1 &
+  guard_pid=$!
+
+  wait "$child_pid" || rc=$?
+  stop_process_group "$guard_pid"
+  wait "$guard_pid" 2>/dev/null || true
+  if [ -f "$timeout_file" ]; then
+    rm -f "$output_file" "$timeout_file"
+    return 124
+  fi
+  OBSIDIAN_VERSION_RESULT="$(head -1 "$output_file")"
+  rm -f "$output_file"
+  [ "$rc" -eq 0 ] || return "$rc"
+  [ -n "$OBSIDIAN_VERSION_RESULT" ] || OBSIDIAN_VERSION_RESULT='버전 출력 없음'
+}
+
+report_obsidian_command() {
+  local command_path="$1"
+  local label="$2"
+  local version="" rc=0
+
+  if obsidian_command_is_gui_app "$command_path"; then
+    ok "Obsidian 앱 감지(버전 미확인)"
+    return 0
+  fi
+
+  obsidian_version_with_limit "$command_path" || rc=$?
+  version="$OBSIDIAN_VERSION_RESULT"
+  if [ "$rc" -eq 0 ]; then
+    ok "$label: $version"
+  elif [ "$rc" -eq 124 ]; then
+    warn "Obsidian 명령 감지(버전 확인 5초 초과)"
+  else
+    warn "Obsidian 명령 감지(버전 미확인, exit $rc)"
+  fi
+}
+
 install_obsidian_cli() {
+  local obsidian_command=""
   step "6.5" "Obsidian CLI (vault access 3-Tier fallback, tier 1)"
 
-  if command -v obsidian >/dev/null 2>&1; then
-    ok "Obsidian CLI already installed: $(obsidian --version 2>&1 | head -1) → skip"
+  obsidian_command="$(command -v obsidian 2>/dev/null || true)"
+  if [ -n "$obsidian_command" ]; then
+    report_obsidian_command "$obsidian_command" "Obsidian CLI already installed"
     return
   fi
 
@@ -378,8 +542,9 @@ EOF
   esac
 
   # Verify
-  if command -v obsidian >/dev/null 2>&1; then
-    ok "Obsidian CLI: $(obsidian --version 2>&1 | head -1)"
+  obsidian_command="$(command -v obsidian 2>/dev/null || true)"
+  if [ -n "$obsidian_command" ]; then
+    report_obsidian_command "$obsidian_command" "Obsidian CLI"
   else
     warn "Obsidian CLI not installed — 3-Tier fallback will use Tier 2 (MCP) or Tier 3 (Write/Read/Grep)"
     warn "If you don't use Obsidian, skipping this step is fine — most of thiscode still works"
@@ -414,4 +579,6 @@ install_codex_cli() {
   warn "After Claude Code install, run /thiscode:codex-check to verify"
 }
 
-main "$@"
+if [ "${THISCODE_INSTALL_SH_SOURCE_ONLY:-0}" != "1" ]; then
+  main "$@"
+fi
