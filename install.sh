@@ -15,7 +15,7 @@
 #   5.   oh-my-tmux (gpakosz/.tmux) auto-install
 #   6.   (optional) Apply thiscode tmux.conf.local
 #   6.5  Obsidian CLI environment branching — vault 3-Tier fallback, tier 1
-#   7.   thiscode plugin install guidance (marketplace + 7 slash commands)
+#   7.   thiscode plugin automatic install (user scope, manual fallback)
 #   8.   First-bot wizard guidance (Claude Code, /thiscode:start)
 
 set -euo pipefail
@@ -237,15 +237,56 @@ apply_our_tmux_conf() {
 
 # ---------------------------------------------------------------- Step 7
 
-install_plugin() {
-  step 7 "thiscode plugin install guidance"
+plugin_installed_scope() {
+  local plugins_json
 
+  plugins_json="$(claude plugin list --json 2>/dev/null)" || return 1
+  printf '%s' "$plugins_json" | node -e '
+    let input = "";
+    process.stdin.setEncoding("utf8");
+    process.stdin.on("data", (chunk) => { input += chunk; });
+    process.stdin.on("end", () => {
+      try {
+        const plugins = JSON.parse(input);
+        const found = Array.isArray(plugins) && plugins.find(
+          (plugin) => plugin && plugin.id === "thiscode@thiscode-marketplace"
+        );
+        if (!found) process.exit(1);
+        process.stdout.write(String(found.scope || "unknown"));
+      } catch {
+        process.exit(1);
+      }
+    });
+  '
+}
+
+last_nonempty_line() {
+  local text="$1"
+  local candidate=""
+  local last=""
+
+  while IFS= read -r candidate; do
+    [ -n "$candidate" ] && last="$candidate"
+  done <<< "$text"
+  printf '%s' "${last:-unknown error}"
+}
+
+print_plugin_manual_fallback() {
+  local reason="$1"
+
+  warn "Automatic thiscode plugin install could not finish: $reason"
   cat <<'EOF'
 
-  Inside Claude Code (after entering the REPL):
+  Manual fallback — inside Claude Code, run:
 
       /plugin marketplace add treylom/ThisCode
       /plugin install thiscode@thiscode-marketplace
+
+EOF
+}
+
+print_plugin_ready_guidance() {
+  cat <<'EOF'
 
   Where to start (these are entry points, not the whole set):
 
@@ -260,15 +301,49 @@ install_plugin() {
   — so no fixed list here can stay accurate. Run /thiscode:help after install;
   it enumerates both directories at runtime.
 
-  Or via local git clone (for testing / verification):
-
-      git clone https://github.com/treylom/ThisCode.git \
-        ~/.claude/plugins/cache/local/thiscode
-
   Prereq: jq (auto-installed in Step 2) — used by hook-merge slash commands
   for safe settings.json merging.
 
 EOF
+}
+
+install_plugin() {
+  step 7 "thiscode plugin automatic install"
+
+  if ! command -v claude >/dev/null 2>&1; then
+    print_plugin_manual_fallback "Claude Code executable was not found in PATH"
+    return 0
+  fi
+
+  local installed_scope
+  if installed_scope="$(plugin_installed_scope)"; then
+    ok "thiscode plugin already installed (scope: $installed_scope) → skip"
+    print_plugin_ready_guidance
+    warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+    return 0
+  fi
+
+  local output
+  log "Adding the thiscode marketplace (user scope)"
+  if ! output="$(claude plugin marketplace add treylom/ThisCode --scope user 2>&1)"; then
+    print_plugin_manual_fallback "$(last_nonempty_line "$output")"
+    return 0
+  fi
+  ok "thiscode marketplace ready"
+
+  log "Installing thiscode@thiscode-marketplace (user scope)"
+  if ! output="$(claude plugin install thiscode@thiscode-marketplace --scope user --yes 2>&1)"; then
+    print_plugin_manual_fallback "$(last_nonempty_line "$output")"
+    return 0
+  fi
+
+  if ! installed_scope="$(plugin_installed_scope)"; then
+    print_plugin_manual_fallback "claude plugin list did not show thiscode@thiscode-marketplace after installation"
+    return 0
+  fi
+
+  ok "thiscode plugin installed and verified (scope: $installed_scope)"
+  print_plugin_ready_guidance
   warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
 }
 
@@ -414,4 +489,6 @@ install_codex_cli() {
   warn "After Claude Code install, run /thiscode:codex-check to verify"
 }
 
-main "$@"
+if [ "${THISCODE_INSTALL_SH_SOURCE_ONLY:-0}" != "1" ]; then
+  main "$@"
+fi
