@@ -560,12 +560,16 @@ FAKE_NVM
       THISCODE_BROWSER_SKIP_DISK_CHECK=1 bash "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
     [ "$hidden_rc" -eq 0 ] || break
   done
-  [ "$hidden_rc" -eq 0 ] \
+  if [ "$hidden_rc" -eq 0 ] \
     && grep -q '1단계 Node 준비' "$hidden_out" \
     && grep -q '2단계 프로젝트 MCP 등록 확인' "$hidden_out" \
     && grep -q '3단계 브라우저 바이너리 확인' "$hidden_out" \
-    && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$hidden_out" \
-    && passes=$((passes + 1))
+    && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$hidden_out"; then
+    passes=$((passes + 1))
+  else
+    printf '[SELFTEST-FAIL] node-hidden separate-shell replay (rc=%s)\n' "$hidden_rc" >&2
+    sed 's/^/[SELFTEST-DETAIL] /' "$hidden_out" >&2
+  fi
   decoy="$tmp/init-only.ndjson"
   printf '%s\n' \
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \
