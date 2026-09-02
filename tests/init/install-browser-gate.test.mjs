@@ -10,10 +10,10 @@ const GATE = join(REPO, 'scripts', 'install-browser-gate.sh');
 const COMMAND = join(REPO, 'commands', 'install-browser.md');
 const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 
-test('browser gate isolated replay passes 0~4 and rejects a broken MCP command', () => {
+test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 20\/20 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 21\/21 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
@@ -25,6 +25,7 @@ test('browser gate uses Node for config diff and has no Python runtime dependenc
 test('isolated verification never copies Claude credentials', () => {
   const text = readFileSync(GATE, 'utf8');
   assert.doesNotMatch(text, /cp[^\n]*\.credentials\.json/);
+  assert.match(text, /4단계 검증 불가\(인증 미승계\)/);
 });
 
 test('student command has one machine gate per step in 0→4 order', () => {

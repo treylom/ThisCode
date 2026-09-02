@@ -375,32 +375,24 @@ NODE
 }
 
 step4() {
-  local cfg="" log rc=0 before_copy before_hash after_hash
+  local log rc=0 before_copy before_hash after_hash
   step3_check >/dev/null || return 1
   [ "$CHECK_ONLY" -eq 0 ] || { fail 4 E '실행 확인은 check-only로 대신할 수 없습니다'; return 1; }
+  if [ -n "${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-}" ]; then
+    fail 4 E '4단계 검증 불가(인증 미승계): 격리 설정에서는 Claude 로그인을 안전하게 승계하지 않습니다. 격리 변수를 제거한 일반 프로젝트 세션에서 다시 실행하세요'
+    return 1
+  fi
   log="${THISCODE_BROWSER_LOG:-$(mktemp "${TMPDIR:-/tmp}/thiscode-browser-check.XXXXXX")}" || return 1
   before_copy="$(mktemp "${TMPDIR:-/tmp}/thiscode-browser-config-before.XXXXXX")" || return 1
   if [ -f "$HOME/.claude.json" ]; then cp "$HOME/.claude.json" "$before_copy"; fi
   before_hash="$(shasum -a 256 "$HOME/.claude.json" 2>/dev/null | awk '{print $1}')"
-  if [ -n "${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-}" ]; then
-    cfg="$THISCODE_BROWSER_CLAUDE_CONFIG_DIR"
-    if [ -f "$HOME/.claude.json" ] && [ ! -f "$cfg/.claude.json" ]; then cp "$HOME/.claude.json" "$cfg/.claude.json"; fi
-    (cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" -p \
-      --model sonnet --effort medium --output-format stream-json --verbose \
-      --no-session-persistence --mcp-config "$PROJECT_DIR/.mcp.json" --strict-mcp-config \
-      --permission-mode dontAsk \
-      --allowedTools='mcp__playwright__browser_navigate,mcp__playwright__browser_snapshot' \
-      "Playwright 도구만 사용합니다. ${TEST_URL}을 열고 페이지 스냅샷을 확인한 뒤 마지막 줄을 정확히 TITLE=Example Domain으로 출력합니다.") \
-      >"$log" 2>&1 || rc=$?
-  else
-    (cd "$PROJECT_DIR" && "$CLAUDE_BIN" -p \
-      --model sonnet --effort medium --output-format stream-json --verbose \
-      --no-session-persistence --mcp-config "$PROJECT_DIR/.mcp.json" --strict-mcp-config \
-      --permission-mode dontAsk \
-      --allowedTools='mcp__playwright__browser_navigate,mcp__playwright__browser_snapshot' \
-      "Playwright 도구만 사용합니다. ${TEST_URL}을 열고 페이지 스냅샷을 확인한 뒤 마지막 줄을 정확히 TITLE=Example Domain으로 출력합니다.") \
-      >"$log" 2>&1 || rc=$?
-  fi
+  (cd "$PROJECT_DIR" && "$CLAUDE_BIN" -p \
+    --model sonnet --effort medium --output-format stream-json --verbose \
+    --no-session-persistence --mcp-config "$PROJECT_DIR/.mcp.json" --strict-mcp-config \
+    --permission-mode dontAsk \
+    --allowedTools='mcp__playwright__browser_navigate,mcp__playwright__browser_snapshot' \
+    "Playwright 도구만 사용합니다. ${TEST_URL}을 열고 페이지 스냅샷을 확인한 뒤 마지막 줄을 정확히 TITLE=Example Domain으로 출력합니다.") \
+    >"$log" 2>&1 || rc=$?
   after_hash="$(shasum -a 256 "$HOME/.claude.json" 2>/dev/null | awk '{print $1}')"
   config_changes_keep_watched_keys "$before_copy" "$HOME/.claude.json" \
     || { fail 4 E '실행 중 MCP·권한·훅·신뢰 감시 설정이 변경되었습니다'; return 1; }
@@ -415,11 +407,12 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out cfg_before cfg_after cfg_out old_path passes=0 total=0 rc pending_rc before_approval_rc
+  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path passes=0 total=0 rc pending_rc before_approval_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
 #!/usr/bin/env bash
+if [ -n "${FAKE_CLAUDE_CALLED_FILE:-}" ]; then : >"$FAKE_CLAUDE_CALLED_FILE"; fi
 if [ "${1:-}" = --version ]; then echo '2.test'; exit 0; fi
 if [ "${1:-}" = mcp ] && [ "${2:-}" = add ]; then
   cat >.mcp.json <<'JSON'
@@ -476,6 +469,10 @@ FAKE_NPX
   for s in 0 1 2 3 4; do
     total=$((total + 1)); if "$0" "$s" >/dev/null; then passes=$((passes + 1)); else echo "[SELFTEST FAIL] step $s" >&2; fi
   done
+  isolated_out="$tmp/isolated-step4.out"; isolated_marker="$tmp/isolated-claude-called"
+  total=$((total + 1)); rc=0
+  THISCODE_BROWSER_CLAUDE_CONFIG_DIR="$tmp/isolated-config" FAKE_CLAUDE_CALLED_FILE="$isolated_marker" "$0" 4 >"$isolated_out" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] && grep -q '4단계 검증 불가(인증 미승계)' "$isolated_out" && [ ! -e "$isolated_marker" ] && passes=$((passes + 1))
   node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["DOES-NOT-EXIST"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
   total=$((total + 1)); rc=0; "$0" 2 --check-only >/dev/null 2>&1 || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
   node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["@playwright/mcp@latest"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
