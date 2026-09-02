@@ -72,6 +72,8 @@ claude
 
 프로젝트의 Playwright 연결을 승인한 뒤 `/thiscode:install-browser`를 다시 실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
 
+Playwright 연결이 여러 위치에 중복 등록됐다는 안내가 나오면, Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 `/thiscode:install-browser`를 다시 실행합니다.
+
 > 4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨
 >
 > 브라우저 준비가 끝났습니다. 프로젝트 Playwright 연결 승인 상태까지 확인했습니다. 이 프로젝트에서 웹페이지 열기와 화면 읽기를 사용할 수 있습니다.

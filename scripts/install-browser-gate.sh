@@ -127,6 +127,9 @@ mcp_approval_state() {
   local out rc
   out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
+  if [[ "$out" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]; then
+    return 5
+  fi
   printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
     index($0, prefix) == 1 {
       found = 1
@@ -150,6 +153,10 @@ step4_approval_check() {
     0) pass '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' ;;
     2)
       fail 4b E '프로젝트 폴더에서 일반 Claude Code 세션을 다시 열어 Playwright 연결을 승인한 뒤 /thiscode:install-browser를 다시 실행하세요'
+      return 1
+      ;;
+    5)
+      fail 4b E 'Playwright 연결이 여러 위치에 중복 등록되어 있습니다. Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요'
       return 1
       ;;
     *)
@@ -426,6 +433,7 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
     localized) echo 'playwright: npx @playwright/mcp@latest - 연결됨' ;;
     pending) echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval' ;;
     pending_localized) echo 'playwright: npx @playwright/mcp@latest - ⏸ 승인 대기' ;;
+    multiple_scopes) echo 'Server "playwright" is defined in multiple scopes with different endpoints' ;;
     approval_flow)
       if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
         echo 'playwright: npx @playwright/mcp@latest - ✔ Connected'
@@ -498,6 +506,9 @@ FAKE_NPX
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=no_status; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
   [ "$rc" -eq 1 ] && grep -q '승인 상태를 확인하지 못했습니다' "$approval_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=multiple_scopes; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
   unset FAKE_MCP_LIST_VARIANT
   unset FAKE_MCP_APPROVED_FILE
   decoy="$tmp/init-only.ndjson"
