@@ -70,7 +70,13 @@ npx playwright install chromium
 claude
 ```
 
-프로젝트의 Playwright 연결을 승인한 뒤 다음 문장을 입력합니다.
+프로젝트의 Playwright 연결을 승인한 뒤 `/thiscode:install-browser`를 다시 실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
+
+> 4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨
+>
+> 브라우저 준비가 끝났습니다. 프로젝트 Playwright 연결 승인 상태까지 확인했습니다. 이 프로젝트에서 웹페이지 열기와 화면 읽기를 사용할 수 있습니다.
+
+그다음 다음 문장을 입력합니다.
 
 ```text
 Playwright로 https://example.com 을 열고 페이지 제목과 화면 구조를 확인해줘.

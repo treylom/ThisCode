@@ -123,6 +123,42 @@ mcp_list_exact() {
   '
 }
 
+mcp_approval_state() {
+  local out rc
+  out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
+  [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
+  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
+    index($0, prefix) == 1 {
+      found = 1
+      suffix = substr($0, length(prefix) + 1)
+      if (suffix ~ /⏸/ || suffix ~ /Pending[[:space:]]+approval/) pending = 1
+      else if (suffix ~ /^[[:space:]]+-[[:space:]]+[^[:space:]]/) approved = 1
+    }
+    END {
+      if (!found) exit 3
+      if (pending) exit 2
+      if (approved) exit 0
+      exit 4
+    }
+  '
+}
+
+step4_approval_check() {
+  local rc=0
+  mcp_approval_state || rc=$?
+  case "$rc" in
+    0) pass '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' ;;
+    2)
+      fail 4b E '프로젝트 폴더에서 일반 Claude Code 세션을 다시 열어 Playwright 연결을 승인한 뒤 /thiscode:install-browser를 다시 실행하세요'
+      return 1
+      ;;
+    *)
+      fail 4b E '`claude mcp list`에서 프로젝트 Playwright 연결의 승인 상태를 확인하지 못했습니다. 카드 E의 승인 절차를 마친 뒤 다시 실행하세요'
+      return 1
+      ;;
+  esac
+}
+
 step2_check() {
   mcp_json_exact || { fail 2 C '프로젝트 설정의 Playwright 항목이 없거나 명령이 다릅니다'; return 1; }
   mcp_list_exact || { fail 2 C '`claude mcp list`의 프로젝트 Playwright 행을 확인하지 못했습니다'; return 1; }
@@ -375,10 +411,11 @@ step4() {
   step4_log_has_execution "$log" \
     || { fail 4 E "도구 실행 이벤트와 스냅샷 제목 결과를 확인하지 못했습니다(로그: $log)"; return 1; }
   pass "4단계 새 세션 실행 확인: navigate+snapshot+TITLE, log=$log"
+  step4_approval_check
 }
 
 self_test() {
-  local tmp fake project decoy cfg_before cfg_after cfg_out old_path passes=0 total=0 rc
+  local tmp fake project decoy approval_out cfg_before cfg_after cfg_out old_path passes=0 total=0 rc pending_rc before_approval_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -394,6 +431,15 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
   case "${FAKE_MCP_LIST_VARIANT:-connected}" in
     connected) echo 'playwright: npx @playwright/mcp@latest - ✔ Connected' ;;
     localized) echo 'playwright: npx @playwright/mcp@latest - 연결됨' ;;
+    pending) echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval' ;;
+    pending_localized) echo 'playwright: npx @playwright/mcp@latest - ⏸ 승인 대기' ;;
+    approval_flow)
+      if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
+        echo 'playwright: npx @playwright/mcp@latest - ✔ Connected'
+      else
+        echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval'
+      fi
+      ;;
     no_status) echo 'playwright: npx @playwright/mcp@latest' ;;
     wrong_command) echo 'playwright: node @playwright/mcp@latest - ✔ Connected' ;;
     wrong_name) echo 'other: npx @playwright/mcp@latest - ✔ Connected' ;;
@@ -441,7 +487,22 @@ FAKE_NPX
     total=$((total + 1)); FAKE_MCP_LIST_VARIANT="$variant"; export FAKE_MCP_LIST_VARIANT
     rc=0; mcp_list_exact || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
   done
+  approval_out="$tmp/approval-check.out"
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=pending; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  pending_rc="$rc"; FAKE_MCP_LIST_VARIANT=pending_localized; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$pending_rc" -eq 1 ] && [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 승인한 뒤 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=approval_flow; FAKE_MCP_APPROVED_FILE="$tmp/approved"; export FAKE_MCP_LIST_VARIANT FAKE_MCP_APPROVED_FILE
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?; before_approval_rc="$rc"; touch "$FAKE_MCP_APPROVED_FILE"; rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$before_approval_rc" -eq 1 ] && [ "$rc" -eq 0 ] && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$approval_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=connected; export FAKE_MCP_LIST_VARIANT
+  if step4_approval_check >"$approval_out" 2>&1 && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$approval_out"; then passes=$((passes + 1)); fi
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=no_status; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] && grep -q '승인 상태를 확인하지 못했습니다' "$approval_out" && passes=$((passes + 1))
   unset FAKE_MCP_LIST_VARIANT
+  unset FAKE_MCP_APPROVED_FILE
   decoy="$tmp/init-only.ndjson"
   printf '%s\n' \
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \

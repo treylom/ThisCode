@@ -13,7 +13,7 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 test('browser gate isolated replay passes 0~4 and rejects a broken MCP command', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 16\/16 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 20\/20 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
@@ -22,11 +22,18 @@ test('browser gate uses Node for config diff and has no Python runtime dependenc
   assert.match(text, /node - "\$before_file" "\$after_file"/);
 });
 
+test('isolated verification never copies Claude credentials', () => {
+  const text = readFileSync(GATE, 'utf8');
+  assert.doesNotMatch(text, /cp[^\n]*\.credentials\.json/);
+});
+
 test('student command has one machine gate per step in 0→4 order', () => {
   const text = readFileSync(COMMAND, 'utf8');
   const steps = [...text.matchAll(/install-browser-gate\.sh" ([0-4])/g)].map((m) => Number(m[1]));
   assert.deepEqual(steps, [0, 1, 2, 3, 4]);
   assert.match(text, /n단계 실패 → 수동 카드 X/);
+  assert.match(text, /프로젝트 Playwright 연결 승인 상태까지 확인했습니다/);
+  assert.match(text, /승인 대기 상태면 자동으로 우회하지 않고/);
 });
 
 test('manual fallback keeps the A~E recovery boundary', () => {
@@ -34,4 +41,14 @@ test('manual fallback keeps the A~E recovery boundary', () => {
   const cards = [...text.matchAll(/^## 카드 ([A-E]) —/gm)].map((m) => m[1]);
   assert.deepEqual(cards, ['A', 'B', 'C', 'D', 'E']);
   assert.match(text, /-s project/);
+  assert.match(text, /4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨/);
+  assert.match(text, /\/thiscode:install-browser`를 다시 실행/);
+});
+
+test('automatic completion and card E share the approval-state sentence', () => {
+  const command = readFileSync(COMMAND, 'utf8');
+  const cards = readFileSync(CARDS, 'utf8');
+  const sentence = '브라우저 준비가 끝났습니다. 프로젝트 Playwright 연결 승인 상태까지 확인했습니다. 이 프로젝트에서 웹페이지 열기와 화면 읽기를 사용할 수 있습니다.';
+  assert.equal(command.includes(sentence), true);
+  assert.equal(cards.includes(sentence), true);
 });
