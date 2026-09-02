@@ -531,8 +531,15 @@ FAKE_NPX
   unset FAKE_MCP_APPROVED_FILE
   real_node="$(command -v node)"; hidden_nvm="$tmp/hidden-nvm"; hidden_node_bin="$tmp/hidden-node-bin"; hidden_out="$tmp/hidden-node.out"
   mkdir -p "$hidden_nvm" "$hidden_node_bin"
-  ln -s "$real_node" "$hidden_node_bin/node"
-  ln -s "$fake/npx" "$hidden_node_bin/npx"
+  cat >"$hidden_node_bin/node" <<'FAKE_NODE_WRAPPER'
+#!/usr/bin/env bash
+exec "$FAKE_NVM_REAL_NODE" "$@"
+FAKE_NODE_WRAPPER
+  cat >"$hidden_node_bin/npx" <<'FAKE_NPX_WRAPPER'
+#!/usr/bin/env bash
+exec "$FAKE_NVM_REAL_NPX" "$@"
+FAKE_NPX_WRAPPER
+  chmod +x "$hidden_node_bin/node" "$hidden_node_bin/npx"
   cat >"$hidden_nvm/nvm.sh" <<'FAKE_NVM'
 nvm() {
   case "${1:-}" in
@@ -548,6 +555,7 @@ FAKE_NVM
   total=$((total + 1)); hidden_rc=0
   for step in 1 2 3 4; do
     env PATH='/usr/bin:/bin:/usr/sbin:/sbin' NVM_DIR="$hidden_nvm" FAKE_NVM_NODE_BIN="$hidden_node_bin" \
+      FAKE_NVM_REAL_NODE="$real_node" FAKE_NVM_REAL_NPX="$fake/npx" \
       THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX=npx \
       THISCODE_BROWSER_SKIP_DISK_CHECK=1 "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
     [ "$hidden_rc" -eq 0 ] || break

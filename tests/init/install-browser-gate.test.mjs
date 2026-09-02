@@ -12,7 +12,7 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 
 test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
   assert.match(r.stdout, /\[SELFTEST\] 23\/23 passed/);
 });
 
