@@ -407,11 +407,100 @@ main() {
 
 # ---------------------------------------------------------------- Step 6.5
 
+OBSIDIAN_VERSION_RESULT=""
+
+obsidian_command_is_gui_app() {
+  local command_path="$1"
+  local resolved_path="$command_path"
+
+  if command -v realpath >/dev/null 2>&1; then
+    resolved_path="$(realpath "$command_path" 2>/dev/null || printf '%s' "$command_path")"
+  elif [ -L "$command_path" ]; then
+    resolved_path="$(readlink "$command_path" 2>/dev/null || printf '%s' "$command_path")"
+  fi
+
+  case "$command_path:$resolved_path" in
+    *'/Obsidian.app/Contents/MacOS/'*|*'/Caskroom/obsidian/'*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+stop_process_group() {
+  local parent_pid="$1"
+  local process_group=""
+
+  if command -v pkill >/dev/null 2>&1; then
+    pkill -TERM -P "$parent_pid" 2>/dev/null || true
+  fi
+  process_group="$(ps -o pgid= -p "$parent_pid" 2>/dev/null | tr -d ' ')"
+  if [ -n "$process_group" ] && [ "$process_group" = "$parent_pid" ]; then
+    kill -TERM "-$process_group" 2>/dev/null || true
+  else
+    kill "$parent_pid" 2>/dev/null || true
+  fi
+}
+
+obsidian_version_with_limit() {
+  local command_path="$1"
+  local output_file timeout_file child_pid guard_pid rc=0
+
+  OBSIDIAN_VERSION_RESULT=""
+  output_file="$(mktemp "${TMPDIR:-/tmp}/thiscode-obsidian-version.XXXXXX")" || return 1
+  timeout_file="${output_file}.timeout"
+  set -m
+  "$command_path" --version >"$output_file" 2>&1 &
+  child_pid=$!
+  set +m
+  (
+    sleep 5
+    if kill -0 "$child_pid" 2>/dev/null; then
+      : >"$timeout_file"
+      stop_process_group "$child_pid"
+    fi
+  ) >/dev/null 2>&1 &
+  guard_pid=$!
+
+  wait "$child_pid" || rc=$?
+  stop_process_group "$guard_pid"
+  wait "$guard_pid" 2>/dev/null || true
+  if [ -f "$timeout_file" ]; then
+    rm -f "$output_file" "$timeout_file"
+    return 124
+  fi
+  OBSIDIAN_VERSION_RESULT="$(head -1 "$output_file")"
+  rm -f "$output_file"
+  [ "$rc" -eq 0 ] || return "$rc"
+  [ -n "$OBSIDIAN_VERSION_RESULT" ] || OBSIDIAN_VERSION_RESULT='버전 출력 없음'
+}
+
+report_obsidian_command() {
+  local command_path="$1"
+  local label="$2"
+  local version="" rc=0
+
+  if obsidian_command_is_gui_app "$command_path"; then
+    ok "Obsidian 앱 감지(버전 미확인)"
+    return 0
+  fi
+
+  obsidian_version_with_limit "$command_path" || rc=$?
+  version="$OBSIDIAN_VERSION_RESULT"
+  if [ "$rc" -eq 0 ]; then
+    ok "$label: $version"
+  elif [ "$rc" -eq 124 ]; then
+    warn "Obsidian 명령 감지(버전 확인 5초 초과)"
+  else
+    warn "Obsidian 명령 감지(버전 미확인, exit $rc)"
+  fi
+}
+
 install_obsidian_cli() {
+  local obsidian_command=""
   step "6.5" "Obsidian CLI (vault access 3-Tier fallback, tier 1)"
 
-  if command -v obsidian >/dev/null 2>&1; then
-    ok "Obsidian CLI already installed: $(obsidian --version 2>&1 | head -1) → skip"
+  obsidian_command="$(command -v obsidian 2>/dev/null || true)"
+  if [ -n "$obsidian_command" ]; then
+    report_obsidian_command "$obsidian_command" "Obsidian CLI already installed"
     return
   fi
 
@@ -453,8 +542,9 @@ EOF
   esac
 
   # Verify
-  if command -v obsidian >/dev/null 2>&1; then
-    ok "Obsidian CLI: $(obsidian --version 2>&1 | head -1)"
+  obsidian_command="$(command -v obsidian 2>/dev/null || true)"
+  if [ -n "$obsidian_command" ]; then
+    report_obsidian_command "$obsidian_command" "Obsidian CLI"
   else
     warn "Obsidian CLI not installed — 3-Tier fallback will use Tier 2 (MCP) or Tier 3 (Write/Read/Grep)"
     warn "If you don't use Obsidian, skipping this step is fine — most of thiscode still works"
