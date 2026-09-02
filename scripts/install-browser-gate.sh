@@ -557,7 +557,8 @@ FAKE_NVM
     env PATH='/usr/bin:/bin:/usr/sbin:/sbin' NVM_DIR="$hidden_nvm" FAKE_NVM_NODE_BIN="$hidden_node_bin" \
       FAKE_NVM_REAL_NODE="$real_node" FAKE_NVM_REAL_NPX="$fake/npx" \
       THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX=npx \
-      THISCODE_BROWSER_SKIP_DISK_CHECK=1 bash "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
+      THISCODE_BROWSER_OS=Linux THISCODE_BROWSER_SKIP_DISK_CHECK=1 \
+      bash "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
     [ "$hidden_rc" -eq 0 ] || break
   done
   if [ "$hidden_rc" -eq 0 ] \
