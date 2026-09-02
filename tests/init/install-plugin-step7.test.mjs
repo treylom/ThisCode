@@ -15,6 +15,9 @@ import test from 'node:test';
 
 const repoRoot = resolve(import.meta.dirname, '../..');
 const installScript = join(repoRoot, 'install.sh');
+const posixOnlySkip = process.platform === 'win32'
+  ? 'POSIX-only install.sh runtime surface; exercised by macOS and Ubuntu jobs'
+  : false;
 
 function makeFakeClaude(root) {
   const bin = join(root, 'bin');
@@ -81,7 +84,7 @@ function fixture() {
   return { root, log, state, env };
 }
 
-test('Step 7 installs at user scope, verifies registry, then skips idempotently', (t) => {
+test('Step 7 installs at user scope, verifies registry, then skips idempotently', { skip: posixOnlySkip }, (t) => {
   const f = fixture();
   t.after(() => rmSync(f.root, { recursive: true, force: true }));
 
@@ -100,7 +103,7 @@ test('Step 7 installs at user scope, verifies registry, then skips idempotently'
   assert.equal(readFileSync(f.log, 'utf8').trim(), 'plugin list --json');
 });
 
-test('Step 7 preserves the manual fallback when claude is absent', (t) => {
+test('Step 7 preserves the manual fallback when claude is absent', { skip: posixOnlySkip }, (t) => {
   const root = mkdtempSync(join(tmpdir(), 'thiscode-step7-no-claude-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const bin = join(root, 'bin');
@@ -114,7 +117,7 @@ test('Step 7 preserves the manual fallback when claude is absent', (t) => {
   assert.match(result.stdout, /\/plugin install thiscode@thiscode-marketplace/);
 });
 
-test('Step 7 reports a marketplace failure reason before the manual fallback', (t) => {
+test('Step 7 reports a marketplace failure reason before the manual fallback', { skip: posixOnlySkip }, (t) => {
   const f = fixture();
   t.after(() => rmSync(f.root, { recursive: true, force: true }));
 
@@ -124,7 +127,7 @@ test('Step 7 reports a marketplace failure reason before the manual fallback', (
   assert.match(result.stdout, /Manual fallback/);
 });
 
-test('Step 7 reports an install failure reason before the manual fallback', (t) => {
+test('Step 7 reports an install failure reason before the manual fallback', { skip: posixOnlySkip }, (t) => {
   const f = fixture();
   t.after(() => rmSync(f.root, { recursive: true, force: true }));
 
