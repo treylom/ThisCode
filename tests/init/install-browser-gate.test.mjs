@@ -12,8 +12,8 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 
 test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
-  assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 21\/21 passed/);
+  assert.equal(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
+  assert.match(r.stdout, /\[SELFTEST\] 23\/23 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
@@ -44,6 +44,7 @@ test('manual fallback keeps the A~E recovery boundary', () => {
   assert.match(text, /-s project/);
   assert.match(text, /4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨/);
   assert.match(text, /\/thiscode:install-browser`를 다시 실행/);
+  assert.match(text, /Playwright 연결을 한 곳만 남긴 뒤/);
 });
 
 test('automatic completion and card E share the approval-state sentence', () => {

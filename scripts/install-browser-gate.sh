@@ -64,7 +64,7 @@ step0_check() {
 }
 
 install_node_if_needed() {
-  local kind
+  local kind rc=0
   command_exists node && command_exists npx && return 0
   [ "$CHECK_ONLY" -eq 0 ] || return 1
   kind="$(os_kind)"
@@ -81,12 +81,30 @@ install_node_if_needed() {
       command_exists curl || return 1
       curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || return 1
     fi
+    # nvm 0.40.x can read an unset internal variable under Bash 5 when nounset is on.
+    # Keep nounset disabled only across nvm's own code, then restore this gate's policy.
+    set +u
     # shellcheck disable=SC1090
-    . "$NVM_DIR/nvm.sh" || return 1
-    nvm install --lts || return 1
-    nvm use --lts || return 1
+    . "$NVM_DIR/nvm.sh" || rc=$?
+    if [ "$rc" -eq 0 ]; then nvm install --lts || rc=$?; fi
+    if [ "$rc" -eq 0 ]; then nvm use --lts || rc=$?; fi
+    set -u
+    [ "$rc" -eq 0 ] || return "$rc"
   fi
   command_exists node && command_exists npx
+}
+
+activate_installed_nvm_node() {
+  local rc=0
+  command_exists node && command_exists npx && return 0
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  [ -s "$NVM_DIR/nvm.sh" ] || return 1
+  set +u
+  # shellcheck disable=SC1090
+  . "$NVM_DIR/nvm.sh" || rc=$?
+  if [ "$rc" -eq 0 ]; then nvm use --lts >/dev/null 2>&1 || rc=$?; fi
+  set -u
+  [ "$rc" -eq 0 ] && command_exists node && command_exists npx
 }
 
 step1() {
@@ -127,6 +145,9 @@ mcp_approval_state() {
   local out rc
   out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
+  if [[ "$out" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]; then
+    return 5
+  fi
   printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
     index($0, prefix) == 1 {
       found = 1
@@ -150,6 +171,10 @@ step4_approval_check() {
     0) pass '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' ;;
     2)
       fail 4b E '프로젝트 폴더에서 일반 Claude Code 세션을 다시 열어 Playwright 연결을 승인한 뒤 /thiscode:install-browser를 다시 실행하세요'
+      return 1
+      ;;
+    5)
+      fail 4b E 'Playwright 연결이 여러 위치에 중복 등록되어 있습니다. Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요'
       return 1
       ;;
     *)
@@ -407,7 +432,7 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path passes=0 total=0 rc pending_rc before_approval_rc
+  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -426,6 +451,7 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
     localized) echo 'playwright: npx @playwright/mcp@latest - 연결됨' ;;
     pending) echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval' ;;
     pending_localized) echo 'playwright: npx @playwright/mcp@latest - ⏸ 승인 대기' ;;
+    multiple_scopes) echo 'Server "playwright" is defined in multiple scopes with different endpoints' ;;
     approval_flow)
       if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
         echo 'playwright: npx @playwright/mcp@latest - ✔ Connected'
@@ -498,8 +524,53 @@ FAKE_NPX
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=no_status; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
   [ "$rc" -eq 1 ] && grep -q '승인 상태를 확인하지 못했습니다' "$approval_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=multiple_scopes; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
   unset FAKE_MCP_LIST_VARIANT
   unset FAKE_MCP_APPROVED_FILE
+  real_node="$(command -v node)"; hidden_nvm="$tmp/hidden-nvm"; hidden_node_bin="$tmp/hidden-node-bin"; hidden_out="$tmp/hidden-node.out"
+  mkdir -p "$hidden_nvm" "$hidden_node_bin"
+  cat >"$hidden_node_bin/node" <<'FAKE_NODE_WRAPPER'
+#!/usr/bin/env bash
+exec "$FAKE_NVM_REAL_NODE" "$@"
+FAKE_NODE_WRAPPER
+  cat >"$hidden_node_bin/npx" <<'FAKE_NPX_WRAPPER'
+#!/usr/bin/env bash
+exec "$FAKE_NVM_REAL_NPX" "$@"
+FAKE_NPX_WRAPPER
+  chmod +x "$hidden_node_bin/node" "$hidden_node_bin/npx"
+  cat >"$hidden_nvm/nvm.sh" <<'FAKE_NVM'
+nvm() {
+  case "${1:-}" in
+    install) export PATH="$FAKE_NVM_NODE_BIN:$PATH" ;;
+    use)
+      : "${PROVIDED_VERSION}"
+      export PATH="$FAKE_NVM_NODE_BIN:$PATH"
+      ;;
+    *) return 2 ;;
+  esac
+}
+FAKE_NVM
+  total=$((total + 1)); hidden_rc=0
+  for step in 1 2 3 4; do
+    env PATH='/usr/bin:/bin:/usr/sbin:/sbin' NVM_DIR="$hidden_nvm" FAKE_NVM_NODE_BIN="$hidden_node_bin" \
+      FAKE_NVM_REAL_NODE="$real_node" FAKE_NVM_REAL_NPX="$fake/npx" \
+      THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX=npx \
+      THISCODE_BROWSER_OS=Linux THISCODE_BROWSER_SKIP_DISK_CHECK=1 \
+      bash "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
+    [ "$hidden_rc" -eq 0 ] || break
+  done
+  if [ "$hidden_rc" -eq 0 ] \
+    && grep -q '1단계 Node 준비' "$hidden_out" \
+    && grep -q '2단계 프로젝트 MCP 등록 확인' "$hidden_out" \
+    && grep -q '3단계 브라우저 바이너리 확인' "$hidden_out" \
+    && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$hidden_out"; then
+    passes=$((passes + 1))
+  else
+    printf '[SELFTEST-FAIL] node-hidden separate-shell replay (rc=%s)\n' "$hidden_rc" >&2
+    sed 's/^/[SELFTEST-DETAIL] /' "$hidden_out" >&2
+  fi
   decoy="$tmp/init-only.ndjson"
   printf '%s\n' \
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \
@@ -527,6 +598,7 @@ FAKE_NPX
 if [ "${1:-}" = --self-test ]; then self_test; exit $?; fi
 STEP="${1:-}"
 [ "${2:-}" = --check-only ] && CHECK_ONLY=1
+case "$STEP" in 2|3|4) activate_installed_nvm_node >/dev/null 2>&1 || true ;; esac
 case "$STEP" in
   0) step0_check ;;
   1) step1 ;;
