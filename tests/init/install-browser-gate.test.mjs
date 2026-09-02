@@ -13,7 +13,7 @@ const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
 test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
-  assert.match(r.stdout, /\[SELFTEST\] 22\/22 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 23\/23 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {

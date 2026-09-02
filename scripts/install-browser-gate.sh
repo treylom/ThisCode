@@ -64,7 +64,7 @@ step0_check() {
 }
 
 install_node_if_needed() {
-  local kind
+  local kind rc=0
   command_exists node && command_exists npx && return 0
   [ "$CHECK_ONLY" -eq 0 ] || return 1
   kind="$(os_kind)"
@@ -81,12 +81,30 @@ install_node_if_needed() {
       command_exists curl || return 1
       curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash || return 1
     fi
+    # nvm 0.40.x can read an unset internal variable under Bash 5 when nounset is on.
+    # Keep nounset disabled only across nvm's own code, then restore this gate's policy.
+    set +u
     # shellcheck disable=SC1090
-    . "$NVM_DIR/nvm.sh" || return 1
-    nvm install --lts || return 1
-    nvm use --lts || return 1
+    . "$NVM_DIR/nvm.sh" || rc=$?
+    if [ "$rc" -eq 0 ]; then nvm install --lts || rc=$?; fi
+    if [ "$rc" -eq 0 ]; then nvm use --lts || rc=$?; fi
+    set -u
+    [ "$rc" -eq 0 ] || return "$rc"
   fi
   command_exists node && command_exists npx
+}
+
+activate_installed_nvm_node() {
+  local rc=0
+  command_exists node && command_exists npx && return 0
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  [ -s "$NVM_DIR/nvm.sh" ] || return 1
+  set +u
+  # shellcheck disable=SC1090
+  . "$NVM_DIR/nvm.sh" || rc=$?
+  if [ "$rc" -eq 0 ]; then nvm use --lts >/dev/null 2>&1 || rc=$?; fi
+  set -u
+  [ "$rc" -eq 0 ] && command_exists node && command_exists npx
 }
 
 step1() {
@@ -414,7 +432,7 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path passes=0 total=0 rc pending_rc before_approval_rc
+  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -511,6 +529,35 @@ FAKE_NPX
   [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
   unset FAKE_MCP_LIST_VARIANT
   unset FAKE_MCP_APPROVED_FILE
+  real_node="$(command -v node)"; hidden_nvm="$tmp/hidden-nvm"; hidden_node_bin="$tmp/hidden-node-bin"; hidden_out="$tmp/hidden-node.out"
+  mkdir -p "$hidden_nvm" "$hidden_node_bin"
+  ln -s "$real_node" "$hidden_node_bin/node"
+  ln -s "$fake/npx" "$hidden_node_bin/npx"
+  cat >"$hidden_nvm/nvm.sh" <<'FAKE_NVM'
+nvm() {
+  case "${1:-}" in
+    install) export PATH="$FAKE_NVM_NODE_BIN:$PATH" ;;
+    use)
+      : "${PROVIDED_VERSION}"
+      export PATH="$FAKE_NVM_NODE_BIN:$PATH"
+      ;;
+    *) return 2 ;;
+  esac
+}
+FAKE_NVM
+  total=$((total + 1)); hidden_rc=0
+  for step in 1 2 3 4; do
+    env PATH='/usr/bin:/bin:/usr/sbin:/sbin' NVM_DIR="$hidden_nvm" FAKE_NVM_NODE_BIN="$hidden_node_bin" \
+      THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX=npx \
+      THISCODE_BROWSER_SKIP_DISK_CHECK=1 "$0" "$step" >>"$hidden_out" 2>&1 || hidden_rc=$?
+    [ "$hidden_rc" -eq 0 ] || break
+  done
+  [ "$hidden_rc" -eq 0 ] \
+    && grep -q '1단계 Node 준비' "$hidden_out" \
+    && grep -q '2단계 프로젝트 MCP 등록 확인' "$hidden_out" \
+    && grep -q '3단계 브라우저 바이너리 확인' "$hidden_out" \
+    && grep -q '4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨' "$hidden_out" \
+    && passes=$((passes + 1))
   decoy="$tmp/init-only.ndjson"
   printf '%s\n' \
     '{"type":"system","subtype":"init","tools":["mcp__playwright__browser_navigate","mcp__playwright__browser_snapshot"]}' \
@@ -538,6 +585,7 @@ FAKE_NPX
 if [ "${1:-}" = --self-test ]; then self_test; exit $?; fi
 STEP="${1:-}"
 [ "${2:-}" = --check-only ] && CHECK_ONLY=1
+case "$STEP" in 2|3|4) activate_installed_nvm_node >/dev/null 2>&1 || true ;; esac
 case "$STEP" in
   0) step0_check ;;
   1) step1 ;;
