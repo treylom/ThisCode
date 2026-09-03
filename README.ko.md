@@ -288,7 +288,7 @@ thiscode/
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v1.2.7
+│   └── plugin.json                        # thiscode v1.3.0
 ├── commands/                              # 슬래시 발견 표면 ①
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── add-bot.md                         # 추가 Discord 봇 신설
@@ -417,7 +417,7 @@ git push
 /thiscode:install-hooks
 ```
 
-기존 훅을 보존하면서 bot-session-init.sh 훅을 `~/.claude/settings.json`에 안전하게 병합합니다.
+기존 훅을 보존하면서 bot-session-init.sh 훅을 `~/.claude/settings.json`에 안전하게 병합합니다. 훅 파일명만 같고 ThisCode 소유 표식이 없는 항목은 지우지 않고 「손으로 검토」 경고로만 보여줍니다.
 
 ### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 

@@ -82,7 +82,8 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 > is **a supported install path, verified working end-to-end** (a real WSL run
 > via `/plugin marketplace add treylom/ThisCode` → `/plugin install
 > thiscode@thiscode-marketplace` → `/reload-plugins` loaded *5 plugins · 23
-> skills · 8 agents · 4 hooks*):
+> skills · 8 agents · 4 hooks*) (that run predates 1.3.0; the plugin now ships
+> 7 hooks via `hooks/hooks.json` — see `/thiscode:install-hooks`):
 >
 > ```
 > /plugin marketplace add treylom/ThisCode
@@ -120,7 +121,7 @@ Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as sla
 - `/thiscode:search` — 4-tier vault search with quick or deep modes
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
 - `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
-- `/thiscode:install-hooks` — Merge the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks into `~/.claude/settings.json` (**installing the plugin does not register them**). `/thiscode:create-bot` now runs the same `scripts/install-hooks.sh` for you and verifies the result, so this command is mainly for re-running it by hand.
+- `/thiscode:install-hooks` — Check the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks (**installing the plugin registers them** via the bundled `hooks/hooks.json`). Every hook runs **only in bot sessions** — when `DISCORD_STATE_DIR` is set; other sessions see no output and no behavior change. On a plugin install this command verifies the registration and clears leftovers from the older `~/.claude/settings.json` merge (which would otherwise fire the same hook twice); on a checkout without `hooks/hooks.json` it still performs that merge. `/thiscode:create-bot` runs the same `scripts/install-hooks.sh` for you.
 - … and more — `/thiscode:help` lists every command with its description
 
 ### Skills
@@ -221,7 +222,7 @@ Plugin slash commands auto-detected after install:
 
 - `/thiscode:init` — **onboarding wizard** (env detect + 8-Phase recommend)
 - `/thiscode:start` — main wizard (env detect + bot setup + first conversation)
-- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hook safe-merge into `~/.claude/settings.json` (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md))
+- `/thiscode:install-hooks` — verify the SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hooks the plugin already registered via `hooks/hooks.json`, and clear any leftover `~/.claude/settings.json` merge from the older path (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md)). The hooks stay silent outside bot sessions.
 - `/thiscode:create-bot` — new bot directory + .env + soul.md template
 - `/thiscode:create-discord-bot` — add one additional Discord bot (alias: `/thiscode:add-bot`)
 - `/thiscode:create-slack-bot` — connect a Slack workspace (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
@@ -232,7 +233,7 @@ Plugin slash commands auto-detected after install:
 Pristine Claude Code bootstrap (no hooks, no bots yet):
 
 ```
-1. /thiscode:install-hooks   # Register SessionStart + UserPromptSubmit + Stop (meeting reread) hooks
+1. /thiscode:install-hooks   # Verify the SessionStart + UserPromptSubmit + Stop (meeting reread) hooks the install registered
 2. /thiscode:create-bot      # First bot directory + soul.md setup
 3. /thiscode:start           # Main wizard (Discord pairing + first conversation)
 4. /thiscode:codex-check     # Verify Codex CLI active (optional)
@@ -398,13 +399,13 @@ DM the bot again → it issues a fresh code.
 
 ### soul.md persona "ghost" (persona not loading)
 
-If your bot's responses don't reflect the persona, the SessionStart hook is likely not registered:
+If your bot's responses don't reflect the persona, the SessionStart hook is not reaching that session. The plugin registers it on install, and the hook deliberately stays silent unless `DISCORD_STATE_DIR` is set — so the two usual causes are a session started without that variable, or the plugin being disabled. To check the registration:
 
 ```
 /thiscode:install-hooks
 ```
 
-This safely merges the bot-session-init.sh hook into `~/.claude/settings.json` while preserving any existing hooks.
+This verifies that `hooks/hooks.json` carries `bot-session-init.sh` and that the file is really there, and removes any duplicate left in `~/.claude/settings.json` by the older merge path — existing hooks of your own are preserved. An entry that merely shares a hook file name but shows no sign of belonging to ThisCode is never deleted: it is listed as a warning for you to review by hand.
 
 ### GraphRAG server won't start (vendor dependency + ~/.cache venv)
 

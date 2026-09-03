@@ -522,10 +522,14 @@ command -v bun >/dev/null 2>&1 \
 echo "ℹ️  시동 시 --channels plugin:discord@claude-plugins-official 누락 = 무반응 최종 관문"
 ```
 
-**④ 훅 등록 — 안 돼 있으면 그 자리에서 등록한다 (묻지 않는다)**
+**④ 훅 등록 확인 — 그 자리에서 스크립트를 한 번 부른다 (묻지 않는다)**
 
-봇이 답을 만들어 놓고 터미널에만 찍는 사고의 원인이 여기다. 훅은 플러그인을 깔았다고
-저절로 붙지 않는다. 아직 안 했으면 게이트가 `exit 1` 로 답하고, 그러면 바로 등록한다.
+봇이 답을 만들어 놓고 터미널에만 찍는 사고의 원인이 여기다. 훅은 이제 플러그인을 깔면
+같이 붙는다(플러그인에 동봉된 `hooks/hooks.json`) — 대신 **봇 세션에서만** 동작한다
+(`DISCORD_STATE_DIR` 이 있을 때만. 일반 세션에서는 래퍼가 출력 없이 통과시킨다).
+그래서 이 스크립트가 하는 일은 «옛 병합 방식으로 `settings.json` 에 남은 같은 훅 정리»
+(안 지우면 훅이 두 번 발화한다) + «검사» 다. `hooks/hooks.json` 이 없는 옛 체크아웃이면
+예전처럼 병합한다. 아직 안 했으면 게이트가 `exit 1` 로 답하고, 그러면 바로 부른다.
 
 ```bash
 bash <플러그인루트>/scripts/install-gate.sh hooks_installed     # exit 1 = 아직 안 함
@@ -563,6 +567,9 @@ fi
 ### Step 7. claude 시동 안내
 
 **시동 안내를 내보내기 전 마지막 확인 — 훅과 규칙이 «실제로» 자리에 있나.** 둘 다 통과할 때만 아래 안내를 출력한다.
+`--verify` 가 무엇을 읽는지는 모드가 정한다: 플러그인 모드면 `hooks/hooks.json`
+(훅 7개 + 봇 세션 래퍼 실재 + `settings.json` 에 옛 병합 잔존 0), 병합 모드(옛 체크아웃)면
+`~/.claude/settings.json`. 어느 쪽이든 `exit 0` 이라야 안내를 낸다 — 「등록됐겠지」는 검사가 아니다.
 
 ```bash
 bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"
@@ -739,8 +746,8 @@ $BOT_NAME
 > - "파일 읽기 금지"를 안 걸면 봇이 그 자리에서 soul.md 를 열어 읽고 정답을 말한다 — **주입이 아니라 조회**인데 통과처럼 보인다.
 >
 > **ⓑ가 나오면 원인은 hook 미등록이다**:
-> 1. 훅 등록 상태 확인 — **Step 6.7 ④ 에서 자동 등록된다.** 그래도 안 들어갔으면 `bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"` 로 빠진 항목을 보고, 필요하면 `/thiscode:install-hooks` 를 한 번 실행한다.
-> 2. `~/.claude/settings.json`(전역) 또는 봇 WD 의 `.claude/settings.json` 에 `bot-session-init.sh` 가 SessionStart 로 등록됐는지.
+> 1. 훅 등록 상태 확인 — **등록은 플러그인 설치가 한다(`hooks/hooks.json`), Step 6.7 ④ 는 그것을 검사하고 옛 병합 잔존을 정리한다.** 빠진 게 있으면 `bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"` 로 항목을 보고, 플러그인이 꺼져 있진 않은지(`/plugin`) 먼저 본다.
+> 2. 플러그인 모드면 `hooks/hooks.json` 에, 옛 체크아웃(병합 모드)이면 `~/.claude/settings.json` 또는 봇 WD 의 `.claude/settings.json` 에 `bot-session-init.sh` 가 SessionStart 로 있는지.
 > 3. 🔴 **`matcher` 는 빈 문자열 `""` 로 둘 것.** `"startup|resume|clear|compact"` 같은 파이프 표기는 매칭되지 않아 **훅이 조용히 안 돈다**(2026-08-05 실측 — 훅 파일을 직접 실행하면 soul 을 정상 출력하는데 세션에는 안 들어오는 형태로 나타난다).
 > 4. 훅이 도는지 확인: `DISCORD_STATE_DIR=<봇dir> bash <plugin>/hooks/bot-session-init.sh` → `additionalContext` 에 soul 본문이 보이면 **훅은 정상, 문제는 등록 쪽**이다.
 >
@@ -759,7 +766,7 @@ $BOT_NAME
 | 토큰 정상인데 서버 채널에서 무반응 (DM 은 됨) | Message Content Intent OFF | Developer Portal → Bot → Privileged Gateway Intents → Message Content Intent ON |
 | 기동 즉시 `PrivilegedIntentsRequired` 크래시 | Server Members Intent OFF (템플릿이 `intents.members` 요청) | Developer Portal → Bot → Privileged Gateway Intents → Server Members Intent ON |
 | 페어링 코드 만료 | 봇에 다시 DM | 새 코드 발급 |
-| soul.md 안 inject | DISCORD_STATE_DIR 미export 또는 SessionStart hook 미등록 | `/thiscode:install-hooks` 먼저 실행 |
+| soul.md 안 inject | DISCORD_STATE_DIR 미export(래퍼가 조용히 통과) 또는 플러그인 비활성 | `export DISCORD_STATE_DIR` 확인 → `/thiscode:install-hooks` 로 검사 |
 | 같은 봇 이름 디렉토리 충돌 | 이미 존재 | 다른 이름 또는 기존 정리 |
 | 토큰·soul.md 정상인데 DM 무반응 | ①discord 플러그인 미설치 ②bun 미설치 ③`--channels` 플래그 누락 (실측 빈도순) | Step 6.7 선검사 3게이트 순서대로 — 플러그인 enable → bun 설치 → `--channels plugin:discord@claude-plugins-official` 포함 재시동 |
 | Windows에서 chmod/permission 검증 실패 | NTFS 는 POSIX chmod 미적용 (정상) | 실패 무시 — 검증 항목에서 제외 |
