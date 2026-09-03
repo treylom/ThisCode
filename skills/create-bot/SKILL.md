@@ -214,7 +214,7 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allo
    | 단 | 언제 쓰나 | 무엇을 하나 |
    |---|---|---|
    | ① 포털 응답에서 읽기 | 브라우저 도구가 네트워크 응답 본문을 보여줄 때 | `https://discord.com/developers/applications` 를 연다 → 포털이 스스로 부르는 `GET /api/v9/users/@me` 의 **응답 본문**에서 `id` 와 `username` 만 읽는다 |
-   | ② 화면에서 읽기 | ①이 없거나 실패했을 때 | `https://discord.com/channels/@me` 를 연다 → 왼쪽 아래 사용자 패널(`section[aria-label*="User"]`)의 아바타 그림 주소 `/avatars/<사용자ID>/…` 에서 ID 를 읽는다(화면 읽기만). 기본 아바타라 주소에 ID 가 없으면 ③ |
+   | ② 화면에서 읽기 | ①이 없거나 실패했을 때 | `https://discord.com/channels/@me` 를 연다 → 왼쪽 아래 사용자 패널의 아바타 그림 주소(`/avatars/<사용자ID>/…`)에서 ID 를 읽는다 — 화면을 읽기만 한다(선택자 = `section[aria-label*="User"]`). 기본 아바타라 주소에 ID 가 없으면 ③ |
    | ③ 사람에게 부탁 | ①②가 모두 실패했을 때만 | 아래 **4.7-b** 로 간다 |
 
    🚫 **어느 단에서도 브라우저 저장소·쿠키·인증 헤더 값을 읽거나 만들지 않는다.** 봇은 로그인 비밀값을 보지도 만지지도 않고, 그 값을 화면·기록·파일에 남기지 않는다. ①②는 공개된 응답과 화면만 읽는다.
@@ -228,7 +228,7 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allo
 
    사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없다.
 
-   가져왔으면 **묻지 말고 보여준다** — 「`<username>` 님(ID 끝 4자리 `****`)으로 등록하겠습니다. 맞나요?」 1줄이면 된다. ②로 얻어 이름이 없으면 「아바타에서 읽은 ID, 끝 4자리 `****`」로 보여준다.
+   가져왔으면 **묻지 말고 보여준다** — 「`<username>` 님(ID 끝 4자리 `1234`)으로 등록할게요. 맞나요?」 1줄이면 된다. ②로 얻어 이름이 없으면 「아바타에서 읽은 ID, 끝 4자리 `****`」로 보여준다.
 2. 생성 (jq·python 불요 — node 한 줄, Windows 스토어 스텁 이슈 회피):
 
 ```bash
@@ -577,10 +577,12 @@ if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
   for f in INDEX.md discord-comms.md; do
     [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
   done
-  bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME" || {
-    echo "훅 등록이 아직 안 끝났습니다 — claude 안에서 /thiscode:install-hooks 를 한 번 실행해 주세요."
+  if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok "자동 재시도 성공"   # 원장이 마지막 상태를 말하게
+  else
+    echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 를 한 번 실행해 주세요."
     bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
-  }
+  fi
 fi
 ```
 

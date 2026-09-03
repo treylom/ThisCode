@@ -15,7 +15,7 @@ $ARGUMENTS
 
 ---
 
-## 등록할 hooks 6개
+## 등록할 hooks 7개
 
 1. **SessionStart** → `bot-session-init.sh`
    - soul.md (페르소나) 자동 inject
@@ -31,11 +31,14 @@ $ARGUMENTS
 4. **UserPromptSubmit** → `rule-router.sh`
    - 프롬프트 task-type 키워드 매칭 → 해당 rule 핵심 게이트 자동 주입 (Layer-1 enforcement, docs/rules-system.md). 정적 self-check 보완 — 상황 매칭이라 무뎌지지 않음. fail-open(무매칭/jq부재 → 무출력)
 
-5. **Stop** → `meeting-stop-reread.sh`
+5. **PreToolUse** → `dispatch-room-gate.py`
+   - 최상위 채널에서 다른 봇에게 일을 시키는 답장을 막는다(발주는 전용 스레드에서) — 설정 파일이 없으면 비활성(그대로 통과)
+
+6. **Stop** → `meeting-stop-reread.sh`
    - active meeting 이 열려 있는 봇 세션이면 종료 전 회의 state 재독을 요청
    - active meeting 없음 / 일반 개발 세션 / 재귀 Stop = fail-open allow-stop
 
-6. **Stop** → `reply-gate.sh`
+7. **Stop** → `reply-gate.sh`
    - Discord 로 온 요청인데 답장 도구를 한 번도 안 쓰고 턴을 끝내려 하면 막는다 —
      터미널에만 찍힌 출력은 사용자에게 **도달하지 않는다**
    - Discord 턴이 아니면 fail-open(그대로 통과)
