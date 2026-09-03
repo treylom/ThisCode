@@ -116,7 +116,7 @@ _json_ok() {
 }
 
 # 옛 병합 잔존 = settings.json 안에서 «이 제품의 훅 파일명»(REQUIRED_HOOKS 7개)을
-#   `/hooks/<이름>` 꼴로 가리키는 명령. 자를 «경로»가 아니라 «파일명»으로 잡는 이유:
+#   `/hooks/<이름>`(Windows 는 `\hooks\<이름>`) 꼴로 가리키는 명령. 자를 «경로»가 아니라 «파일명»으로 잡는 이유:
 #   마켓 설치는 버전 디렉터리(…/thiscode/1.2.7/hooks/…)에 살아서, 1.3.0 으로 올린 뒤의
 #   PLUGIN_DIR 과 옛 항목의 경로가 서로 다르다 — 경로로 재면 옛 항목이 그대로 남아
 #   이중 발화(또는 지워진 디렉터리를 가리키는 죽은 훅)가 된다. 다른 체크아웃에서 병합한
@@ -128,7 +128,7 @@ _stale_re() {
     _e="$(printf '%s' "$_h" | command sed 's/\./\\./g')"
     _n="${_n}${_n:+|}${_e}"
   done
-  printf '/hooks/(%s)(["'"'"' ]|$)' "$_n"
+  printf '[/\\\\]hooks[/\\\\](%s)(["'"'"' ]|$)' "$_n"
 }
 
 _stale_list() {
@@ -347,30 +347,34 @@ if [ "$ENGINE" = "none" ]; then
   exit 2
 fi
 
+# 경로를 JSON 문자열 안에 넣는다 — Windows(Git Bash) 에서 --plugin-dir 로 «백슬래시 경로»가
+#   오면 \ 가 JSON 이스케이프로 읽혀 jq·node 둘 다 parse error 를 낸다(CI windows-latest 실증).
+#   백슬래시와 큰따옴표만 이스케이프한다(경로에 올 수 있는 두 글자).
+PLUGIN_DIR_JSON="$(printf '%s' "$PLUGIN_DIR" | command sed 's/\\/\\\\/g; s/"/\\"/g')"
 PATCH=$(cat <<EOF
 {
   "hooks": {
     "SessionStart": [
       { "matcher": "", "hooks": [
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/bot-session-init.sh'", "timeout": 10 }
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/bot-session-init.sh'", "timeout": 10 }
       ] }
     ],
     "UserPromptSubmit": [
       { "matcher": "", "hooks": [
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/discord-slash-cmd.sh'", "timeout": 5 },
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/regression-self-check.sh'", "timeout": 3 },
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/rule-router.sh'", "timeout": 3 }
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/discord-slash-cmd.sh'", "timeout": 5 },
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/regression-self-check.sh'", "timeout": 3 },
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/rule-router.sh'", "timeout": 3 }
       ] }
     ],
     "PreToolUse": [
       { "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message", "hooks": [
-        { "type": "command", "command": "python3 '$PLUGIN_DIR/hooks/dispatch-room-gate.py'", "timeout": 5 }
+        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/dispatch-room-gate.py'", "timeout": 5 }
       ] }
     ],
     "Stop": [
       { "matcher": "", "hooks": [
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/meeting-stop-reread.sh'", "timeout": 5 },
-        { "type": "command", "command": "bash '$PLUGIN_DIR/hooks/reply-gate.sh'", "timeout": 5 }
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/meeting-stop-reread.sh'", "timeout": 5 },
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/reply-gate.sh'", "timeout": 5 }
       ] }
     ]
   }

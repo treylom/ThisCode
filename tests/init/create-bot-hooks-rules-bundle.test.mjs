@@ -249,6 +249,26 @@ test('H1 — --verify 는 등록됐는데 «파일이 없는» 경우도 잡는�
 });
 
 // ─────────────────────────────────────────────── H5 모드 분기 (bash 필요)
+test('H6 — 플러그인 경로에 백슬래시가 있어도 병합 PATCH 가 유효한 JSON 이다 (Windows 임시 경로 회귀)', { skip: process.platform === 'win32' ? 'POSIX 에서만 백슬래시를 파일명에 넣을 수 있다 — Windows 는 H1 자체가 이 경로로 돈다' : false }, () => {
+  withHome((home) => {
+    const base = mkdtempSync(join(tmpdir(), 'thiscode-bs-'));
+    const plug = join(base, 'plug\\win');
+    cpSync(join(REPO, 'hooks'), join(plug, 'hooks'), { recursive: true });
+    rmSync(join(plug, 'hooks', 'hooks.json'), { force: true }); // 병합 모드로 보내야 PATCH 가 만들어진다
+    mkdirSync(join(plug, 'scripts'), { recursive: true });
+    cpSync(INSTALL_HOOKS, join(plug, 'scripts', 'install-hooks.sh'));
+    try {
+      const r = sh([join(plug, 'scripts', 'install-hooks.sh'), '--home', home, '--plugin-dir', plug]);
+      assert.equal(r.code, 0, `백슬래시 경로에서 병합이 실패했다: ${r.err}${r.out}`);
+      const cmds = commandsOf(home);
+      assert.equal(cmds.filter((c) => c.includes('plug\\win') && c.includes('reply-gate.sh')).length, 1, '등록된 명령에 경로가 온전히(백슬래시 1개) 들어가지 않았다');
+      assert.equal(sh([join(plug, 'scripts', 'install-hooks.sh'), '--verify', '--home', home, '--plugin-dir', plug]).code, 0, '병합 뒤 검사가 실패한다');
+    } finally {
+      rmSync(base, { recursive: true, force: true });
+    }
+  });
+});
+
 test('H5 — hooks.json 이 있으면 병합하지 않고, 없으면 예전대로 병합한다', { skip: skipNoBash }, () => {
   withHome((home) => {
     // ① 플러그인 모드 — 제품 트리에는 hooks/hooks.json 이 있다. 훅은 플러그인이 직접 싣는다.

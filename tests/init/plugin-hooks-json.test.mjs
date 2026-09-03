@@ -292,6 +292,9 @@ test('P4 — 잔존 자 = 훅 파일명: 마켓 캐시의 옛 버전 디렉터�
         PreToolUse: [{ matcher: 'x', hooks: [
           { type: 'command', command: "python3 '/opt/other-checkout/hooks/dispatch-room-gate.py'", timeout: 5 },
         ] }],
+        UserPromptSubmit: [{ matcher: '', hooks: [
+          { type: 'command', command: "bash 'C:\\Users\\x\\.claude\\plugins\\cache\\mk\\thiscode\\1.2.7\\hooks\\rule-router.sh'", timeout: 3 },
+        ] }],
         Stop: [{ matcher: '', hooks: [
           { type: 'command', command: "bash '/Users/somebody/hooks/reply-gate-custom.sh'", timeout: 7 },
         ] }],
@@ -301,14 +304,14 @@ test('P4 — 잔존 자 = 훅 파일명: 마켓 캐시의 옛 버전 디렉터�
     // 1.3.0 의 PLUGIN_DIR 과 경로가 다른 옛 항목 2건 — 경로 자로는 못 잡고 파일명 자로만 잡힌다
     const before = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]);
     assert.equal(before.code, 1, '옛 버전 디렉터리·다른 체크아웃의 잔존을 못 잡았다 — 이중 발화가 통과한다');
-    assert.match(before.out, /옛 병합 항목 2 건 잔존/, '잔존 건수가 2가 아니다 (닮은 이름을 세었거나 하나를 놓쳤다)');
+    assert.match(before.out, /옛 병합 항목 3 건 잔존/, '잔존 건수가 3이 아니다 (닮은 이름을 세었거나 Windows 구분자 경로를 놓쳤다)');
 
     const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
     assert.equal(r.code, 0, `실패했다: ${r.err}`);
-    assert.match(r.out, /옛 병합 항목 2 건 제거/, '무엇을 지웠는지 알려주지 않는다');
+    assert.match(r.out, /옛 병합 항목 3 건 제거/, '무엇을 지웠는지 알려주지 않는다');
 
     const cmds = commandsOf(home);
-    assert.equal(cmds.filter((c) => /1\.2\.7|other-checkout/.test(c)).length, 0, '옛 경로의 잔존이 남아 있다');
+    assert.equal(cmds.filter((c) => /1\.2\.7|other-checkout/.test(c)).length, 0, '옛 경로의 잔존이 남아 있다 (Windows 구분자 포함)');
     assert.equal(cmds.filter((c) => c.includes('reply-gate-custom.sh')).length, 1, '이름만 닮은 남의 훅을 지웠다');
     assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]).code, 0, '지웠는데도 검사가 실패한다');
   });
