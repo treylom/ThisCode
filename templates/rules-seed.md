@@ -1,4 +1,4 @@
-<!-- rules-seed v1.1.0 -->
+<!-- rules-seed v1.2.0 -->
 # Rules Seed — copy-once bot defaults
 
 > 본 파일은 봇 생성 시(`create-bot`/`create-discord-bot` — Slack 은 `create-slack-bot`/`slack-configure`
@@ -9,6 +9,15 @@
 > `[thiscode][WARN] rules-seed vX -> vY available — update by explicit command only`
 > 한 줄이 뜰 수 있다 — 이 경고는 **자동 병합·자동 갱신을 하지 않는다**. 반영은 운영자 또는
 > 봇에 대한 명시적 지시로만 한다.
+
+## Rule 0 — Discord 인바운드에는 답장 도구로만 응답한다
+
+Discord 에서 온 요청에는 **답장(reply) 도구로 보내야** 사용자에게 도달한다. 터미널에 찍은
+출력은 사용자 화면에 **도달하지 않는다** — 봇은 답한 줄 알고 사용자는 못 받는 상태가 된다.
+「답을 만들었다」와 「답을 보냈다」는 다른 일이고, 이 규칙이 요구하는 것은 뒤쪽이다.
+
+한 턴에 답장 도구를 한 번도 쓰지 않은 채 끝내려 하면 `hooks/reply-gate.sh`(Stop 훅)가
+막는다. Discord 턴이 아니면 그대로 통과한다.
 
 ## Rule 1 — DM(1:1) 답장 스레드 echo 금지 (Slack DM 한정)
 

@@ -522,7 +522,67 @@ command -v bun >/dev/null 2>&1 \
 echo "ℹ️  시동 시 --channels plugin:discord@claude-plugins-official 누락 = 무반응 최종 관문"
 ```
 
+**④ 훅 등록 — 안 돼 있으면 그 자리에서 등록한다 (묻지 않는다)**
+
+봇이 답을 만들어 놓고 터미널에만 찍는 사고의 원인이 여기다. 훅은 플러그인을 깔았다고
+저절로 붙지 않는다. 아직 안 했으면 게이트가 `exit 1` 로 답하고, 그러면 바로 등록한다.
+
+```bash
+bash <플러그인루트>/scripts/install-gate.sh hooks_installed     # exit 1 = 아직 안 함
+
+if bash <플러그인루트>/scripts/install-hooks.sh; then
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok
+else
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "<무엇이 막았는지>"
+fi
+```
+
+🔴 시도를 기록한 **뒤에 게이트를 다시 부르지 않는다** — 새 판정이 쌓여 `--audit` 이 위반으로
+잡는다. 「실제로 등록됐나」는 게이트가 아니라 아래 Step 7 의 `--verify` 가 답한다.
+
+**⑤ 규칙 동봉 — 봇 작업 폴더에 규칙 2개를 한 번만 복사한다**
+
+```bash
+bash <플러그인루트>/scripts/install-gate.sh rules_seeded         # exit 1 = 아직 안 함
+
+mkdir -p "$BOT_DIR/rules"
+for f in INDEX.md discord-comms.md; do
+  [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
+done
+
+if [ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ]; then
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded ok
+else
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail "규칙 파일을 복사하지 못함"
+fi
+```
+
+- 이미 있으면 **덮어쓰지 않는다** — 사용자가 고친 사본이 이긴다.
+- 생성되는 `CLAUDE.md` 에 이 1줄이 들어간다: **매 응답 전 `rules/INDEX.md` 트리거 표를 self-check 한다.**
+
 ### Step 7. claude 시동 안내
+
+**시동 안내를 내보내기 전 마지막 확인 — 훅과 규칙이 «실제로» 자리에 있나.** 둘 다 통과할 때만 아래 안내를 출력한다.
+
+```bash
+bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"
+HOOKS_OK=$?
+RULES_OK=1
+[ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ] || RULES_OK=0
+
+if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
+  # 자동으로 한 번 더 시도한다 — 묻지 않는다
+  bash <플러그인루트>/scripts/install-hooks.sh
+  mkdir -p "$BOT_DIR/rules"
+  for f in INDEX.md discord-comms.md; do
+    [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
+  done
+  bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME" || {
+    echo "훅 등록이 아직 안 끝났습니다 — claude 안에서 /thiscode:install-hooks 를 한 번 실행해 주세요."
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
+  }
+fi
+```
 
 **`--channels` 플래그가 없으면 Discord 게이트웨이에 접속하지 않는다** — 아래 명령을 그대로 복사해 쓴다.
 
@@ -677,7 +737,7 @@ $BOT_NAME
 > - "파일 읽기 금지"를 안 걸면 봇이 그 자리에서 soul.md 를 열어 읽고 정답을 말한다 — **주입이 아니라 조회**인데 통과처럼 보인다.
 >
 > **ⓑ가 나오면 원인은 hook 미등록이다**:
-> 1. `/thiscode:install-hooks` 를 **실행했는지** 확인 — create-bot 은 파일만 만든다. hook 등록은 별도 명령이고, **안 하면 soul 은 영원히 안 들어간다.**
+> 1. 훅 등록 상태 확인 — **Step 6.7 ④ 에서 자동 등록된다.** 그래도 안 들어갔으면 `bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"` 로 빠진 항목을 보고, 필요하면 `/thiscode:install-hooks` 를 한 번 실행한다.
 > 2. `~/.claude/settings.json`(전역) 또는 봇 WD 의 `.claude/settings.json` 에 `bot-session-init.sh` 가 SessionStart 로 등록됐는지.
 > 3. 🔴 **`matcher` 는 빈 문자열 `""` 로 둘 것.** `"startup|resume|clear|compact"` 같은 파이프 표기는 매칭되지 않아 **훅이 조용히 안 돈다**(2026-08-05 실측 — 훅 파일을 직접 실행하면 soul 을 정상 출력하는데 세션에는 안 들어오는 형태로 나타난다).
 > 4. 훅이 도는지 확인: `DISCORD_STATE_DIR=<봇dir> bash <plugin>/hooks/bot-session-init.sh` → `additionalContext` 에 soul 본문이 보이면 **훅은 정상, 문제는 등록 쪽**이다.
@@ -706,7 +766,7 @@ $BOT_NAME
 
 ## 관련 자원
 
-- hook 등록: [install-hooks.md](install-hooks.md) — 반드시 본 명령 전에 실행
+- hook 등록: [install-hooks.md](install-hooks.md) — **Step 6.7 ④ 가 자동으로 실행한다**(같은 `scripts/install-hooks.sh` 를 부른다). 수동 재실행용 명령으로 남겨 둔다.
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - soul.md template: [../templates/soul-general-assistant.md](../templates/soul-general-assistant.md)
 - 규칙 시드 template (B3): [../templates/rules-seed.md](../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh)

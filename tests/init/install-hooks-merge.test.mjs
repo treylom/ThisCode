@@ -1,6 +1,8 @@
 // Contract tests for the install-hooks settings merge (jq path + node fallback).
-// The snippets are extracted from skills/install-hooks/SKILL.md so the doc IS the
-// tested artifact — no drift between documentation and verified behavior.
+// The snippets are extracted from scripts/install-hooks.sh so the SCRIPT IS the
+// tested artifact — no drift between the shipped installer and verified behavior.
+// (Before 2026-09-03 these came from skills/install-hooks/SKILL.md; the merge
+//  logic moved into the script so install-hooks and create-bot share one copy.)
 // Contract: (1) no hook loss (2) first-occurrence order preserved
 // (3) idempotent re-run (4) node/jq parity. (2026-07-21 post-review HIGH-2)
 import { test } from 'node:test';
@@ -10,18 +12,20 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 
-const DOC = readFileSync(new URL('../../skills/install-hooks/SKILL.md', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows CRLF checkout
+const DOC = readFileSync(new URL('../../scripts/install-hooks.sh', import.meta.url), 'utf8').replace(/\r\n/g, '\n'); // Windows CRLF checkout
 
 function extractJq() {
-  const m = DOC.match(/jq -s '([\s\S]*?)' \\\n {2}"\$SETTINGS"/);
-  assert.ok(m, 'jq merge expression not found in install-hooks.md');
+  const m = DOC.match(/jq -s '(def uniqHooks:[\s\S]*?)' \\\n {4}"\$SETTINGS"/);
+  assert.ok(m, 'jq merge expression not found in scripts/install-hooks.sh');
   return m[1];
 }
 
 function extractNode() {
-  const m = DOC.match(/> node -e '\n([\s\S]*?)> ' "\$SETTINGS" "\$PATCH"/);
-  assert.ok(m, 'node fallback snippet not found in install-hooks.md');
-  return m[1].split('\n').map((l) => l.replace(/^> ?/, '')).join('\n');
+  // `const a = JSON.parse` 로 시작하는 «병합» 스크립트만 — 같은 파일의 조회용
+  // node 한 줄들(let j={} 로 시작)과 구별하지 않으면 그 사이 전체를 삼킨다.
+  const m = DOC.match(/node -e '(const fs=require\("fs"\);\nconst a = JSON\.parse[\s\S]*?)' "\$SETTINGS" "\$PATCH" "\$SETTINGS\.tmp"/);
+  assert.ok(m, 'node fallback snippet not found in scripts/install-hooks.sh');
+  return m[1];
 }
 
 const EXISTING = {

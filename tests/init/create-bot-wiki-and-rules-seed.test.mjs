@@ -93,9 +93,11 @@ test('B3 (기준 4-5): a staleness WARN is documented at the actual boot checkpo
   assert.match(text, /\[thiscode\]\[WARN\] rules-seed vX -> vY available — update by explicit command only/);
 });
 
-test('templates/rules-seed.md exists with the v1.1.0 stamp, all three rules, and the Slack-only DM caveat (parity with ThisCodex examples/rules-seed.md — Rule 3 lands there in P2)', () => {
+test('templates/rules-seed.md exists with the v1.2.0 stamp, all four rules, and the Slack-only DM caveat (parity with ThisCodex examples/rules-seed.md — Rule 3 lands there in P2)', () => {
   const text = readFileSync('templates/rules-seed.md', 'utf8');
-  assert.match(text, /^<!-- rules-seed v1\.1\.0 -->/);
+  assert.match(text, /^<!-- rules-seed v1\.2\.0 -->/);
+  assert.match(text, /## Rule 0/);
+  assert.match(text, /답장\(reply\) 도구로 보내야|답장 도구로만 응답한다/, 'Rule 0 must state the reply-tool requirement');
   assert.match(text, /## Rule 1/);
   assert.match(text, /Slack DM 한정/, 'Rule 1 must scope the thread_ts echo rule to the Slack bridge');
   assert.match(text, /## Rule 2/);

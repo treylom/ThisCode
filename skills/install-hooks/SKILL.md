@@ -15,7 +15,7 @@ $ARGUMENTS
 
 ---
 
-## 등록할 hooks 4개
+## 등록할 hooks 6개
 
 1. **SessionStart** → `bot-session-init.sh`
    - soul.md (페르소나) 자동 inject
@@ -34,6 +34,11 @@ $ARGUMENTS
 5. **Stop** → `meeting-stop-reread.sh`
    - active meeting 이 열려 있는 봇 세션이면 종료 전 회의 state 재독을 요청
    - active meeting 없음 / 일반 개발 세션 / 재귀 Stop = fail-open allow-stop
+
+6. **Stop** → `reply-gate.sh`
+   - Discord 로 온 요청인데 답장 도구를 한 번도 안 쓰고 턴을 끝내려 하면 막는다 —
+     터미널에만 찍힌 출력은 사용자에게 **도달하지 않는다**
+   - Discord 턴이 아니면 fail-open(그대로 통과)
 
 ---
 
@@ -71,158 +76,32 @@ if [ -z "$PLUGIN_DIR" ]; then
 fi
 ```
 
-### Step 2. ~/.claude/settings.json 백업
+### Step 2. 훅 병합 — 백업 포함, 스크립트 1회 호출
+
+병합 로직은 `scripts/install-hooks.sh` 한 곳에 산다. 이 문서와 `create-bot` 이 **같은 스크립트**를
+부른다 — 예전처럼 양쪽에 같은 병합식을 베껴 두면 한쪽만 고쳐져 조용히 갈라진다.
 
 ```bash
-SETTINGS="$HOME/.claude/settings.json"
-[ -f "$SETTINGS" ] && cp "$SETTINGS" "$SETTINGS.backup-$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$HOME/.claude"
-[ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
+bash "$PLUGIN_DIR/scripts/install-hooks.sh"
 ```
 
-### Step 3. jq 로 안전 merge
-
-```bash
-PATCH=$(cat <<EOF
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '$PLUGIN_DIR/hooks/bot-session-init.sh'",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '$PLUGIN_DIR/hooks/discord-slash-cmd.sh'",
-            "timeout": 5
-          },
-          {
-            "type": "command",
-            "command": "bash '$PLUGIN_DIR/hooks/regression-self-check.sh'",
-            "timeout": 3
-          },
-          {
-            "type": "command",
-            "command": "bash '$PLUGIN_DIR/hooks/rule-router.sh'",
-            "timeout": 3
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 '$PLUGIN_DIR/hooks/dispatch-room-gate.py'",
-            "timeout": 5
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash '$PLUGIN_DIR/hooks/meeting-stop-reread.sh'",
-            "timeout": 5
-          }
-        ]
-      }
-    ]
-  }
-}
-EOF
-)
-
-# 기존 hook 보존 + thiscode hook append
-# 순서 보존 병합: matcher별 그룹 유지(등장 순), 내부 hook은 type+command+timeout 키로 첫 등장만
-jq -s 'def uniqHooks: reduce .[] as $x ([]; if (map(.type == $x.type and .command == $x.command and .timeout == $x.timeout) | any) then . else . + [$x] end);
-def mergeEv($a; $b):
-  reduce (($a + $b) | .[]) as $g ({order: [], map: {}};
-    (($g.matcher // "")) as $m
-    | if (.map | has($m)) then (.map[$m].hooks += ($g.hooks // []))
-      else (.order += [$m] | .map[$m] = ($g + {matcher: $m, hooks: ($g.hooks // [])})) end)
-  | [ .map[.order[]] | (.hooks |= uniqHooks) ];
-. as [$s, $p] | ($s * $p)
-| .hooks.SessionStart     = mergeEv($s.hooks.SessionStart // [];     $p.hooks.SessionStart // [])
-| .hooks.UserPromptSubmit = mergeEv($s.hooks.UserPromptSubmit // []; $p.hooks.UserPromptSubmit // [])
-| .hooks.Stop             = mergeEv($s.hooks.Stop // [];             $p.hooks.Stop // [])
-| .hooks.PreToolUse       = mergeEv($s.hooks.PreToolUse // [];       $p.hooks.PreToolUse // [])' \
-  "$SETTINGS" <(echo "$PATCH") > "$SETTINGS.tmp"
-mv "$SETTINGS.tmp" "$SETTINGS"
-```
-
-⚠️ jq merge 정확성 보장 — agent 가 사용자 기존 settings.json 의 hook 들을 보존하면서 thiscode hook 만 추가.
-
-> **jq 부재 시 (Windows 등) node 폴백** — jq 를 설치하지 못하는 환경이면 agent 가 같은 merge 를 node 로 수행한다 (동일 보존 규칙: 기존 hook + thiscode hook, command 기준 dedupe):
->
-> ```bash
-> # $PATCH = Step 3 의 heredoc 문자열 그대로 (파일 불필요 — 문자열 인자로 전달)
-> node -e '
-> const fs = require("fs");
-> const a = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-> const b = JSON.parse(process.argv[2]);
-> const merged = { ...a, hooks: { ...(a.hooks || {}) } };
-> for (const ev of ["SessionStart", "UserPromptSubmit", "Stop", "PreToolUse"]) {
->   const groups = new Map();  // matcher별 바깥 그룹 병합
->   for (const g of [...(a.hooks?.[ev] || []), ...(b.hooks?.[ev] || [])]) {
->     const m = g.matcher || "";
->     if (!groups.has(m)) groups.set(m, { ...g, matcher: m, hooks: [] });
->     const tgt = groups.get(m);
->     for (const h of g.hooks || []) {  // 내부 hook 단위 dedupe (순서 보존)
->       const k = [h.type, h.command, h.timeout].join("\u0000");
->       if (!tgt.hooks.some(x => [x.type, x.command, x.timeout].join("\u0000") === k)) tgt.hooks.push(h);
->     }
->   }
->   merged.hooks[ev] = [...groups.values()];
-> }
-> fs.writeFileSync(process.argv[3], JSON.stringify(merged, null, 2));
-> ' "$SETTINGS" "$PATCH" "$SETTINGS.new" && mv "$SETTINGS.new" "$SETTINGS"
-> ```
-
-복잡 시 fallback (manual merge 안내):
-
-```
-사용자 ~/.claude/settings.json 가 비어있거나 thiscode hook 만 등록 시:
-- 위 PATCH 를 그대로 settings.json 으로 작성
-
-기존 hook 있는 경우:
-- 사용자 ~/.claude/settings.json 열기
-- "hooks" 키 안에 SessionStart + UserPromptSubmit + Stop + PreToolUse 추가 (기존 항목 뒤에 append)
-```
+- 백업은 스크립트가 알아서 만든다 (`settings.json.bak-<시각>`).
+- **기존 훅은 그대로 둔다.** 같은 명령을 두 번 넣지 않으므로 다시 실행해도 안전하다.
+- 병합 엔진은 `jq` 가 있으면 jq, 없으면 `node` 로 **같은 규칙**을 쓴다(보존·중복제거 동일).
+  둘 다 없을 때만 멈추고(`exit 2`) 무엇을 설치하면 되는지 알려준다.
+- 바꾸기 전에 확인하려면 `--dry-run`, 다른 홈으로 시험하려면 `--home <디렉터리>` 를 붙인다.
 
 ### Step 4. 검증
 
 ```bash
-# JSON 유효성
-python3 -m json.tool "$SETTINGS" >/dev/null && echo "✅ JSON valid"
-
-# 등록된 hook 확인
-python3 -c '
-import json
-with open("'"$SETTINGS"'") as f: d = json.load(f)
-hooks = d.get("hooks", {})
-print("SessionStart hooks:", len(hooks.get("SessionStart", [])))
-print("UserPromptSubmit hooks:", len(hooks.get("UserPromptSubmit", [])))
-print("Stop hooks:", len(hooks.get("Stop", [])))
-print("PreToolUse hooks:", len(hooks.get("PreToolUse", [])))
-'
+bash "$PLUGIN_DIR/scripts/install-hooks.sh" --verify
 ```
+
+`exit 0` = `settings.json` 의 네 이벤트 — `"SessionStart"` · `"UserPromptSubmit"` · `"PreToolUse"` ·
+`"Stop"`(회의 재독 `meeting-stop-reread.sh` 와 답장 게이트 `reply-gate.sh` 가 여기 붙는다) — 에
+필요한 훅이 전부 등록돼 있고, 등록된 명령의 **파일이 실재한다**.
+`exit 1` 이면 빠진 항목을 줄마다 이름으로 알려준다 — 세 번째 검사가 중요한데, 등록만 되고
+파일이 없으면 아무 오류 없이 조용히 아무 일도 안 일어나기 때문이다.
 
 ### Step 5. 새 세션에서 효과 확인
 
