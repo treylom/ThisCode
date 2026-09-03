@@ -209,11 +209,30 @@ chmod 600 "$BOT_DIR/.env" 2>/dev/null || true   # Windows는 무의미 — 검�
 
 DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allowFrom` 에 사용자 Discord ID 를 직접 등록한다. 서버는 **매 인바운드 메시지마다 access.json 을 재독**하므로 수정 즉시 반영(재시작 불필요).
 
-1. 사용자 Discord ID(스노우플레이크) 확인: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
+1. **사용자 Discord ID 자동 취득 (기본)** — Step 3 에서 이미 로그인된 브라우저 세션을 그대로 쓴다. 사용자에게 ID 를 **묻지 않고** 아래 순서로 가져온다.
+
+   | 단 | 언제 쓰나 | 무엇을 하나 |
+   |---|---|---|
+   | ① 포털 응답에서 읽기 | 브라우저 도구가 네트워크 응답 본문을 보여줄 때 | `https://discord.com/developers/applications` 를 연다 → 포털이 스스로 부르는 `GET /api/v9/users/@me` 의 **응답 본문**에서 `id` 와 `username` 만 읽는다 |
+   | ② 화면에서 읽기 | ①이 없거나 실패했을 때 | `https://discord.com/channels/@me` 를 연다 → 왼쪽 아래 사용자 패널의 아바타 그림 주소(`/avatars/<사용자ID>/…`)에서 ID 를 읽는다 — 화면을 읽기만 한다(선택자 = `section[aria-label*="User"]`). 기본 아바타라 주소에 ID 가 없으면 ③ |
+   | ③ 사람에게 부탁 | ①②가 모두 실패했을 때만 | 아래 **4.7-b** 로 간다 |
+
+   🚫 **어느 단에서도 브라우저 저장소·쿠키·인증 헤더 값을 읽거나 만들지 않는다.** 봇은 로그인 비밀값을 보지도 만지지도 않고, 그 값을 화면·기록·파일에 남기지 않는다. ①②는 공개된 응답과 화면만 읽는다.
+
+   시도했으면 **성공이든 실패든 반드시 남긴다**:
+
+   ```bash
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch ok
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail "<무엇이 막았는지>"
+   ```
+
+   사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없다.
+
+   가져왔으면 **묻지 말고 보여준다** — 「`<username>` 님(ID 끝 4자리 `1234`)으로 등록할게요. 맞나요?」 1줄이면 된다. ②로 얻어 이름이 없으면 「아바타에서 읽은 ID, 끝 4자리 `****`」로 보여준다.
 2. 생성 (jq·python 불요 — node 한 줄, Windows 스토어 스텁 이슈 회피):
 
 ```bash
-USER_ID="<복사한 사용자 ID>"
+USER_ID="<자동 취득한 사용자 ID>"
 node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.error('❌ Discord 사용자 ID 형식이 아님 (17~20자리 숫자): ' + id); process.exit(1); } require('fs').writeFileSync(require('path').join(process.argv[1], 'access.json'), JSON.stringify({allowFrom: [id], ackReaction: ''}, null, 2)); console.log('✅ access.json 등록: ' + id)" "$BOT_DIR" "$USER_ID"
 ```
 
@@ -238,6 +257,18 @@ node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.erro
 > - `requireMention: true` = 그 채널에선 `<@봇ID>` 멘션이 있을 때만 반응(공용 채널 기본값). 직통 채널은 `false`.
 > - 스레드는 **부모 채널 등록을 상속**한다 — 스레드마다 따로 넣지 않아도 된다.
 > - access.json 은 **매 인바운드마다 재독**되므로 수정 즉시 반영(재시작 불필요).
+
+### 4.7-b 수동 취득(자동 3단 실패 시)
+
+> **이 절은 「자동 시도가 실패로 기록된 뒤」에만 연다.** 시도 «전»에 아래를 부르면 `exit 1`(= 아직 시도 안 함)이 돌아온다. 그러면 안내하지 말고 위 ①②로 돌아가 한 번 더 시도한다.
+>
+> ```bash
+> bash <플러그인루트>/scripts/install-gate.sh discord_user_id_autofetch
+> ```
+>
+> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail "<사유>"` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
+
+자동 취득이 모두 실패했을 때만 사용자에게 부탁한다: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
 
 ### Step 4.5. 페르소나·직무 프롬프트 고도화 (`/prompt` 연동 — 설치 권장)
 
@@ -491,7 +522,69 @@ command -v bun >/dev/null 2>&1 \
 echo "ℹ️  시동 시 --channels plugin:discord@claude-plugins-official 누락 = 무반응 최종 관문"
 ```
 
+**④ 훅 등록 — 안 돼 있으면 그 자리에서 등록한다 (묻지 않는다)**
+
+봇이 답을 만들어 놓고 터미널에만 찍는 사고의 원인이 여기다. 훅은 플러그인을 깔았다고
+저절로 붙지 않는다. 아직 안 했으면 게이트가 `exit 1` 로 답하고, 그러면 바로 등록한다.
+
+```bash
+bash <플러그인루트>/scripts/install-gate.sh hooks_installed     # exit 1 = 아직 안 함
+
+if bash <플러그인루트>/scripts/install-hooks.sh; then
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok
+else
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "<무엇이 막았는지>"
+fi
+```
+
+🔴 시도를 기록한 **뒤에 게이트를 다시 부르지 않는다** — 새 판정이 쌓여 `--audit` 이 위반으로
+잡는다. 「실제로 등록됐나」는 게이트가 아니라 아래 Step 7 의 `--verify` 가 답한다.
+
+**⑤ 규칙 동봉 — 봇 작업 폴더에 규칙 2개를 한 번만 복사한다**
+
+```bash
+bash <플러그인루트>/scripts/install-gate.sh rules_seeded         # exit 1 = 아직 안 함
+
+mkdir -p "$BOT_DIR/rules"
+for f in INDEX.md discord-comms.md; do
+  [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
+done
+
+if [ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ]; then
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded ok
+else
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail "규칙 파일을 복사하지 못함"
+fi
+```
+
+- 이미 있으면 **덮어쓰지 않는다** — 사용자가 고친 사본이 이긴다.
+- 생성되는 `CLAUDE.md` 에 이 1줄이 들어간다: **매 응답 전 `rules/INDEX.md` 트리거 표를 self-check 한다.**
+
 ### Step 7. claude 시동 안내
+
+**시동 안내를 내보내기 전 마지막 확인 — 훅과 규칙이 «실제로» 자리에 있나.** 둘 다 통과할 때만 아래 안내를 출력한다.
+
+```bash
+bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"
+HOOKS_OK=$?
+RULES_OK=1
+[ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ] || RULES_OK=0
+
+if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
+  # 자동으로 한 번 더 시도한다 — 묻지 않는다
+  bash <플러그인루트>/scripts/install-hooks.sh
+  mkdir -p "$BOT_DIR/rules"
+  for f in INDEX.md discord-comms.md; do
+    [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
+  done
+  if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok "자동 재시도 성공"   # 원장이 마지막 상태를 말하게
+  else
+    echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 를 한 번 실행해 주세요."
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
+  fi
+fi
+```
 
 **`--channels` 플래그가 없으면 Discord 게이트웨이에 접속하지 않는다** — 아래 명령을 그대로 복사해 쓴다.
 
@@ -646,7 +739,7 @@ $BOT_NAME
 > - "파일 읽기 금지"를 안 걸면 봇이 그 자리에서 soul.md 를 열어 읽고 정답을 말한다 — **주입이 아니라 조회**인데 통과처럼 보인다.
 >
 > **ⓑ가 나오면 원인은 hook 미등록이다**:
-> 1. `/thiscode:install-hooks` 를 **실행했는지** 확인 — create-bot 은 파일만 만든다. hook 등록은 별도 명령이고, **안 하면 soul 은 영원히 안 들어간다.**
+> 1. 훅 등록 상태 확인 — **Step 6.7 ④ 에서 자동 등록된다.** 그래도 안 들어갔으면 `bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"` 로 빠진 항목을 보고, 필요하면 `/thiscode:install-hooks` 를 한 번 실행한다.
 > 2. `~/.claude/settings.json`(전역) 또는 봇 WD 의 `.claude/settings.json` 에 `bot-session-init.sh` 가 SessionStart 로 등록됐는지.
 > 3. 🔴 **`matcher` 는 빈 문자열 `""` 로 둘 것.** `"startup|resume|clear|compact"` 같은 파이프 표기는 매칭되지 않아 **훅이 조용히 안 돈다**(2026-08-05 실측 — 훅 파일을 직접 실행하면 soul 을 정상 출력하는데 세션에는 안 들어오는 형태로 나타난다).
 > 4. 훅이 도는지 확인: `DISCORD_STATE_DIR=<봇dir> bash <plugin>/hooks/bot-session-init.sh` → `additionalContext` 에 soul 본문이 보이면 **훅은 정상, 문제는 등록 쪽**이다.
@@ -675,7 +768,7 @@ $BOT_NAME
 
 ## 관련 자원
 
-- hook 등록: [install-hooks.md](install-hooks.md) — 반드시 본 명령 전에 실행
+- hook 등록: [install-hooks.md](install-hooks.md) — **Step 6.7 ④ 가 자동으로 실행한다**(같은 `scripts/install-hooks.sh` 를 부른다). 수동 재실행용 명령으로 남겨 둔다.
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - soul.md template: [../templates/soul-general-assistant.md](../templates/soul-general-assistant.md)
 - 규칙 시드 template (B3): [../templates/rules-seed.md](../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh)

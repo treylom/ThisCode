@@ -120,7 +120,7 @@ Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as sla
 - `/thiscode:search` — 4-tier vault search with quick or deep modes
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
 - `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
-- `/thiscode:install-hooks` — Merge the SessionStart / UserPromptSubmit hooks into `~/.claude/settings.json` (**installing the plugin does not register them — run this once**)
+- `/thiscode:install-hooks` — Merge the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks into `~/.claude/settings.json` (**installing the plugin does not register them**). `/thiscode:create-bot` now runs the same `scripts/install-hooks.sh` for you and verifies the result, so this command is mainly for re-running it by hand.
 - … and more — `/thiscode:help` lists every command with its description
 
 ### Skills
