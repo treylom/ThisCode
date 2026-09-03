@@ -175,10 +175,10 @@ _stale_candidates() {
   [ -f "$1" ] || return 0
   case "$(_engine)" in
     jq)
-      jq -r --arg re "$(_stale_re)" '(.hooks // {}) | to_entries[] | .key as $e | .value[]? | .hooks[]? | select((.command // "") | test($re)) | "\($e)\t\((.command // "") | gsub("\n"; "\\n"))"' "$1" 2>/dev/null
+      jq -r --arg re "$(_stale_re)" '(.hooks // {}) | to_entries[] | .key as $e | .value[]? | .hooks[]? | select((.command // "") | test($re)) | "\($e)\t\((.command // "") | gsub("\n"; "\\n"))"' "$1" 2>/dev/null | command sed 's/\r$//'
       ;;
     node)
-      node -e 'const fs=require("fs");const re=new RegExp(process.argv[2]);let j={};try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(0);}for(const ev of Object.keys(j.hooks||{}))for(const g of j.hooks[ev]||[])for(const h of g.hooks||[])if(re.test(h.command||""))console.log(ev+"\t"+String(h.command).replace(/\n/g,"\\n"));' "$1" "$(_stale_re)" 2>/dev/null
+      node -e 'const fs=require("fs");const re=new RegExp(process.argv[2]);let j={};try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(0);}for(const ev of Object.keys(j.hooks||{}))for(const g of j.hooks[ev]||[])for(const h of g.hooks||[])if(re.test(h.command||""))console.log(ev+"\t"+String(h.command).replace(/\n/g,"\\n"));' "$1" "$(_stale_re)" 2>/dev/null | command sed 's/\r$//'
       ;;
     *) return 0 ;;
   esac
@@ -217,13 +217,14 @@ _warn_ambiguous() {
 # 빈 그룹·빈 이벤트는 같이 치운다(껍데기가 남으면 「등록돼 있다」로 오독된다).
 # 규칙은 jq·node 두 경로가 «같다».
 _strip_stale() {
+  _kill="$(printf '%s' "$3" | command sed 's/\r$//')"
   case "$(_engine)" in
     jq)
-      jq --arg kill "$3" '($kill | split("\n") | map(select(length > 0))) as $K
+      INSTALL_HOOKS_KILL="$_kill" jq '(env.INSTALL_HOOKS_KILL | split("\n") | map(select(length > 0))) as $K
 | .hooks = ((.hooks // {}) | with_entries(.key as $e | .value = ((.value // []) | map(.hooks = ((.hooks // []) | map(select((($e + "\t" + ((.command // "") | gsub("\n"; "\\n"))) as $sig | ($K | index($sig)) == null))))) | map(select((.hooks | length) > 0)))) | with_entries(select((.value | length) > 0)))' "$1" > "$2" 2>/dev/null
       ;;
     node)
-      node -e 'const fs=require("fs");const kill=new Set(String(process.argv[3]).split("\n").filter((x)=>x.length));let j;try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(1);}const src=j.hooks||{};const out={};for(const ev of Object.keys(src)){const groups=[];for(const g of src[ev]||[]){const kept=(g.hooks||[]).filter((h)=>!kill.has(ev+"\t"+String(h.command||"").replace(/\n/g,"\\n")));if(kept.length)groups.push(Object.assign({},g,{hooks:kept}));}if(groups.length)out[ev]=groups;}j.hooks=out;fs.writeFileSync(process.argv[2],JSON.stringify(j,null,2));' "$1" "$2" "$3"
+      INSTALL_HOOKS_KILL="$_kill" node -e 'const fs=require("fs");const kill=new Set(String(process.env.INSTALL_HOOKS_KILL||"").split("\n").filter((x)=>x.length));let j;try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(1);}const src=j.hooks||{};const out={};for(const ev of Object.keys(src)){const groups=[];for(const g of src[ev]||[]){const kept=(g.hooks||[]).filter((h)=>!kill.has(ev+"\t"+String(h.command||"").replace(/\n/g,"\\n")));if(kept.length)groups.push(Object.assign({},g,{hooks:kept}));}if(groups.length)out[ev]=groups;}j.hooks=out;fs.writeFileSync(process.argv[2],JSON.stringify(j,null,2));' "$1" "$2"
       ;;
     *) return 1 ;;
   esac
