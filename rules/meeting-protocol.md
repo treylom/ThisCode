@@ -368,6 +368,12 @@ idle" while the meeting was active in thread replies.
   tool reports "nothing" about a region it cannot see, and the operator reads
   that as "nothing is happening."
 
+## 12. Decision document + closing-retrospective gate (operator rule, 2026-09-02)
+
+1. Every project room keeps a **decision document** (e.g. `NN-decision.md`, or a designated existing decision ledger) that records the path **draft → interim feedback → final deliverable**: what was built first, which feedback changed it — **name the positive and the negative feedback separately** — and why each change was made. Written by the bot that finalizes the deliverable, in the same turn (every rule names who writes it, when, and where).
+2. The room's `01-spec` exit condition and its `03-outcome` both list a **decision retrospective plus a review of the skills / rules / hooks / instructions the work changed, held with every bot that took part** as a condition of closing. Hold it only after notifying the operator and receiving a yes/no — yes = hold it now, no = file it as an agenda item for the next improvement meeting. Holding it without that notice is not allowed.
+3. Case-based rule: the operator's explicit instruction for a given room overrides this section.
+
 ## Liveness: two rulers, two questions
 
 The ledger's (02-progress) **mtime answers "is this meeting alive"**

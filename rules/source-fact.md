@@ -99,6 +99,8 @@ Case-based (one day's audit; the retraction lists were per-author, not exhaustiv
    a violated invariant means the *instrument* is broken: adopt neither value;
    re-measure through an independent path.
 
+5. **Hook-block counts in Claude Code transcripts anchor on `"type":"hook_blocking_error"`.** The keys `"permissionDecision":"deny"` and `"decision":"block"` occur **zero** times across transcripts, so counting on them reports a false "0 blocks". Attribute per hook through the `hookEvent` / `blockingError` labels on the same record (census finding, 2026-09-02).
+
 
 ## 8. Checker discipline — pass messages, signal placement, transcription
 

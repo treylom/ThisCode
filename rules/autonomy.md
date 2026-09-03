@@ -26,6 +26,7 @@ reached partial / blocked / awaiting-permission state.
   (`[proxied pre-report — <agent>'s behalf, relayed by <proxy>; reason]`).
   A gate that some agents cannot walk is a rule without a path — fix the path,
   don't waive the rule (measured 2026-08-07).
+- If you stop because an approval is legitimately pending, end the last message with an explicit waiting verdict — e.g. `verdict: waiting for approval — <reason>` — so a reviewer (or a stop gate, where one is installed) can tell a sanctioned pause from an unfinished task.
 
 ## 2.5 Continuous execution
 - No "turn-limit / I'll stop here / next turn" speeches. If work remains and
