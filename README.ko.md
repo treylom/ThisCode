@@ -288,7 +288,7 @@ thiscode/
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v1.2.7
+│   └── plugin.json                        # thiscode v1.3.0
 ├── commands/                              # 슬래시 발견 표면 ①
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── add-bot.md                         # 추가 Discord 봇 신설

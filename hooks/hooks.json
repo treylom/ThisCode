@@ -1,0 +1,68 @@
+{
+  "description": "ThisCode bot hooks — installed with the plugin, active only in bot sessions (DISCORD_STATE_DIR). Every command goes through hooks/lib/bot-only.sh, which exits 0 with no output in ordinary sessions.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/bot-session-init.sh\"",
+            "timeout": 10
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/discord-slash-cmd.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/regression-self-check.sh\"",
+            "timeout": 3
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/rule-router.sh\"",
+            "timeout": 3
+          }
+        ],
+        "matcher": ""
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/dispatch-room-gate.py\"",
+            "timeout": 5
+          }
+        ],
+        "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/meeting-stop-reread.sh\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/reply-gate.sh\"",
+            "timeout": 5
+          }
+        ],
+        "matcher": ""
+      }
+    ]
+  }
+}

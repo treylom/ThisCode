@@ -13,7 +13,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync, cpSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -37,6 +37,15 @@ function bashWorks() {
 }
 const BASH = bashWorks();
 const skipNoBash = BASH ? false : 'bash 가 없어 스크립트 실행 시험을 건너뛴다 (문서 잠금 시험은 그대로 돈다)';
+
+// 병합 모드(fallback)를 지키는 시험들은 «hooks.json 이 없는» 플러그인 루트를 쓴다.
+// 제품 트리에는 hooks/hooks.json 이 있어 그대로 부르면 플러그인 모드로 갈라지기 때문이다
+// (그쪽 동작은 tests/init/plugin-hooks-json.test.mjs 가 따로 잰다). 병합 경로는 hooks.json
+// 없는 체크아웃에서 계속 살아 있어야 하고, 그 생존을 여기서 증명한다.
+const MERGE_PLUGIN = mkdtempSync(join(tmpdir(), 'thiscode-mergemode-'));
+cpSync(join(REPO, 'hooks'), join(MERGE_PLUGIN, 'hooks'), { recursive: true });
+rmSync(join(MERGE_PLUGIN, 'hooks', 'hooks.json'), { force: true });
+process.on('exit', () => rmSync(MERGE_PLUGIN, { recursive: true, force: true }));
 
 function withHome(fn) {
   const dir = mkdtempSync(join(tmpdir(), 'thiscode-hooks-'));
@@ -168,7 +177,7 @@ test('H1 — 임시 HOME 머지: 4 이벤트 · reply-gate 1 · 기존 타 훅 �
       hooks: { Stop: [{ matcher: '', hooks: [{ type: 'command', command: "bash '/Users/somebody/my-own-hook.sh'", timeout: 7 }] }] },
     }, null, 2));
 
-    const r = sh([INSTALL_HOOKS, '--home', home]);
+    const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', MERGE_PLUGIN]);
     assert.equal(r.code, 0, `머지 실패: ${r.err}`);
 
     const j = settingsOf(home);
@@ -182,7 +191,7 @@ test('H1 — 임시 HOME 머지: 4 이벤트 · reply-gate 1 · 기존 타 훅 �
 
     // 다시 돌려도 쌓이지 않는다
     const before = commandsOf(home).length;
-    assert.equal(sh([INSTALL_HOOKS, '--home', home]).code, 0);
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', MERGE_PLUGIN]).code, 0);
     assert.equal(commandsOf(home).length, before, '재실행이 훅을 중복으로 쌓는다');
   });
 });
@@ -191,7 +200,7 @@ test('H1 — --dry-run 은 파일을 바꾸지 않는다', { skip: skipNoBash },
   withHome((home) => {
     const p = join(home, '.claude', 'settings.json');
     writeFileSync(p, '{}');
-    const r = sh([INSTALL_HOOKS, '--dry-run', '--home', home]);
+    const r = sh([INSTALL_HOOKS, '--dry-run', '--home', home, '--plugin-dir', MERGE_PLUGIN]);
     assert.equal(r.code, 0);
     assert.match(r.out, /미리보기/);
     assert.equal(read(p), '{}', 'dry-run 이 파일을 바꿨다');
@@ -202,11 +211,11 @@ test('H1 — --dry-run 은 파일을 바꾸지 않는다', { skip: skipNoBash },
 test('H1 — --verify: 머지 전 1 → 머지 후 0 → reply-gate 를 지우면 다시 1', { skip: skipNoBash }, () => {
   withHome((home) => {
     // ① 머지 전
-    assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home]).code, 1, '아무것도 없는데 통과했다');
+    assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', MERGE_PLUGIN]).code, 1, '아무것도 없는데 통과했다');
 
     // ② 머지 후
-    assert.equal(sh([INSTALL_HOOKS, '--home', home]).code, 0);
-    const ok = sh([INSTALL_HOOKS, '--verify', '--home', home]);
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', MERGE_PLUGIN]).code, 0);
+    const ok = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', MERGE_PLUGIN]);
     assert.equal(ok.code, 0, `머지했는데 검사가 실패한다: ${ok.out}`);
     assert.match(ok.out, /검사 통과/);
 
@@ -217,7 +226,7 @@ test('H1 — --verify: 머지 전 1 → 머지 후 0 → reply-gate 를 지우�
       for (const g of j.hooks[ev]) g.hooks = (g.hooks || []).filter((h) => !h.command.includes('reply-gate.sh'));
     }
     writeFileSync(p, JSON.stringify(j, null, 2));
-    const bad = sh([INSTALL_HOOKS, '--verify', '--home', home]);
+    const bad = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', MERGE_PLUGIN]);
     assert.equal(bad.code, 1, 'reply-gate 를 지웠는데도 검사가 통과했다 — 검사가 장식이다');
     assert.match(bad.out, /reply-gate\.sh/, '무엇이 빠졌는지 알려주지 않는다');
   });
@@ -225,7 +234,7 @@ test('H1 — --verify: 머지 전 1 → 머지 후 0 → reply-gate 를 지우�
 
 test('H1 — --verify 는 등록됐는데 «파일이 없는» 경우도 잡는다', { skip: skipNoBash }, () => {
   withHome((home) => {
-    assert.equal(sh([INSTALL_HOOKS, '--home', home]).code, 0);
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', MERGE_PLUGIN]).code, 0);
     const p = join(home, '.claude', 'settings.json');
     const j = JSON.parse(read(p));
     // 실재하지 않는 경로로 바꿔치기 — 조용한 무반응의 실제 원인 형태
@@ -233,8 +242,26 @@ test('H1 — --verify 는 등록됐는데 «파일이 없는» 경우도 잡는�
       if (h.command.includes('reply-gate.sh')) h.command = "bash '/nowhere/hooks/reply-gate.sh'";
     }
     writeFileSync(p, JSON.stringify(j, null, 2));
-    const r = sh([INSTALL_HOOKS, '--verify', '--home', home]);
+    const r = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', MERGE_PLUGIN]);
     assert.equal(r.code, 1, '등록만 돼 있고 파일이 없는데 통과했다');
     assert.match(r.out, /실재하지 않는다/);
+  });
+});
+
+// ─────────────────────────────────────────────── H5 모드 분기 (bash 필요)
+test('H5 — hooks.json 이 있으면 병합하지 않고, 없으면 예전대로 병합한다', { skip: skipNoBash }, () => {
+  withHome((home) => {
+    // ① 플러그인 모드 — 제품 트리에는 hooks/hooks.json 이 있다. 훅은 플러그인이 직접 싣는다.
+    const plug = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
+    assert.equal(plug.code, 0, `플러그인 모드가 실패했다: ${plug.err}`);
+    assert.match(plug.out, /플러그인이 훅을 직접 싣는다/, '무슨 모드인지 알려주지 않는다');
+    assert.equal(existsSync(join(home, '.claude', 'settings.json')), false,
+      '병합하지 않기로 해 놓고 settings.json 을 만들었다');
+
+    // ② 병합 모드 — hooks.json 이 없는 체크아웃에서는 fallback 이 살아 있어야 한다
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', MERGE_PLUGIN]).code, 0);
+    assert.ok(existsSync(join(home, '.claude', 'settings.json')), '병합 모드 fallback 이 죽었다');
+    assert.equal(commandsOf(home).filter((c) => c.includes('reply-gate.sh')).length, 1,
+      '병합 모드가 훅을 넣지 않았다');
   });
 });
