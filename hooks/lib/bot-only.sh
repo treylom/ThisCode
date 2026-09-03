@@ -46,6 +46,11 @@ if [ ! -f "$target" ]; then
 fi
 
 case "$target" in
-  *.py) exec python3 "$target" "$@" ;;
+  *.py|*.PY)
+    # 인터프리터가 없으면 rc127 로 죽는 대신 조용히 비켜선다 — hookkit 의
+    # 「의존성 부재 → 통과(exit 0)」 계약을 문면까지 맞춘다.
+    command -v python3 >/dev/null 2>&1 || { _drain_stdin; echo "bot-only: python3 이 없어 훅을 건너뛴다 — $target" >&2; exit 0; }
+    exec python3 "$target" "$@"
+    ;;
   *)    exec bash "$target" "$@" ;;
 esac

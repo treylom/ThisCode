@@ -36,8 +36,10 @@ VERIFY=0
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --home)        HOME_DIR="${2:-}"; shift 2 ;;
-    --plugin-dir)  PLUGIN_DIR="${2:-}"; shift 2 ;;
+    --home)        [ $# -ge 2 ] || { echo "install-hooks: $1 에 값이 없다" >&2; exit 2; }
+                   HOME_DIR="${2:-}"; shift 2 ;;
+    --plugin-dir)  [ $# -ge 2 ] || { echo "install-hooks: $1 에 값이 없다" >&2; exit 2; }
+                   PLUGIN_DIR="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
     --verify)      VERIFY=1; shift ;;
     -h|--help)     command sed -n '2,25p' "${BASH_SOURCE[0]}"; exit 0 ;;
@@ -91,8 +93,18 @@ _event_present() {
   esac
 }
 
-# 명령 문자열에서 스크립트 경로만 뽑는다: bash '<경로>' / python3 '<경로>'
-_path_of() { printf '%s' "$1" | command sed -n "s/^[^']*'\([^']*\)'.*$/\1/p"; }
+# 명령 문자열에서 스크립트 경로만 뽑는다: bash '<경로>' / python3 "<경로>" / bash <경로>
+#   첫 토큰(실행기) 뒤의 «첫 인자» 하나만 본다. 세 형태(작은따옴표·큰따옴표·무따옴표)를 다 받는다 —
+#   한 형태만 보면 나머지는 «경로 없음» 이 돼 뒤따르는 판정이 통째로 건너뛰어진다.
+#   $HOME 같은 변수는 전개하지 않는다(전개하면 남의 홈을 우리 것으로 읽는다).
+_path_of() {
+  _rest="$(printf '%s' "$1" | command sed -n '1s/^[[:space:]]*[^[:space:]]*[[:space:]]*//p')"
+  case "$_rest" in
+    "'"*) printf '%s' "$_rest" | command sed -n "1s/^'\([^']*\)'.*$/\1/p" ;;
+    '"'*) printf '%s' "$_rest" | command sed -n '1s/^"\([^"]*\)".*$/\1/p' ;;
+    *)    printf '%s' "$_rest" | command sed -n '1s/^\([^[:space:]]*\).*$/\1/p' ;;
+  esac
+}
 
 # ── 플러그인 모드 판정 ──────────────────────────────────────────────
 # 플러그인 루트에 hooks/hooks.json 이 있으면 Claude Code 가 그 파일을 읽어 훅을 «직접»
@@ -131,38 +143,108 @@ _stale_re() {
   printf '[/\\\\]hooks[/\\\\](%s)(["'"'"' ]|$)' "$_n"
 }
 
-_stale_list() {
+# 이름이 같다고 «우리 것» 은 아니다 — 소유 표식이 하나라도 있어야 지운다.
+#   이름만 보는 자는 남의 살아있는 훅(예: ~/x/hooks/rule-router.sh)을 지우고,
+#   --verify 를 거짓 실패로 만든다. 그래서 이름 자(정규식) 뒤에 소유 자를 한 번 더 댄다.
+#   ⓐ 명령이 우리 래퍼를 거친다 · ⓑ 명령에 thiscode(대소문자 무시) 가 있다
+#   ⓒ 그 훅의 형제로 우리 plugin.json 이 실재한다 · ⓓ 가리키는 파일이 «아예 없다»(죽은 항목)
+#   ⓓ 는 경로에 변수($HOME 등)가 있으면 판정하지 않는다 — 전개 안 한 문자열은 항상 «없다» 로 보인다.
+_owned_by_us() {
+  case "$1" in
+    *hooks/lib/bot-only.sh*) return 0 ;;
+  esac
+  case "$(printf '%s' "$1" | command sed 'y/ABCDEFGHIJKLMNOPQRSTUVWXYZ/abcdefghijklmnopqrstuvwxyz/')" in
+    *thiscode*) return 0 ;;
+  esac
+  _p="$(_path_of "$1")"
+  [ -n "$_p" ] || return 1
+  _sib="$(dirname "$_p")/../.claude-plugin/plugin.json"
+  if [ -f "$_sib" ] && command grep -q '"name"[[:space:]]*:[[:space:]]*"thiscode"' "$_sib" 2>/dev/null; then
+    return 0
+  fi
+  case "$_p" in
+    *'$'*) return 1 ;;
+  esac
+  [ -e "$_p" ] || return 0
+  return 1
+}
+
+# 이름 자에 걸린 «후보» 만 뽑는다(소유 판정은 셸에서 한 번만 — 양 엔진이 같은 규칙을 쓰도록).
+#   출력 = EV<TAB>command · 명령 안 개행은 \n 리터럴로 바꿔 «1 항목 = 1 줄» 을 보장한다.
+_stale_candidates() {
   [ -f "$1" ] || return 0
   case "$(_engine)" in
     jq)
-      jq -r --arg re "$(_stale_re)" '(.hooks // {}) | to_entries[] | .key as $e | .value[]? | .hooks[]? | select((.command // "") | test($re)) | "\($e)\t\(.command)"' "$1" 2>/dev/null
+      jq -r --arg re "$(_stale_re)" '(.hooks // {}) | to_entries[] | .key as $e | .value[]? | .hooks[]? | select((.command // "") | test($re)) | "\($e)\t\((.command // "") | gsub("\n"; "\\n"))"' "$1" 2>/dev/null
       ;;
     node)
-      node -e 'const fs=require("fs");const re=new RegExp(process.argv[2]);let j={};try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(0);}for(const ev of Object.keys(j.hooks||{}))for(const g of j.hooks[ev]||[])for(const h of g.hooks||[])if(re.test(h.command||""))console.log(ev+"\t"+h.command);' "$1" "$(_stale_re)" 2>/dev/null
+      node -e 'const fs=require("fs");const re=new RegExp(process.argv[2]);let j={};try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(0);}for(const ev of Object.keys(j.hooks||{}))for(const g of j.hooks[ev]||[])for(const h of g.hooks||[])if(re.test(h.command||""))console.log(ev+"\t"+String(h.command).replace(/\n/g,"\\n"));' "$1" "$(_stale_re)" 2>/dev/null
       ;;
     *) return 0 ;;
   esac
 }
 
-# 잔존 «건수» = _stale_list 가 낸 줄 수(매치된 명령만 한 줄씩 나온다).
-_stale_count() {
-  c="$(_stale_list "$1" | command grep -c .)"
-  [ -n "$c" ] || c=0
-  printf '%s' "$c"
+_TAB="$(printf '\t')"
+
+# 지울 것 = 후보 중 «우리 것»
+_stale_list() {
+  _stale_candidates "$1" | while IFS= read -r _line; do
+    _owned_by_us "${_line#*"$_TAB"}" && printf '%s\n' "$_line"
+  done
 }
 
-# 잔존 제거본을 <출력파일> 에 쓴다. 빈 그룹·빈 이벤트는 같이 치운다(껍데기가 남으면
-# 「등록돼 있다」로 오독된다). 규칙은 jq·node 두 경로가 «같다».
+# 손대지 않을 것 = 후보 중 소유가 «불명» 인 것(이름만 같은 남의 훅이 여기 온다)
+_ambiguous_list() {
+  _stale_candidates "$1" | while IFS= read -r _line; do
+    _owned_by_us "${_line#*"$_TAB"}" || printf '%s\n' "$_line"
+  done
+}
+
+# 건수는 «줄 수» 로 센다 — grep 이 없는 환경에서 0 으로 조용히 통과하지 않도록 엔진 밖 계수기를 쓴다.
+_stale_count() { _stale_list "$1" | awk 'END{print NR}'; }
+_ambiguous_count() { _ambiguous_list "$1" | awk 'END{print NR}'; }
+
+# 소유 불명 항목은 지우지 않고 «보여만» 준다(계수에도 넣지 않는다 — 거짓 실패가 되면 안 된다).
+_warn_ambiguous() {
+  _amb="$(_ambiguous_count "$1")"
+  [ "$_amb" -gt 0 ] 2>/dev/null || return 0
+  echo "주의 — 이름은 같지만 소유가 불명한 항목 $_amb 건은 손대지 않았다(손으로 검토):"
+  _ambiguous_list "$1" | command sed 's/^/  - /'
+}
+
+# 잔존 제거본을 <출력파일> 에 쓴다. 지울 대상은 «$3 = _stale_list 가 낸 목록» 그것뿐이다
+# (엔진이 정규식으로 다시 고르면 소유 판정을 건너뛴 채 남의 훅을 지운다).
+# 빈 그룹·빈 이벤트는 같이 치운다(껍데기가 남으면 「등록돼 있다」로 오독된다).
+# 규칙은 jq·node 두 경로가 «같다».
 _strip_stale() {
   case "$(_engine)" in
     jq)
-      jq --arg re "$(_stale_re)" '.hooks = ((.hooks // {}) | with_entries(.value = ((.value // []) | map(.hooks = ((.hooks // []) | map(select(((.command // "") | test($re)) | not)))) | map(select((.hooks | length) > 0)))) | with_entries(select((.value | length) > 0)))' "$1" > "$2" 2>/dev/null
+      jq --arg kill "$3" '($kill | split("\n") | map(select(length > 0))) as $K
+| .hooks = ((.hooks // {}) | with_entries(.key as $e | .value = ((.value // []) | map(.hooks = ((.hooks // []) | map(select((($e + "\t" + ((.command // "") | gsub("\n"; "\\n"))) as $sig | ($K | index($sig)) == null))))) | map(select((.hooks | length) > 0)))) | with_entries(select((.value | length) > 0)))' "$1" > "$2" 2>/dev/null
       ;;
     node)
-      node -e 'const fs=require("fs");const re=new RegExp(process.argv[3]);let j;try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(1);}const src=j.hooks||{};const out={};for(const ev of Object.keys(src)){const groups=[];for(const g of src[ev]||[]){const kept=(g.hooks||[]).filter((h)=>!re.test(h.command||""));if(kept.length)groups.push(Object.assign({},g,{hooks:kept}));}if(groups.length)out[ev]=groups;}j.hooks=out;fs.writeFileSync(process.argv[2],JSON.stringify(j,null,2));' "$1" "$2" "$(_stale_re)"
+      node -e 'const fs=require("fs");const kill=new Set(String(process.argv[3]).split("\n").filter((x)=>x.length));let j;try{j=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));}catch(e){process.exit(1);}const src=j.hooks||{};const out={};for(const ev of Object.keys(src)){const groups=[];for(const g of src[ev]||[]){const kept=(g.hooks||[]).filter((h)=>!kill.has(ev+"\t"+String(h.command||"").replace(/\n/g,"\\n")));if(kept.length)groups.push(Object.assign({},g,{hooks:kept}));}if(groups.length)out[ev]=groups;}j.hooks=out;fs.writeFileSync(process.argv[2],JSON.stringify(j,null,2));' "$1" "$2" "$3"
       ;;
     *) return 1 ;;
   esac
+}
+
+# 명령들($1, 줄바꿈 구분) 중 «래퍼를 앞세운» 명령 안에 그 훅 이름($2)이 있나.
+#   이름만 어딘가 있으면 통과시키면, 래퍼를 우회한 등록이 「래퍼 경유」로 보고된다.
+_WRAPPER_PREFIX='bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh" '
+_wrapped_has() {
+  _hit=1
+  _oi="$IFS"; IFS='
+'
+  for _c in $1; do
+    case "$_c" in
+      "$_WRAPPER_PREFIX"*)
+        case "$_c" in *"$2"*) _hit=0 ;; esac
+        ;;
+    esac
+  done
+  IFS="$_oi"
+  return $_hit
 }
 
 # settings.json 의 enabledPlugins 에 thiscode 가 켜져 있는가(마켓 설치 축).
@@ -199,13 +281,34 @@ if [ "$VERIFY" -eq 1 ] && [ "$PLUGIN_MODE" -eq 1 ]; then
       missing=$((missing + 1))
     fi
   done
-  # ③ 필수 훅 전부
+  # ③ 필수 훅 전부 — «래퍼를 앞세운» 명령 안에 있어야 한다.
+  #    이름이 어딘가 있기만 하면 통과시키면, 래퍼를 우회한 등록도 「래퍼 경유」로 보고된다.
   for want in $REQUIRED_HOOKS; do
-    if ! printf '%s\n' "$cmds" | command grep -q -- "$want"; then
-      echo "빠짐 — hooks.json 에 훅이 등록돼 있지 않다: $want"
+    if ! _wrapped_has "$cmds" "$want"; then
+      echo "빠짐 — hooks.json 에 훅이 래퍼 경유로 등록돼 있지 않다: $want"
       missing=$((missing + 1))
     fi
   done
+  # ③′ 래퍼를 «거치지 않는» 명령 — 그 훅은 일반 세션에서도 돈다
+  bare=0
+  bare_first=""
+  oldifs="$IFS"; IFS='
+'
+  for c in $cmds; do
+    [ -z "$c" ] && continue
+    case "$c" in
+      *"hooks/lib/bot-only.sh"*) ;;
+      *)
+        bare=$((bare + 1))
+        [ -n "$bare_first" ] || bare_first="$c"
+        ;;
+    esac
+  done
+  IFS="$oldifs"
+  if [ "$bare" -gt 0 ]; then
+    echo "빠짐 — 래퍼를 거치지 않는 명령 $bare 건: $bare_first"
+    missing=$((missing + bare))
+  fi
   # ④ ${CLAUDE_PLUGIN_ROOT} 를 실제 플러그인 경로로 바꿔 파일 실재 확인.
   #    등록만 되고 파일이 없으면 «조용한 무반응» 이 된다 — 병합 모드와 같은 축이다.
   paths="$(printf '%s\n' "$cmds" | command grep -o '\${CLAUDE_PLUGIN_ROOT}/[A-Za-z0-9._/-]*' | sort -u)"
@@ -225,12 +328,22 @@ if [ "$VERIFY" -eq 1 ] && [ "$PLUGIN_MODE" -eq 1 ]; then
     echo "빠짐 — 봇 세션 래퍼가 실재하지 않는다: $BOT_ONLY"
     missing=$((missing + 1))
   fi
-  # ⑥ 옛 병합 잔존 = 같은 훅이 두 번 발화한다
-  stale="$(_stale_count "$SETTINGS")"
-  if [ "$stale" -gt 0 ] 2>/dev/null; then
-    echo "빠짐 — 옛 병합 항목 $stale 건 잔존(이중 발화): $SETTINGS"
-    echo "  지우려면: bash scripts/install-hooks.sh --home \"$HOME_DIR\""
+  # ⑥ 옛 병합 잔존 = 같은 훅이 두 번 발화한다.
+  #    파싱 실패를 «잔존 0» 으로 읽지 않는다 — 못 읽은 것과 없는 것은 다르다.
+  if [ -f "$SETTINGS" ] && [ ! -s "$SETTINGS" ]; then
+    echo "주의 — settings.json 이 비어 있다: $SETTINGS"
+  elif [ -f "$SETTINGS" ] && ! _json_ok "$SETTINGS"; then
+    echo "install-hooks: $SETTINGS 를 JSON 으로 읽을 수 없다 — 손으로 고칠 것"
     missing=$((missing + 1))
+  else
+    stale="$(_stale_count "$SETTINGS")"
+    if [ "$stale" -gt 0 ] 2>/dev/null; then
+      echo "빠짐 — 옛 병합 항목 $stale 건 잔존(이중 발화): $SETTINGS"
+      echo "  지우려면: bash scripts/install-hooks.sh --home \"$HOME_DIR\""
+      missing=$((missing + 1))
+    fi
+    # 소유 불명 동명 항목은 «경고만» — 계수에 넣으면 남의 훅 때문에 검사가 거짓 실패한다.
+    _warn_ambiguous "$SETTINGS"
   fi
   # ⑦ 플러그인 활성 — 경고만 낸다(개발 체크아웃을 거짓 실패로 만들지 않는다)
   if _plugin_enabled "$SETTINGS"; then
@@ -306,7 +419,16 @@ if [ "$PLUGIN_MODE" -eq 1 ]; then
       echo "install-hooks: jq 도 node 도 없어 $SETTINGS 를 읽을 수 없다 — 둘 중 하나를 설치할 것" >&2
       exit 2
     fi
-    stale="$(_stale_count "$SETTINGS")"
+    # 0 바이트는 «없음» 과 같이 본다. 깨진 JSON 은 못 읽은 것이지 «잔존 0» 이 아니다 —
+    # 그 상태에서 손대면 사용자가 못 되돌린다. 그래서 한 글자도 건드리지 않고 멈춘다.
+    if [ ! -s "$SETTINGS" ]; then
+      echo "주의 — settings.json 이 비어 있다: $SETTINGS"
+    elif ! _json_ok "$SETTINGS"; then
+      echo "install-hooks: $SETTINGS 를 JSON 으로 읽을 수 없다 — 손으로 고칠 것" >&2
+      exit 2
+    else
+      stale="$(_stale_count "$SETTINGS")"
+    fi
   fi
 
   if [ "$DRY_RUN" -eq 1 ]; then
@@ -317,6 +439,7 @@ if [ "$PLUGIN_MODE" -eq 1 ]; then
     else
       echo "[미리보기] 지울 옛 병합 항목 없음."
     fi
+    _warn_ambiguous "$SETTINGS"
     echo "[미리보기] 파일은 바꾸지 않았다."
     exit 0
   fi
@@ -324,8 +447,10 @@ if [ "$PLUGIN_MODE" -eq 1 ]; then
   if [ "$stale" -gt 0 ] 2>/dev/null; then
     BACKUP="$SETTINGS.bak-$(date +%s)"
     cp "$SETTINGS" "$BACKUP" 2>/dev/null || true
-    if _strip_stale "$SETTINGS" "$SETTINGS.tmp"; then
-      mv "$SETTINGS.tmp" "$SETTINGS"
+    KILL="$(_stale_list "$SETTINGS")"
+    # 제자리 쓰기 — mv 로 갈아치우면 권한이 넓어지고(600→644) 심링크가 일반 파일로 바뀐다.
+    if _strip_stale "$SETTINGS" "$SETTINGS.tmp" "$KILL" && cat "$SETTINGS.tmp" > "$SETTINGS"; then
+      rm -f "$SETTINGS.tmp"
       echo "옛 병합 항목 $stale 건 제거 — $SETTINGS (백업 $BACKUP · 이중 발화 차단)"
     else
       rm -f "$SETTINGS.tmp"
@@ -334,6 +459,7 @@ if [ "$PLUGIN_MODE" -eq 1 ]; then
     fi
   fi
 
+  _warn_ambiguous "$SETTINGS"
   echo "플러그인이 훅을 직접 싣는다 — settings.json 병합은 하지 않는다 ($HOOKS_JSON · 봇 세션에서만 동작)"
   echo "검사하려면: bash scripts/install-hooks.sh --verify --home \"$HOME_DIR\""
   exit 0
@@ -439,6 +565,7 @@ fs.writeFileSync(process.argv[3], JSON.stringify(merged, null, 2));' "$SETTINGS"
   if [ $? -ne 0 ]; then rm -f "$SETTINGS.tmp"; echo "install-hooks: 병합 실패(node)" >&2; exit 2; fi
 fi
 
-mv "$SETTINGS.tmp" "$SETTINGS"
+# 제자리 쓰기 — mv 는 권한을 넓히고(600→644) 심링크를 일반 파일로 갈아치운다.
+cat "$SETTINGS.tmp" > "$SETTINGS" && rm -f "$SETTINGS.tmp"
 echo "훅 병합 완료 — $SETTINGS (엔진 $ENGINE · 백업 $BACKUP)"
 echo "검사하려면: bash scripts/install-hooks.sh --verify --home \"$HOME_DIR\""

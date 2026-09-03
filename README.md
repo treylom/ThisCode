@@ -405,7 +405,7 @@ If your bot's responses don't reflect the persona, the SessionStart hook is not 
 /thiscode:install-hooks
 ```
 
-This verifies that `hooks/hooks.json` carries `bot-session-init.sh` and that the file is really there, and removes any duplicate left in `~/.claude/settings.json` by the older merge path — existing hooks of your own are preserved.
+This verifies that `hooks/hooks.json` carries `bot-session-init.sh` and that the file is really there, and removes any duplicate left in `~/.claude/settings.json` by the older merge path — existing hooks of your own are preserved. An entry that merely shares a hook file name but shows no sign of belonging to ThisCode is never deleted: it is listed as a warning for you to review by hand.
 
 ### GraphRAG server won't start (vendor dependency + ~/.cache venv)
 

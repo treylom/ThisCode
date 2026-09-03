@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync, cpSync, symlinkSync,
+  chmodSync, statSync,
 } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -357,7 +358,7 @@ test('P5 — 미끼: hooks.json 이 깨지면 --verify 가 1 로 잡는다', { s
 // jq 를 못 쓰는 환경(Windows 등)에서 node 폴백이 «같은 규칙» 인지 실측한다.
 // PATH 에서 jq 만 빼는 건 불가능하다 — 필요한 도구만 담은 최소 PATH 를 만든다.
 function minimalBin(dir) {
-  const need = ['bash', 'node', 'dirname', 'date', 'cp', 'mv', 'rm', 'sed', 'grep', 'sort', 'cat', 'mkdir'];
+  const need = ['bash', 'node', 'dirname', 'date', 'cp', 'mv', 'rm', 'sed', 'grep', 'sort', 'cat', 'mkdir', 'awk'];
   const bin = join(dir, 'bin');
   mkdirSync(bin, { recursive: true });
   for (const t of need) {
@@ -392,4 +393,209 @@ test('P6 — jq 없는 PATH(node 엔진)에서도 같은 결과: 잔존 제거 +
     const ver = spawnSync(join(bin, 'bash'), [INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO], { encoding: 'utf8', env });
     assert.equal(ver.status, 0, `node 엔진 검사가 실패했다: ${ver.stdout}`);
   }));
+});
+
+// ───────────────────────────────────── P7~P9 잔존 자의 «소유» 판정 (F1)
+// 이름이 같다고 우리 것이 아니다. 이 시험들이 재는 것은 «남의 살아있는 훅을 안 지우는가» 다.
+// 주의: 임시 디렉터리 이름에 thiscode 가 들어가면 소유 규칙(경로에 thiscode)이 먼저 걸려
+//   시험이 성립하지 않는다 — 남의 것을 흉내 내는 경로는 중립 접두어로 만든다.
+const withNeutralTmp = (fn) => withTmp('zz-user-side-', fn);
+
+test('P7 — F1 음성: 이름만 같은 «살아있는 남의 훅» 은 지우지 않고 경고만 한다', { skip: skipNoBash }, () => {
+  withHome((home) => withNeutralTmp((usr) => {
+    const userHook = join(usr, 'user-hooks', 'hooks', 'rule-router.sh');
+    mkdirSync(dirname(userHook), { recursive: true });
+    writeFileSync(userHook, '#!/bin/bash\nexit 0\n');
+    const body = JSON.stringify({
+      hooks: { UserPromptSubmit: [{ matcher: '', hooks: [{ type: 'command', command: `bash '${userHook}'`, timeout: 3 }] }] },
+    }, null, 2);
+    writeFileSync(settingsPath(home), body);
+
+    const dry = sh([INSTALL_HOOKS, '--dry-run', '--home', home, '--plugin-dir', REPO]);
+    assert.equal(dry.code, 0, `dry-run 이 실패했다: ${dry.err}`);
+    assert.match(dry.out, /지울 옛 병합 항목 없음/, '남의 살아있는 훅을 지울 목록에 올렸다');
+    assert.match(dry.out, /주의 — 이름은 같지만 소유가 불명한 항목 1 건/, '손대지 않은 항목을 알려주지 않는다');
+
+    const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
+    assert.equal(r.code, 0, `실패했다: ${r.err}`);
+    assert.equal(read(settingsPath(home)), body, '지울 것이 없는데 파일을 다시 썼다');
+    assert.equal(commandsOf(home).filter((c) => c.includes('rule-router.sh')).length, 1, '남의 살아있는 훅을 지웠다');
+
+    const ver = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]);
+    assert.equal(ver.code, 0, `남의 훅 때문에 검사가 거짓 실패했다: ${ver.out}`);
+  }));
+});
+
+test('P8 — F1 양성: 소유 표식(경로 thiscode·형제 plugin.json·죽은 항목·래퍼) 4종은 전부 지운다', { skip: skipNoBash }, () => {
+  withHome((home) => withNeutralTmp((usr) => {
+    // ⓒ 다른 체크아웃 — 경로에 thiscode 는 없지만 형제로 우리 plugin.json 이 실재한다
+    const other = join(usr, 'other-checkout');
+    mkdirSync(join(other, '.claude-plugin'), { recursive: true });
+    mkdirSync(join(other, 'hooks'), { recursive: true });
+    writeFileSync(join(other, '.claude-plugin', 'plugin.json'), JSON.stringify({ name: 'thiscode', version: '1.2.7' }, null, 2));
+    writeFileSync(join(other, 'hooks', 'reply-gate.sh'), '#!/bin/bash\nexit 0\n');
+    // ⓔ 래퍼를 앞세운 옛 병합 항목
+    const wrapped = `bash "${join(usr, 'wrap', 'hooks', 'lib', 'bot-only.sh')}" "${join(usr, 'wrap', 'hooks', 'reply-gate.sh')}"`;
+
+    writeFileSync(settingsPath(home), JSON.stringify({
+      hooks: {
+        SessionStart: [{ matcher: '', hooks: [
+          { type: 'command', command: "bash '/Users/somebody/.claude/plugins/cache/mk/thiscode/1.2.7/hooks/reply-gate.sh'", timeout: 5 },
+        ] }],
+        UserPromptSubmit: [{ matcher: '', hooks: [
+          { type: 'command', command: `bash '${join(other, 'hooks', 'reply-gate.sh')}'`, timeout: 5 },
+        ] }],
+        PreToolUse: [{ matcher: 'x', hooks: [
+          { type: 'command', command: "python3 '/opt/nowhere-zzq/hooks/dispatch-room-gate.py'", timeout: 5 },
+        ] }],
+        Stop: [{ matcher: '', hooks: [
+          { type: 'command', command: wrapped, timeout: 5 },
+          { type: 'command', command: "bash '/Users/somebody/my-own-hook.sh'", timeout: 7 },
+        ] }],
+      },
+    }, null, 2));
+
+    const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
+    assert.equal(r.code, 0, `실패했다: ${r.err}`);
+    assert.match(r.out, /옛 병합 항목 4 건 제거/, `소유 표식이 있는 4건을 다 못 지웠다: ${r.out}`);
+    const cmds = commandsOf(home);
+    assert.equal(cmds.length, 1, `남은 항목이 1개가 아니다: ${JSON.stringify(cmds)}`);
+    assert.equal(cmds.filter((c) => c.includes('my-own-hook.sh')).length, 1, '대조군(우리 것이 아닌 훅)을 지웠다');
+    assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]).code, 0, '지웠는데도 검사가 실패한다');
+  }));
+});
+
+test('P9 — F1 변수 경로: 전개하지 않은 $HOME 경로를 «죽은 항목» 으로 오판하지 않는다', { skip: skipNoBash }, () => {
+  withHome((home) => {
+    const body = JSON.stringify({
+      hooks: { Stop: [{ matcher: '', hooks: [{ type: 'command', command: 'bash "$HOME/x/hooks/reply-gate.sh"', timeout: 5 }] }] },
+    }, null, 2);
+    writeFileSync(settingsPath(home), body);
+    const dry = sh([INSTALL_HOOKS, '--dry-run', '--home', home, '--plugin-dir', REPO]);
+    assert.match(dry.out, /지울 옛 병합 항목 없음/, '변수 경로를 «파일 부재» 로 읽고 지우려 한다');
+    assert.match(dry.out, /주의 — 이름은 같지만 소유가 불명한 항목 1 건/, '불명 항목이라고 알려주지 않는다');
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]).code, 0);
+    assert.equal(read(settingsPath(home)), body, '보존해야 할 항목을 지웠다');
+    assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]).code, 0, '거짓 실패한다');
+  });
+});
+
+// ───────────────────────────────────── P10 «래퍼 경유» 를 주장만 하지 않는가 (F2)
+test('P10 — F2: 래퍼를 우회한 hooks.json 을 --verify 가 1 로 잡는다', { skip: skipNoBash }, () => {
+  withHome((home) => withPluginCopy((plug) => {
+    const hj = join(plug, 'hooks', 'hooks.json');
+    const j = JSON.parse(read(hj));
+    for (const ev of Object.keys(j.hooks))
+      for (const g of j.hooks[ev]) for (const h of g.hooks || [])
+        h.command = h.command.replace('bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh" ', 'bash ');
+    const mutated = Object.keys(j.hooks).flatMap((ev) => j.hooks[ev].flatMap((g) => (g.hooks || []).map((h) => h.command)));
+    assert.equal(mutated.filter((c) => c.includes('bot-only.sh')).length, 0, '미끼가 안 심겼다 — 명령에 래퍼가 남아 있다');
+    assert.equal(mutated.length, 7, `명령이 7개가 아니다 (${mutated.length})`);
+    writeFileSync(hj, JSON.stringify(j, null, 2));
+
+    const r = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', plug]);
+    assert.equal(r.code, 1, '7훅 전부 래퍼를 우회하는데 검사가 통과했다 — 「래퍼 경유」는 주장일 뿐이다');
+    assert.match(r.out, /래퍼를 거치지 않는 명령 7 건/, `우회 건수를 안 알려준다: ${r.out}`);
+  }));
+});
+
+// ───────────────────────────────────── P11 파싱 실패 ≠ 잔존 0 (F4)
+test('P11 — F4: settings.json 을 못 읽으면 «잔존 0» 이 아니라 실패다 (파일 무접촉)', { skip: skipNoBash }, () => {
+  withHome((home) => {
+    const broken = '{"hooks":';
+    writeFileSync(settingsPath(home), broken);
+    assert.equal(sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]).code, 1,
+      '깨진 settings.json 을 「검사 통과」로 읽었다');
+    assert.equal(sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]).code, 2,
+      '못 읽는 파일에 손을 대고 성공이라 했다');
+    assert.equal(read(settingsPath(home)), broken, '깨진 파일의 바이트가 바뀌었다');
+    assert.equal(readdirSync(join(home, '.claude')).filter((f) => f.includes('.bak-')).length, 0, '읽지도 못한 파일을 백업했다');
+
+    // 0 바이트는 «없음» 과 같이 본다 — 경고는 하되 실패로 세지 않는다
+    writeFileSync(settingsPath(home), '');
+    const empty = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', REPO]);
+    assert.equal(empty.code, 0, `빈 파일을 실패로 셌다: ${empty.out}`);
+    assert.match(empty.out, /비어 있다/, '비어 있다고 알려주지 않는다');
+  });
+});
+
+// ───────────────────────────────────── P12 제자리 쓰기 (F5)
+test('P12 — F5: 잔존을 지워도 settings.json 의 권한이 넓어지지 않는다', { skip: skipNoBash }, (t) => {
+  if (process.platform === 'win32') return t.skip('Windows 에는 POSIX 권한 비트가 없다');
+  return withHome((home) => {
+    writeFileSync(settingsPath(home), JSON.stringify({
+      hooks: { Stop: [{ matcher: '', hooks: [
+        { type: 'command', command: `bash '${REPO}/hooks/reply-gate.sh'`, timeout: 5 },
+        { type: 'command', command: "bash '/Users/somebody/my-own-hook.sh'", timeout: 7 },
+      ] }] },
+    }, null, 2));
+    chmodSync(settingsPath(home), 0o600);
+    const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
+    assert.equal(r.code, 0, `실패했다: ${r.err}`);
+    assert.match(r.out, /옛 병합 항목 1 건 제거/, '잔존을 안 지웠다 — 권한 시험이 성립하지 않는다');
+    const mode = statSync(settingsPath(home)).mode & 0o777;
+    assert.equal(mode.toString(8), '600', `권한이 600 에서 ${mode.toString(8)} 로 넓어졌다`);
+  });
+});
+
+// ───────────────────────────────────── P13 값 없는 인자 (F9)
+test('P13 — F9: 값 없는 --home/--plugin-dir 은 무한 루프가 아니라 rc 2 로 끝난다', { skip: skipNoBash }, () => {
+  const r = spawnSync('bash', [INSTALL_HOOKS, '--home'], { encoding: 'utf8', timeout: 5000 });
+  assert.equal(r.status, 2, `rc 가 2 가 아니다 (${r.status} · signal ${r.signal}) — 값 없는 인자에서 멈추지 않는다`);
+  assert.equal(r.stdout ?? '', '', 'stdout 으로 뭔가 샜다');
+  assert.equal((r.stderr ?? '').trim().split('\n').length, 1, `stderr 가 1줄이 아니다: ${JSON.stringify(r.stderr)}`);
+  const r2 = spawnSync('bash', [INSTALL_HOOKS, '--plugin-dir'], { encoding: 'utf8', timeout: 5000 });
+  assert.equal(r2.status, 2, `--plugin-dir 도 같아야 한다 (${r2.status} · signal ${r2.signal})`);
+});
+
+// ───────────────────────────────────── P14 계수 자 (F6)
+test('P14 — F6: 개행이 든 명령 1건을 1건으로 센다 (줄 수가 아니라 항목 수)', { skip: skipNoBash }, () => {
+  withHome((home) => {
+    const cmd = "bash '/opt/nowhere-zzq/hooks/reply-gate.sh'\nbash '/opt/nowhere-zzq/hooks/rule-router.sh'";
+    writeFileSync(settingsPath(home), JSON.stringify({
+      hooks: { Stop: [{ matcher: '', hooks: [{ type: 'command', command: cmd, timeout: 5 }] }] },
+    }, null, 2));
+    const dry = sh([INSTALL_HOOKS, '--dry-run', '--home', home, '--plugin-dir', REPO]);
+    assert.match(dry.out, /지울 옛 병합 항목 1 건/, `개행을 항목으로 셌다: ${dry.out}`);
+    const r = sh([INSTALL_HOOKS, '--home', home, '--plugin-dir', REPO]);
+    assert.match(r.out, /옛 병합 항목 1 건 제거/, `제거 계수도 1 이어야 한다: ${r.out}`);
+    assert.equal(commandsOf(home).length, 0, '개행이 든 명령을 못 지웠다');
+  });
+});
+
+// ───────────────────────────────────── P15 인터프리터 부재·확장자 (F10·F8)
+test('P15 — F10: python3 가 없으면 rc127 이 아니라 건너뛴다 (stderr 1줄 · exit 0)', { skip: skipNoBash }, (t) => {
+  return withTmp('thiscode-pj-nopy-', (dir) => {
+    const bin = join(dir, 'bin');
+    mkdirSync(bin, { recursive: true });
+    for (const tool of ['bash', 'cat']) {
+      let src = null;
+      for (const d of ['/bin', '/usr/bin']) if (existsSync(join(d, tool))) { src = join(d, tool); break; }
+      if (!src) return t.skip('최소 PATH 를 만들 수 없다');
+      symlinkSync(src, join(bin, tool));
+    }
+    const probe = spawnSync(join(bin, 'bash'), ['-c', 'command -v python3'], { encoding: 'utf8', env: { PATH: bin } });
+    if (probe.status === 0) return t.skip('최소 PATH 에서도 python3 가 보인다 — 이 시험은 성립하지 않는다');
+    const pyStub = join(dir, 'stub.py');
+    writeFileSync(pyStub, 'import sys\nsys.exit(3)\n');
+    const r = spawnSync(join(bin, 'bash'), [BOT_ONLY, pyStub], {
+      encoding: 'utf8', input: '{"hook":"x"}', env: { PATH: bin, DISCORD_STATE_DIR: join(dir, 'discord-testbot') },
+    });
+    assert.equal(r.status, 0, `python3 가 없다고 rc ${r.status} 로 끝났다 — fail-open 계약이 깨진다`);
+    assert.equal(r.stdout ?? '', '', 'stdout 으로 뭔가 샜다');
+    assert.equal((r.stderr ?? '').trim().split('\n').length, 1, `stderr 가 1줄이 아니다: ${JSON.stringify(r.stderr)}`);
+    assert.match(r.stderr, /python3 이 없어/, '무엇이 없어서 건너뛰는지 알려주지 않는다');
+    return undefined;
+  });
+});
+
+test('P15 — F8: 대문자 .PY 확장자도 python3 로 실행한다', { skip: skipNoBash || skipNoPy }, () => {
+  withTmp('thiscode-pj-stub-', (dir) => {
+    const mark = join(dir, 'py-upper-ran.txt');
+    const pyStub = join(dir, 'stub-upper.PY');
+    writeFileSync(pyStub, `import sys\nopen(r"${mark}", "w").write("PY:" + sys.stdin.read())\nsys.exit(3)\n`);
+    const r = sh([BOT_ONLY, pyStub], { env: { DISCORD_STATE_DIR: join(dir, 'discord-testbot') }, input: 'PAYLOAD' });
+    assert.equal(r.code, 3, `.PY 훅이 python3 로 실행되지 않았다 (${r.code}) — bash 로 넘어갔다: ${r.err}`);
+    assert.equal(read(mark), 'PY:PAYLOAD', '.PY 훅이 python3 로 stdin 을 받지 못했다');
+  });
 });
