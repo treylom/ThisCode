@@ -209,11 +209,30 @@ chmod 600 "$BOT_DIR/.env" 2>/dev/null || true   # Windows는 무의미 — 검�
 
 DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allowFrom` 에 사용자 Discord ID 를 직접 등록한다. 서버는 **매 인바운드 메시지마다 access.json 을 재독**하므로 수정 즉시 반영(재시작 불필요).
 
-1. 사용자 Discord ID(스노우플레이크) 확인: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
+1. **사용자 Discord ID 자동 취득 (기본)** — Step 3 에서 이미 로그인된 브라우저 세션을 그대로 쓴다. 사용자에게 ID 를 **묻지 않고** 아래 순서로 가져온다.
+
+   | 단 | 언제 쓰나 | 무엇을 하나 |
+   |---|---|---|
+   | ① 포털 응답에서 읽기 | 브라우저 도구가 네트워크 응답 본문을 보여줄 때 | `https://discord.com/developers/applications` 를 연다 → 포털이 스스로 부르는 `GET /api/v9/users/@me` 의 **응답 본문**에서 `id` 와 `username` 만 읽는다 |
+   | ② 화면에서 읽기 | ①이 없거나 실패했을 때 | `https://discord.com/channels/@me` 를 연다 → 왼쪽 아래 사용자 패널(`section[aria-label*="User"]`)의 아바타 그림 주소 `/avatars/<사용자ID>/…` 에서 ID 를 읽는다(화면 읽기만). 기본 아바타라 주소에 ID 가 없으면 ③ |
+   | ③ 사람에게 부탁 | ①②가 모두 실패했을 때만 | 아래 **4.7-b** 로 간다 |
+
+   🚫 **어느 단에서도 브라우저 저장소·쿠키·인증 헤더 값을 읽거나 만들지 않는다.** 봇은 로그인 비밀값을 보지도 만지지도 않고, 그 값을 화면·기록·파일에 남기지 않는다. ①②는 공개된 응답과 화면만 읽는다.
+
+   시도했으면 **성공이든 실패든 반드시 남긴다**:
+
+   ```bash
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch ok
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail "<무엇이 막았는지>"
+   ```
+
+   사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없다.
+
+   가져왔으면 **묻지 말고 보여준다** — 「`<username>` 님(ID 끝 4자리 `****`)으로 등록하겠습니다. 맞나요?」 1줄이면 된다. ②로 얻어 이름이 없으면 「아바타에서 읽은 ID, 끝 4자리 `****`」로 보여준다.
 2. 생성 (jq·python 불요 — node 한 줄, Windows 스토어 스텁 이슈 회피):
 
 ```bash
-USER_ID="<복사한 사용자 ID>"
+USER_ID="<자동 취득한 사용자 ID>"
 node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.error('❌ Discord 사용자 ID 형식이 아님 (17~20자리 숫자): ' + id); process.exit(1); } require('fs').writeFileSync(require('path').join(process.argv[1], 'access.json'), JSON.stringify({allowFrom: [id], ackReaction: ''}, null, 2)); console.log('✅ access.json 등록: ' + id)" "$BOT_DIR" "$USER_ID"
 ```
 
@@ -238,6 +257,18 @@ node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.erro
 > - `requireMention: true` = 그 채널에선 `<@봇ID>` 멘션이 있을 때만 반응(공용 채널 기본값). 직통 채널은 `false`.
 > - 스레드는 **부모 채널 등록을 상속**한다 — 스레드마다 따로 넣지 않아도 된다.
 > - access.json 은 **매 인바운드마다 재독**되므로 수정 즉시 반영(재시작 불필요).
+
+### 4.7-b 수동 취득(자동 3단 실패 시)
+
+> **이 절은 「자동 시도가 실패로 기록된 뒤」에만 연다.** 시도 «전»에 아래를 부르면 `exit 1`(= 아직 시도 안 함)이 돌아온다. 그러면 안내하지 말고 위 ①②로 돌아가 한 번 더 시도한다.
+>
+> ```bash
+> bash <플러그인루트>/scripts/install-gate.sh discord_user_id_autofetch
+> ```
+>
+> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail "<사유>"` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
+
+자동 취득이 모두 실패했을 때만 사용자에게 부탁한다: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
 
 ### Step 4.5. 페르소나·직무 프롬프트 고도화 (`/prompt` 연동 — 설치 권장)
 
