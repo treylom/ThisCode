@@ -96,7 +96,7 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 - `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
 - `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
-- `/thiscode:install-hooks` — SessionStart·UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (**플러그인 설치만으로 자동 등록되지 않음 — 한 번 직접 호출 필요**)
+- `/thiscode:install-hooks` — SessionStart / UserPromptSubmit / PreToolUse / Stop 훅의 등록 상태를 검사합니다 (**플러그인을 설치하면 훅은 이미 등록됩니다** — 동봉된 `hooks/hooks.json` 을 Claude Code 가 직접 싣습니다). 훅은 **봇 세션에서만**(`DISCORD_STATE_DIR` 이 있을 때) 동작하고, 일반 세션에서는 아무 출력도 동작 변화도 없습니다. 플러그인 설치본에서는 등록을 검사하고 옛 `~/.claude/settings.json` 병합 잔존을 정리하며(안 지우면 같은 훅이 두 번 발화), `hooks/hooks.json` 이 없는 체크아웃에서는 예전처럼 병합합니다. `/thiscode:create-bot` 이 같은 `scripts/install-hooks.sh` 를 대신 실행합니다.
 - … 그 외 다수 — **`/thiscode:help` 가 설명과 함께 전량을 나열합니다** (문서에 박아둔 목록이 아니라, 실행 시점에 두 표면을 직접 훑습니다). `/` 를 입력해 `thiscode:` 로 필터해도 같습니다
 
 ### 스킬
@@ -200,7 +200,7 @@ Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` �
 아래는 **대표 진입점**입니다:
 
 - `/thiscode:start` — 메인 wizard (환경 인식 + Discord 봇 셋업 + 첫 대화 검증)
-- `/thiscode:install-hooks` — SessionStart + UserPromptSubmit hook 을 `~/.claude/settings.json` 에 안전 병합 (기존 hook 보존)
+- `/thiscode:install-hooks` — 플러그인이 `hooks/hooks.json` 으로 이미 등록한 SessionStart + UserPromptSubmit + **Stop(회의 재독)** 훅을 검사하고, 옛 `~/.claude/settings.json` 병합 잔존을 정리합니다(기존 사용자 훅 보존). 봇 세션 밖에서는 조용히 통과합니다.
 - `/thiscode:create-bot` — 신규 봇 디렉토리 + soul.md template 셋업
 - `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설
 - `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
@@ -210,7 +210,7 @@ Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` �
 - `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
 - … 그 밖에 다수 (`/` → `thiscode:` 필터로 현재 세션의 전량 확인)
 
-> ⚠️ **훅은 플러그인 설치만으로 자동 등록되지 않습니다.** `/thiscode:install-hooks` 를 **한 번 직접 호출**해야 `~/.claude/settings.json` 에 병합됩니다. 이걸 건너뛰면 soul.md 가 그냥 markdown 파일로 방치되어 페르소나가 주입되지 않습니다.
+> ℹ️ **훅은 플러그인 설치와 함께 등록됩니다**(`hooks/hooks.json` 동봉). 단 **봇 세션에서만** 동작하므로, `DISCORD_STATE_DIR` 없이 켠 세션에서는 soul.md 가 주입되지 않습니다 — 그건 고장이 아니라 설계입니다. 등록 상태가 궁금하면 `/thiscode:install-hooks` 로 검사하세요.
 
 순정 Claude Code 부트스트랩 (hook + 봇 없는 상태):
 
@@ -411,13 +411,13 @@ git push
 
 ### soul.md 페르소나 "유령" (페르소나가 안 실림)
 
-봇 답변에 페르소나가 반영되지 않는다면 SessionStart 훅이 등록되지 않았을 가능성이 큽니다:
+봇 답변에 페르소나가 반영되지 않는다면 SessionStart 훅이 그 세션에 닿지 않은 것입니다. 플러그인이 설치 시 등록해 두고 훅은 `DISCORD_STATE_DIR` 이 없으면 일부러 조용히 지나가므로, 흔한 원인은 둘 — 그 변수 없이 켠 세션이거나, 플러그인이 꺼져 있는 경우입니다. 등록 상태 검사:
 
 ```
 /thiscode:install-hooks
 ```
 
-기존 훅을 보존하면서 bot-session-init.sh 훅을 `~/.claude/settings.json`에 안전하게 병합합니다. 훅 파일명만 같고 ThisCode 소유 표식이 없는 항목은 지우지 않고 「손으로 검토」 경고로만 보여줍니다.
+`hooks/hooks.json` 에 `bot-session-init.sh` 가 실려 있고 그 파일이 실제로 있는지 확인하고, 옛 병합 경로가 `~/.claude/settings.json` 에 남긴 중복 항목을 제거합니다 — 사용자가 직접 넣은 훅은 보존하고, 파일명만 같고 ThisCode 소유 표식이 없는 항목은 지우지 않고 「손으로 검토」 경고로만 보여줍니다.
 
 ### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 
