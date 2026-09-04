@@ -1,4 +1,4 @@
-# 브라우저 설치 수동 복구 카드 A~E
+# 브라우저 설치 수동 복구 카드 A~F
 
 자동 설치가 멈춘 단계와 같은 글자의 카드부터 시작합니다. 한 카드를 마치면 `/thiscode:install-browser`를 다시 실행하면 통과한 단계는 건너뜁니다.
 
@@ -62,6 +62,30 @@ npx -y --package=@playwright/mcp@0.0.80 playwright install chromium
 ```
 
 다운로드가 끝나면 `/thiscode:install-browser`를 다시 실행합니다.
+
+## 카드 F — Playwright 연결이 두 곳에 등록되어 있음
+
+프로젝트 폴더에서 지금 등록 상태를 확인합니다.
+
+### Windows PowerShell·macOS·Linux·WSL 공통
+
+```text
+claude mcp list
+```
+
+화면에 `[Conflicting scopes]` 문단이나 `user (...)` 표기가 보이면 이 카드에 해당합니다. 그다음 사용자 전체 범위의 연결만 지웁니다.
+
+```text
+claude mcp remove -s user playwright
+```
+
+지운 뒤 `/thiscode:install-browser`를 다시 실행합니다.
+
+다른 작업에서 사용자 전체 연결이 필요했다면 실습이 끝난 뒤 아래 명령으로 되돌릴 수 있습니다.
+
+```text
+claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+```
 
 ## 카드 E — 4단계 실행 확인
 
