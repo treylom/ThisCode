@@ -50,13 +50,13 @@ ThisCode 1.4.0 부터 지식관리·vault 검색 스킬은 이 레포에 들어 
 제공합니다(`claude plugin marketplace add treylom/tofukyung-plugins` +
 `claude plugin install km@tofukyung-plugins`). Codex 쪽 사용법은 그 플러그인 문서를 따릅니다.
 
-ThisCode 의 나머지 스킬을 Codex 개인 스캔 경로(`~/.agents/skills/`)로 내보내는 통로는 그대로
-있습니다(Claude Code `~/.claude/skills/` ↔ Codex `~/.agents/skills/` 1:1,
-[ThisCodex/docs/skill-portability.md](https://github.com/treylom/ThisCodex/blob/master/docs/skill-portability.md) §1·§2):
+1.4.0 부터 ThisCode 의 Codex 스킬 내보내기 목록은 비어 있습니다. 과거 목록은 KM 계열뿐이었고,
+그 기능은 km 플러그인이 Codex 를 직접 지원하므로 ThisCode 에서 내보낼 항목이 없습니다.
+`--check` 와 `--apply` 는 이 상태를 "nothing to export"로 알립니다.
 
 ```bash
-node bin/thiscode.mjs --check    # 미리보기(무변경)
-node bin/thiscode.mjs --apply    # ~/.agents/skills/ 로 sync (harness=codex/both 선택 시)
+node bin/thiscode.mjs --check    # 미리보기(무변경, nothing to export)
+node bin/thiscode.mjs --apply    # 내보낼 항목 없음 (harness=codex/both 선택 시에도 동일)
 ```
 
 ## 3. Tier 2 — vault-search MCP (5분, 권장)

@@ -1,6 +1,6 @@
 // scripts/lib/codexsync.mjs
 // Node port of scripts/sync-skills-to-codex.sh (baseline bc37eec). One-way:
-// ThisCode/skills/<km> → <codexSkillsDir>/<km>/. ThisCode is SoT; copies not edited.
+// ThisCode/skills/<skill> → <codexSkillsDir>/<skill>/. ThisCode is SoT; copies not edited.
 import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -14,17 +14,17 @@ export function compat(_skill) {
   return 'unknown';
 }
 
-export function planCodexSync(srcSkillsDir, destDir) {
+export function planCodexSync(srcSkillsDir, destDir, skills = KM_SKILLS) {
   const plan = [];
-  for (const skill of KM_SKILLS) {
+  for (const skill of skills) {
     const from = join(srcSkillsDir, skill);
     if (existsSync(from)) plan.push({ skill, from, to: join(destDir, skill), compat: compat(skill) });
   }
   return plan;
 }
 
-export function applyCodexSync(srcSkillsDir, destDir) {
-  const plan = planCodexSync(srcSkillsDir, destDir);
+export function applyCodexSync(srcSkillsDir, destDir, skills = KM_SKILLS) {
+  const plan = planCodexSync(srcSkillsDir, destDir, skills);
   if (plan.length === 0) return [];        // DA-review fix: no empty ~/.agents/skills dir on zero-plan
   mkdirSync(destDir, { recursive: true });
   const done = [];

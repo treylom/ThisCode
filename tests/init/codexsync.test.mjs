@@ -39,3 +39,20 @@ test('applyCodexSync copies SKILL.md into dest layer', () => {
   }
   rmSync(src, { recursive: true, force: true }); rmSync(dest, { recursive: true, force: true });
 });
+
+test('injected skill list plans and copies a real temporary skill', () => {
+  const src = mkdtempSync(join(tmpdir(), 'src-'));
+  const dest = mkdtempSync(join(tmpdir(), 'dst-'));
+  const skills = ['tmp-skill'];
+  mkdirSync(join(src, skills[0]), { recursive: true });
+  writeFileSync(join(src, skills[0], 'SKILL.md'), '# temporary');
+
+  const plan = planCodexSync(src, dest, skills);
+  assert.deepEqual(plan.map(({ skill }) => skill), skills);
+  assert.equal(existsSync(join(dest, skills[0])), false, 'plan must remain dry with injected skills');
+
+  const done = applyCodexSync(src, dest, skills);
+  assert.deepEqual(done, skills);
+  assert.equal(readFileSync(join(dest, skills[0], 'SKILL.md'), 'utf8'), '# temporary');
+  rmSync(src, { recursive: true, force: true }); rmSync(dest, { recursive: true, force: true });
+});
