@@ -45,10 +45,11 @@ curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bas
 ### Windows PowerShell·macOS·Linux·WSL 공통
 
 ```text
-claude mcp add -s project playwright -- npx @playwright/mcp@latest
+claude mcp remove -s project playwright
+claude mcp add -s project playwright -- npx @playwright/mcp@0.0.80
 ```
 
-성공 화면에 `project config`와 `playwright`가 보이면 `/thiscode:install-browser`를 다시 실행합니다.
+기존 항목이 없다는 첫 명령의 안내는 그대로 다음 줄로 진행합니다. 두 번째 명령의 성공 화면에 `project config`와 `playwright`가 보이면 `/thiscode:install-browser`를 다시 실행합니다.
 
 ## 카드 D — 3단계 Chromium 준비
 
@@ -57,7 +58,7 @@ claude mcp add -s project playwright -- npx @playwright/mcp@latest
 ### Windows PowerShell·macOS·Linux·WSL 공통
 
 ```text
-npx playwright install chromium
+npx -y --package=@playwright/mcp@0.0.80 playwright install chromium
 ```
 
 다운로드가 끝나면 `/thiscode:install-browser`를 다시 실행합니다.
