@@ -116,7 +116,7 @@ exit 0
 test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
-  assert.match(r.stdout, /\[SELFTEST\] 23\/23 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 25\/25 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
@@ -148,6 +148,35 @@ test('manual fallback keeps the A~E recovery boundary', () => {
   assert.match(text, /4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨/);
   assert.match(text, /\/thiscode:install-browser`를 다시 실행/);
   assert.match(text, /Playwright 연결을 한 곳만 남긴 뒤/);
+});
+
+test('R1: card E exposes exactly one approval and one rerun instruction', () => {
+  const cards = readFileSync(CARDS, 'utf8');
+  const cardE = cards.slice(cards.indexOf('## 카드 E'));
+  assert.match(cardE, /연결을 한 번 승인한 뒤/);
+  assert.match(cardE, /한 번만 재실행/);
+  assert.equal([...cardE.matchAll(/\/thiscode:install-browser/g)].length, 1);
+});
+
+test('R1 mutation: clearing only the approval profile makes the state machine fail', () => {
+  const root = mkdtempSync(join(tmpdir(), 'thiscode-browser-r1-mutation-'));
+  const mutated = join(root, 'install-browser-gate.sh');
+  const original = readFileSync(GATE, 'utf8');
+  const needle = 'out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?';
+  const first = original.indexOf(needle);
+  const second = original.indexOf(needle, first + needle.length);
+  assert.notEqual(first, -1);
+  assert.notEqual(second, -1);
+  const replacement = 'out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?';
+  const text = `${original.slice(0, second)}${replacement}${original.slice(second + needle.length)}`;
+  writeFileSync(mutated, text);
+  chmodSync(mutated, 0o755);
+  const r = spawnSync('/bin/bash', [mutated, '--self-test'], {
+    encoding: 'utf8',
+    env: { ...process.env, LC_ALL: 'C' },
+  });
+  assert.equal(r.status, 1, [r.stdout, r.stderr].filter(Boolean).join('\n'));
+  assert.match(r.stdout, /\[SELFTEST\] 23\/25 passed/);
 });
 
 test('automatic completion and card E share the approval-state sentence', () => {

@@ -144,10 +144,17 @@ mcp_json_has_name() {
   ' "$config" "$MCP_NAME"
 }
 
+run_claude_configured() {
+  if [ -n "${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-}" ]; then
+    CLAUDE_CONFIG_DIR="$THISCODE_BROWSER_CLAUDE_CONFIG_DIR" "$CLAUDE_BIN" "$@"
+  else
+    "$CLAUDE_BIN" "$@"
+  fi
+}
+
 mcp_list_exact() {
-  local cfg out rc
-  cfg="${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-claude.XXXXXX")}" || return 1
-  out="$(cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
+  local out rc
+  out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 1; }
   printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx ${MCP_PACKAGE}" '
     index($0, prefix) == 1 { found = 1 }
@@ -157,7 +164,7 @@ mcp_list_exact() {
 
 mcp_approval_state() {
   local out rc
-  out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
+  out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
   if [[ "$out" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]; then
     return 5
@@ -205,19 +212,18 @@ step2_check() {
 }
 
 step2() {
-  local cfg rc=0 backup=""
+  local rc=0 backup=""
   step1 >/dev/null || return 1
   if mcp_json_exact; then
     note '2단계 기존 프로젝트 등록을 그대로 사용합니다'
   else
     [ "$CHECK_ONLY" -eq 0 ] || { step2_check; return $?; }
     mkdir -p "$PROJECT_DIR"
-    cfg="${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-add.XXXXXX")}" || return 1
     if [ -x "$INSTALL_GATE" ]; then bash "$INSTALL_GATE" browser_mcp_registration >/dev/null 2>&1 || true; fi
     if mcp_json_has_name; then
       backup="$(mktemp "${TMPDIR:-/tmp}/thiscode-browser-mcp-backup.XXXXXX")" || return 1
       cp "$PROJECT_DIR/.mcp.json" "$backup" || return 1
-      (cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp remove -s project "$MCP_NAME") || rc=$?
+      (cd "$PROJECT_DIR" && run_claude_configured mcp remove -s project "$MCP_NAME") || rc=$?
       if [ "$rc" -ne 0 ]; then
         rm -f "$backup"
         record_attempt browser_mcp_registration fail "claude mcp remove exit $rc"
@@ -226,7 +232,7 @@ step2() {
       fi
       rc=0
     fi
-    (cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp add -s project "$MCP_NAME" -- npx "$MCP_PACKAGE") || rc=$?
+    (cd "$PROJECT_DIR" && run_claude_configured mcp add -s project "$MCP_NAME" -- npx "$MCP_PACKAGE") || rc=$?
     if [ "$rc" -ne 0 ]; then
       if [ -n "$backup" ]; then
         if ! cp "$backup" "$PROJECT_DIR/.mcp.json"; then
@@ -482,13 +488,14 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc
+  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc profile profile_log profile_pending_rc profile_approved_rc caller_profile caller_log caller_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
 #!/usr/bin/env bash
 mcp_package="${THISCODE_BROWSER_MCP_PACKAGE:-@playwright/mcp@0.0.80}"
 if [ -n "${FAKE_CLAUDE_CALLED_FILE:-}" ]; then : >"$FAKE_CLAUDE_CALLED_FILE"; fi
+if [ -n "${FAKE_CLAUDE_ENV_LOG:-}" ]; then printf '%s|%s\n' "${CLAUDE_CONFIG_DIR-<unset>}" "$*" >>"$FAKE_CLAUDE_ENV_LOG"; fi
 if [ "${1:-}" = --version ]; then echo '2.test'; exit 0; fi
 if [ "${1:-}" = mcp ] && [ "${2:-}" = add ]; then
   cat >.mcp.json <<JSON
@@ -507,7 +514,8 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
       if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
         echo "playwright: npx $mcp_package - ✔ Connected"
       else
-        echo "playwright: npx $mcp_package - ⏸ Pending approval"
+        printf 'Checking MCP server health…\n\n'
+        echo "playwright: npx $mcp_package - ⏸ Pending approval (run \`claude\` to approve)"
       fi
       ;;
     no_status) echo "playwright: npx $mcp_package" ;;
@@ -544,6 +552,7 @@ exit 2
 FAKE_NPX
   chmod +x "$fake/claude" "$fake/npx"
   old_path="$PATH"; export PATH="$fake:$PATH"
+  PROJECT_DIR="$project"
   export THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX="$fake/npx"
   export THISCODE_BROWSER_SKIP_DISK_CHECK=1 THISCODE_INSTALL_STATE="$tmp/install-state.yaml" THISCODE_INSTALL_LOG="$tmp/install-log.jsonl"
   printf 'install:\n  mode: auto\n' >"$THISCODE_INSTALL_STATE"
@@ -582,6 +591,27 @@ FAKE_NPX
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=multiple_scopes; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
   [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
+
+  profile="$tmp/one-profile"; profile_log="$tmp/one-profile.log"; rm -f "$project/.mcp.json" "$tmp/profile-approved"
+  mkdir -p "$profile"
+  export THISCODE_BROWSER_CLAUDE_CONFIG_DIR="$profile" FAKE_CLAUDE_ENV_LOG="$profile_log"
+  export FAKE_MCP_LIST_VARIANT=approval_flow FAKE_MCP_APPROVED_FILE="$tmp/profile-approved"
+  total=$((total + 1)); rc=0; step2 >/dev/null 2>&1 || rc=$?
+  profile_pending_rc=0; mcp_approval_state >/dev/null 2>&1 || profile_pending_rc=$?
+  touch "$FAKE_MCP_APPROVED_FILE"
+  profile_approved_rc=0; mcp_approval_state >/dev/null 2>&1 || profile_approved_rc=$?
+  if [ "$rc" -eq 0 ] && [ "$profile_pending_rc" -eq 2 ] && [ "$profile_approved_rc" -eq 0 ] \
+    && [ "$(awk -F'|' '$2 ~ /^mcp / {print $1}' "$profile_log" | sort -u | wc -l | tr -d ' ')" -eq 1 ] \
+    && ! grep -q '^<unset>|mcp ' "$profile_log"; then passes=$((passes + 1)); fi
+
+  caller_profile="$tmp/caller-profile"; caller_log="$tmp/caller-profile.log"
+  unset THISCODE_BROWSER_CLAUDE_CONFIG_DIR
+  export CLAUDE_CONFIG_DIR="$caller_profile" FAKE_CLAUDE_ENV_LOG="$caller_log" FAKE_MCP_LIST_VARIANT=connected
+  mkdir -p "$caller_profile"
+  total=$((total + 1)); caller_rc=0; mcp_list_exact >/dev/null 2>&1 || caller_rc=$?; mcp_approval_state >/dev/null 2>&1 || caller_rc=$?
+  if [ "$caller_rc" -eq 0 ] && [ "$(awk -F'|' '$2 ~ /^mcp / {print $1}' "$caller_log" | sort -u | wc -l | tr -d ' ')" -eq 1 ] \
+    && ! grep -qv "^${caller_profile}|mcp " "$caller_log"; then passes=$((passes + 1)); fi
+  unset CLAUDE_CONFIG_DIR FAKE_CLAUDE_ENV_LOG
   unset FAKE_MCP_LIST_VARIANT
   unset FAKE_MCP_APPROVED_FILE
   real_node="$(command -v node)"; hidden_nvm="$tmp/hidden-nvm"; hidden_node_bin="$tmp/hidden-node-bin"; hidden_out="$tmp/hidden-node.out"

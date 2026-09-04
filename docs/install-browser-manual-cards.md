@@ -71,9 +71,9 @@ npx -y --package=@playwright/mcp@0.0.80 playwright install chromium
 claude
 ```
 
-프로젝트의 Playwright 연결을 승인한 뒤 `/thiscode:install-browser`를 다시 실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
+프로젝트의 Playwright 연결을 한 번 승인한 뒤 `/thiscode:install-browser`를 한 번만 재실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
 
-Playwright 연결이 여러 위치에 중복 등록됐다는 안내가 나오면, Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 `/thiscode:install-browser`를 다시 실행합니다.
+Playwright 연결이 여러 위치에 중복 등록됐다는 안내가 나오면, Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 위의 1회 절차를 따릅니다.
 
 > 4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨
 >
