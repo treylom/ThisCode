@@ -4,9 +4,9 @@
 
 ## What this plugin provides
 
-- **KM ingestion** (Mode I/R/G per `contracts/km-mode-spec.md`)
-- **4-Tier vault search** per `contracts/search-fallback-4tier.md`
-- **3 variants** per `contracts/km-variant-matrix.md`: `lite` / `at` / `plain`
+- **Bot-harness operations**: setup/installers, meetings, shared memory, model routing, and Codex/Discord bridges.
+- **Knowledge management and vault search are outside ThisCode 1.4.0**. Install the km plugin and use `/km:search`,
+  `/km:knowledge-manager`, and `/km:setup` for those capabilities.
 
 ## Packaging layers
 
@@ -29,17 +29,26 @@ bash scripts/km-version.sh
 
 Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/contracts/`. Exits non-zero on any version mismatch.
 
-## Slash commands
+## Claude Code entry points
 
-| Command | Variant | Purpose |
+| Entry point | Surface | Purpose |
 |---|---|---|
-| `/thiscode:km` | auto-routes | Mode I/R/G dispatch (see km-variant-matrix) |
-| `/thiscode:search` | n/a | 4-Tier search |
-| `/thiscode:km-bootstrap` | wizard | First-time install + config write |
+| `/thiscode:add-bot` | `commands/add-bot.md` | Add a Discord bot to an existing setup |
+| `/thiscode:codex-check` | `commands/codex-check.md` | Verify the Codex CLI bridge |
+| `/thiscode:init` | `commands/init.md` | Detect the environment and guide selected ThisCode local setup scripts |
+| `/thiscode:install-browser` | `commands/install-browser.md` | Install and verify the browser tool |
+| `/thiscode:km-bootstrap` | `commands/km-bootstrap.md` | Point to ThisCode local search-tool scripts and km plugin setup |
+| `/thiscode:km` | `commands/km.md` | Point to `/km:search` and `/km:knowledge-manager` |
+| `/thiscode:open-meeting` | `commands/open-meeting.md` | Create the standard multi-bot meeting files |
+| `/thiscode:slack-configure` | `commands/slack-configure.md` | Connect a Claude Code session to Slack |
+| `/thiscode:start` | `commands/start.md` | Run the main Discord bot setup wizard |
+| `/thiscode:test` | `commands/test.md` | Run feature smoke tests |
+
+`/thiscode:setup` is the separate `skills/setup/SKILL.md` entry point, not a file under `commands/`. Knowledge management and vault-search behavior are provided by the km plugin; the two ThisCode `km*` commands above are migration pointers, not local implementations.
 
 ## Cross-harness invocation reference
 
-- **Claude Code**: `Skill(search)`
-- **Hermes Agent**: `claude_discode_search` tool (auto-registered via `hermes-plugin/__init__.py`)
+- **Claude Code**: `Skill(<name>)` for any skill under `skills/`; vault search uses the km plugin (`/km:search`)
+- **Hermes Agent**: the runtime registers the `on_session_start` drift-check hook; KM/search surfaces are not registered here
 - **Gemini CLI**: read `GEMINI.md` on startup; skills auto-discovered from `skills/`
 - **OpenCode / Goose / Cursor**: standard agentskills.io SKILL.md frontmatter (`name` + `description`) makes them visible

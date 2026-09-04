@@ -11,8 +11,8 @@ YAML 은 의미 단위로 5 block 으로 나뉩니다.
 `name`, `description`, `version`, `license`, `homepage` — Claude / Cursor / Aider 모두 인식 가능한 portable metadata.
 
 ```yaml
-name: search
-description: 4-Tier vault search ...
+name: bootstrap
+description: Plugin first-run bootstrap — verifies tools, registers vault_root, prints status table ...
 version: 1.0.0
 license: MIT
 homepage: https://github.com/treylom/ThisCode
@@ -23,9 +23,9 @@ homepage: https://github.com/treylom/ThisCode
 플러그인이 호스트에 어떤 tool/hook/command 를 등록할지 명시.
 
 ```yaml
-provides_tools: [claude_discode_search]
+provides_tools: [claude_discode_bootstrap]
 provides_hooks: [on_session_start]
-provides_commands: [/thiscode:search]
+provides_commands: [/thiscode:setup]
 ```
 
 ### Block C — thiscode extension (classroom policy)
@@ -103,6 +103,8 @@ benchmark:
 `scripts/route-model.mjs` heuristic. user override `--model haiku|sonnet|opus`.
 
 ## Tier 순서
+
+로컬 검색 도구용 스크립트는 ThisCode의 `scripts/install-*.sh`에 있고, 아래 fallback 순서는 km 플러그인의 `/km:search`가 실행합니다. `/km:setup`은 km 설정 위저드이며 검색 도구를 설치하지 않습니다.
 
 | Tier | Method | 이유 |
 |---|---|---|

@@ -115,7 +115,7 @@ Claude Code 의 task 단위 정의 (`.claude/skills/<name>/SKILL.md`).
 Claude Code 에 등록되는 skill + command + hook 묶음.
 
 ### slash command
-`/thiscode:search` 같은 명령. Claude Code 안에서 입력.
+`/thiscode:init` 같은 명령. Claude Code 안에서 입력.
 
 ### YAML
 "YAML Ain't Markup Language" — 사람이 읽기 쉬운 설정 파일 형식.

@@ -2,9 +2,9 @@
 
 thiscode 의 구조 + 흐름을 mermaid 차트로 시각화. GitHub 에서 자동 render — 별도 도구 불필요.
 
-## 1. 4-Tier Search Fallback
+## 1. KM plugin search fallback (external)
 
-검색 dispatcher 가 빠른 도구부터 시도 + 결과 부족 시 더 정확한 도구로 fallback.
+아래 검색 fallback은 km 플러그인이 소유하고 실행합니다. ThisCode는 봇 하네스와 각 Tier의 로컬 도구 설치기를 제공하지만 이 검색 흐름을 실행하지 않습니다.
 
 ```mermaid
 flowchart TD
@@ -32,30 +32,24 @@ flowchart TD
     class T4 tier4
 ```
 
-각 Tier 는 독립 설치 가능 — Tier 4 만 깔아도 즉시 작동. 사용자가 점진적으로 Tier 3 → 2 → 1 추가.
+각 Tier의 로컬 도구는 ThisCode의 `scripts/install-*.sh`로 설치합니다. `/km:search`는 검색 fallback을 실행하고 `/km:setup`은 km 저장 위치·MCP·설정을 구성하며, 검색 Tier를 설치하지 않습니다.
 
 ---
 
-## 2. KM 3 variants — 언제 어떤 걸 쓰나
+## 2. KM plugin commands — 외부 플러그인
 
 ```mermaid
 flowchart LR
-    User([사용자]) -->|`/thiscode:km`| Disp{KM dispatcher}
+    User([사용자]) -->|`/km:search`| Search[검색 fallback]
+    User -->|`/km:knowledge-manager`| Knowledge[지식관리 workflow]
+    User -->|`/km:setup`| Setup[플러그인 설정 생성]
 
-    Disp -->|default<br/>개인 vault| Lite[KM lite<br/>Phase 1 + 2<br/>tier: external]
-    Disp -->|`--at`<br/>팀 vault 100+ files| AT[KM at<br/>Agent Teams<br/>category lead + worker<br/>tier: experimental]
-    Disp -->|`--plain`<br/>CI/cron| Plain[KM plain<br/>headless<br/>no AskUserQuestion<br/>tier: internal]
+    Search --> Out1([검색 결과])
+    Knowledge --> Out2([수집·분류·저장])
+    Setup --> Out3([설정 완료])
 
-    Lite --> Out1([vault index 갱신])
-    AT --> Out2([대량 ingestion + 재정리])
-    Plain --> Out3([log + exit code])
-
-    classDef lite fill:#e3f2fd,stroke:#1976d2
-    classDef at fill:#fff8e1,stroke:#f57c00
-    classDef plain fill:#f5f5f5,stroke:#616161
-    class Lite lite
-    class AT at
-    class Plain plain
+    classDef command fill:#e3f2fd,stroke:#1976d2
+    class Search,Knowledge,Setup command
 ```
 
 ---
@@ -156,10 +150,14 @@ flowchart LR
     end
 
     subgraph Plugin[thiscode plugin]
-        Search[/thiscode:search<br/>4-Tier dispatcher/]
-        KM[/thiscode:km<br/>lite/at/plain/]
         Meet[/thiscode:meetings<br/>회의실/]
         Setup[/thiscode:setup<br/>bootstrap/]
+    end
+
+    subgraph KMPlugin[km plugin — external]
+        Search[/km:search<br/>vault fallback/]
+        Knowledge[/km:knowledge-manager<br/>지식관리/]
+        KMSetup[/km:setup<br/>configuration/]
     end
 
     subgraph Backend[검색 backend]
@@ -176,7 +174,8 @@ flowchart LR
     end
 
     CC --> Search
-    CC --> KM
+    CC --> Knowledge
+    CC --> KMSetup
     CC --> Meet
     CC --> Setup
 
@@ -197,10 +196,12 @@ flowchart LR
 
     classDef user fill:#e3f2fd,stroke:#1976d2
     classDef plugin fill:#fff8e1,stroke:#f57c00
+    classDef external fill:#ede7f6,stroke:#6a1b9a
     classDef backend fill:#e8f5e9,stroke:#388e3c
     classDef ci fill:#fce4ec,stroke:#c2185b
     class CC,Vault user
-    class Search,KM,Meet,Setup plugin
+    class Meet,Setup plugin
+    class Search,Knowledge,KMSetup external
     class T1,T2,T3,T4 backend
     class VA,BM,BT1,README ci
 ```

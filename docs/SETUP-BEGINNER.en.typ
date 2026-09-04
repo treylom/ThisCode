@@ -320,14 +320,15 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 Inside Claude Code:
 
 ```
-/thiscode:search "hello first search"
+/thiscode:help
 ```
 
-Or test with the sample-vault:
+For vault search, install the km plugin first:
 
 ```
-/thiscode:search "NuriFlow ARR" \
-  --vault ~/.claude/plugins/thiscode/sample-vault
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
+/km:search "hello first search"
 ```
 
 Congratulations! 🎉

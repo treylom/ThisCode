@@ -3,13 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "KM ingestion + 4-Tier vault search (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). Multi-harness: Claude Code / Hermes / Gemini / OpenCode.",
+  "description": "Discord/Slack bot harness for Claude Code: setup, bots, meetings, shared memory, model router (knowledge management via the km plugin).",
   "keywords": [
     "claude-code",
     "hermes-agent",
     "gemini-cli",
     "agentskills",
-    "knowledge-manager",
     "vault-search",
     "graphrag",
     "obsidian"

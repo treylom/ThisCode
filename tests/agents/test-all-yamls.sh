@@ -17,9 +17,10 @@ for f in "$ROOT"/.agents/*.yaml; do
   fi
 done
 
-# 13 expected: 9 skills + 4 commands
-if [ "$COUNT" -lt 13 ]; then
-  echo "FAIL: expected 13+ agents, got $COUNT"
+# 6 expected after 1.4.0 (bootstrap, codex-exec-bridge, init, meetings,
+# model-router, shared-memory) — measured, not guessed.
+if [ "$COUNT" -lt 6 ]; then
+  echo "FAIL: expected 6+ agents, got $COUNT"
   exit 1
 fi
 

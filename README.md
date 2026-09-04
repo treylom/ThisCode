@@ -4,6 +4,8 @@
 
 > **Role boundary**: ThisCode is the bot-harness operations bundle (operating rules, GraphRAG ops vendor, deployment contracts). The general-purpose knowledge product is [knowledge-manager](https://github.com/treylom/knowledge-manager); plugin installs go through [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins).
 
+> Knowledge management and vault search are provided by the **knowledge-manager** plugin — install it with `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins`, then use `/km:search` and `/km:knowledge-manager`. ThisCode 1.4.0 no longer bundles its own copies of these skills.
+
 > Claude Code + Discord bot + Codex CLI bridge plugin — personal vault automation + multi-agent ops.
 >
 > 🇰🇷 **한국어 버전**: [README.ko.md](README.ko.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (developer) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (beginner) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[Config Guide](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[Recent changes](docs/RECENT-CHANGES.md)** (read on install — newest-first digest the install AI should auto-reflect) · 📖 **[Getting started guide (English PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.en.pdf)** (beginner, 14p) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex companion)
@@ -22,7 +24,7 @@ Follow the install files in https://github.com/treylom/ThisCode step by step. St
 
 ![ThisCode + ThisCodex detailed wiring (tmux · app-server · Discord · vault)](assets/architecture.png)
 
-`bash install.sh` boots a Claude Code + tmux environment (WSL / Linux / macOS). **Core value**: a *structured Obsidian vault* where each working directory gets an *appropriate bot*, all usable from *Discord*, with bots that can *talk to each other*. The 4-Tier vault search (GraphRAG → vault-search MCP → Obsidian CLI → ripgrep) + LLM model routing are the capabilities that make those bots useful — supporting, not the point.
+`bash install.sh` boots a Claude Code + tmux environment (WSL / Linux / macOS). **Core value**: a *structured Obsidian vault* where each working directory gets an *appropriate bot*, all usable from *Discord*, with bots that can *talk to each other*. The km plugin owns vault retrieval; thiscode's LLM model routing and bot operations make those bots useful — supporting, not the point.
 
 > **Before you start (recommended):** (1) lay out your Obsidian **folder structure** first; (2) **install Obsidian** for full memory + internal-search. **No Obsidian?** You can still wire a plain Discord bot for connectivity only — but vault memory and internal-search quality are **not guaranteed** without it.
 
@@ -117,8 +119,7 @@ Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as sla
 - `/thiscode:init` — Alternative lightweight setup for experienced users
 - `/thiscode:create-bot` — Create a new Discord bot with soul.md template
 - `/thiscode:create-slack-bot` — Connect a bot to Slack instead of (or in addition to) Discord (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
-- `/thiscode:km` — Knowledge manager with intelligent variant routing (lite/at/plain)
-- `/thiscode:search` — 4-tier vault search with quick or deep modes
+- `/thiscode:km` — Pointer to the knowledge-manager plugin (`/km:knowledge-manager`)
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
 - `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
 - `/thiscode:install-hooks` — Check the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks (**installing the plugin registers them** via the bundled `hooks/hooks.json`). Every hook runs **only in bot sessions** — when `DISCORD_STATE_DIR` is set; other sessions see no output and no behavior change. On a plugin install this command verifies the registration and clears leftovers from the older `~/.claude/settings.json` merge (which would otherwise fire the same hook twice); on a checkout without `hooks/hooks.json` it still performs that merge. `/thiscode:create-bot` runs the same `scripts/install-hooks.sh` for you.
@@ -126,13 +127,13 @@ Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as sla
 
 ### Skills
 
-Each skill (bootstrap, knowledge-manager, search, meetings, etc.) includes a **"How to Use This Skill"** section in its SKILL.md. These explain when to invoke each skill and what it does. Search skills are focused on vault operations; knowledge-manager skills handle content ingestion and reorganization with different feature sets (lite/at/plain/full).
+Each skill (bootstrap, init, meetings, shared-memory, etc.) includes a **"How to Use This Skill"** section in its SKILL.md. These explain when to invoke each skill and what it does. Knowledge management and vault search skills are no longer bundled here — install the knowledge-manager plugin and use `/km:knowledge-manager` and `/km:search`.
 
 ---
 
 ## Optional: Discord bot + Agent Teams
 
-Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The 4-Tier vault search works standalone — Discord pairing is for advanced multi-bot orchestration.
+Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The km plugin's vault retrieval works independently — Discord pairing is for advanced multi-bot orchestration.
 
 > **Prefer Slack?** You can pair a bot over Slack instead of (or in addition to) Discord — run `/thiscode:create-slack-bot` (alias: `/thiscode:slack-configure`); it walks you through the human gates (CLI login, workspace install approval, token paste) and automates the rest. Details: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). Ops & troubleshooting reference: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 
@@ -301,13 +302,6 @@ thiscode/
 ├── commands/                              # Slash discovery surface ① (incl. /thiscode:init)
 ├── skills/                                # Slash discovery surface ② — skills are callable as
 │                                          #   /thiscode:<name> too (vault-mirror policy)
-│   ├── knowledge-manager/                 # full vault 7-Layer Fusion
-│   ├── knowledge-manager-at/              # Agent Teams variant
-│   ├── knowledge-manager-lite/            # Lite single-agent
-│   ├── knowledge-manager-bootstrap/       # 4-Tier install bundle
-│   ├── knowledge-manager-plain/           # headless variant
-│   ├── search/                            # 4-Tier vault search
-│   ├── search-lite/                       # 3-Tier (no GraphRAG)
 │   ├── codex-exec-bridge/                 # vault skill mirror (folder)
 │   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin install wizard
@@ -440,7 +434,6 @@ The `--apply` mode:
 - `meetings` — 4-file meeting protocol + source-backed cross-check + Discord REST API threads
 - `slack-bridge` — Slack bridge operations & troubleshooting (sender gates, bot-interop allowlist, live meeting canvas recipes)
 - `codex-exec-bridge` — Codex CLI subprocess + `/tofu-at-codex` reference
-- `knowledge-manager-at` — km-at Mode R preflight (read-only diagnostics + dry-run apply)
 
 ### Codex CLI bridge
 

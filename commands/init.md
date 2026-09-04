@@ -1,5 +1,5 @@
 ---
-description: thiscode 환경 감지 + 8 Phase progressive install wizard (사용자 v2.1 spec)
+description: thiscode 환경 감지 + 8 Phase 로컬 도구 안내 (사용자 v2.1 spec)
 allowedTools: Bash, AskUserQuestion, Read
 ---
 
@@ -11,30 +11,32 @@ $ARGUMENTS
 
 ## Purpose
 
-vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추천 (현재 가능 / 권장 / 나중). 사용자 y/n 선택 후 install dispatch.
+vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추천 (현재 가능 / 권장 / 나중). 사용자 y/n 선택 후 에이전트가 선택한 ThisCode 스크립트를 실행한다.
 
 ## 8 Phase 진행 (Phase 0~7, 사용자 v2.1 spec)
 
 | Phase | trigger | install |
 |---|---|---|
 | 0 | vault 미설치 | Obsidian app (link 안내) |
-| 1 | vault 시작 | ripgrep (default Tier 4) |
-| 2 | Zettelkasten 시도 | obsidian-cli (Tier 3) |
-| 3 | 100+ 노트 의미 검색 갈증 | vault-search MCP (Tier 2) |
-| 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | GraphRAG (Tier 1) |
-| 5 | 2000+ 노트 혼란 | km-at Mode R preflight (read-only) |
+| 1 | vault 시작 | ThisCode `scripts/install-ripgrep.sh` (ripgrep, Tier 4) |
+| 2 | Zettelkasten 시도 | ThisCode `scripts/install-obsidian-cli.sh` (Obsidian CLI, Tier 3) |
+| 3 | 100+ 노트 의미 검색 갈증 | ThisCode `scripts/install-vault-search.sh` (vault-search MCP, Tier 2) |
+| 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | ThisCode `scripts/install-graphrag.sh` (GraphRAG, Tier 1) |
+| 5 | 2000+ 노트 혼란 | km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름) |
 | 6 | 3000+ + GraphRAG installed | Dashboard 시각화 (선택, 외부 link) |
 | 7 | advanced | 하이브리드 4채널 (선택, Journey-12/13) |
 
 ## Flow
 
 1. `bash $CLAUDE_DISCODE_HOME/scripts/claude-discode-init.sh` 실행 — env detect + Phase 추천 + interactive prompt
-2. 사용자가 y 선택한 Phase 마다 해당 install script dispatch:
+2. 감지 스크립트 자체는 검색 Tier를 설치하지 않는다. 사용자가 y를 선택한 Phase마다 에이전트가 해당 ThisCode 로컬 스크립트를 실행한다:
+   - phase-1-ripgrep → `scripts/install-ripgrep.sh --apply`
    - phase-2-cli-install → `scripts/install-obsidian-cli.sh`
    - phase-3-mcp → `scripts/install-vault-search.sh --apply`
    - phase-4-graphrag / strong → `scripts/install-graphrag.sh --apply`
-   - phase-5-mode-r-preflight → km-at Skill 의 Mode R preflight (read-only 진단)
-3. 완료 후 healthcheck 실행
+3. `/km:search`는 검색 fallback을 실행하고 `/km:setup`은 km 저장 위치·MCP·설정을 구성한다. `/km:setup`은 검색 Tier 설치 명령이 아니다.
+4. phase-5-mode-r-preflight → km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름; read-only 진단 — km 미설치면 README 의 km 설치 포인터 안내)
+5. 완료 후 healthcheck 실행
 
 ## Fallback
 

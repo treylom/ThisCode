@@ -38,31 +38,43 @@
 
 = What is thiscode?
 
-A Knowledge Manager plugin that bundles Claude Code + Discord bots + Codex calls + a 4-Tier vault search.
+A bot-harness operations plugin that bundles Claude Code + Discord bots + Codex calls. Knowledge management and vault search are provided by the km plugin.
 
 == The one-line differentiator
 
-It cascades the existing tools (`obsidian-cli` alone / `/search` alone / `/vault-search` alone) through a 4-Tier fallback. Fast tools first → if results are insufficient, escalate to more accurate tools.
+ThisCode focuses on bot operations, installation, meetings, shared memory, and model routing; the km plugin owns knowledge management and vault-search fallback.
 
-= Install — 5 steps
+= Install — ThisCode + the km plugin
 
 ```bash
 # 1. Prerequisites (node 18+, jq, git)
-# 2. Plugin install
+# 2. ThisCode bot-harness install
 git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
 
-# 3. Tier 2 MCP (5 min, recommended)
-bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+# 3. Install the km plugin
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
 
-# 4. Tier 3 Obsidian CLI (optional, Obsidian users only)
+# 4. In Claude Code, configure KM storage, MCP integrations, and settings: /km:setup
+#    (This command does not install the search tiers.)
+
+# 5. Tier 4 ripgrep (local tool)
+bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
+
+# 6. Tier 3 Obsidian CLI detection and Obsidian app guidance (optional)
 bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
 
-# 5. Tier 1 GraphRAG (optional, advanced — 25 min)
+# 7. Tier 2 vault-search MCP (recommended)
+bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+
+# 8. Tier 1 GraphRAG (optional; advanced)
 bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 
-# 6. Healthcheck
+# 9. ThisCode bot-harness healthcheck
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
+
+ThisCode provides the local search-tool scripts. Run `/km:setup` separately in Claude Code to configure KM storage, MCP integrations, and settings; use `/km:search` to run the fallback.
 
 For a branching, beginner-friendly guide: SETUP-BEGINNER.md
 
@@ -80,15 +92,15 @@ For a branching, beginner-friendly guide: SETUP-BEGINNER.md
   [4], [ripgrep (literal)], [30-100ms], [Low], [0 min],
 )
 
-The dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
+The km plugin's dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
 
-= Knowledge Manager (KM)
+= Knowledge Manager (KM plugin)
 
-Three variants:
+Knowledge management and search are not bundled in ThisCode. Install the km plugin and use:
 
-- `/thiscode:km` (lite, default) — personal vault
-- `/thiscode:km at` (experimental) — team vault + Agent Teams
-- `/thiscode:km plain` (internal) — CI / cron, headless
+- `/km:search` — vault search and fallback
+- `/km:knowledge-manager` — knowledge capture, classification, and storage
+- `/km:setup` — create and update km plugin configuration
 
 #pagebreak()
 

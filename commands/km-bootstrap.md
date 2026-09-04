@@ -1,15 +1,25 @@
 ---
-description: thiscode 검색 환경 초기 설치 (Obsidian CLI / vault-search MCP / GraphRAG 서버)
-allowedTools: Bash, AskUserQuestion, Write, Read
+description: 검색 환경 안내 — ThisCode 로컬 도구와 km 플러그인 설정
+allowedTools: Read
 ---
 
 # /thiscode:km-bootstrap
 
-> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 문서 요약·소개 출력이나 "실행할까요?" 확인 질문으로 멈추지 말고 **아래 단계를 지금 즉시 실행**한다. (본문이 명시하는 인터뷰·AskUserQuestion 단계는 그 지점에서 그대로 수행 — 그 외 추가 확인 ❌)
+> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 아래 안내를 지금 즉시 사용자에게 출력한다.
 
-Invokes the `knowledge-manager-bootstrap` skill — detects environment, prompts for vault_root + install matrix, runs install-*.sh scripts.
+검색 환경은 두 부분으로 나뉜다. 로컬 검색 도구는 ThisCode의 `scripts/install-*.sh`가 제공하고, 검색 fallback과 km 설정은 각각 km 플러그인의 `/km:search`와 `/km:setup`이 담당한다. `/km:setup`은 검색 Tier 설치 명령이 아니다.
 
-Use this command when:
-- 처음 설치
-- `/thiscode:search` 가 4-Tier 전부 실패 메시지 출력
-- 머신 옮긴 후 환경 재구성
+## km 플러그인 설치
+
+```
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
+```
+
+## 로컬 검색 도구
+
+필요한 Tier에 따라 ThisCode의 `scripts/install-ripgrep.sh`, `install-obsidian-cli.sh`, `install-vault-search.sh`, `install-graphrag.sh`를 사용한다. 자세한 실행 방법은 `docs/SETUP.md` §3을 따른다.
+
+처음 설치할 때, 검색이 모든 단계에서 실패할 때, 머신을 옮긴 뒤 환경을 다시 잡을 때 이 안내를 쓴다. 이 명령 자체는 도구나 설정을 설치하지 않는다.
+
+설치된 km 플러그인의 설정 생성과 재설정은 `/km:setup`을 직접 실행한다.

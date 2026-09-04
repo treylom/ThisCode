@@ -104,7 +104,6 @@ thiscode_agy/
 ## Related ThisCode skills
 
 - `thiscodex/` — same pattern for OpenAI Codex CLI
-- `knowledge-manager/` — vault ingest pipeline (Karpathy/Orchestrator Pattern)
 - `prompt/` — prompt engineering library
 
 ## License & attribution

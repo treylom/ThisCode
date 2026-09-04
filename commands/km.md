@@ -1,29 +1,22 @@
 ---
-description: thiscode knowledge-manager 진입점 — variant 자동 라우팅 (lite/at/plain)
-allowedTools: Read, Write, Bash, AskUserQuestion, WebFetch, Glob, Grep
+description: km 플러그인 안내 — 지식관리·vault 검색은 km 플러그인으로 이동했다
+allowedTools: Read
 ---
 
 # /thiscode:km
 
-> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 문서 요약·소개 출력이나 "실행할까요?" 확인 질문으로 멈추지 말고 **아래 단계를 지금 즉시 실행**한다. (본문이 명시하는 인터뷰·AskUserQuestion 단계는 그 지점에서 그대로 수행 — 그 외 추가 확인 ❌)
+> **⚡ 실행 지시**: 이 문서는 슬래시 커맨드 본문이다 — 로드된 것 자체가 사용자의 실행 요청이다. 아래 안내를 지금 즉시 사용자에게 출력한다.
 
-$ARGUMENTS
+ThisCode 1.4.0 부터 지식관리와 vault 검색은 **km 플러그인**이 제공한다. ThisCode 는 이 스킬들의 자체 사본을 더 이상 포함하지 않는다.
 
-## Variant routing
-
-1. Parse `$ARGUMENTS` for `--variant lite|at|plain` flag.
-2. If absent:
-   - $CLAUDE_DISCODE_HEADLESS=1 → variant = plain
-   - "아카이브 정리" / "카테고리 재편" / "그래프 구축" keywords → variant = at
-   - else → variant = lite (Phase 1·2 default)
-3. Invoke the matching skill via `Skill` tool:
-   - `knowledge-manager-lite` / `knowledge-manager-at` / `knowledge-manager-plain`
-4. If skill emits "config missing" → invoke the `knowledge-manager-bootstrap` skill.
-
-## Examples
+## 설치
 
 ```
-/thiscode:km https://example.com/article
-/thiscode:km --variant at "아카이브 정리: 020-Library/Research"
-/thiscode:km --variant plain "이 텍스트 저장: ..."
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
 ```
+
+## 설치 후
+
+- vault 검색 = `/km:search`
+- 지식관리·수집·분류·저장 = `/km:knowledge-manager` (km 플러그인의 기본 명령)

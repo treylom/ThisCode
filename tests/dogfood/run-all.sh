@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Dogfood orchestrator — run all 3 sandbox scenarios + report.
+# Dogfood orchestrator — run the sandbox scenarios + report.
 set -e
 
 ROOT="${CLAUDE_DISCODE_HOME:-/thiscode}"
@@ -15,7 +15,7 @@ LOG="$HERE/dogfood-results-$(date +%Y-%m-%d).md"
 } > "$LOG"
 
 pass=0; fail=0
-for s in scenario-1-grep-only.sh scenario-2-mcp.sh scenario-3-graphrag.sh; do
+for s in scenario-2-mcp.sh scenario-3-graphrag.sh; do
   echo "=== $s ==="
   if bash "$HERE/$s"; then
     pass=$((pass + 1))

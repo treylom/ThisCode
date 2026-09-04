@@ -38,31 +38,43 @@
 
 = thiscode 가 뭐예요?
 
-Claude Code + Discord 봇 + Codex 호출 + 4-Tier vault search 가 통합된 Knowledge Manager 플러그인.
+Claude Code + Discord 봇 + Codex 호출을 묶은 bot-harness operations 플러그인. 지식관리와 vault 검색은 km 플러그인이 담당합니다.
 
 == 차별점 한 줄
 
-기존 도구 (obsidian-cli 단독 / `/search` 단독 / `/vault-search` 단독) 를 4-Tier fallback 으로 자동 cascading. 빠른 도구 먼저 → 결과 부족 시 정확한 도구로.
+ThisCode는 봇 운영·설치·모델 라우팅에 집중하고, 지식관리와 vault 검색은 km 플러그인의 명령으로 연결합니다.
 
-= 설치 — 5단계
+= 설치 — ThisCode + km 플러그인
 
 ```bash
 # 1. Prereq (node 18+, jq, git)
-# 2. Plugin install
+# 2. ThisCode bot-harness install
 git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
 
-# 3. Tier 2 MCP (5분, 권장)
-bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+# 3. km plugin install
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
 
-# 4. Tier 3 Obsidian CLI (선택, Obsidian 사용자만)
+# 4. Claude Code에서 km 저장 위치·MCP·설정 구성: /km:setup
+#    (검색 Tier 설치 명령이 아님)
+
+# 5. Tier 4 ripgrep (로컬 도구)
+bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
+
+# 6. Tier 3 Obsidian CLI 감지·Obsidian 앱 안내 (선택)
 bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
 
-# 5. Tier 1 GraphRAG (선택, advanced 25분)
+# 7. Tier 2 vault-search MCP (권장)
+bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+
+# 8. Tier 1 GraphRAG (선택, advanced)
 bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 
-# 6. Healthcheck
+# 9. ThisCode bot-harness healthcheck
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
+
+로컬 검색 도구용 스크립트는 ThisCode가 제공합니다. Claude Code에서 `/km:setup`을 별도로 실행해 km 저장 위치·MCP·설정을 구성하고, 검색 fallback은 `/km:search`로 실행합니다.
 
 자세한 분기 가이드: SETUP-BEGINNER.md
 
@@ -80,15 +92,15 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
   [4], [ripgrep (literal)], [30-100ms], [낮음], [0분],
 )
 
-dispatcher 가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallback.
+km 플러그인의 dispatcher가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallback.
 
-= Knowledge Manager (KM)
+= Knowledge Manager (KM plugin)
 
-3 variant:
+지식관리·검색은 ThisCode에 내장되지 않습니다. km 플러그인을 설치한 뒤 다음 명령을 사용합니다.
 
-- `/thiscode:km` (lite, default) — 개인 vault
-- `/thiscode:km at` (experimental) — 팀 vault + Agent Teams
-- `/thiscode:km plain` (internal) — CI/cron headless
+- `/km:search` — vault 검색과 fallback
+- `/km:knowledge-manager` — 지식관리·수집·분류·저장
+- `/km:setup` — km 플러그인 설정 생성·재설정
 
 #pagebreak()
 

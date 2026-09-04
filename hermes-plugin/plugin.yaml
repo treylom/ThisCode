@@ -1,14 +1,8 @@
 name: thiscode
 version: 1.0.0
-description: KM ingestion + 4-Tier vault search (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). Discord-friendly knowledge manager for individual + team vaults.
+description: "Discord/Slack bot harness for Claude Code: setup, bots, meetings, shared memory, model router (knowledge management via the km plugin)."
 # Aggregated from .agents/*.yaml (source of truth — see scripts/generate-agents-index.mjs)
 provides_tools:
-  - claude_discode_search
-  - claude_discode_km_lite
-  - claude_discode_km_at
-  - claude_discode_km_plain
-  - claude_discode_km_bootstrap
-  - claude_discode_ingest
   - claude_discode_bootstrap
   - claude_discode_meetings
   - claude_discode_codex_invoke
@@ -18,9 +12,6 @@ provides_hooks:
   - on_session_start
   - on_stop
 provides_commands:
-  - /thiscode:km
-  - /thiscode:km-bootstrap
-  - /thiscode:search
   - /thiscode:setup
 author: treylom
 homepage: https://github.com/treylom/ThisCode
@@ -31,7 +22,7 @@ platforms:
   - wsl
 requires_env: []
 metadata:
-  hermes_status: "partial/deferred — programmatic search/ingest deferred; see docs/HERMES-STATUS.md. Active: registration + drift-check hook."
+  hermes_status: "runtime subset: on_session_start drift-check hook; manifest-only tools/commands are deferred — see docs/HERMES-STATUS.md."
   contract_version: "0.1.0"
   contract_path: "contracts/search-fallback-4tier.md"
   agent_spec_version: "1.0.0"
@@ -41,7 +32,3 @@ metadata:
     - 2: vault-search MCP
     - 3: Obsidian CLI
     - 4: ripgrep
-  km_variants:
-    - lite
-    - at
-    - plain

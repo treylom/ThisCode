@@ -24,7 +24,7 @@ status: draft (v0.2.0)
 - 영상 길이: 6-8 min.
 
 ### C3. 막혔을 때 사용자 묻지 말고 스킬 시도
-- 학습: `/knowledge-manager` / `/autoresearch` / `/search` 로 끝까지 시도 후 보고. A/B/C/D 4지선택 안티패턴.
+- 학습: `/km:search` / `/autoresearch` 로 끝까지 시도 후 보고. A/B/C/D 4지선택 안티패턴.
 - 영상 길이: 7 min.
 
 ### C4. 응답 echo drift 차단
@@ -53,8 +53,8 @@ status: draft (v0.2.0)
 - contract: `contracts/search-fallback-4tier.md` v0.1.0.
 - 영상 길이: 12-15 min.
 
-### C9. KM Mode I/R/G + variant lite/at/plain
-- 학습: variant matrix per `contracts/km-variant-matrix.md`. lite (Phase 1·2 default) / at (Agent Teams) / plain (headless).
+### C9. KM plugin commands and boundary
+- 학습: 지식관리와 vault 검색은 km 플러그인이 담당한다. `/km:search` · `/km:knowledge-manager` · `/km:setup` 문서를 따른다.
 - 영상 길이: 10 min.
 
 ### C10. 4-Tier search drift 감지 (km-version.sh)

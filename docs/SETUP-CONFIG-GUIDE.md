@@ -279,20 +279,20 @@ Plain intro: [memory-dreaming.md](memory-dreaming.md).
 
 ## §4 — How to set up & how to ask (first run)
 
-![4-Tier vault search with Obsidian-less degradation — GraphRAG → vault-search MCP → Obsidian CLI → ripgrep fallback](../assets/search-fallback-4tier.png)
+![km plugin vault-search fallback with Obsidian-less degradation — GraphRAG → vault-search MCP → Obsidian CLI → ripgrep](../assets/search-fallback-4tier.png)
 
 After install + the three files above:
 
 ```
 /thiscode:setup            # (re)configure tiers
-/thiscode:search "..."     # 4-Tier vault search
+/km:search "..."           # vault search fallback (km plugin)
 ```
 
 Example prompts and what to expect:
 
 | You ask | The bot does |
 |---|---|
-| "Summarize my notes on attention mechanisms" | vault search (Tier 1→4 fallback) → grounded summary with source paths |
+| "Summarize my notes on attention mechanisms" | km plugin vault search (Tier 1→4 fallback) → grounded summary with source paths |
 | "Set yourself up as a scheduling bot" | reads `templates/soul-schedule-bot.md`, helps you fill `soul.md` |
 | "Why did you do X?" | answers from the loaded soul + the rule that applied (it tells you which) |
 
@@ -325,18 +325,17 @@ cd ~/projects/research && claude        # repeat with discord-writing + its WD
    `docs/05-meeting-thread-protocol.md`. Bots address each other **only**
    via Discord mentions — never by typing into each other's terminals.
 
-### §4.6 — Which knowledge-manager variant?
+### §4.6 — Knowledge management and vault search
 
-| Variant | Best for | Needs |
-|---|---|---|
-| `knowledge-manager-lite` | first install, single bot | none (keyword presets, no popups) |
-| `knowledge-manager` (full) | interactive single-bot use | AskUserQuestion UI |
-| `knowledge-manager-plain` | headless / Codex bots / cron | none (never asks) |
-| `knowledge-manager-at` | 2+ bots coordinating (Agent Teams) | Agent Teams support |
-| `knowledge-manager-bootstrap` | one-time env setup / "Tier X 실패" repair | run once |
+These are not bundled with ThisCode 1.4.0 — install the km plugin:
 
-New user: start with `-lite` (or `-plain` for unattended bots); move to `-at`
-only when multiple bots need to split one ingestion job.
+```
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
+```
+
+Then use `/km:search` for vault search; the plugin documents its own
+ingestion entry points and variants.
 
 ## §5 — Skills 2.0 conformance checklist
 
@@ -504,7 +503,7 @@ harness 가 실제 노출하는 모델 id 로.
 충돌 우선순위 = **사용자 명시 지시 > rule 파일 > inline 기본**.
 
 ### §4 설정·질문 방법
-설치 후 `/thiscode:setup`, `/thiscode:search "질의"`. 예: "내 attention 노트
+설치 후 `/thiscode:setup`, 그리고 km 플러그인의 `/km:search "질의"`. 예: "내 attention 노트
 요약" → 4-Tier 검색 후 출처 경로 포함 요약. 응답이 페르소나/규칙을 벗어나면
 soul.md frontmatter 유효성 + INDEX 트리거 매칭을 점검.
 

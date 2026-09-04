@@ -5,7 +5,7 @@ import { msg } from '../scripts/lib/i18n.mjs';
 import { loadState, saveState, mergeAnswer, resumeSummary } from '../scripts/lib/state.mjs';
 import { SCRIPT, nextQuestion, isInScope } from '../scripts/lib/questions.mjs';
 import { injectMarkerBlock, backupFile } from '../scripts/lib/apply.mjs';
-import { applyCodexSync } from '../scripts/lib/codexsync.mjs';
+import { applyCodexSync, planCodexSync } from '../scripts/lib/codexsync.mjs';
 import { loadManifest } from '../scripts/lib/manifest.mjs';
 import { runManifest } from '../scripts/lib/manifest-runner.mjs';
 import { join } from 'node:path';
@@ -101,6 +101,12 @@ if (!interactive) {
 }
 
 if (mode === 'check') {
+  const codexPlan = planCodexSync(join(repoRoot, 'skills'), join(homedir(), '.agents', 'skills'));
+  if (codexPlan.length === 0) {
+    console.log('Codex skill sync: nothing to export in 1.4.0 (knowledge skills moved to the km plugin)');
+  } else {
+    console.log(`Codex skill sync: ${codexPlan.map(({ skill }) => skill).join(', ')}`);
+  }
   console.log(msg('check_only_notice', register));
   process.exit(0);
 }
@@ -115,7 +121,11 @@ saveState(repoRoot, state);
 if (['codex','both'].includes(state.answers.harness) && state.answers.codex_skill_layer !== 'repo') {
   const dest = join(homedir(), '.agents', 'skills');
   const synced = applyCodexSync(join(repoRoot, 'skills'), dest);
-  console.log(`🔁 Codex skill sync → ${dest} (${synced.join(', ')})`);
+  if (synced.length === 0) {
+    console.log('Codex skill sync: nothing to export in 1.4.0 (knowledge skills moved to the km plugin)');
+  } else {
+    console.log(`🔁 Codex skill sync → ${dest} (${synced.join(', ')})`);
+  }
 }
 console.log('✅ apply 완료. state: .thiscode-init-state.json');
 process.exit(0);
