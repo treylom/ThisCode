@@ -44,6 +44,13 @@ adding an MCP server; writing API code.
   plugin READMEs, command help and onboarding copy leak internal names (course
   numbering, in-house bot/channel names) easily; one grep line before push, by
   the pushing agent, replaces them with public vocabulary.
+  The grep list also covers in-house jargon, not only course terms (2026-09-04,
+  knowledge-manager (km) 1.3.0 retrospective): words whose meaning is fixed only inside the bot
+  team — e.g. "canonical source", "feed back into", "linting", "work order",
+  "orchestrator", "SoT" — leaked through a gate that only checked course terms
+  (7 + 3 + 2 hits in one new skill file). Same leak layer as course terms; on
+  detection rewrite in plain user words. Adding a word to the list = cite the
+  incident (file:line) on the same line.
 
 ## 3. MCP servers
 - Before adding: list current MCPs. After adding: health-check. Remove on
