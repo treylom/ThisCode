@@ -17,8 +17,12 @@ from pathlib import Path
 PLUGIN_DIR = Path(__file__).resolve().parent
 REPO_ROOT = PLUGIN_DIR.parent
 
-SEARCH_DISPATCHER = REPO_ROOT / "skills" / "search" / "references" / "tier-implementations.md.sh"
-KM_LITE_CORE = REPO_ROOT / "skills" / "knowledge-manager-lite" / "references" / "extract-and-classify.md.sh"
+# Programmatic dispatchers are not bundled in this repo (they were never
+# vendored, and 1.4.0 moved the km/search skills to the km plugin). These paths
+# are intentionally absent so the .exists() guards below always take the
+# "deferred" branch — see docs/HERMES-STATUS.md.
+SEARCH_DISPATCHER = REPO_ROOT / "hermes-plugin" / "dispatchers" / "tier-implementations.sh"
+KM_LITE_CORE = REPO_ROOT / "hermes-plugin" / "dispatchers" / "extract-and-classify.sh"
 DRIFT_CHECK = REPO_ROOT / "scripts" / "km-version.sh"
 
 
@@ -45,7 +49,7 @@ def _run(cmd: list[str], env_extra: dict[str, str] | None = None, timeout: int =
 _DEFER = {
     "status": "deferred",
     "reason": "Hermes programmatic dispatch deferred — thiscode skills are LLM-instruction (SKILL.md), not shell dispatchers; the .md.sh dispatcher was not vendored to the public repo.",
-    "use_instead": "Claude Code: /search or /thiscode:km (or invoke the skill via an LLM agent).",
+    "use_instead": "Claude Code with the km plugin installed: /km:search (or invoke the skill via an LLM agent).",
     "doc": "docs/HERMES-STATUS.md",
 }
 

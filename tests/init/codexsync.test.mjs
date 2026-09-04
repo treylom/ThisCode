@@ -7,29 +7,35 @@ import { join } from 'node:path';
 import { planCodexSync, applyCodexSync, KM_SKILLS } from '../../scripts/lib/codexsync.mjs';
 
 test('KM_SKILLS matches bash SKILLS array (behavior parity)', () => {
-  assert.deepEqual(KM_SKILLS, ['knowledge-manager','knowledge-manager-lite',
-    'knowledge-manager-plain','knowledge-manager-at','knowledge-manager-bootstrap']);
+  assert.deepEqual(KM_SKILLS, []);
 });
 
 test('planCodexSync is dry (no writes), lists src→dest pairs', () => {
   const src = mkdtempSync(join(tmpdir(), 'src-'));
-  mkdirSync(join(src, 'knowledge-manager-plain'), { recursive: true });
-  writeFileSync(join(src, 'knowledge-manager-plain', 'SKILL.md'), '# k');
+  const skill = KM_SKILLS[0] ?? 'sample-skill';
+  mkdirSync(join(src, skill), { recursive: true });
+  writeFileSync(join(src, skill, 'SKILL.md'), '# k');
   const dest = mkdtempSync(join(tmpdir(), 'dst-'));
-  const before = existsSync(join(dest, 'knowledge-manager-plain'));
+  const before = existsSync(join(dest, skill));
   const plan = planCodexSync(src, dest);
   assert.equal(before, false);
-  assert.equal(existsSync(join(dest, 'knowledge-manager-plain')), false, 'plan must not write');
-  assert.ok(plan.some(p => p.skill === 'knowledge-manager-plain'));
+  assert.equal(existsSync(join(dest, skill)), false, 'plan must not write');
+  assert.equal(plan.length, KM_SKILLS.length ? 1 : 0, 'plan lists exactly the synced skills');
   rmSync(src, { recursive: true, force: true }); rmSync(dest, { recursive: true, force: true });
 });
 
 test('applyCodexSync copies SKILL.md into dest layer', () => {
   const src = mkdtempSync(join(tmpdir(), 'src-'));
-  mkdirSync(join(src, 'knowledge-manager-lite'), { recursive: true });
-  writeFileSync(join(src, 'knowledge-manager-lite', 'SKILL.md'), '# lite');
+  const skill = KM_SKILLS[0] ?? 'sample-skill';
+  mkdirSync(join(src, skill), { recursive: true });
+  writeFileSync(join(src, skill, 'SKILL.md'), '# lite');
   const dest = mkdtempSync(join(tmpdir(), 'dst-'));
-  applyCodexSync(src, dest);
-  assert.equal(readFileSync(join(dest, 'knowledge-manager-lite', 'SKILL.md'), 'utf8'), '# lite');
+  const done = applyCodexSync(src, dest);
+  if (KM_SKILLS.length) {
+    assert.equal(readFileSync(join(dest, skill, 'SKILL.md'), 'utf8'), '# lite');
+  } else {
+    assert.deepEqual(done, [], 'empty sync list must copy nothing');
+    assert.equal(existsSync(join(dest, skill)), false, 'empty sync list must not write');
+  }
   rmSync(src, { recursive: true, force: true }); rmSync(dest, { recursive: true, force: true });
 });

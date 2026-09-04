@@ -23,9 +23,9 @@ homepage: https://github.com/treylom/ThisCode
 플러그인이 호스트에 어떤 tool/hook/command 를 등록할지 명시.
 
 ```yaml
-provides_tools: [claude_discode_search]
+provides_tools: [claude_discode_bootstrap]
 provides_hooks: [on_session_start]
-provides_commands: [/thiscode:search]
+provides_commands: [/thiscode:setup]
 ```
 
 ### Block C — thiscode extension (classroom policy)

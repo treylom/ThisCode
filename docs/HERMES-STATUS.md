@@ -21,8 +21,8 @@ The `hermes-plugin/` registers thiscode tools into a Hermes Agent host. Its
 
 | Piece | State | Why |
 |---|---|---|
-| `handle_search` / `cmd_search` (`claude_discode_search`) | ⏸️ deferred | needs `skills/search/references/tier-implementations.md.sh` |
-| `handle_ingest` / `cmd_km` (`claude_discode_ingest`) | ⏸️ deferred | needs `skills/knowledge-manager-lite/references/extract-and-classify.md.sh` |
+| `handle_search` / `cmd_search` (`claude_discode_search`) | ⏸️ deferred | needs an executable search dispatcher, which is not bundled |
+| `handle_ingest` / `cmd_km` (`claude_discode_ingest`) | ⏸️ deferred | needs an executable ingest dispatcher, which is not bundled |
 
 **Root cause (verified 2026-05-16, independent cross-validation):** thiscode skills
 are **LLM-instruction documents** (`SKILL.md` + `references/*.md`), not
@@ -38,19 +38,17 @@ dispatchers from a guess was explicitly rejected (reconstruction risk).
   return a structured **`{"status":"deferred", ...}`** JSON pointing here and
   at the Claude Code path. They never raise (Hermes contract) and never fake a
   result.
-- The four shell tests that exercised the dispatchers
-  (`tests/test-search-tier4-fallback.sh`, `tests/test-integration-cascade.sh`,
-  `tests/dogfood/scenario-1-grep-only.sh`, `tests/test-km-lite-plain-write.sh`)
-  now **SKIP with a reason + exit 0** when the dispatcher is absent (same
-  `SKIP:` convention `scenario-1` already used for a missing sample-vault) —
-  so CI is honest, not red, and not falsely green.
+- The four shell tests that exercised the dispatchers were removed in 1.4.0
+  together with the skills they pointed at — they could only ever SKIP, so
+  CI is honest, not red, and not falsely green.
 
 ## Supported path instead
 
 Use thiscode through **Claude Code** (or any LLM agent that reads `SKILL.md`):
 
-- Search: `/search "<query>"` (4-Tier fallback) — `skills/search/SKILL.md`
-- KM ingest: `/thiscode:km` / `/knowledge-manager-lite` — `skills/knowledge-manager-lite/SKILL.md`
+- Install the km plugin (`claude plugin marketplace add treylom/tofukyung-plugins`
+  + `claude plugin install km@tofukyung-plugins`) and use its search and
+  knowledge commands — `/km:search` for 4-Tier vault search.
 
 ## How to un-defer (future)
 

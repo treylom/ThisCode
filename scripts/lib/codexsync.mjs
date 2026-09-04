@@ -4,16 +4,14 @@
 import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-export const KM_SKILLS = [
-  'knowledge-manager', 'knowledge-manager-lite', 'knowledge-manager-plain',
-  'knowledge-manager-at', 'knowledge-manager-bootstrap',
-];
+// 1.4.0: the knowledge/search skill family moved out of this repo, so nothing
+// is on the Codex sync list any more. Add skill directory names here to resume
+// syncing; keep this array and scripts/sync-skills-to-codex.sh in step.
+export const KM_SKILLS = [];
 
-// compat parity with bash compat(): plain/lite=supported, full/bootstrap=degraded, at=unsupported
-export function compat(skill) {
-  if (skill === 'knowledge-manager-plain' || skill === 'knowledge-manager-lite') return 'supported';
-  if (skill === 'knowledge-manager-at') return 'unsupported';
-  return 'degraded';
+// compat parity with bash compat(): anything not explicitly classified
+export function compat(_skill) {
+  return 'unknown';
 }
 
 export function planCodexSync(srcSkillsDir, destDir) {

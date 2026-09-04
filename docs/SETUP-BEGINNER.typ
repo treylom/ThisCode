@@ -320,14 +320,15 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 Claude Code 안에서:
 
 ```
-/thiscode:search "안녕 첫 검색"
+/thiscode:help
 ```
 
-또는 sample-vault 에서 테스트:
+vault 검색을 써 보려면 km 플러그인을 먼저 설치합니다:
 
 ```
-/thiscode:search "NuriFlow ARR" \
-  --vault ~/.claude/plugins/thiscode/sample-vault
+claude plugin marketplace add treylom/tofukyung-plugins
+claude plugin install km@tofukyung-plugins
+/km:search "안녕 첫 검색"
 ```
 
 축하합니다! 🎉

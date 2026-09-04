@@ -90,7 +90,6 @@ disable-model-invocation: true
 |---|---|
 | `/thiscode:km` | 자료를 옵시디언 금고(vault)에 정리해 넣기 |
 | `/thiscode:km-bootstrap` | km 이 "설정이 없다(config missing)"고 할 때 1회 — 설정 자동 생성 |
-| `/thiscode:search` | 금고 안 내용 검색 |
 | `/thiscode:prompt` | AI 프롬프트 생성기 |
 | `/thiscode:open-meeting` | 봇 여럿이 협업할 회의방 만들기 |
 | `/thiscode:codex-check` | Codex 연동 상태 점검 |

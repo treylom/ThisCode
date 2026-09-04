@@ -69,7 +69,7 @@ MCP Discord 서버는 본 환경변수로 봇 계정 (토큰 + access.json) 분�
 
 ## MCP server integration
 
-`.mcp.json` 으로 MCP server 등록 시 claude 가 host. Custom MCP server (예: vault-search, knowledge-manager) 를 봇이 활용:
+`.mcp.json` 으로 MCP server 등록 시 claude 가 host. Custom MCP server (예: vault-search) 를 봇이 활용:
 
 ```json
 {

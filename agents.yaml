@@ -1,6 +1,6 @@
 index_version: 1
-generated_at: '2026-05-15'
-count: 17
+generated_at: '2026-09-04'
+count: 6
 agents:
   - name: bootstrap
     version: 1.0.0
@@ -9,28 +9,6 @@ agents:
       Plugin first-run bootstrap — verifies tools, registers vault_root, prints status table. Triggered on
       /thiscode:setup or first session_start.
     file: .agents/bootstrap.yaml
-  - name: cmd-thiscode-km-bootstrap
-    version: 1.0.0
-    tier: external
-    description: Slash command /thiscode:km-bootstrap — one-shot installer wrapper for the 4-Tier search stack.
-    file: .agents/cmd-thiscode-km-bootstrap.yaml
-  - name: cmd-thiscode-km
-    version: 1.0.0
-    tier: external
-    description: Slash command /thiscode:km — dispatches to km-lite (default) / km-at / km-plain based on flags. Wizard if no args.
-    file: .agents/cmd-thiscode-km.yaml
-  - name: cmd-search
-    version: 1.0.0
-    tier: external
-    description: Slash command /thiscode:search — 4-Tier search dispatcher (forwards to search skill).
-    file: .agents/cmd-search.yaml
-  - name: cmd-thiscode-setup
-    version: 1.0.0
-    tier: external
-    description: >-
-      Slash command /thiscode:setup — interactive bootstrap wizard (Tier 1-4 install choices), invokes
-      bootstrap skill.
-    file: .agents/cmd-thiscode-setup.yaml
   - name: codex-exec-bridge
     version: 1.0.0
     tier: experimental
@@ -45,39 +23,6 @@ agents:
       8 Phase progressive install wizard — env detect + vault note count + tools/resources 기반 Phase 추천
       (current/recommended/later). 사용자 v2.1 spec.
     file: .agents/init.yaml
-  - name: knowledge-manager-at
-    version: 1.0.0
-    tier: experimental
-    description: >-
-      Knowledge Manager Agent Teams variant — Mode R (Reorganization) workflow with category lead + worker split via
-      parallel-agent orchestration pattern. Advanced KM for team vaults.
-    file: .agents/knowledge-manager-at.yaml
-  - name: knowledge-manager-bootstrap
-    version: 1.0.0
-    tier: external
-    description: >-
-      One-shot environment installer for the 4-Tier search stack — installs Obsidian CLI (optional), vault-search MCP,
-      GraphRAG server (optional), records vault_root.
-    file: .agents/knowledge-manager-bootstrap.yaml
-  - name: knowledge-manager-lite
-    version: 1.0.0
-    tier: external
-    description: >-
-      Knowledge Manager lite — Phase 1 (ingestion) + Phase 2 (extract/classify) for individual vault. Default KM variant
-      per docs/01-mode-i.md.
-    file: .agents/knowledge-manager-lite.yaml
-  - name: knowledge-manager-plain
-    version: 1.0.0
-    tier: internal
-    description: Knowledge Manager headless variant — no AskUserQuestion prompts, suitable for CI/cron unattended ingestion.
-    file: .agents/knowledge-manager-plain.yaml
-  - name: knowledge-manager
-    version: 2.2.0
-    tier: external
-    description: >-
-      Knowledge Manager — vault 7-Layer Fusion + Orchestrator Pipeline + agent-office/km-tools 풀 본문 (vault
-      `.claude/commands/knowledge-manager.md` mirror). Mode I/R/G 모두 지원, 단일 에이전트 순차 처리. v2.2 옵션 C pure Mirror.
-    file: .agents/knowledge-manager.yaml
   - name: meetings
     version: 1.0.0
     tier: external
@@ -90,20 +35,6 @@ agents:
     tier: external
     description: 검색 결과 후 응답 생성 시 task complexity 따라 LLM 모델 선택 (haiku/sonnet/opus 또는 codex). dispatcher 가 query 분석 → 자동 routing.
     file: .agents/model-router.yaml
-  - name: search-lite
-    version: 2.2.0
-    tier: external
-    description: >-
-      Search Lite — Obsidian CLI / MCP / Grep 3-Tier Cascade (GraphRAG 의존 없음). vault `.claude/commands/search-lite.md`
-      mirror. v2.2 옵션 C pure Mirror.
-    file: .agents/search-lite.yaml
-  - name: search
-    version: 1.0.0
-    tier: external
-    description: >-
-      4-Tier vault search dispatcher — Tier 1 GraphRAG (FastAPI semantic + graph) → Tier 2 vault-search MCP (embedding)
-      → Tier 3 Obsidian CLI (index) → Tier 4 ripgrep (literal). 정확도 우선 fallback. v2.0 정정 — 사용자 spec.
-    file: .agents/search.yaml
   - name: shared-memory
     version: 1.0.0
     tier: internal

@@ -24,7 +24,7 @@ status: draft (v0.2.0)
 - 영상 길이: 6-8 min.
 
 ### C3. 막혔을 때 사용자 묻지 말고 스킬 시도
-- 학습: `/knowledge-manager` / `/autoresearch` / `/search` 로 끝까지 시도 후 보고. A/B/C/D 4지선택 안티패턴.
+- 학습: `/km:search` / `/autoresearch` 로 끝까지 시도 후 보고. A/B/C/D 4지선택 안티패턴.
 - 영상 길이: 7 min.
 
 ### C4. 응답 echo drift 차단

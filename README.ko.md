@@ -6,6 +6,8 @@
 >
 > **역할 경계**: ThisCode = 봇 하네스 운영 번들(운영 규칙·GraphRAG 운영 vendor·배포 계약). 범용 지식관리 제품은 [knowledge-manager](https://github.com/treylom/knowledge-manager), 플러그인 설치 창구는 [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins)가 정본입니다.
 >
+> 지식관리와 vault 검색은 **knowledge-manager** 플러그인이 제공합니다 — `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins` 로 설치한 뒤 `/km:search` 와 `/km:knowledge-manager` 를 사용하세요. ThisCode 1.4.0 부터는 이 스킬들의 자체 사본을 포함하지 않습니다.
+>
 > 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[최근 변경](docs/RECENT-CHANGES.md)** (설치 시 읽기 — AI가 자동 반영할 최신 변경 요약) · 📖 **[시작 안내서 (한국어 PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.pdf)** (초보자, 14p) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
 
 ## AI에게 설치 맡기기
@@ -92,8 +94,7 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 - `/thiscode:init` — 경험자용 경량 셋업
 - `/thiscode:add-bot` — 추가 Discord 봇 1개 신설 (soul.md 템플릿 + token + 페어링)
 - `/thiscode:slack-configure` — Discord 대신(또는 추가로) Slack에 봇 연결 (claude-channel-server 브리지 자동 셋업)
-- `/thiscode:km` — 지능형 variant 라우팅 knowledge manager (lite/at/plain)
-- `/thiscode:search` — 4-tier vault 검색 (quick/deep 모드)
+- `/thiscode:km` — knowledge-manager 플러그인 안내 (`/km:knowledge-manager`)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
 - `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
 - `/thiscode:install-hooks` — SessionStart / UserPromptSubmit / PreToolUse / Stop 훅의 등록 상태를 검사합니다 (**플러그인을 설치하면 훅은 이미 등록됩니다** — 동봉된 `hooks/hooks.json` 을 Claude Code 가 직접 싣습니다). 훅은 **봇 세션에서만**(`DISCORD_STATE_DIR` 이 있을 때) 동작하고, 일반 세션에서는 아무 출력도 동작 변화도 없습니다. 플러그인 설치본에서는 등록을 검사하고 옛 `~/.claude/settings.json` 병합 잔존을 정리하며(안 지우면 같은 훅이 두 번 발화), `hooks/hooks.json` 이 없는 체크아웃에서는 예전처럼 병합합니다. `/thiscode:create-bot` 이 같은 `scripts/install-hooks.sh` 를 대신 실행합니다.
@@ -101,7 +102,7 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 
 ### 스킬
 
-각 스킬 (bootstrap, knowledge-manager, search, meetings 등)의 SKILL.md 에는 **"How to Use This Skill"** 절이 있어 언제 호출하는지, 무엇을 하는지 설명합니다. vault 관련 스킬은 검색에, knowledge-manager 스킬은 콘텐츠 수집과 재정리에 초점을 맞추며 각 variant (lite/at/plain/full) 마다 기능 세트가 다릅니다.
+각 스킬 (bootstrap, init, meetings, shared-memory 등)의 SKILL.md 에는 **"How to Use This Skill"** 절이 있어 언제 호출하는지, 무엇을 하는지 설명합니다. 지식관리·vault 검색 스킬은 이제 여기 포함되지 않습니다 — knowledge-manager 플러그인을 설치해 `/km:knowledge-manager` · `/km:search` 를 쓰십시오.
 
 ---
 
@@ -204,8 +205,7 @@ Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` �
 - `/thiscode:create-bot` — 신규 봇 디렉토리 + soul.md template 셋업
 - `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설
 - `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
-- `/thiscode:km` — knowledge-manager 진입점 (variant 자동 라우팅 — lite / at / plain)
-- `/thiscode:search` — vault 통합 검색 4-Tier (GraphRAG → Obsidian → MCP → grep)
+- `/thiscode:km` — knowledge-manager 플러그인 안내 (`/km:knowledge-manager` · `/km:search`)
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
 - … 그 밖에 다수 (`/` → `thiscode:` 필터로 현재 세션의 전량 확인)
@@ -299,13 +299,6 @@ thiscode/
 │                                          #    skills 도 /thiscode:<name> 으로 직접 호출된다
 │                                          #    install-hooks · create-bot · create-slack-bot ·
 │                                          #    self-update · help 가 여기 산다
-│   ├── knowledge-manager/                 # vault 풀 7-Layer Fusion
-│   ├── knowledge-manager-at/              # Agent Teams 변종
-│   ├── knowledge-manager-lite/            # Lite 단일 에이전트
-│   ├── knowledge-manager-bootstrap/       # 4-Tier install 합본
-│   ├── knowledge-manager-plain/           # headless variant
-│   ├── search/                            # 4-Tier vault search
-│   ├── search-lite/                       # 3-Tier (GraphRAG 의존 없음)
 │   ├── codex-exec-bridge/                 # vault skill mirror (폴더)
 │   ├── init/                              # onboarding wizard skill
 │   ├── bootstrap/                         # plugin 설치 wizard
@@ -452,7 +445,6 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 - `meetings` — 4-file 회의 프로토콜 + 출처 기반 크로스체크 + Discord REST API 스레드
 - `slack-bridge` — Slack 브리지 운영·트러블슈팅 (발신자 게이트, 봇간 통신 허용목록, 라이브 회의 캔버스 레시피)
 - `codex-exec-bridge` — Codex CLI 서브프로세스 + `/tofu-at-codex` 참조
-- `knowledge-manager-at` — km-at Mode R 사전점검 (읽기 전용 진단 + dry-run 적용)
 
 ### Codex CLI 브리지
 

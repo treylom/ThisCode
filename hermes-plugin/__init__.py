@@ -1,8 +1,8 @@
 """thiscode — Hermes plugin entry point.
 
-Wires the thiscode 4-Tier search + KM ingestion tools into Hermes Agent.
-Bridges to the bash-based dispatcher in ../skills/search/references/
-and the km-lite variant in ../skills/knowledge-manager-lite/references/ via subprocess.
+Registers the search / ingest tool surface with Hermes Agent. The programmatic
+dispatchers those handlers would shell out to are not bundled in this repo, so
+both handlers return a structured "deferred" payload (docs/HERMES-STATUS.md).
 """
 
 from . import schemas, tools

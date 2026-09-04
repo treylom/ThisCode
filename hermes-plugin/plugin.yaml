@@ -3,12 +3,6 @@ version: 1.0.0
 description: KM ingestion + 4-Tier vault search (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). Discord-friendly knowledge manager for individual + team vaults.
 # Aggregated from .agents/*.yaml (source of truth — see scripts/generate-agents-index.mjs)
 provides_tools:
-  - claude_discode_search
-  - claude_discode_km_lite
-  - claude_discode_km_at
-  - claude_discode_km_plain
-  - claude_discode_km_bootstrap
-  - claude_discode_ingest
   - claude_discode_bootstrap
   - claude_discode_meetings
   - claude_discode_codex_invoke
@@ -18,9 +12,6 @@ provides_hooks:
   - on_session_start
   - on_stop
 provides_commands:
-  - /thiscode:km
-  - /thiscode:km-bootstrap
-  - /thiscode:search
   - /thiscode:setup
 author: treylom
 homepage: https://github.com/treylom/ThisCode
@@ -41,7 +32,3 @@ metadata:
     - 2: vault-search MCP
     - 3: Obsidian CLI
     - 4: ripgrep
-  km_variants:
-    - lite
-    - at
-    - plain

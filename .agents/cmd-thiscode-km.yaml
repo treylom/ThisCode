@@ -1,9 +1,0 @@
-name: cmd-thiscode-km
-description: Slash command /thiscode:km — dispatches to km-lite (default) / km-at / km-plain based on flags. Wizard if no args.
-version: 1.0.0
-provides_commands:
-  - /thiscode:km
-tier: external
-allowedTools:
-  - Bash
-  - AskUserQuestion

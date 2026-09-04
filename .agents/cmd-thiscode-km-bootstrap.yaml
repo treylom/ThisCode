@@ -1,8 +1,0 @@
-name: cmd-thiscode-km-bootstrap
-description: Slash command /thiscode:km-bootstrap — one-shot installer wrapper for the 4-Tier search stack.
-version: 1.0.0
-provides_commands:
-  - /thiscode:km-bootstrap
-tier: external
-allowedTools:
-  - Bash

@@ -27,5 +27,4 @@ This is the Gemini CLI / multi-harness entry context for the `thiscode` plugin.
 ## Suggested first actions
 
 1. `/thiscode-km-bootstrap` — install + wire 4-Tier stack.
-2. `/thiscode:km <URL>` — ingest a first article.
-3. `/thiscode:search "MCP"` — verify search.
+2. `/thiscode:km` — shows how to install the km plugin, which provides ingestion and vault search.

@@ -156,7 +156,7 @@ flowchart LR
     end
 
     subgraph Plugin[thiscode plugin]
-        Search[/thiscode:search<br/>4-Tier dispatcher/]
+        Search[/km:search<br/>4-Tier dispatcher/]
         KM[/thiscode:km<br/>lite/at/plain/]
         Meet[/thiscode:meetings<br/>회의실/]
         Setup[/thiscode:setup<br/>bootstrap/]

@@ -34,12 +34,11 @@ Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/cont
 | Command | Variant | Purpose |
 |---|---|---|
 | `/thiscode:km` | auto-routes | Mode I/R/G dispatch (see km-variant-matrix) |
-| `/thiscode:search` | n/a | 4-Tier search |
 | `/thiscode:km-bootstrap` | wizard | First-time install + config write |
 
 ## Cross-harness invocation reference
 
-- **Claude Code**: `Skill(search)`
+- **Claude Code**: `Skill(<name>)` for any skill under `skills/` (vault search moved to the km plugin — `/km:search`)
 - **Hermes Agent**: `claude_discode_search` tool (auto-registered via `hermes-plugin/__init__.py`)
 - **Gemini CLI**: read `GEMINI.md` on startup; skills auto-discovered from `skills/`
 - **OpenCode / Goose / Cursor**: standard agentskills.io SKILL.md frontmatter (`name` + `description`) makes them visible
