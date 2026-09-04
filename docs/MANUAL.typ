@@ -44,7 +44,7 @@ Claude Code + Discord 봇 + Codex 호출을 묶은 bot-harness operations 플러
 
 ThisCode는 봇 운영·설치·모델 라우팅에 집중하고, 지식관리와 vault 검색은 km 플러그인의 명령으로 연결합니다.
 
-= 설치 — km 플러그인 경유
+= 설치 — ThisCode + km 플러그인
 
 ```bash
 # 1. Prereq (node 18+, jq, git)
@@ -55,12 +55,26 @@ git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
 claude plugin marketplace add treylom/tofukyung-plugins
 claude plugin install km@tofukyung-plugins
 
-# 4. 검색 Tier 설치·재설정
-/km:setup
+# 4. Claude Code에서 km 저장 위치·MCP·설정 구성: /km:setup
+#    (검색 Tier 설치 명령이 아님)
 
-# 5. ThisCode bot-harness healthcheck
+# 5. Tier 4 ripgrep (로컬 도구)
+bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
+
+# 6. Tier 3 Obsidian CLI 감지·Obsidian 앱 안내 (선택)
+bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
+
+# 7. Tier 2 vault-search MCP (권장)
+bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+
+# 8. Tier 1 GraphRAG (선택, advanced)
+bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
+
+# 9. ThisCode bot-harness healthcheck
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
+
+로컬 검색 도구용 스크립트는 ThisCode가 제공합니다. Claude Code에서 `/km:setup`을 별도로 실행해 km 저장 위치·MCP·설정을 구성하고, 검색 fallback은 `/km:search`로 실행합니다.
 
 자세한 분기 가이드: SETUP-BEGINNER.md
 

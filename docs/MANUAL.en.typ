@@ -44,7 +44,7 @@ A bot-harness operations plugin that bundles Claude Code + Discord bots + Codex 
 
 ThisCode focuses on bot operations, installation, meetings, shared memory, and model routing; the km plugin owns knowledge management and vault-search fallback.
 
-= Install — through the km plugin
+= Install — ThisCode + the km plugin
 
 ```bash
 # 1. Prerequisites (node 18+, jq, git)
@@ -55,12 +55,26 @@ git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
 claude plugin marketplace add treylom/tofukyung-plugins
 claude plugin install km@tofukyung-plugins
 
-# 4. Install or reconfigure the search tiers
-/km:setup
+# 4. In Claude Code, configure KM storage, MCP integrations, and settings: /km:setup
+#    (This command does not install the search tiers.)
 
-# 5. ThisCode bot-harness healthcheck
+# 5. Tier 4 ripgrep (local tool)
+bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
+
+# 6. Tier 3 Obsidian CLI detection and Obsidian app guidance (optional)
+bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
+
+# 7. Tier 2 vault-search MCP (recommended)
+bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+
+# 8. Tier 1 GraphRAG (optional; advanced)
+bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
+
+# 9. ThisCode bot-harness healthcheck
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
+
+ThisCode provides the local search-tool scripts. Run `/km:setup` separately in Claude Code to configure KM storage, MCP integrations, and settings; use `/km:search` to run the fallback.
 
 For a branching, beginner-friendly guide: SETUP-BEGINNER.md
 

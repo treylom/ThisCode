@@ -59,15 +59,24 @@ node bin/thiscode.mjs --check    # 미리보기(무변경, nothing to export)
 node bin/thiscode.mjs --apply    # 내보낼 항목 없음 (harness=codex/both 선택 시에도 동일)
 ```
 
-## 3. 검색 Tier 설치 — km 플러그인
+## 3. km 플러그인 설정과 선택 검색 도구
 
-vault-search MCP·Obsidian CLI·GraphRAG·ripgrep의 설치와 재설정은 km 플러그인이 담당합니다.
+`/km:setup`은 km 저장 위치·Playwright/Obsidian MCP·`km-config.json`·vault 경로와 구조 문서를 구성합니다. 검색 Tier 설치 명령은 아닙니다.
 
 ```text
 /km:setup
 ```
 
-설치할 Tier, 선택 의존성, 검증과 troubleshooting은 km 플러그인의 안내를 따릅니다.
+로컬 검색 도구가 필요하면 ThisCode의 아래 스크립트 중 필요한 Tier만 선택해 실행합니다.
+
+```bash
+bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
+bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
+bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
+bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
+```
+
+검색 fallback 실행은 km 플러그인의 `/km:search`, km 플러그인 설정 생성·재설정은 `/km:setup`이 담당합니다.
 
 ## 검증 (전체)
 
@@ -94,8 +103,9 @@ Exit code: `0` = all required OK / `1` = required FAIL / `2` = intentional SKIP 
 
 ```
 /thiscode:km                     # km 플러그인 설치 안내 (검색·지식관리)
+/thiscode:init                   # ThisCode 환경 감지·설정 인터뷰
 /thiscode:setup                  # ThisCode 봇 하네스 재설정
-/km:setup                        # 검색 Tier 설치·추가·재설정
+/km:setup                        # km 저장 위치·MCP·설정 구성
 /km:search "your query"          # km 플러그인 설치 후 검색 fallback 자동
 ```
 

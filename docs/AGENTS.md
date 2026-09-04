@@ -104,7 +104,7 @@ benchmark:
 
 ## Tier 순서
 
-로컬 검색 도구 설치기는 ThisCode에 있고, 아래 fallback 순서를 실제로 실행하는 dispatcher는 km 플러그인이 제공합니다.
+로컬 검색 도구용 스크립트는 ThisCode의 `scripts/install-*.sh`에 있고, 아래 fallback 순서는 km 플러그인의 `/km:search`가 실행합니다. `/km:setup`은 km 설정 위저드이며 검색 도구를 설치하지 않습니다.
 
 | Tier | Method | 이유 |
 |---|---|---|

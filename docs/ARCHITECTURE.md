@@ -4,7 +4,7 @@ thiscode 의 구조 + 흐름을 mermaid 차트로 시각화. GitHub 에서 자�
 
 ## 1. KM plugin search fallback (external)
 
-아래 검색 fallback과 각 Tier의 지원 설치 경로는 km 플러그인이 소유합니다. ThisCode는 봇 하네스를 제공하지만 이 검색 흐름을 실행하지 않습니다.
+아래 검색 fallback은 km 플러그인이 소유하고 실행합니다. ThisCode는 봇 하네스와 각 Tier의 로컬 도구 설치기를 제공하지만 이 검색 흐름을 실행하지 않습니다.
 
 ```mermaid
 flowchart TD
@@ -32,7 +32,7 @@ flowchart TD
     class T4 tier4
 ```
 
-각 Tier의 로컬 도구 설치·재설정과 fallback 구성은 km 플러그인의 `/km:setup`에서 진행합니다.
+각 Tier의 로컬 도구는 ThisCode의 `scripts/install-*.sh`로 설치합니다. `/km:search`는 검색 fallback을 실행하고 `/km:setup`은 km 저장 위치·MCP·설정을 구성하며, 검색 Tier를 설치하지 않습니다.
 
 ---
 
