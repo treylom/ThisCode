@@ -13,6 +13,7 @@ PROJECT_DIR="${THISCODE_BROWSER_PROJECT_DIR:-$PWD}"
 CLAUDE_BIN="${THISCODE_BROWSER_CLAUDE:-claude}"
 NPX_BIN="${THISCODE_BROWSER_NPX:-npx}"
 MCP_NAME="${THISCODE_BROWSER_MCP_NAME:-playwright}"
+MCP_PACKAGE="${THISCODE_BROWSER_MCP_PACKAGE:-@playwright/mcp@0.0.80}"
 TEST_URL="${THISCODE_BROWSER_TEST_URL:-https://example.com}"
 INSTALL_GATE="$HERE/install-gate.sh"
 CHECK_ONLY=0
@@ -121,21 +122,41 @@ mcp_json_exact() {
   [ -f "$config" ] || return 1
   node -e '
     const fs=require("fs");
-    const p=process.argv[1], name=process.argv[2];
+    const p=process.argv[1], name=process.argv[2], expected=process.argv[3];
     try {
       const d=JSON.parse(fs.readFileSync(p,"utf8"));
       const m=d.mcpServers && d.mcpServers[name];
-      process.exit(m && m.command==="npx" && Array.isArray(m.args) && m.args.length===1 && m.args[0]==="@playwright/mcp@latest" ? 0 : 1);
+      process.exit(m && m.command==="npx" && Array.isArray(m.args) && m.args.length===1 && m.args[0]===expected ? 0 : 1);
+    } catch { process.exit(1); }
+  ' "$config" "$MCP_NAME" "$MCP_PACKAGE"
+}
+
+mcp_json_has_name() {
+  local config="$PROJECT_DIR/.mcp.json"
+  [ -f "$config" ] || return 1
+  node -e '
+    const fs=require("fs");
+    const p=process.argv[1], name=process.argv[2];
+    try {
+      const d=JSON.parse(fs.readFileSync(p,"utf8"));
+      process.exit(d.mcpServers && Object.hasOwn(d.mcpServers, name) ? 0 : 1);
     } catch { process.exit(1); }
   ' "$config" "$MCP_NAME"
 }
 
+run_claude_configured() {
+  if [ -n "${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-}" ]; then
+    CLAUDE_CONFIG_DIR="$THISCODE_BROWSER_CLAUDE_CONFIG_DIR" "$CLAUDE_BIN" "$@"
+  else
+    "$CLAUDE_BIN" "$@"
+  fi
+}
+
 mcp_list_exact() {
-  local cfg out rc
-  cfg="${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-claude.XXXXXX")}" || return 1
-  out="$(cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
+  local out rc
+  out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 1; }
-  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
+  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx ${MCP_PACKAGE}" '
     index($0, prefix) == 1 { found = 1 }
     END { exit found ? 0 : 1 }
   '
@@ -143,12 +164,12 @@ mcp_list_exact() {
 
 mcp_approval_state() {
   local out rc
-  out="$(cd "$PROJECT_DIR" && env -u CLAUDE_CONFIG_DIR "$CLAUDE_BIN" mcp list 2>&1)"; rc=$?
+  out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
   if [[ "$out" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]; then
     return 5
   fi
-  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx @playwright/mcp@latest" '
+  printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx ${MCP_PACKAGE}" '
     index($0, prefix) == 1 {
       found = 1
       suffix = substr($0, length(prefix) + 1)
@@ -187,51 +208,75 @@ step4_approval_check() {
 step2_check() {
   mcp_json_exact || { fail 2 C '프로젝트 설정의 Playwright 항목이 없거나 명령이 다릅니다'; return 1; }
   mcp_list_exact || { fail 2 C '`claude mcp list`의 프로젝트 Playwright 행을 확인하지 못했습니다'; return 1; }
-  pass '2단계 프로젝트 MCP 등록 확인: scope=project command=npx @playwright/mcp@latest'
+  pass "2단계 프로젝트 MCP 등록 확인: scope=project command=npx ${MCP_PACKAGE}"
 }
 
 step2() {
-  local cfg rc=0
+  local rc=0 backup=""
   step1 >/dev/null || return 1
   if mcp_json_exact; then
     note '2단계 기존 프로젝트 등록을 그대로 사용합니다'
   else
     [ "$CHECK_ONLY" -eq 0 ] || { step2_check; return $?; }
     mkdir -p "$PROJECT_DIR"
-    cfg="${THISCODE_BROWSER_CLAUDE_CONFIG_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-add.XXXXXX")}" || return 1
     if [ -x "$INSTALL_GATE" ]; then bash "$INSTALL_GATE" browser_mcp_registration >/dev/null 2>&1 || true; fi
-    (cd "$PROJECT_DIR" && CLAUDE_CONFIG_DIR="$cfg" "$CLAUDE_BIN" mcp add -s project "$MCP_NAME" -- npx @playwright/mcp@latest) || rc=$?
+    if mcp_json_has_name; then
+      backup="$(mktemp "${TMPDIR:-/tmp}/thiscode-browser-mcp-backup.XXXXXX")" || return 1
+      cp "$PROJECT_DIR/.mcp.json" "$backup" || return 1
+      (cd "$PROJECT_DIR" && run_claude_configured mcp remove -s project "$MCP_NAME") || rc=$?
+      if [ "$rc" -ne 0 ]; then
+        rm -f "$backup"
+        record_attempt browser_mcp_registration fail "claude mcp remove exit $rc"
+        fail 2 C "기존 프로젝트 MCP 등록 제거 명령이 exit ${rc}로 끝났습니다"
+        return 1
+      fi
+      rc=0
+    fi
+    (cd "$PROJECT_DIR" && run_claude_configured mcp add -s project "$MCP_NAME" -- npx "$MCP_PACKAGE") || rc=$?
     if [ "$rc" -ne 0 ]; then
+      if [ -n "$backup" ]; then
+        if ! cp "$backup" "$PROJECT_DIR/.mcp.json"; then
+          record_attempt browser_mcp_registration fail "claude mcp add exit $rc; restore failed; backup=$backup"
+          fail 2 C "새 프로젝트 MCP 등록이 exit ${rc}로 끝났고 기존 설정 복원도 실패했습니다. 백업을 보존했습니다: $backup"
+          return 1
+        fi
+        rm -f "$backup"
+      fi
       record_attempt browser_mcp_registration fail "claude mcp add exit $rc"
-      fail 2 C "프로젝트 MCP 등록 명령이 exit $rc로 끝났습니다"
+      fail 2 C "프로젝트 MCP 등록 명령이 exit ${rc}로 끝났습니다"
       return 1
     fi
+    if [ -n "$backup" ]; then rm -f "$backup"; fi
     record_attempt browser_mcp_registration ok
   fi
   step2_check
 }
 
-browser_locations() {
-  "$NPX_BIN" playwright install --dry-run chromium 2>&1 \
-    | sed -n 's/^[[:space:]]*Install location:[[:space:]]*//p'
+playwright_cli() {
+  "$NPX_BIN" -y "--package=$MCP_PACKAGE" playwright "$@"
 }
 
 browser_locations_ready() {
-  local locations loc count=0
-  locations="$(browser_locations)" || return 1
+  local raw rc=0 locations loc base
+  BROWSER_PROBE_RC=0
+  raw="$(playwright_cli install --dry-run chromium 2>&1)" || rc=$?
+  if [ "$rc" -ne 0 ]; then
+    BROWSER_PROBE_RC="$rc"
+    printf '%s\n' "$raw" >&2
+    return 2
+  fi
+  locations="$(printf '%s\n' "$raw" | sed -n 's/^[[:space:]]*Install location:[[:space:]]*//p')"
   [ -n "$locations" ] || return 1
   while IFS= read -r loc; do
     [ -n "$loc" ] || continue
-    count=$((count + 1))
-    [ -d "$loc" ] || return 1
-    if [ ! -f "$loc/INSTALLATION_COMPLETE" ] \
-      && ! find "$loc" -type f -perm -111 -print -quit 2>/dev/null | grep -q .; then
-      return 1
-    fi
+    base="$(basename "$loc")"
+    case "$base" in chromium-*|chromium_headless_shell-*) ;; *) continue ;; esac
+    [ -d "$loc" ] || continue
+    find "$loc" -type f \( -perm -u=x -o -name '*.exe' \) -print -quit 2>/dev/null | grep -q . && return 0
   done <<EOF
 $locations
 EOF
-  [ "$count" -ge 2 ]
+  return 1
 }
 
 disk_preflight() {
@@ -242,25 +287,36 @@ disk_preflight() {
 }
 
 step3_check() {
-  browser_locations_ready || { fail 3 D 'Chromium 설치 위치 또는 실행 파일을 확인하지 못했습니다'; return 1; }
-  pass '3단계 브라우저 바이너리 확인: dry-run 위치 전건 실재'
+  local rc=0
+  browser_locations_ready || rc=$?
+  if [ "$rc" -eq 2 ]; then
+    fail 3 D "Chromium 설치 위치 판정 명령이 exit ${BROWSER_PROBE_RC}로 끝났습니다"
+    return 1
+  fi
+  [ "$rc" -eq 0 ] || { fail 3 D 'MCP 런타임이 사용할 Chromium 실행 파일을 확인하지 못했습니다'; return 1; }
+  pass '3단계 브라우저 바이너리 확인: MCP 런타임용 Chromium 실행 파일 실재'
 }
 
 step3() {
-  local rc=0
+  local rc=0 ready_rc=0
   step2_check >/dev/null || return 1
-  if browser_locations_ready; then
+  browser_locations_ready || ready_rc=$?
+  if [ "$ready_rc" -eq 0 ]; then
     note '3단계 기존 Chromium 바이너리를 그대로 사용합니다'
-    step3_check
-    return $?
+    pass '3단계 브라우저 바이너리 확인: MCP 런타임용 Chromium 실행 파일 실재'
+    return 0
+  fi
+  if [ "$ready_rc" -eq 2 ]; then
+    fail 3 D "Chromium 설치 위치 판정 명령이 exit ${BROWSER_PROBE_RC}로 끝났습니다"
+    return 1
   fi
   [ "$CHECK_ONLY" -eq 0 ] || { step3_check; return $?; }
   disk_preflight || { fail 3 D '여유 공간이 15 GiB 미만이라 안전상 다운로드를 시작하지 않았습니다'; return 1; }
   if [ -x "$INSTALL_GATE" ]; then bash "$INSTALL_GATE" browser_binary_install >/dev/null 2>&1 || true; fi
-  "$NPX_BIN" playwright install chromium || rc=$?
+  playwright_cli install chromium || rc=$?
   if [ "$rc" -ne 0 ]; then
     record_attempt browser_binary_install fail "playwright install exit $rc"
-    fail 3 D "브라우저 설치 명령이 exit $rc로 끝났습니다"
+    fail 3 D "브라우저 설치 명령이 exit ${rc}로 끝났습니다"
     return 1
   fi
   record_attempt browser_binary_install ok
@@ -432,36 +488,39 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc
+  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc profile profile_log profile_pending_rc profile_approved_rc caller_profile caller_log caller_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
 #!/usr/bin/env bash
+mcp_package="${THISCODE_BROWSER_MCP_PACKAGE:-@playwright/mcp@0.0.80}"
 if [ -n "${FAKE_CLAUDE_CALLED_FILE:-}" ]; then : >"$FAKE_CLAUDE_CALLED_FILE"; fi
+if [ -n "${FAKE_CLAUDE_ENV_LOG:-}" ]; then printf '%s|%s\n' "${CLAUDE_CONFIG_DIR-<unset>}" "$*" >>"$FAKE_CLAUDE_ENV_LOG"; fi
 if [ "${1:-}" = --version ]; then echo '2.test'; exit 0; fi
 if [ "${1:-}" = mcp ] && [ "${2:-}" = add ]; then
-  cat >.mcp.json <<'JSON'
-{"mcpServers":{"playwright":{"type":"stdio","command":"npx","args":["@playwright/mcp@latest"],"env":{}}}}
+  cat >.mcp.json <<JSON
+{"mcpServers":{"playwright":{"type":"stdio","command":"npx","args":["$mcp_package"],"env":{}}}}
 JSON
   exit 0
 fi
 if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
   case "${FAKE_MCP_LIST_VARIANT:-connected}" in
-    connected) echo 'playwright: npx @playwright/mcp@latest - ✔ Connected' ;;
-    localized) echo 'playwright: npx @playwright/mcp@latest - 연결됨' ;;
-    pending) echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval' ;;
-    pending_localized) echo 'playwright: npx @playwright/mcp@latest - ⏸ 승인 대기' ;;
+    connected) echo "playwright: npx $mcp_package - ✔ Connected" ;;
+    localized) echo "playwright: npx $mcp_package - 연결됨" ;;
+    pending) echo "playwright: npx $mcp_package - ⏸ Pending approval" ;;
+    pending_localized) echo "playwright: npx $mcp_package - ⏸ 승인 대기" ;;
     multiple_scopes) echo 'Server "playwright" is defined in multiple scopes with different endpoints' ;;
     approval_flow)
       if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
-        echo 'playwright: npx @playwright/mcp@latest - ✔ Connected'
+        echo "playwright: npx $mcp_package - ✔ Connected"
       else
-        echo 'playwright: npx @playwright/mcp@latest - ⏸ Pending approval'
+        printf 'Checking MCP server health…\n\n'
+        echo "playwright: npx $mcp_package - ⏸ Pending approval (run \`claude\` to approve)"
       fi
       ;;
-    no_status) echo 'playwright: npx @playwright/mcp@latest' ;;
-    wrong_command) echo 'playwright: node @playwright/mcp@latest - ✔ Connected' ;;
-    wrong_name) echo 'other: npx @playwright/mcp@latest - ✔ Connected' ;;
+    no_status) echo "playwright: npx $mcp_package" ;;
+    wrong_command) echo "playwright: node $mcp_package - ✔ Connected" ;;
+    wrong_name) echo "other: npx $mcp_package - ✔ Connected" ;;
   esac
   exit 0
 fi
@@ -474,21 +533,26 @@ printf '%s\n' \
 FAKE_CLAUDE
   cat >"$fake/npx" <<FAKE_NPX
 #!/usr/bin/env bash
+while [ "\$#" -gt 0 ]; do
+  case "\${1:-}" in -y|--yes|--package=*) shift ;; *) break ;; esac
+done
 if [ "\${1:-}" = playwright ] && [ "\${2:-}" = install ] && [ "\${3:-}" = --dry-run ]; then
-  echo '  Install location:    $tmp/browsers/chromium'
+  echo '  Install location:    $tmp/browsers/chromium-1243'
   echo '  Install location:    $tmp/browsers/ffmpeg'
-  echo '  Install location:    $tmp/browsers/headless'
+  echo '  Install location:    $tmp/browsers/chromium_headless_shell-1243'
   exit 0
 fi
 if [ "\${1:-}" = playwright ] && [ "\${2:-}" = install ]; then
-  mkdir -p '$tmp/browsers/chromium' '$tmp/browsers/ffmpeg' '$tmp/browsers/headless'
-  touch '$tmp/browsers/chromium/INSTALLATION_COMPLETE' '$tmp/browsers/ffmpeg/INSTALLATION_COMPLETE' '$tmp/browsers/headless/INSTALLATION_COMPLETE'
+  mkdir -p '$tmp/browsers/chromium-1243' '$tmp/browsers/ffmpeg' '$tmp/browsers/chromium_headless_shell-1243'
+  touch '$tmp/browsers/chromium-1243/chrome' '$tmp/browsers/chromium-1243/chrome.exe' '$tmp/browsers/chromium_headless_shell-1243/headless_shell' '$tmp/browsers/chromium_headless_shell-1243/headless_shell.exe'
+  chmod +x '$tmp/browsers/chromium-1243/chrome' '$tmp/browsers/chromium_headless_shell-1243/headless_shell'
   exit 0
 fi
 exit 2
 FAKE_NPX
   chmod +x "$fake/claude" "$fake/npx"
   old_path="$PATH"; export PATH="$fake:$PATH"
+  PROJECT_DIR="$project"
   export THISCODE_BROWSER_PROJECT_DIR="$project" THISCODE_BROWSER_CLAUDE="$fake/claude" THISCODE_BROWSER_NPX="$fake/npx"
   export THISCODE_BROWSER_SKIP_DISK_CHECK=1 THISCODE_INSTALL_STATE="$tmp/install-state.yaml" THISCODE_INSTALL_LOG="$tmp/install-log.jsonl"
   printf 'install:\n  mode: auto\n' >"$THISCODE_INSTALL_STATE"
@@ -501,7 +565,7 @@ FAKE_NPX
   [ "$rc" -ne 0 ] && grep -q '4단계 검증 불가(인증 미승계)' "$isolated_out" && [ ! -e "$isolated_marker" ] && passes=$((passes + 1))
   node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["DOES-NOT-EXIST"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
   total=$((total + 1)); rc=0; "$0" 2 --check-only >/dev/null 2>&1 || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
-  node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=["@playwright/mcp@latest"];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json"
+  node -e 'const fs=require("fs");const p=process.argv[1],d=JSON.parse(fs.readFileSync(p));d.mcpServers.playwright.args=[process.argv[2]];fs.writeFileSync(p,JSON.stringify(d));' "$project/.mcp.json" "$MCP_PACKAGE"
   for variant in connected localized no_status; do
     total=$((total + 1)); FAKE_MCP_LIST_VARIANT="$variant"; export FAKE_MCP_LIST_VARIANT
     if mcp_list_exact; then passes=$((passes + 1)); else echo "[SELFTEST FAIL] mcp list $variant" >&2; fi
@@ -527,6 +591,27 @@ FAKE_NPX
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=multiple_scopes; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
   [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
+
+  profile="$tmp/one-profile"; profile_log="$tmp/one-profile.log"; rm -f "$project/.mcp.json" "$tmp/profile-approved"
+  mkdir -p "$profile"
+  export THISCODE_BROWSER_CLAUDE_CONFIG_DIR="$profile" FAKE_CLAUDE_ENV_LOG="$profile_log"
+  export FAKE_MCP_LIST_VARIANT=approval_flow FAKE_MCP_APPROVED_FILE="$tmp/profile-approved"
+  total=$((total + 1)); rc=0; step2 >/dev/null 2>&1 || rc=$?
+  profile_pending_rc=0; mcp_approval_state >/dev/null 2>&1 || profile_pending_rc=$?
+  touch "$FAKE_MCP_APPROVED_FILE"
+  profile_approved_rc=0; mcp_approval_state >/dev/null 2>&1 || profile_approved_rc=$?
+  if [ "$rc" -eq 0 ] && [ "$profile_pending_rc" -eq 2 ] && [ "$profile_approved_rc" -eq 0 ] \
+    && [ "$(awk -F'|' '$2 ~ /^mcp / {print $1}' "$profile_log" | sort -u | wc -l | tr -d ' ')" -eq 1 ] \
+    && ! grep -q '^<unset>|mcp ' "$profile_log"; then passes=$((passes + 1)); fi
+
+  caller_profile="$tmp/caller-profile"; caller_log="$tmp/caller-profile.log"
+  unset THISCODE_BROWSER_CLAUDE_CONFIG_DIR
+  export CLAUDE_CONFIG_DIR="$caller_profile" FAKE_CLAUDE_ENV_LOG="$caller_log" FAKE_MCP_LIST_VARIANT=connected
+  mkdir -p "$caller_profile"
+  total=$((total + 1)); caller_rc=0; mcp_list_exact >/dev/null 2>&1 || caller_rc=$?; mcp_approval_state >/dev/null 2>&1 || caller_rc=$?
+  if [ "$caller_rc" -eq 0 ] && [ "$(awk -F'|' '$2 ~ /^mcp / {print $1}' "$caller_log" | sort -u | wc -l | tr -d ' ')" -eq 1 ] \
+    && ! grep -qv "^${caller_profile}|mcp " "$caller_log"; then passes=$((passes + 1)); fi
+  unset CLAUDE_CONFIG_DIR FAKE_CLAUDE_ENV_LOG
   unset FAKE_MCP_LIST_VARIANT
   unset FAKE_MCP_APPROVED_FILE
   real_node="$(command -v node)"; hidden_nvm="$tmp/hidden-nvm"; hidden_node_bin="$tmp/hidden-node-bin"; hidden_out="$tmp/hidden-node.out"

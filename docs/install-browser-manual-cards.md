@@ -45,10 +45,11 @@ curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bas
 ### Windows PowerShell·macOS·Linux·WSL 공통
 
 ```text
-claude mcp add -s project playwright -- npx @playwright/mcp@latest
+claude mcp remove -s project playwright
+claude mcp add -s project playwright -- npx @playwright/mcp@0.0.80
 ```
 
-성공 화면에 `project config`와 `playwright`가 보이면 `/thiscode:install-browser`를 다시 실행합니다.
+기존 항목이 없다는 첫 명령의 안내는 그대로 다음 줄로 진행합니다. 두 번째 명령의 성공 화면에 `project config`와 `playwright`가 보이면 `/thiscode:install-browser`를 다시 실행합니다.
 
 ## 카드 D — 3단계 Chromium 준비
 
@@ -57,7 +58,7 @@ claude mcp add -s project playwright -- npx @playwright/mcp@latest
 ### Windows PowerShell·macOS·Linux·WSL 공통
 
 ```text
-npx playwright install chromium
+npx -y --package=@playwright/mcp@0.0.80 playwright install chromium
 ```
 
 다운로드가 끝나면 `/thiscode:install-browser`를 다시 실행합니다.
@@ -70,9 +71,9 @@ npx playwright install chromium
 claude
 ```
 
-프로젝트의 Playwright 연결을 승인한 뒤 `/thiscode:install-browser`를 다시 실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
+프로젝트의 Playwright 연결을 한 번 승인한 뒤 `/thiscode:install-browser`를 한 번만 재실행합니다. 화면에 다음 두 문장이 모두 보여야 자동 설치와 일반 세션이 같은 승인 상태를 검증한 것입니다.
 
-Playwright 연결이 여러 위치에 중복 등록됐다는 안내가 나오면, Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 `/thiscode:install-browser`를 다시 실행합니다.
+Playwright 연결이 여러 위치에 중복 등록됐다는 안내가 나오면, Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 위의 1회 절차를 따릅니다.
 
 > 4b 승인 상태 확인: 프로젝트 Playwright 연결 승인됨
 >
