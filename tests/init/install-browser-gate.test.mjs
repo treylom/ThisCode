@@ -96,7 +96,24 @@ function makeBrowserProbeFixture(mode, mcpPackage = '@playwright/mcp@latest') {
   writeFileSync(fakeClaude, `#!/usr/bin/env bash
 if [ "\${1:-}" = --version ]; then echo '2.test'; exit 0; fi
 if [ "\${1:-}" = mcp ] && [ "\${2:-}" = list ]; then
-  echo 'playwright: npx ${mcpPackage} - ✔ Connected'
+  case "\${FAKE_MCP_LIST_VARIANT:-connected}" in
+    conflict_user_row)
+      echo 'playwright: npx -y @playwright/mcp@latest - ✔ Connected'
+      echo ''
+      echo '[Conflicting scopes]'
+      echo '  Server "playwright" is defined in multiple scopes with different endpoints:'
+      echo '  user (npx -y @playwright/mcp@latest), project (npx @playwright/mcp@0.0.80).'
+      ;;
+    *) echo 'playwright: npx ${mcpPackage} - ✔ Connected' ;;
+  esac
+  exit 0
+fi
+if [ -n "\${FAKE_CLAUDE_STREAM_JSON:-}" ]; then
+  echo '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"nav-1","name":"mcp__playwright__browser_navigate"}]}}'
+  echo '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"nav-1","content":"Page URL: https://example.com"}]}}'
+  echo '{"type":"assistant","message":{"content":[{"type":"tool_use","id":"snap-1","name":"mcp__playwright__browser_snapshot"}]}}'
+  echo '{"type":"user","message":{"content":[{"type":"tool_result","tool_use_id":"snap-1","content":[{"type":"text","text":"Page Title: Example Domain"}]}]}}'
+  echo '{"type":"result","result":"TITLE=Example Domain"}'
   exit 0
 fi
 exit 2
@@ -118,7 +135,7 @@ exit 0
 test('browser gate replays 0~4 and fails closed for isolated step 4', () => {
   const r = spawnSync('bash', [GATE, '--self-test'], { encoding: 'utf8' });
   assert.equal(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
-  assert.match(r.stdout, /\[SELFTEST\] 25\/25 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 28\/28 passed/);
 });
 
 test('browser gate uses Node for config diff and has no Python runtime dependency', () => {
@@ -178,7 +195,7 @@ test('R1 mutation: clearing only the approval profile makes the state machine fa
     env: { ...process.env, LC_ALL: 'C' },
   });
   assert.equal(r.status, 1, [r.stdout, r.stderr].filter(Boolean).join('\n'));
-  assert.match(r.stdout, /\[SELFTEST\] 23\/25 passed/);
+  assert.match(r.stdout, /\[SELFTEST\] 26\/28 passed/);
 });
 
 test('automatic completion and card E share the approval-state sentence', () => {
@@ -330,4 +347,77 @@ test('R2: Chromium probe is resolved through the same pinned MCP package used at
     readFileSync(fixture.npxLog, 'utf8'),
     /^-y --package=@playwright\/mcp@0\.0\.80 playwright install --dry-run chromium$/m,
   );
+});
+
+test('R8a: user-scope conflict sends step 2 to card F instead of looping on card C', () => {
+  const fixture = makeBrowserProbeFixture('one', '@playwright/mcp@0.0.80');
+  const r = spawnSync(BASH, [GATE, '2'], {
+    cwd: fixture.project,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      LC_ALL: 'C',
+      CLAUDE_CONFIG_DIR: fixture.config,
+      THISCODE_BROWSER_CLAUDE_CONFIG_DIR: fixture.config,
+      THISCODE_BROWSER_PROJECT_DIR: fixture.project,
+      THISCODE_BROWSER_CLAUDE: fixture.fakeClaude,
+      THISCODE_BROWSER_NPX: fixture.fakeNpx,
+      THISCODE_BROWSER_MCP_PACKAGE: fixture.mcpPackage,
+      FAKE_MCP_LIST_VARIANT: 'conflict_user_row',
+      FAKE_NPX_MODE: fixture.mode,
+      FAKE_BROWSER_DIR: fixture.browserDir,
+    },
+  });
+  assert.notEqual(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
+  assert.match(r.stderr, /2단계 실패 → 수동 카드 F/);
+  assert.match(r.stderr, /사용자 전체\(user\) 범위에도 등록되어 있어/);
+  assert.doesNotMatch(r.stderr, /카드 C/);
+});
+
+test('R8b: user-scope conflict sends step 4b to card F', () => {
+  const fixture = makeBrowserProbeFixture('one', '@playwright/mcp@0.0.80');
+  const r = spawnSync(BASH, [GATE, '4'], {
+    cwd: fixture.project,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      LC_ALL: 'C',
+      HOME: fixture.root,
+      CLAUDE_CONFIG_DIR: fixture.config,
+      THISCODE_BROWSER_PROJECT_DIR: fixture.project,
+      THISCODE_BROWSER_CLAUDE: fixture.fakeClaude,
+      THISCODE_BROWSER_NPX: fixture.fakeNpx,
+      THISCODE_BROWSER_MCP_PACKAGE: fixture.mcpPackage,
+      THISCODE_BROWSER_LOG: join(fixture.root, 'step4.log'),
+      FAKE_MCP_LIST_VARIANT: 'conflict_user_row',
+      FAKE_CLAUDE_STREAM_JSON: '1',
+      FAKE_NPX_MODE: fixture.mode,
+      FAKE_BROWSER_DIR: fixture.browserDir,
+    },
+  });
+  assert.notEqual(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
+  assert.match(r.stderr, /4b단계 실패 → 수동 카드 F/);
+  assert.match(r.stderr, /사용자 전체\(user\) 범위에도 등록되어 있어/);
+});
+
+test('R8c: negative control — the connected variant keeps step 2 passing', () => {
+  const fixture = makeBrowserProbeFixture('one', '@playwright/mcp@0.0.80');
+  const r = spawnSync(BASH, [GATE, '2'], {
+    cwd: fixture.project,
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      LC_ALL: 'C',
+      CLAUDE_CONFIG_DIR: fixture.config,
+      THISCODE_BROWSER_CLAUDE_CONFIG_DIR: fixture.config,
+      THISCODE_BROWSER_PROJECT_DIR: fixture.project,
+      THISCODE_BROWSER_CLAUDE: fixture.fakeClaude,
+      THISCODE_BROWSER_NPX: fixture.fakeNpx,
+      THISCODE_BROWSER_MCP_PACKAGE: fixture.mcpPackage,
+      FAKE_NPX_MODE: fixture.mode,
+      FAKE_BROWSER_DIR: fixture.browserDir,
+    },
+  });
+  assert.equal(r.status, 0, [r.stdout, r.stderr].filter(Boolean).join('\n'));
+  assert.match(r.stdout, /\[PASS\] 2단계 프로젝트 MCP 등록 확인/);
 });

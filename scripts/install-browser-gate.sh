@@ -152,10 +152,15 @@ run_claude_configured() {
   fi
 }
 
+mcp_list_scope_conflict() {   # $1 = `claude mcp list` 출력 전체 → 충돌이면 0
+  [[ "$1" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]
+}
+
 mcp_list_exact() {
   local out rc
   out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 1; }
+  mcp_list_scope_conflict "$out" && return 5
   printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx ${MCP_PACKAGE}" '
     index($0, prefix) == 1 { found = 1 }
     END { exit found ? 0 : 1 }
@@ -166,9 +171,7 @@ mcp_approval_state() {
   local out rc
   out="$(cd "$PROJECT_DIR" && run_claude_configured mcp list 2>&1)"; rc=$?
   [ "$rc" -eq 0 ] || { printf '%s\n' "$out" >&2; return 3; }
-  if [[ "$out" == *"Server \"$MCP_NAME\" is defined in multiple scopes"* ]]; then
-    return 5
-  fi
+  mcp_list_scope_conflict "$out" && return 5
   printf '%s\n' "$out" | awk -v prefix="${MCP_NAME}: npx ${MCP_PACKAGE}" '
     index($0, prefix) == 1 {
       found = 1
@@ -195,7 +198,7 @@ step4_approval_check() {
       return 1
       ;;
     5)
-      fail 4b E 'Playwright 연결이 여러 위치에 중복 등록되어 있습니다. Claude Code에서 Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요'
+      fail 4b F 'Playwright 연결이 사용자 전체(user) 범위에도 등록되어 있어 프로젝트 연결을 확인할 수 없습니다. 카드 F대로 사용자 전체 연결을 지운 뒤 다시 실행하세요'
       return 1
       ;;
     *)
@@ -206,8 +209,14 @@ step4_approval_check() {
 }
 
 step2_check() {
+  local rc=0
   mcp_json_exact || { fail 2 C '프로젝트 설정의 Playwright 항목이 없거나 명령이 다릅니다'; return 1; }
-  mcp_list_exact || { fail 2 C '`claude mcp list`의 프로젝트 Playwright 행을 확인하지 못했습니다'; return 1; }
+  mcp_list_exact || rc=$?
+  case "${rc}" in
+    0) ;;
+    5) fail 2 F 'Playwright 연결이 사용자 전체(user) 범위에도 등록되어 있어 프로젝트 연결을 확인할 수 없습니다. 카드 F대로 사용자 전체 연결을 지운 뒤 다시 실행하세요'; return 1 ;;
+    *) fail 2 C '`claude mcp list`의 프로젝트 Playwright 행을 확인하지 못했습니다'; return 1 ;;
+  esac
   pass "2단계 프로젝트 MCP 등록 확인: scope=project command=npx ${MCP_PACKAGE}"
 }
 
@@ -488,7 +497,7 @@ step4() {
 }
 
 self_test() {
-  local tmp fake project decoy approval_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc profile profile_log profile_pending_rc profile_approved_rc caller_profile caller_log caller_rc
+  local tmp fake project decoy approval_out step2_out isolated_out isolated_marker cfg_before cfg_after cfg_out old_path real_node hidden_nvm hidden_node_bin hidden_out hidden_rc step passes=0 total=0 rc pending_rc before_approval_rc profile profile_log profile_pending_rc profile_approved_rc caller_profile caller_log caller_rc
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/thiscode-browser-selftest.XXXXXX")" || return 1
   fake="$tmp/bin"; project="$tmp/project"; mkdir -p "$fake" "$project"
   cat >"$fake/claude" <<'FAKE_CLAUDE'
@@ -510,6 +519,13 @@ if [ "${1:-}" = mcp ] && [ "${2:-}" = list ]; then
     pending) echo "playwright: npx $mcp_package - ⏸ Pending approval" ;;
     pending_localized) echo "playwright: npx $mcp_package - ⏸ 승인 대기" ;;
     multiple_scopes) echo 'Server "playwright" is defined in multiple scopes with different endpoints' ;;
+    conflict_user_row)
+      echo 'playwright: npx -y @playwright/mcp@latest - ✔ Connected'
+      echo ''
+      echo '[Conflicting scopes]'
+      echo '  Server "playwright" is defined in multiple scopes with different endpoints:'
+      echo '  user (npx -y @playwright/mcp@latest), project (npx @playwright/mcp@0.0.80).'
+      ;;
     approval_flow)
       if [ -f "${FAKE_MCP_APPROVED_FILE:-}" ]; then
         echo "playwright: npx $mcp_package - ✔ Connected"
@@ -574,6 +590,13 @@ FAKE_NPX
     total=$((total + 1)); FAKE_MCP_LIST_VARIANT="$variant"; export FAKE_MCP_LIST_VARIANT
     rc=0; mcp_list_exact || rc=$?; [ "$rc" -ne 0 ] && passes=$((passes + 1))
   done
+  step2_out="$tmp/step2-check.out"
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=conflict_user_row; export FAKE_MCP_LIST_VARIANT
+  rc=0; "$0" 2 --check-only >"$step2_out" 2>&1 || rc=$?
+  [ "$rc" -ne 0 ] && grep -q '2단계 실패 → 수동 카드 F' "$step2_out" && ! grep -q '카드 C' "$step2_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=connected; export FAKE_MCP_LIST_VARIANT
+  rc=0; "$0" 2 --check-only >"$step2_out" 2>&1 || rc=$?
+  [ "$rc" -eq 0 ] && grep -q '\[PASS\] 2단계 프로젝트 MCP 등록 확인' "$step2_out" && passes=$((passes + 1))
   approval_out="$tmp/approval-check.out"
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=pending; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
@@ -590,7 +613,10 @@ FAKE_NPX
   [ "$rc" -eq 1 ] && grep -q '승인 상태를 확인하지 못했습니다' "$approval_out" && passes=$((passes + 1))
   total=$((total + 1)); FAKE_MCP_LIST_VARIANT=multiple_scopes; export FAKE_MCP_LIST_VARIANT
   rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
-  [ "$rc" -eq 1 ] && grep -q 'Playwright 연결을 한 곳만 남긴 뒤 프로젝트 폴더에서 /thiscode:install-browser를 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
+  [ "$rc" -eq 1 ] && grep -q '카드 F대로 사용자 전체 연결을 지운 뒤 다시 실행하세요' "$approval_out" && passes=$((passes + 1))
+  total=$((total + 1)); FAKE_MCP_LIST_VARIANT=conflict_user_row; export FAKE_MCP_LIST_VARIANT
+  rc=0; step4_approval_check >"$approval_out" 2>&1 || rc=$?
+  [ "$rc" -eq 1 ] && grep -q '4b단계 실패 → 수동 카드 F' "$approval_out" && passes=$((passes + 1))
 
   profile="$tmp/one-profile"; profile_log="$tmp/one-profile.log"; rm -f "$project/.mcp.json" "$tmp/profile-approved"
   mkdir -p "$profile"
