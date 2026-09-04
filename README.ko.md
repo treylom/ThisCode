@@ -24,7 +24,7 @@ https://github.com/treylom/ThisCode 에 있는 설치 파일을 따라 단계별
 
 ![ThisCode + ThisCodex 상세 배선 (tmux · app-server · 디스코드 · 볼트)](assets/architecture.png)
 
-WSL / Linux / macOS 어디서든 `bash install.sh` 한 줄로 Claude Code + tmux 환경을 세팅합니다. **핵심 가치**: *구조화된 옵시디언 볼트* 안에서 *각 작업 디렉토리에 적합한 봇*을 두고, *디스코드*로 쓰며, *봇끼리 협업*하게 하는 것. 4-Tier 볼트 검색(GraphRAG → vault-search MCP → Obsidian CLI → ripgrep) + LLM 모델 라우팅은 그 봇들을 쓸모 있게 만드는 보조 기능이지 핵심이 아닙니다.
+WSL / Linux / macOS 어디서든 `bash install.sh` 한 줄로 Claude Code + tmux 환경을 세팅합니다. **핵심 가치**: *구조화된 옵시디언 볼트* 안에서 *각 작업 디렉토리에 적합한 봇*을 두고, *디스코드*로 쓰며, *봇끼리 협업*하게 하는 것. 지식관리·볼트 검색은 km 플러그인이 맡고, ThisCode의 LLM 모델 라우팅과 봇 운영 기능은 그 봇들을 쓸모 있게 만드는 보조 기능입니다.
 
 > **시작 전 권고:** (1) 옵시디언 **폴더 구조**부터 잡으세요; (2) 메모리·내부검색을 제대로 쓰려면 **옵시디언 설치** 권장. **옵시디언 없이?** 단순 연결용 디스코드 봇만 띄울 수도 있지만, 그 경우 볼트 메모리·내부 검색 품질은 **보장되지 않습니다**.
 
@@ -108,7 +108,7 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 
 ## 선택: Discord 봇 + Agent Teams
 
-본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. vault-first 검색만으로도 완전히 작동하며, Discord 페어링 및 tmux 세션은 advanced use case 용입니다.
+본 플러그인의 Discord 봇 및 Agent Teams 통합은 선택사항입니다. km 플러그인의 볼트 검색은 독립적으로 작동하며, Discord 페어링 및 tmux 세션은 고급 다중 봇 운영에만 필요합니다.
 
 > **Slack을 쓰고 싶다면?** Discord 대신(또는 추가로) Slack으로도 봇을 페어링할 수 있습니다 — `/thiscode:slack-configure` 실행 시 CLI 로그인·앱 설치 승인·토큰 입력 같은 사람 관문만 안내받고 나머지는 자동으로 처리됩니다. 상세: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). 운영·트러블슈팅 참조: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 
@@ -126,9 +126,9 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 
 ---
 
-## 📊 4-Tier Search Benchmark
+## 📊 검색 백엔드 벤치마크
 
-thiscode 의 4-Tier search 가 일반 `obsidian-cli` / `/search` / `/vault-search` 대비 어떤 trade-off 를 보이는지 5-axis 로 측정합니다. **본인 vault 에서 직접 측정** 하면 본인 환경의 실제 trade-off 가 보입니다.
+이 저장소에는 GraphRAG·vault-search MCP·Obsidian CLI·ripgrep의 성능 특성을 비교하는 개발자용 벤치마크 러너가 남아 있습니다. 사용자용 지식관리·볼트 검색 명령은 km 플러그인이 제공하므로 실제 사용은 `/km:search` 안내를 따르십시오. **본인 vault에서 직접 측정**하면 환경별 차이를 확인할 수 있습니다.
 
 ```bash
 # 본인 vault 로 측정 (Tier 1 GraphRAG 사용 시 server 별도 띄움 필요)

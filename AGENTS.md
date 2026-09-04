@@ -29,13 +29,22 @@ bash scripts/km-version.sh
 
 Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/contracts/`. Exits non-zero on any version mismatch.
 
-## Slash commands
+## Claude Code entry points
 
-| Command | Variant | Purpose |
+| Entry point | Surface | Purpose |
 |---|---|---|
-| `/thiscode:setup` | wizard | ThisCode bot-harness setup and local installer |
+| `/thiscode:add-bot` | `commands/add-bot.md` | Add a Discord bot to an existing setup |
+| `/thiscode:codex-check` | `commands/codex-check.md` | Verify the Codex CLI bridge |
+| `/thiscode:init` | `commands/init.md` | Detect the environment and route KM tier setup to `/km:setup` |
+| `/thiscode:install-browser` | `commands/install-browser.md` | Install and verify the browser tool |
+| `/thiscode:km-bootstrap` | `commands/km-bootstrap.md` | Point to km plugin installation and `/km:setup` |
+| `/thiscode:km` | `commands/km.md` | Point to `/km:search` and `/km:knowledge-manager` |
+| `/thiscode:open-meeting` | `commands/open-meeting.md` | Create the standard multi-bot meeting files |
+| `/thiscode:slack-configure` | `commands/slack-configure.md` | Connect a Claude Code session to Slack |
+| `/thiscode:start` | `commands/start.md` | Run the main Discord bot setup wizard |
+| `/thiscode:test` | `commands/test.md` | Run feature smoke tests |
 
-Knowledge management and vault-search setup are provided by the km plugin; follow its `/km:setup` documentation.
+`/thiscode:setup` is the separate `skills/setup/SKILL.md` entry point, not a file under `commands/`. Knowledge management and vault-search behavior are provided by the km plugin; the two ThisCode `km*` commands above are migration pointers, not local implementations.
 
 ## Cross-harness invocation reference
 

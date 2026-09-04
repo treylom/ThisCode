@@ -19,4 +19,4 @@ claude plugin install km@tofukyung-plugins
 ## 설치 후
 
 - vault 검색 = `/km:search`
-- 지식관리·수집·분류·저장 = `/km:knowledge-manager` (km 플러그인의 공식 명령)
+- 지식관리·수집·분류·저장 = `/km:knowledge-manager` (km 플러그인의 기본 명령)

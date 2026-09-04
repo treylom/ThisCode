@@ -45,9 +45,9 @@ auto-activate. The `/thiscode setup` skill drives this step.
 - The lite flow is absorbed by the km plugin's search fallback.
 - KM configuration creation is `/km:setup`.
 
-ThisCode retains its bot-harness operations and the setup/init installers for
-the underlying local tools. Install the km plugin for knowledge management and
-vault search.
+ThisCode retains its bot-harness operations. The underlying installer scripts
+remain for compatibility, while the supported KM and search setup path is the
+km plugin's `/km:setup`.
 
 ---
 

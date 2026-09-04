@@ -59,34 +59,15 @@ node bin/thiscode.mjs --check    # 미리보기(무변경, nothing to export)
 node bin/thiscode.mjs --apply    # 내보낼 항목 없음 (harness=codex/both 선택 시에도 동일)
 ```
 
-## 3. Tier 2 — vault-search MCP (5분, 권장)
+## 3. 검색 Tier 설치 — km 플러그인
 
-```bash
-bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
-claude mcp list | grep vault-search   # 검증: vault-search 항목 출력
+vault-search MCP·Obsidian CLI·GraphRAG·ripgrep의 설치와 재설정은 km 플러그인이 담당합니다.
+
+```text
+/km:setup
 ```
 
-Claude Code 재시작 필요. troubleshooting: `npm install` 실패 시 `nvm use 18`
-
-## 4. Tier 3 — obsidian-cli (3분, Obsidian 사용자만)
-
-```bash
-bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
-which obsidian-cli      # 검증: path 출력
-```
-
-Obsidian 미사용 시 skip.
-
-## 5. Tier 1 — GraphRAG (20-30분, advanced)
-
-Python 3.10+, Docker (선택) 필요.
-
-```bash
-bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
-curl localhost:8400/health   # 검증: {"status":"ok"}
-```
-
-첫 indexing 시간 ~15분 (vault 크기 의존). troubleshooting: port 8400 충돌 시 `GRAPHRAG_PORT=8401 bash scripts/...`
+설치할 Tier, 선택 의존성, 검증과 troubleshooting은 km 플러그인의 안내를 따릅니다.
 
 ## 검증 (전체)
 
@@ -113,8 +94,9 @@ Exit code: `0` = all required OK / `1` = required FAIL / `2` = intentional SKIP 
 
 ```
 /thiscode:km                     # km 플러그인 설치 안내 (검색·지식관리)
-/thiscode:setup                  # 재설정 (Tier 추가/제거)
-/km:search "your query"          # km 플러그인 설치 후 4-Tier fallback 자동
+/thiscode:setup                  # ThisCode 봇 하네스 재설정
+/km:setup                        # 검색 Tier 설치·추가·재설정
+/km:search "your query"          # km 플러그인 설치 후 검색 fallback 자동
 ```
 
 ## 벤치마크 (선택)

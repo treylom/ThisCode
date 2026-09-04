@@ -18,10 +18,10 @@ vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추�
 | Phase | trigger | install |
 |---|---|---|
 | 0 | vault 미설치 | Obsidian app (link 안내) |
-| 1 | vault 시작 | ripgrep (default Tier 4) |
-| 2 | Zettelkasten 시도 | obsidian-cli (Tier 3) |
-| 3 | 100+ 노트 의미 검색 갈증 | vault-search MCP (Tier 2) |
-| 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | GraphRAG (Tier 1) |
+| 1 | vault 시작 | km 플러그인 `/km:setup` (ripgrep, Tier 4) |
+| 2 | Zettelkasten 시도 | km 플러그인 `/km:setup` (Obsidian CLI, Tier 3) |
+| 3 | 100+ 노트 의미 검색 갈증 | km 플러그인 `/km:setup` (vault-search MCP, Tier 2) |
+| 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | km 플러그인 `/km:setup` (GraphRAG, Tier 1) |
 | 5 | 2000+ 노트 혼란 | km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름) |
 | 6 | 3000+ + GraphRAG installed | Dashboard 시각화 (선택, 외부 link) |
 | 7 | advanced | 하이브리드 4채널 (선택, Journey-12/13) |
@@ -29,12 +29,9 @@ vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추�
 ## Flow
 
 1. `bash $CLAUDE_DISCODE_HOME/scripts/claude-discode-init.sh` 실행 — env detect + Phase 추천 + interactive prompt
-2. 사용자가 y 선택한 Phase 마다 해당 install script dispatch:
-   - phase-2-cli-install → `scripts/install-obsidian-cli.sh`
-   - phase-3-mcp → `scripts/install-vault-search.sh --apply`
-   - phase-4-graphrag / strong → `scripts/install-graphrag.sh --apply`
-   - phase-5-mode-r-preflight → km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름; read-only 진단 — km 미설치면 README 의 km 설치 포인터 안내)
-3. 완료 후 healthcheck 실행
+2. Phase 1~4 검색 Tier의 설치·재설정은 km 플러그인의 `/km:setup`으로 연결한다. ThisCode의 `scripts/install-*.sh`를 직접 실행하지 않는다.
+3. phase-5-mode-r-preflight → km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름; read-only 진단 — km 미설치면 README 의 km 설치 포인터 안내)
+4. 완료 후 healthcheck 실행
 
 ## Fallback
 

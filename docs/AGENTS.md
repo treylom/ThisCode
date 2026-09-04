@@ -11,8 +11,8 @@ YAML 은 의미 단위로 5 block 으로 나뉩니다.
 `name`, `description`, `version`, `license`, `homepage` — Claude / Cursor / Aider 모두 인식 가능한 portable metadata.
 
 ```yaml
-name: search
-description: ThisCode bot-harness operations and installation ...
+name: bootstrap
+description: Plugin first-run bootstrap — verifies tools, registers vault_root, prints status table ...
 version: 1.0.0
 license: MIT
 homepage: https://github.com/treylom/ThisCode
@@ -103,6 +103,8 @@ benchmark:
 `scripts/route-model.mjs` heuristic. user override `--model haiku|sonnet|opus`.
 
 ## Tier 순서
+
+로컬 검색 도구 설치기는 ThisCode에 있고, 아래 fallback 순서를 실제로 실행하는 dispatcher는 km 플러그인이 제공합니다.
 
 | Tier | Method | 이유 |
 |---|---|---|
