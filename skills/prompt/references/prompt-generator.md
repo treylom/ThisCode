@@ -78,7 +78,7 @@ Skill("prompt", "--batch GPT-5.2 상세 Chain-of-Verification 핵심 주장 검�
 
 ### Batch 모드 워크플로우 (절대 인터랙티브 사용 금지)
 ```
-1. ${ARGUMENTS}에서 --batch 플래그 제거
+1. $ARGUMENTS에서 --batch 플래그 제거
 2. 모델 / 상세도 / 지시문 파싱
 3. 지시문 → Step 1 목적 감지 테이블로 자동 라우팅
 4. IF 목적 ∈ {팩트체크, 리서치/조사}:
