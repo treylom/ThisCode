@@ -10,6 +10,7 @@ const REPO = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const GATE = join(REPO, 'scripts', 'install-browser-gate.sh');
 const COMMAND = join(REPO, 'commands', 'install-browser.md');
 const CARDS = join(REPO, 'docs', 'install-browser-manual-cards.md');
+const BASH = process.platform === 'win32' ? 'bash' : '/bin/bash';
 
 function makeLocaleFailureFixture() {
   const root = mkdtempSync(join(tmpdir(), 'thiscode-browser-locale-'));
@@ -90,6 +91,7 @@ function makeBrowserProbeFixture(mode, mcpPackage = '@playwright/mcp@latest') {
   mcpConfig.mcpServers.playwright.args = [mcpPackage];
   writeFileSync(join(project, '.mcp.json'), JSON.stringify(mcpConfig));
   writeFileSync(join(browserDir, 'chrome'), '#!/usr/bin/env bash\nexit 0\n');
+  writeFileSync(join(browserDir, 'chrome.exe'), 'fixture');
   chmodSync(join(browserDir, 'chrome'), 0o755);
   writeFileSync(fakeClaude, `#!/usr/bin/env bash
 if [ "\${1:-}" = --version ]; then echo '2.test'; exit 0; fi
@@ -171,7 +173,7 @@ test('R1 mutation: clearing only the approval profile makes the state machine fa
   const text = `${original.slice(0, second)}${replacement}${original.slice(second + needle.length)}`;
   writeFileSync(mutated, text);
   chmodSync(mutated, 0o755);
-  const r = spawnSync('/bin/bash', [mutated, '--self-test'], {
+  const r = spawnSync(BASH, [mutated, '--self-test'], {
     encoding: 'utf8',
     env: { ...process.env, LC_ALL: 'C' },
   });
@@ -190,7 +192,7 @@ test('automatic completion and card E share the approval-state sentence', () => 
 test('R6: C and UTF-8 locales preserve the step 2 exit cause under Bash nounset', () => {
   for (const locale of ['C', 'en_US.UTF-8']) {
     const fixture = makeLocaleFailureFixture();
-    const r = spawnSync('/bin/bash', [GATE, '2'], {
+    const r = spawnSync(BASH, [GATE, '2'], {
       cwd: fixture.project,
       encoding: 'utf8',
       env: {
@@ -235,7 +237,7 @@ test('R6: shell sources reject a bare variable immediately followed by non-ASCII
 
 test('R7: mismatched project MCP entry is replaced instead of looping on already exists', () => {
   const fixture = makeMcpReplacementFixture();
-  const r = spawnSync('/bin/bash', [GATE, '2'], {
+  const r = spawnSync(BASH, [GATE, '2'], {
     cwd: fixture.project,
     encoding: 'utf8',
     env: {
@@ -261,7 +263,7 @@ test('R7: mismatched project MCP entry is replaced instead of looping on already
 
 test('R3: one dry-run location passes when it contains a runnable Chromium executable', () => {
   const fixture = makeBrowserProbeFixture('one');
-  const r = spawnSync('/bin/bash', [GATE, '3', '--check-only'], {
+  const r = spawnSync(BASH, [GATE, '3', '--check-only'], {
     cwd: fixture.project,
     encoding: 'utf8',
     env: {
@@ -283,7 +285,7 @@ test('R3: one dry-run location passes when it contains a runnable Chromium execu
 
 test('R4: dry-run command failure has a distinct cause with its exit code', () => {
   const fixture = makeBrowserProbeFixture('fail');
-  const r = spawnSync('/bin/bash', [GATE, '3', '--check-only'], {
+  const r = spawnSync(BASH, [GATE, '3', '--check-only'], {
     cwd: fixture.project,
     encoding: 'utf8',
     env: {
@@ -307,7 +309,7 @@ test('R4: dry-run command failure has a distinct cause with its exit code', () =
 
 test('R2: Chromium probe is resolved through the same pinned MCP package used at runtime', () => {
   const fixture = makeBrowserProbeFixture('one', '@playwright/mcp@0.0.80');
-  const r = spawnSync('/bin/bash', [GATE, '3', '--check-only'], {
+  const r = spawnSync(BASH, [GATE, '3', '--check-only'], {
     cwd: fixture.project,
     encoding: 'utf8',
     env: {

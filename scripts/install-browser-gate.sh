@@ -544,7 +544,7 @@ if [ "\${1:-}" = playwright ] && [ "\${2:-}" = install ] && [ "\${3:-}" = --dry-
 fi
 if [ "\${1:-}" = playwright ] && [ "\${2:-}" = install ]; then
   mkdir -p '$tmp/browsers/chromium-1243' '$tmp/browsers/ffmpeg' '$tmp/browsers/chromium_headless_shell-1243'
-  touch '$tmp/browsers/chromium-1243/chrome' '$tmp/browsers/chromium_headless_shell-1243/headless_shell'
+  touch '$tmp/browsers/chromium-1243/chrome' '$tmp/browsers/chromium-1243/chrome.exe' '$tmp/browsers/chromium_headless_shell-1243/headless_shell' '$tmp/browsers/chromium_headless_shell-1243/headless_shell.exe'
   chmod +x '$tmp/browsers/chromium-1243/chrome' '$tmp/browsers/chromium_headless_shell-1243/headless_shell'
   exit 0
 fi
