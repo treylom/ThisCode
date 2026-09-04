@@ -89,7 +89,7 @@ disable-model-invocation: true
 | 명령 | 언제 |
 |---|---|
 | `/thiscode:km` | km 플러그인 설치와 `/km:knowledge-manager`·`/km:search` 사용 안내 |
-| `/thiscode:km-bootstrap` | km 플러그인 설치와 `/km:setup` 설정 명령 안내(설정을 직접 만들지는 않음) |
+| `/thiscode:km-bootstrap` | ThisCode 로컬 검색 도구 스크립트와 km 플러그인 설치·`/km:setup` 안내(직접 설치하지 않음) |
 | `/thiscode:prompt` | AI 프롬프트 생성기 |
 | `/thiscode:open-meeting` | 봇 여럿이 협업할 회의방 만들기 |
 | `/thiscode:codex-check` | Codex 연동 상태 점검 |

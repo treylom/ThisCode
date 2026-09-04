@@ -35,9 +35,9 @@ Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/cont
 |---|---|---|
 | `/thiscode:add-bot` | `commands/add-bot.md` | Add a Discord bot to an existing setup |
 | `/thiscode:codex-check` | `commands/codex-check.md` | Verify the Codex CLI bridge |
-| `/thiscode:init` | `commands/init.md` | Detect the environment and route KM tier setup to `/km:setup` |
+| `/thiscode:init` | `commands/init.md` | Detect the environment and guide selected ThisCode local setup scripts |
 | `/thiscode:install-browser` | `commands/install-browser.md` | Install and verify the browser tool |
-| `/thiscode:km-bootstrap` | `commands/km-bootstrap.md` | Point to km plugin installation and `/km:setup` |
+| `/thiscode:km-bootstrap` | `commands/km-bootstrap.md` | Point to ThisCode local search-tool scripts and km plugin setup |
 | `/thiscode:km` | `commands/km.md` | Point to `/km:search` and `/km:knowledge-manager` |
 | `/thiscode:open-meeting` | `commands/open-meeting.md` | Create the standard multi-bot meeting files |
 | `/thiscode:slack-configure` | `commands/slack-configure.md` | Connect a Claude Code session to Slack |
