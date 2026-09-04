@@ -12,7 +12,7 @@ YAML 은 의미 단위로 5 block 으로 나뉩니다.
 
 ```yaml
 name: search
-description: 4-Tier vault search ...
+description: ThisCode bot-harness operations and installation ...
 version: 1.0.0
 license: MIT
 homepage: https://github.com/treylom/ThisCode

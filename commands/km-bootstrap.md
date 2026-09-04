@@ -17,3 +17,5 @@ claude plugin install km@tofukyung-plugins
 ```
 
 설치 후 그 플러그인의 설치 안내를 따른다. 처음 설치할 때, 검색이 모든 단계에서 실패할 때, 머신을 옮긴 뒤 환경을 다시 잡을 때 쓴다.
+
+설치된 km 플러그인의 설정 생성과 재설정은 `/km:setup`을 직접 실행한다.

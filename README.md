@@ -24,7 +24,7 @@ Follow the install files in https://github.com/treylom/ThisCode step by step. St
 
 ![ThisCode + ThisCodex detailed wiring (tmux · app-server · Discord · vault)](assets/architecture.png)
 
-`bash install.sh` boots a Claude Code + tmux environment (WSL / Linux / macOS). **Core value**: a *structured Obsidian vault* where each working directory gets an *appropriate bot*, all usable from *Discord*, with bots that can *talk to each other*. The 4-Tier vault search (GraphRAG → vault-search MCP → Obsidian CLI → ripgrep) + LLM model routing are the capabilities that make those bots useful — supporting, not the point.
+`bash install.sh` boots a Claude Code + tmux environment (WSL / Linux / macOS). **Core value**: a *structured Obsidian vault* where each working directory gets an *appropriate bot*, all usable from *Discord*, with bots that can *talk to each other*. The km plugin owns vault retrieval; thiscode's LLM model routing and bot operations make those bots useful — supporting, not the point.
 
 > **Before you start (recommended):** (1) lay out your Obsidian **folder structure** first; (2) **install Obsidian** for full memory + internal-search. **No Obsidian?** You can still wire a plain Discord bot for connectivity only — but vault memory and internal-search quality are **not guaranteed** without it.
 
@@ -133,7 +133,7 @@ Each skill (bootstrap, init, meetings, shared-memory, etc.) includes a **"How to
 
 ## Optional: Discord bot + Agent Teams
 
-Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The 4-Tier vault search works standalone — Discord pairing is for advanced multi-bot orchestration.
+Discord bot integration and tmux-based Agent Teams are **opt-in extras**. The km plugin's vault retrieval works independently — Discord pairing is for advanced multi-bot orchestration.
 
 > **Prefer Slack?** You can pair a bot over Slack instead of (or in addition to) Discord — run `/thiscode:create-slack-bot` (alias: `/thiscode:slack-configure`); it walks you through the human gates (CLI login, workspace install approval, token paste) and automates the rest. Details: [skills/slack-configure/SKILL.md](skills/slack-configure/SKILL.md). Ops & troubleshooting reference: [skills/slack-bridge/SKILL.md](skills/slack-bridge/SKILL.md).
 

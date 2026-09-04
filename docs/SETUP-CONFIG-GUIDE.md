@@ -279,20 +279,20 @@ Plain intro: [memory-dreaming.md](memory-dreaming.md).
 
 ## §4 — How to set up & how to ask (first run)
 
-![4-Tier vault search with Obsidian-less degradation — GraphRAG → vault-search MCP → Obsidian CLI → ripgrep fallback](../assets/search-fallback-4tier.png)
+![km plugin vault-search fallback with Obsidian-less degradation — GraphRAG → vault-search MCP → Obsidian CLI → ripgrep](../assets/search-fallback-4tier.png)
 
 After install + the three files above:
 
 ```
 /thiscode:setup            # (re)configure tiers
-/km:search "..."           # 4-Tier vault search (km plugin)
+/km:search "..."           # vault search fallback (km plugin)
 ```
 
 Example prompts and what to expect:
 
 | You ask | The bot does |
 |---|---|
-| "Summarize my notes on attention mechanisms" | vault search (Tier 1→4 fallback) → grounded summary with source paths |
+| "Summarize my notes on attention mechanisms" | km plugin vault search (Tier 1→4 fallback) → grounded summary with source paths |
 | "Set yourself up as a scheduling bot" | reads `templates/soul-schedule-bot.md`, helps you fill `soul.md` |
 | "Why did you do X?" | answers from the loaded soul + the rule that applied (it tells you which) |
 

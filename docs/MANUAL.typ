@@ -38,11 +38,11 @@
 
 = thiscode 가 뭐예요?
 
-Claude Code + Discord 봇 + Codex 호출 + 4-Tier vault search 가 통합된 Knowledge Manager 플러그인.
+Claude Code + Discord 봇 + Codex 호출을 묶은 bot-harness operations 플러그인. 지식관리와 vault 검색은 km 플러그인이 담당합니다.
 
 == 차별점 한 줄
 
-기존 도구 (obsidian-cli 단독 / `/search` 단독 / `/vault-search` 단독) 를 4-Tier fallback 으로 자동 cascading. 빠른 도구 먼저 → 결과 부족 시 정확한 도구로.
+ThisCode는 봇 운영·설치·모델 라우팅에 집중하고, 지식관리와 vault 검색은 km 플러그인의 명령으로 연결합니다.
 
 = 설치 — 5단계
 
@@ -80,15 +80,15 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
   [4], [ripgrep (literal)], [30-100ms], [낮음], [0분],
 )
 
-dispatcher 가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallback.
+km 플러그인의 dispatcher가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallback.
 
-= Knowledge Manager (KM)
+= Knowledge Manager (KM plugin)
 
-3 variant:
+지식관리·검색은 ThisCode에 내장되지 않습니다. km 플러그인을 설치한 뒤 다음 명령을 사용합니다.
 
-- `/thiscode:km` (lite, default) — 개인 vault
-- `/thiscode:km at` (experimental) — 팀 vault + Agent Teams
-- `/thiscode:km plain` (internal) — CI/cron headless
+- `/km:search` — vault 검색과 fallback
+- `/km:knowledge-manager` — 지식관리·수집·분류·저장
+- `/km:setup` — km 플러그인 설정 생성·재설정
 
 #pagebreak()
 

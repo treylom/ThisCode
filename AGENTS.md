@@ -4,9 +4,9 @@
 
 ## What this plugin provides
 
-- **KM ingestion** (Mode I/R/G per `contracts/km-mode-spec.md`)
-- **4-Tier vault search** per `contracts/search-fallback-4tier.md`
-- **3 variants** per `contracts/km-variant-matrix.md`: `lite` / `at` / `plain`
+- **Bot-harness operations**: setup/installers, meetings, shared memory, model routing, and Codex/Discord bridges.
+- **Knowledge management and vault search are outside ThisCode 1.4.0**. Install the km plugin and use `/km:search`,
+  `/km:knowledge-manager`, and `/km:setup` for those capabilities.
 
 ## Packaging layers
 
@@ -33,12 +33,13 @@ Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/cont
 
 | Command | Variant | Purpose |
 |---|---|---|
-| `/thiscode:km` | auto-routes | Mode I/R/G dispatch (see km-variant-matrix) |
-| `/thiscode:km-bootstrap` | wizard | First-time install + config write |
+| `/thiscode:setup` | wizard | ThisCode bot-harness setup and local installer |
+
+Knowledge management and vault-search setup are provided by the km plugin; follow its `/km:setup` documentation.
 
 ## Cross-harness invocation reference
 
-- **Claude Code**: `Skill(<name>)` for any skill under `skills/` (vault search moved to the km plugin — `/km:search`)
-- **Hermes Agent**: `claude_discode_search` tool (auto-registered via `hermes-plugin/__init__.py`)
+- **Claude Code**: `Skill(<name>)` for any skill under `skills/`; vault search uses the km plugin (`/km:search`)
+- **Hermes Agent**: the runtime registers the `on_session_start` drift-check hook; KM/search surfaces are not registered here
 - **Gemini CLI**: read `GEMINI.md` on startup; skills auto-discovered from `skills/`
 - **OpenCode / Goose / Cursor**: standard agentskills.io SKILL.md frontmatter (`name` + `description`) makes them visible

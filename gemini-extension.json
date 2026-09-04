@@ -1,7 +1,7 @@
 {
   "name": "thiscode",
   "version": "0.2.0",
-  "description": "KM ingestion + 4-Tier vault search packaged for Gemini CLI / OpenCode / multi-harness use.",
+  "description": "Bot-harness operations packaged for Gemini CLI / OpenCode / multi-harness use; knowledge management is provided by the km plugin.",
   "contextFileName": "GEMINI.md",
   "skillsDir": "skills",
   "commandsDir": "commands",

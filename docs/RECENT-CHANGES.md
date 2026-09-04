@@ -26,6 +26,31 @@ auto-activate. The `/thiscode setup` skill drives this step.
 
 ---
 
+## 2026-09-05 — ThisCode 1.4.0 KM boundary
+
+### Removed (no replacement)
+
+- The `knowledge-manager-lite` and `knowledge-manager-plain` variants.
+- The seven KM-family `.agents/*.yaml` registrations: `knowledge-manager`,
+  `knowledge-manager-at`, `knowledge-manager-bootstrap`, `knowledge-manager-lite`,
+  `knowledge-manager-plain`, `search`, and `search-lite`.
+- Hermes search/ingest runtime registrations, including the former search and
+  ingest tools and commands.
+- The empty Codex export surface: there is no longer an export list in ThisCode
+  1.4.0.
+
+### Moved to the km plugin
+
+- `knowledge-manager`, `knowledge-manager-at`, and `search`.
+- The lite flow is absorbed by the km plugin's search fallback.
+- KM configuration creation is `/km:setup`.
+
+ThisCode retains its bot-harness operations and the setup/init installers for
+the underlying local tools. Install the km plugin for knowledge management and
+vault search.
+
+---
+
 ## 2026-06-10 — Fresh-install audit fixes (vendored vault-search MCP + portability)
 
 - **vault-search MCP is now vendored** at `vendor/vault-search-mcp/` and

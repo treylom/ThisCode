@@ -19,4 +19,4 @@ claude plugin install km@tofukyung-plugins
 ## 설치 후
 
 - vault 검색 = `/km:search`
-- 수집·분류·저장 = km 플러그인의 `/km:` 지식관리 명령 (명령 이름은 [README.md](../README.md) 상단 안내 참조)
+- 지식관리·수집·분류·저장 = `/km:knowledge-manager` (km 플러그인의 정본 명령)

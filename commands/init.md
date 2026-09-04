@@ -22,7 +22,7 @@ vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추�
 | 2 | Zettelkasten 시도 | obsidian-cli (Tier 3) |
 | 3 | 100+ 노트 의미 검색 갈증 | vault-search MCP (Tier 2) |
 | 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | GraphRAG (Tier 1) |
-| 5 | 2000+ 노트 혼란 | km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (read-only) |
+| 5 | 2000+ 노트 혼란 | km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름) |
 | 6 | 3000+ + GraphRAG installed | Dashboard 시각화 (선택, 외부 link) |
 | 7 | advanced | 하이브리드 4채널 (선택, Journey-12/13) |
 
@@ -33,7 +33,7 @@ vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추�
    - phase-2-cli-install → `scripts/install-obsidian-cli.sh`
    - phase-3-mcp → `scripts/install-vault-search.sh --apply`
    - phase-4-graphrag / strong → `scripts/install-graphrag.sh --apply`
-   - phase-5-mode-r-preflight → km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (read-only 진단 — km 미설치면 README 의 km 설치 포인터 안내)
+   - phase-5-mode-r-preflight → km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름; read-only 진단 — km 미설치면 README 의 km 설치 포인터 안내)
 3. 완료 후 healthcheck 실행
 
 ## Fallback

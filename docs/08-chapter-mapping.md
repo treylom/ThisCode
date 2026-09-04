@@ -53,8 +53,8 @@ status: draft (v0.2.0)
 - contract: `contracts/search-fallback-4tier.md` v0.1.0.
 - 영상 길이: 12-15 min.
 
-### C9. KM Mode I/R/G + variant lite/at/plain
-- 학습: variant matrix per `contracts/km-variant-matrix.md`. lite (Phase 1·2 default) / at (Agent Teams) / plain (headless).
+### C9. KM plugin commands and boundary
+- 학습: 지식관리와 vault 검색은 km 플러그인이 담당한다. `/km:search` · `/km:knowledge-manager` · `/km:setup` 문서를 따른다.
 - 영상 길이: 10 min.
 
 ### C10. 4-Tier search drift 감지 (km-version.sh)

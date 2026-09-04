@@ -2,13 +2,13 @@
 
 This is the Gemini CLI / multi-harness entry context for the `thiscode` plugin.
 
-> thiscode brings a portable knowledge manager + 4-Tier vault search to any agentskills.io-compatible runtime.
+> thiscode brings bot-harness operations to agentskills.io-compatible runtimes. Knowledge management and vault search
+> are provided by the separate km plugin.
 
 ## When to use
 
-- Student needs to ingest a URL / file / inline text into a local markdown vault.
-- Student asks a vault question and wants graded fallback (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep).
-- Student is debugging why search returns "Tier 4: 텍스트 검색 결과입니다" — invoke `/thiscode-km-bootstrap`.
+- Student needs to configure the ThisCode bot harness, meetings, shared memory, or model routing.
+- Student needs knowledge management or vault search — install the km plugin and follow its command documentation.
 
 ## Layout (L3 — npm gemini-extension wrapper)
 
@@ -20,11 +20,11 @@ This is the Gemini CLI / multi-harness entry context for the `thiscode` plugin.
 
 ## Key facts
 
-- **Single source of truth** for behavior: `contracts/search-fallback-4tier.md`, `contracts/km-mode-spec.md`, `contracts/km-variant-matrix.md`. Any client MUST follow these.
-- **Variants** (`contracts/km-variant-matrix.md`): `lite` (default, Phase 1·2), `at` (Phase 3 Agent Teams), `plain` (headless).
-- Drift detection: `bash scripts/km-version.sh` — compares plugin contracts vs vault mirror.
+- ThisCode's source of truth covers bot-harness operations and its installation contracts.
+- KM behavior and command variants are documented by the km plugin; thiscode does not bundle those skills.
+- Drift detection: `bash scripts/km-version.sh` — compares the remaining plugin contracts vs vault mirror.
 
 ## Suggested first actions
 
-1. `/thiscode-km-bootstrap` — install + wire 4-Tier stack.
-2. `/thiscode:km` — shows how to install the km plugin, which provides ingestion and vault search.
+1. `/thiscode:setup` — configure the ThisCode bot harness and installer surfaces.
+2. Install the km plugin, then follow `/km:setup`, `/km:search`, and `/km:knowledge-manager` in its documentation.

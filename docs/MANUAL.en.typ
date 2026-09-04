@@ -38,11 +38,11 @@
 
 = What is thiscode?
 
-A Knowledge Manager plugin that bundles Claude Code + Discord bots + Codex calls + a 4-Tier vault search.
+A bot-harness operations plugin that bundles Claude Code + Discord bots + Codex calls. Knowledge management and vault search are provided by the km plugin.
 
 == The one-line differentiator
 
-It cascades the existing tools (`obsidian-cli` alone / `/search` alone / `/vault-search` alone) through a 4-Tier fallback. Fast tools first → if results are insufficient, escalate to more accurate tools.
+ThisCode focuses on bot operations, installation, meetings, shared memory, and model routing; the km plugin owns knowledge management and vault-search fallback.
 
 = Install — 5 steps
 
@@ -80,15 +80,15 @@ For a branching, beginner-friendly guide: SETUP-BEGINNER.md
   [4], [ripgrep (literal)], [30-100ms], [Low], [0 min],
 )
 
-The dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
+The km plugin's dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
 
-= Knowledge Manager (KM)
+= Knowledge Manager (KM plugin)
 
-Three variants:
+Knowledge management and search are not bundled in ThisCode. Install the km plugin and use:
 
-- `/thiscode:km` (lite, default) — personal vault
-- `/thiscode:km at` (experimental) — team vault + Agent Teams
-- `/thiscode:km plain` (internal) — CI / cron, headless
+- `/km:search` — vault search and fallback
+- `/km:knowledge-manager` — knowledge capture, classification, and storage
+- `/km:setup` — create and update km plugin configuration
 
 #pagebreak()
 
