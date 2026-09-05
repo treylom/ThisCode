@@ -12,6 +12,14 @@ reached partial / blocked / awaiting-permission state.
   authority domain** (live-service restart timing / public-repo change / bot
   capability expansion) + **insufficient info** — those three only. Otherwise
   proceed, then report.
+- Third-party-facing actions need explicit approval (2026-09-05): a PR, issue,
+  or comment on someone else's repository, a post on an external service, a
+  mention of an outside person — anything that leaves the user's own assets,
+  becomes visible to other people at once, and leaves a record even if
+  withdrawn. For these, "no reply = proceed" does NOT apply; act only on the
+  user's explicit go. Prepare everything (branch, body, gates) and hold back
+  only the final step until approved. Inside the user's own assets (own repos,
+  forks, vault, local machine) the rules above apply unchanged.
 - When a standing "proceed" instruction is active, explicit user "proceed"
   outranks skill approval-gates (instruction priority): design inline, then
   implement + report.
