@@ -99,11 +99,11 @@ status: draft (v0.2.0)
 - 영상 길이: 11 min.
 
 ### C19. 봇 self-skill 영역 R&R
-- 학습: `/strange` · `/aktofu` · `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, Karpathy 검토·commit.
+- 학습: `/strange` · `/aktofu` · `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇 검토·commit.
 - 영상 길이: 7 min.
 
 ### C20. Discord 봇 mention 다축 channel reference fetch
-- 학습: 봇 위치 단정 전 reference doc + 어벤져스 + 멀티버스 채널 3축 cross-check 의무.
+- 학습: 봇 위치 단정 전 reference doc + 메인 채널 + cross-machine 채널 3축 cross-check 의무.
 - 영상 길이: 8 min.
 
 ## 보조 + 운영 카테고리 (Phase 1-3 분산)

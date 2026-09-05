@@ -47,7 +47,7 @@ declarative hard rule 만으로는 attention drift 시 회귀 발생. UserPrompt
 
 ### A-3. 봇 self-skill 영역 R&R
 
-`/strange`, `/aktofu`, `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, Karpathy 가 검토·commit. design 사전 제시 redundant.
+`/strange`, `/aktofu`, `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇이 검토·commit. design 사전 제시 redundant.
 
 ---
 
