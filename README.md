@@ -4,7 +4,7 @@
 
 > **Role boundary**: ThisCode is the bot-harness operations bundle (operating rules, GraphRAG ops vendor, deployment contracts). The general-purpose knowledge product is [knowledge-manager](https://github.com/treylom/knowledge-manager); plugin installs go through [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins).
 
-> Knowledge management and vault search are provided by the **knowledge-manager** plugin — install it with `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins`, then use `/km:search` and `/km:knowledge-manager`. ThisCode 1.4.0 no longer bundles its own copies of these skills.
+> Knowledge management and vault search are provided by the **km (knowledge-manager)** plugin — install it with `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins`, then use `/km:search` and `/km:knowledge-manager`. ThisCode 1.4.0 no longer bundles its own copies of these skills.
 
 > Claude Code + Discord bot + Codex CLI bridge plugin — personal vault automation + multi-agent ops.
 >
@@ -44,7 +44,7 @@ This single command installs:
 
 1. **superpowers** plugin (via Claude Code plugin manager)
 2. **ripgrep** (Tier 4 baseline — brew / apt / dnf / apk multi-pkg-manager fallback)
-3. **Obsidian CLI** detection (Tier 3 — manual download guide if missing)
+3. **Obsidian CLI** detection (Tier 2 — manual download guide if missing)
 4. **GraphRAG core** (Tier 1 — vendored Python runtime + 7-pkg pip install)
 5. **Dense embedding** (Optional 4-channel — user confirms once, ~1GB)
 
@@ -85,7 +85,7 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 > via `/plugin marketplace add treylom/ThisCode` → `/plugin install
 > thiscode@thiscode-marketplace` → `/reload-plugins` loaded *5 plugins · 23
 > skills · 8 agents · 4 hooks*) (that run predates 1.3.0; the plugin now ships
-> 7 hooks via `hooks/hooks.json` — see `/thiscode:install-hooks`):
+> 7 hooks via `hooks/hooks.json` — see the `/thiscode:install-hooks` skill):
 >
 > ```
 > /plugin marketplace add treylom/ThisCode
@@ -119,15 +119,15 @@ Claude Code exposes **both** `commands/*.md` and `skills/<name>/SKILL.md` as sla
 - `/thiscode:init` — Alternative lightweight setup for experienced users
 - `/thiscode:create-bot` — Create a new Discord bot with soul.md template
 - `/thiscode:create-slack-bot` — Connect a bot to Slack instead of (or in addition to) Discord (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
-- `/thiscode:km` — Pointer to the knowledge-manager plugin (`/km:knowledge-manager`)
+- `/thiscode:km` — Pointer to the km (knowledge-manager) plugin (`/km:knowledge-manager`)
 - `/thiscode:open-meeting` — Create meeting room structure for multi-bot collaboration
 - `/thiscode:codex-check` — Validate Codex CLI bridge connectivity
-- `/thiscode:install-hooks` — Check the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks (**installing the plugin registers them** via the bundled `hooks/hooks.json`). Every hook runs **only in bot sessions** — when `DISCORD_STATE_DIR` is set; other sessions see no output and no behavior change. On a plugin install this command verifies the registration and clears leftovers from the older `~/.claude/settings.json` merge (which would otherwise fire the same hook twice); on a checkout without `hooks/hooks.json` it still performs that merge. `/thiscode:create-bot` runs the same `scripts/install-hooks.sh` for you.
+- `/thiscode:install-hooks` (skill: `skills/install-hooks/SKILL.md`) — Check the SessionStart / UserPromptSubmit / PreToolUse / Stop hooks (**installing the plugin registers them** via the bundled `hooks/hooks.json`). Every hook runs **only in bot sessions** — when `DISCORD_STATE_DIR` is set; other sessions see no output and no behavior change. On a plugin install this skill verifies the registration and clears leftovers from the older `~/.claude/settings.json` merge (which would otherwise fire the same hook twice); on a checkout without `hooks/hooks.json` it still performs that merge. `/thiscode:create-bot` runs the same `scripts/install-hooks.sh` for you.
 - … and more — `/thiscode:help` lists every command with its description
 
 ### Skills
 
-Each skill (bootstrap, init, meetings, shared-memory, etc.) includes a **"How to Use This Skill"** section in its SKILL.md. These explain when to invoke each skill and what it does. Knowledge management and vault search skills are no longer bundled here — install the knowledge-manager plugin and use `/km:knowledge-manager` and `/km:search`.
+Each skill (bootstrap, init, meetings, shared-memory, etc.) includes a **"How to Use This Skill"** section in its SKILL.md. These explain when to invoke each skill and what it does. Knowledge management and vault search skills are no longer bundled here — install the km (knowledge-manager) plugin and use `/km:knowledge-manager` and `/km:search`.
 
 ---
 
@@ -151,9 +151,14 @@ Once a bot is paired, Discord becomes a remote control for your vault bots — n
 
 ---
 
-## 📊 4-Tier Search Benchmark
+## 📊 Historical Local Search-Tool Benchmark
 
-How does thiscode's 4-Tier search trade off against vanilla `obsidian-cli` / `/search` / `/vault-search`? Measured on 5 axes. **Measure it against your own vault** — the headline numbers below are aggregates; your hardware / vault size / content distribution will shift them.
+This section preserves the **2026-05-13 legacy ThisCode baseline** for its local
+search-tool stack. It is historical evidence, not a current measurement of km
+plugin runtime performance. Use `/km:search` for current vault retrieval; the
+bundled runner below measures the local tools against your own vault.
+The linked benchmark guide preserves that run's legacy engine IDs (vault-search
+MCP used 2, Obsidian CLI used 3); the current km order is stated below.
 
 ```bash
 # Measure against your own vault (Tier 1 GraphRAG requires a running server)
@@ -163,7 +168,8 @@ python3 benchmark/report-generator.py --print-only
 
 Numbers vary widely by vault size, content, and hardware — v1.0 ships the
 runner and methodology rather than fixed benchmark figures. Run the script
-above against your own vault to get meaningful numbers.
+above against your own vault to get a new local-tool measurement; do not read it
+as a current km runtime comparison.
 
 > Method / interpretation / your-own-fixture guide: [docs/BENCHMARK.md](docs/BENCHMARK.md). CI auto-runs Tier 4 ripgrep + sample fixture: [benchmark/results/](benchmark/results/).
 
@@ -181,7 +187,7 @@ After retrieval, thiscode picks a model by task complexity:
 
 `scripts/route-model.mjs` heuristic — query length + keyword classifier. User override: `--model haiku|sonnet|opus`.
 
-**Tier order:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). Accuracy-first fallback.
+**Tier order:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [Obsidian CLI](docs/SETUP.md#tier-2) → Tier 3 [vault-search MCP](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). Accuracy-first fallback.
 
 ## 📚 Lost on terms? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -215,7 +221,7 @@ cd ~/code/thiscode && bash install.sh
 | 4.5 | **Codex CLI** (`@openai/codex`) global install — bridge dependency | npm |
 | 5 | oh-my-tmux (`gpakosz/.tmux`) auto install | git |
 | 6 | (optional) thiscode `tmux.conf.local` apply | user confirm |
-| 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — Tier 3 fallback | brew / snap / manual |
+| 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — Tier 2 fallback | brew / snap / manual |
 | 7 | Claude Code plugin install guidance (marketplace + slash commands) | (slash inside Claude Code) |
 | 8 | First bot wizard guidance (`/thiscode:start`) | (slash inside Claude Code) |
 
@@ -223,7 +229,7 @@ Plugin slash commands auto-detected after install:
 
 - `/thiscode:init` — **onboarding wizard** (env detect + 8-Phase recommend)
 - `/thiscode:start` — main wizard (env detect + bot setup + first conversation)
-- `/thiscode:install-hooks` — verify the SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hooks the plugin already registered via `hooks/hooks.json`, and clear any leftover `~/.claude/settings.json` merge from the older path (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md)). The hooks stay silent outside bot sessions.
+- `/thiscode:install-hooks` (skill: `skills/install-hooks/SKILL.md`) — verify the SessionStart + UserPromptSubmit + **Stop (active-meeting reread)** hooks the plugin already registered via `hooks/hooks.json`, and clear any leftover `~/.claude/settings.json` merge from the older path (SessionStart injects soul.md + memory + `rules/INDEX.md`; the Stop hook is how recent rule/meeting changes auto-apply — see [docs/RECENT-CHANGES.md](docs/RECENT-CHANGES.md)). The hooks stay silent outside bot sessions.
 - `/thiscode:create-bot` — new bot directory + .env + soul.md template
 - `/thiscode:create-discord-bot` — add one additional Discord bot (alias: `/thiscode:add-bot`)
 - `/thiscode:create-slack-bot` — connect a Slack workspace (automates the claude-channel-server bridge; alias: `/thiscode:slack-configure`)
@@ -234,7 +240,7 @@ Plugin slash commands auto-detected after install:
 Pristine Claude Code bootstrap (no hooks, no bots yet):
 
 ```
-1. /thiscode:install-hooks   # Verify the SessionStart + UserPromptSubmit + Stop (meeting reread) hooks the install registered
+1. /thiscode:install-hooks   # Run the install-hooks skill; verify the registered SessionStart + UserPromptSubmit + Stop (meeting reread) hooks
 2. /thiscode:create-bot      # First bot directory + soul.md setup
 3. /thiscode:start           # Main wizard (Discord pairing + first conversation)
 4. /thiscode:codex-check     # Verify Codex CLI active (optional)
@@ -247,7 +253,7 @@ thiscode bundles the author's vault operations playbook:
 - [03-shared-memory.md](docs/03-shared-memory.md) — **4-tier shared memory** (T1 git-tracked / T2 machine-specific / T3 project-meetings / T4 per-bot WD)
 - [memory-dreaming.md](docs/memory-dreaming.md) — **reversible memory archival** (plain-language): periodic, *move-not-delete* cleanup that ships idle memory to out-of-WD cold storage with one-command checksum-verified restore. One tier-agnostic rubric across all tiers incl. Codex; conservative (auto-archive gated, ambiguous → human review); criteria self-correct from restores. Tool: `scripts/memory_dreaming.py` (`--scan` default dry-run / `--apply` gated / `--restore` / `--recalibrate`), weekly-enforced (YAML manifest + session-start overdue check + launchd)
 - **orchestrator-watchdog** (`scripts/meeting_watchdog.py`) — **meeting progress watchdog (recommended on every meeting — invite one watchdog bot per meeting, start before the first dispatch)**: on meeting-thread creation a YAML-enforced watchdog checks progress every ~5 min and self-terminates only when the goal AND all tasks complete (models Claude Code `/goal`). `start`/`beat`/`check`/`status`/`stop`; fail-closed = keep-active (never falsely terminate a live meeting); pairs with [05-meeting-thread-protocol.md](docs/05-meeting-thread-protocol.md) §2.3 + [rules/meeting-protocol.md](rules/meeting-protocol.md) §5
-- [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **Obsidian CLI setup** (Mac brew / WSL Windows native / Linux snap·flatpak·deb) + 3-Tier fallback (CLI → MCP → Write/Read/Grep) + known bugs / workarounds
+- [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **legacy Obsidian CLI setup** (the old local 3-Tier CLI → MCP → Write/Read/Grep guide; the current km contract is documented separately) + known bugs / workarounds
 - [05-meeting-thread-protocol.md](docs/05-meeting-thread-protocol.md) — **meeting thread & channel governance** (new topic = new thread / archive final deliverables only / cross-machine = multiverse)
 - [06-claude-code-server.md](docs/06-claude-code-server.md) — **Claude Code server modes** (`claude -p` headless + MCP server + tmux session vs headless split pattern)
 - [08-debug-노하우.md](docs/08-debug-노하우.md) — **24+ debugging categories** (Workflow / Code Review / Vault Path / Meeting protocol / Security / Time / LLM Prompt / Schedule / Plugins / External Apps / Cross-bot SoP) — Korean only, dense operational learnings
@@ -396,10 +402,10 @@ DM the bot again → it issues a fresh code.
 If your bot's responses don't reflect the persona, the SessionStart hook is not reaching that session. The plugin registers it on install, and the hook deliberately stays silent unless `DISCORD_STATE_DIR` is set — so the two usual causes are a session started without that variable, or the plugin being disabled. To check the registration:
 
 ```
-/thiscode:install-hooks
+/thiscode:install-hooks   # Run the install-hooks skill
 ```
 
-This verifies that `hooks/hooks.json` carries `bot-session-init.sh` and that the file is really there, and removes any duplicate left in `~/.claude/settings.json` by the older merge path — existing hooks of your own are preserved. An entry that merely shares a hook file name but shows no sign of belonging to ThisCode is never deleted: it is listed as a warning for you to review by hand.
+The `skills/install-hooks/SKILL.md` skill verifies that `hooks/hooks.json` carries `bot-session-init.sh` and that the file is really there, and removes any duplicate left in `~/.claude/settings.json` by the older merge path — existing hooks of your own are preserved. An entry that merely shares a hook file name but shows no sign of belonging to ThisCode is never deleted: it is listed as a warning for you to review by hand.
 
 ### GraphRAG server won't start (vendor dependency + ~/.cache venv)
 

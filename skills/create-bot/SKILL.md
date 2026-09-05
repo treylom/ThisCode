@@ -587,7 +587,7 @@ if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
   if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
     bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok "자동 재시도 성공"   # 원장이 마지막 상태를 말하게
   else
-    echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 를 한 번 실행해 주세요."
+    echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 스킬을 한 번 실행해 주세요."
     bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
   fi
 fi
@@ -766,7 +766,7 @@ $BOT_NAME
 | 토큰 정상인데 서버 채널에서 무반응 (DM 은 됨) | Message Content Intent OFF | Developer Portal → Bot → Privileged Gateway Intents → Message Content Intent ON |
 | 기동 즉시 `PrivilegedIntentsRequired` 크래시 | Server Members Intent OFF (템플릿이 `intents.members` 요청) | Developer Portal → Bot → Privileged Gateway Intents → Server Members Intent ON |
 | 페어링 코드 만료 | 봇에 다시 DM | 새 코드 발급 |
-| soul.md 안 inject | DISCORD_STATE_DIR 미export(래퍼가 조용히 통과) 또는 플러그인 비활성 | `export DISCORD_STATE_DIR` 확인 → `/thiscode:install-hooks` 로 검사 |
+| soul.md 안 inject | DISCORD_STATE_DIR 미export(래퍼가 조용히 통과) 또는 플러그인 비활성 | `export DISCORD_STATE_DIR` 확인 → `/thiscode:install-hooks` 스킬로 검사 |
 | 같은 봇 이름 디렉토리 충돌 | 이미 존재 | 다른 이름 또는 기존 정리 |
 | 토큰·soul.md 정상인데 DM 무반응 | ①discord 플러그인 미설치 ②bun 미설치 ③`--channels` 플래그 누락 (실측 빈도순) | Step 6.7 선검사 3게이트 순서대로 — 플러그인 enable → bun 설치 → `--channels plugin:discord@claude-plugins-official` 포함 재시동 |
 | Windows에서 chmod/permission 검증 실패 | NTFS 는 POSIX chmod 미적용 (정상) | 실패 무시 — 검증 항목에서 제외 |
@@ -775,7 +775,7 @@ $BOT_NAME
 
 ## 관련 자원
 
-- hook 등록: [install-hooks.md](install-hooks.md) — **Step 6.7 ④ 가 자동으로 실행한다**(같은 `scripts/install-hooks.sh` 를 부른다). 수동 재실행용 명령으로 남겨 둔다.
+- hook 등록: [install-hooks 스킬](../install-hooks/SKILL.md) — **Step 6.7 ④ 가 자동으로 실행한다**(같은 `scripts/install-hooks.sh` 를 부른다). 수동 재실행용 스킬로 남겨 둔다.
 - DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
 - soul.md template: [../templates/soul-general-assistant.md](../templates/soul-general-assistant.md)
 - 규칙 시드 template (B3): [../templates/rules-seed.md](../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh)

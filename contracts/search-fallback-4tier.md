@@ -6,9 +6,17 @@ date: 2026-07-29
 
 # 4-Tier Search Fallback Contract
 
-> Weight params removed 2026-07-29 (contract v0.2.0): hard-coded client weights silently overrode the server's launch-config weights (the SoT). Clients MUST NOT pass channel weights.
+The km plugin's `/km:search` dispatcher MUST follow this Tier order and
+interface. A vault-local `.claude/commands/search.md` may delegate to that
+dispatcher; this contract does not make it a ThisCode-provided search command.
 
-Both `search` (plugin) and `.claude/commands/search.md` (vault) MUST follow this Tier order and interface.
+ThisCode provides the optional local search-tool installers in
+`scripts/install-*.sh` (including ripgrep, Obsidian CLI, vault-search MCP, and
+GraphRAG). Those installers prepare engines only; the km plugin owns fallback
+execution and km configuration. Knowledge workflows belong to
+`/km:knowledge-manager`.
+
+> Weight params removed 2026-07-29 (contract v0.2.0): hard-coded client weights silently overrode the server's launch-config weights. Clients MUST NOT pass channel weights.
 
 ## Tier Order (fixed — drift forbidden)
 
@@ -57,7 +65,8 @@ Response: file list + matched lines. Output MUST include `[Tier 4: 텍스트 검
 
 If all 4 Tiers fail, output:
 ```
-4-Tier search 전부 실패 — /thiscode:km-bootstrap 으로 환경 설치 안내
+4-Tier search 전부 실패 — 로컬 검색 도구는 ThisCode의 `scripts/install-*.sh`로
+설치하고, km 설정은 `/km:setup`에서 구성한 뒤 `/km:search`를 다시 실행
 ```
 
 ## MOC priority routing

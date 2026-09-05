@@ -292,7 +292,7 @@ print_plugin_ready_guidance() {
 
       /thiscode:help           — LIST EVERY command and skill, with descriptions
       /thiscode:start          — main wizard (env + bot + first chat)
-      /thiscode:install-hooks  — SessionStart + UserPromptSubmit hook merge
+      /thiscode:install-hooks  — skill: SessionStart + UserPromptSubmit hook merge
       /thiscode:create-bot     — new-bot directory + .env + soul.md auto-setup
       /thiscode:open-meeting   — new meeting folder (multi-bot 4-file pattern)
       …
@@ -319,7 +319,7 @@ install_plugin() {
   if installed_scope="$(plugin_installed_scope)"; then
     ok "thiscode plugin already installed (scope: $installed_scope) → skip"
     print_plugin_ready_guidance
-    warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+    warn "On a vanilla Claude Code, run the /thiscode:install-hooks skill first (prevents orphan soul.md regression when SessionStart hook is absent)"
     return 0
   fi
 
@@ -344,7 +344,7 @@ install_plugin() {
 
   ok "thiscode plugin installed and verified (scope: $installed_scope)"
   print_plugin_ready_guidance
-  warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+  warn "On a vanilla Claude Code, run the /thiscode:install-hooks skill first (prevents orphan soul.md regression when SessionStart hook is absent)"
 }
 
 # ---------------------------------------------------------------- Step 8

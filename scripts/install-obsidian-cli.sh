@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-obsidian-cli.sh — Obsidian CLI / app detect + install (Tier 3 fallback).
+# install-obsidian-cli.sh — Obsidian CLI / app detect + install (Tier 2 fallback).
 # v2.3: v2.1.1 backbone + 출처 명시.
 # 출처: obsidian.md (proprietary GUI, 별도 download 필요)
 # CLI 후보 (3-binary detect): obsidian-cli / obsidian / notesmd-cli
@@ -103,7 +103,7 @@ install_obsidian() {
       if [ "$WSL" = "1" ]; then
         echo "[install] WSL detected — install Obsidian on Windows side:" >&2
         echo "  https://obsidian.md/download" >&2
-        echo "  Tier 3 (CLI) skip → Tier 4 (ripgrep) 가 fallback" >&2
+        echo "  Tier 2 (CLI) skip → Tier 3 (MCP) → Tier 4 (ripgrep) fallback" >&2
         return 1
       fi
       if command -v apt-get >/dev/null 2>&1; then

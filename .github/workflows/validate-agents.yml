@@ -9,6 +9,18 @@ on:
       - 'scripts/check-agents-index.mjs'
       - 'scripts/generate-agents-index.mjs'
       - 'hermes-plugin/plugin.yaml'
+      - 'hermes-plugin/__init__.py'
+      - 'docs/HERMES-STATUS.md'
+      - 'contracts/**'
+      - 'scripts/km-version.sh'
+      - 'tests/test-km-version.sh'
+      - 'scripts/install-*.sh'
+      - 'tests/installers-readonly.test.mjs'
+      - 'tests/installers-tier-labels.test.mjs'
+      - 'tests/test-install-*.sh'
+      - 'scripts/healthcheck.sh'
+      - 'tests/docs/**'
+      - 'docs/**'
       - 'hooks/meeting-stop-reread.sh'
       - 'commands/open-meeting.md'
       - 'tests/agents/**'
@@ -54,6 +66,35 @@ jobs:
 
       - name: Plugin sync (hermes-plugin/plugin.yaml ↔ .agents/*.yaml)
         run: bash tests/agents/test-plugin-sync.sh
+
+      - name: Hermes runtime registrations and deferred entries
+        run: bash tests/agents/test-hermes-runtime-manifest.sh
+
+      - name: Reject an unadvertised Hermes registration
+        run: |
+          if bash tests/agents/test-hermes-runtime-manifest.sh --self-test; then
+            echo "FAIL: an unadvertised runtime registration was accepted"
+            exit 1
+          else
+            test "$?" -eq 1
+          fi
+
+      - name: Contract version checks
+        run: bash tests/test-km-version.sh
+
+      - name: Node regression tests
+        run: npm test
+
+      - name: Clone-relative installer checks
+        run: |
+          bash tests/test-install-graphrag.sh
+          bash tests/test-install-obsidian-cli.sh
+          bash tests/test-install-vault-search.sh
+
+      - name: Clone-relative documentation checks
+        run: |
+          bash tests/docs/test-glossary.sh
+          bash tests/docs/test-manual-v2.sh
 
       - name: Meeting Stop hook fixture
         run: node --test tests/init/meeting-protocol.test.mjs

@@ -7,7 +7,6 @@ set -euo pipefail
 
 MODE="${1:---apply}"
 LOG="${HOME}/.thiscode-setup.log"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-ripgrep.sh mode=$MODE" >> "$LOG"
 
 usage() {
   cat <<EOF >&2
@@ -16,6 +15,12 @@ Usage: $0 [--check | --apply]
   --apply      (default) OS detect + 패키지 매니저 install
 EOF
 }
+
+case "$MODE" in
+  -h|--help) usage; exit 0 ;;
+  --check|--apply) ;;
+  *) echo "unknown arg: $MODE" >&2; usage; exit 2 ;;
+esac
 
 if command -v rg >/dev/null 2>&1; then
   echo "✓ ripgrep already installed ($(rg --version 2>/dev/null | head -1))"
@@ -28,6 +33,7 @@ case "$MODE" in
     exit 1
     ;;
   --apply)
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-ripgrep.sh mode=$MODE" >> "$LOG"
     OS="$(uname -s)"
     case "$OS" in
       Darwin)
@@ -73,14 +79,5 @@ case "$MODE" in
       echo "✗ install verification failed" >&2
       exit 2
     fi
-    ;;
-  -h|--help)
-    usage
-    exit 0
-    ;;
-  *)
-    echo "unknown arg: $MODE" >&2
-    usage
-    exit 2
     ;;
 esac

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -e
-F=$HOME/code/ThisCode/docs/GLOSSARY.md
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+F="$REPO_ROOT/docs/GLOSSARY.md"
 test -f "$F" || { echo "FAIL: GLOSSARY.md not found"; exit 1; }
 TERMS=$(grep -E "^### " "$F" | wc -l)
 [ "$TERMS" -ge 30 ] || { echo "FAIL: expected 30+ terms, got $TERMS"; exit 1; }

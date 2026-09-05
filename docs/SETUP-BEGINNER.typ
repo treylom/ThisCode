@@ -62,21 +62,23 @@
 
 #v(0.5em)
 
-== 4-Tier 검색이 뭔가요?
+== km 플러그인의 4-Tier 검색이 뭔가요?
 
-thiscode 의 핵심은 검색을 4단계로 fallback 합니다 — 빠른 도구가 답 못 찾으면 더 정확한 도구로 넘어갑니다.
+km 플러그인의 4-Tier 검색은 GraphRAG → Obsidian CLI → vault-search MCP →
+ripgrep 순으로 시도합니다. 한 Tier가 미설치이거나 결과가 부족하면 다음
+Tier로 fallback하며, 로컬 도구는 thiscode 설치 스크립트로 설치합니다.
 
 #box(fill: rgb("#f8f9fa"), inset: 10pt, radius: 4pt, width: 100%)[
   - #text(weight: "bold")[Tier 4 — ripgrep] (기본, 0분 셋업) — 문자열 일치, 매우 빠름
-  - #text(weight: "bold")[Tier 3 — obsidian-cli] (3분 셋업, Obsidian 사용자만) — Obsidian index 활용
-  - #text(weight: "bold")[Tier 2 — vault-search MCP] (5분 셋업) — embedding semantic 검색
+  - #text(weight: "bold")[Tier 2 — obsidian-cli] (3분 셋업, Obsidian 사용자만) — Obsidian index 활용
+  - #text(weight: "bold")[Tier 3 — vault-search MCP] (5분 셋업) — embedding semantic 검색
   - #text(weight: "bold")[Tier 1 — GraphRAG] (25분 셋업, advanced) — LLM + graph + 가장 정확
 ]
 
 #v(0.5em)
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — 빠르게 도입하려면 Tier 4 + 3 까지만 (3-A) 충분합니다. 익숙해진 후 GraphRAG (4-C) 도전.
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — 빠르게 도입하려면 Tier 4 + 2 까지만 (3-A) 충분합니다. 익숙해진 후 GraphRAG (4-C) 도전.
 ]
 
 #pagebreak()
@@ -224,8 +226,8 @@ which obsidian-cli
 
 == 3-B. SKIP — Obsidian 없이도 잘 작동 ✅
 
-- 4-Tier 중 Tier 3 (Obsidian CLI) 만 SKIP
-- 나머지 Tier 1 / 2 / 4 정상 작동, 기능 80% 동일
+- 4-Tier 중 Tier 2 (Obsidian CLI) 만 SKIP
+- 나머지 Tier 1 / 3 / 4 정상 작동, 기능 80% 동일
 - 바로 Step 4 로 진행
 
 #pagebreak()
@@ -240,7 +242,7 @@ which obsidian-cli
   align: (left, left, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
   [#text(weight: "bold")[선택]], [#text(weight: "bold")[누가?]], [#text(weight: "bold")[시간]],
-  [4-A], [지금은 패스, 빠르게 도입 (Tier 3 까지만)], [0분],
+  [4-A], [지금은 패스, 빠르게 도입 (Tier 2 까지만)], [0분],
   [4-B], [도커 익숙한 사용자], [10분],
   [4-C], [Python 로컬 + 직접 디버깅 원함], [25분],
 )
@@ -298,8 +300,8 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
   thiscode healthcheck v1.0
   ─────────────────────────────────
   ✓ Tier 4 (ripgrep)  : OK
-  ✓ Tier 2 (MCP)      : OK
-  ○ Tier 3 (CLI)      : SKIP (Obsidian 미사용 — 3-B 선택)
+  ✓ Tier 3 (MCP)      : OK
+  ○ Tier 2 (CLI)      : SKIP (Obsidian 미사용 — 3-B 선택)
   ○ Tier 1 (GraphRAG) : SKIP (4-A 선택)
   ─────────────────────────────────
   all required checks passed ✅
@@ -347,14 +349,20 @@ macOS / Linux / WSL 은 검증 완료. Windows native 는 추후 지원 예정 (
 
 == Q3. 학생인데 비용 걱정?
 
-- Tier 4 (ripgrep) + Tier 3 (Obsidian) = 100% 무료
-- Tier 2 (MCP) = 무료 (Claude Code 구독 안에)
+- Tier 4 (ripgrep) + Tier 2 (Obsidian) = 100% 무료
+- Tier 3 (MCP) = 무료 (Claude Code 구독 안에)
 - Tier 1 (GraphRAG) = OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing \$0.5\~5
 
 == Q4. 이미 obsidian-cli 만 쓰고 있는데 차이는?
 
-README 의 5-axis benchmark 표 참고:
-- Tier 1 GraphRAG = recall +44% / Tier 2 obsidian-cli 단독 대비
+README 의 5-axis benchmark 표 참고. 예전 ThisCode 가이드 메모에는 당시
+Obsidian CLI 기준선보다 GraphRAG recall이 높다고 적혀 있었지만, 보관된
+2026-05-13 결과는 legacy engine ID(vault-search MCP는 2, Obsidian CLI는 3)로
+Tier 1·2를 건너뛰어 정확한 상승률을 입증하지 않습니다.
+이 메모는 역사적 기록이며 현재 km 플러그인 runtime 성능 측정이 아닙니다.
+- 현재 trade-off: Tier 2 Obsidian CLI는 가벼운 로컬 선택지이고, Tier 1
+  GraphRAG는 semantic/graph 검색과 더 큰 셋업·API 비용을 동반합니다.
+- 두 선택지는 본인 fixture로 비교하고, 역사적 상승률은 재사용하지 마세요.
 - 단 setup 25분 + LLM 비용
 
 == Q5. 피드백 어디 남기나요?

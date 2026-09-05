@@ -7,7 +7,6 @@ set -euo pipefail
 
 MODE="${1:---apply}"
 LOG="${HOME}/.thiscode-setup.log"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-superpowers.sh mode=$MODE" >> "$LOG"
 
 usage() {
   cat <<EOF >&2
@@ -37,6 +36,7 @@ case "$MODE" in
       echo "✓ superpowers already installed — skip"
       exit 0
     fi
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-superpowers.sh mode=$MODE" >> "$LOG"
     echo "[apply] Installing superpowers plugin via Claude Code plugin manager..."
     if claude plugin install superpowers@claude-plugins-official 2>>"$LOG"; then
       echo "✓ superpowers installed"

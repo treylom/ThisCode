@@ -5,7 +5,7 @@ order: 9
 
 # Dogfood Sandbox
 
-WSL Ubuntu 20.04 환경에 가까운 Docker 컨테이너에서 thiscode 의 4-Tier search + KM 흐름을 자동 검증.
+WSL Ubuntu 20.04 환경에 가까운 Docker 컨테이너에서 km 플러그인의 4-Tier search(검색 도구는 thiscode 설치 스크립트로 설치)와 KM 흐름을 자동 검증.
 
 ## 빌드 + 실행
 

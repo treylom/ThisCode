@@ -48,12 +48,12 @@ status: draft (v0.2.0)
 - 학습: Discord chat archive + Obsidian vault + SessionStart 자동 주입 셋 다 필요.
 - 영상 길이: 9 min.
 
-### C8. MOC-Map 진입점 + GraphRAG 4-Tier search
-- 학습: thiscode 4-Tier (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). MOC 우선 라우팅.
-- contract: `contracts/search-fallback-4tier.md` v0.1.0.
+### C8. MOC-Map 진입점 + km 플러그인의 4-Tier search
+- 학습: km 플러그인의 4-Tier search (검색 도구는 thiscode 설치 스크립트로 설치; GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). MOC 우선 라우팅.
+- contract: `contracts/search-fallback-4tier.md` v0.2.0.
 - 영상 길이: 12-15 min.
 
-### C9. KM plugin commands and boundary
+### C9. km plugin commands and boundary
 - 학습: 지식관리와 vault 검색은 km 플러그인이 담당한다. `/km:search` · `/km:knowledge-manager` · `/km:setup` 문서를 따른다.
 - 영상 길이: 10 min.
 

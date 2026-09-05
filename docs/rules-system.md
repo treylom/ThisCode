@@ -64,7 +64,7 @@ The bot's `CLAUDE.md` (auto-loaded by Claude Code) carries **only** the INDEX po
 
 ### Meeting protocol hooks
 
-ThisCode ships hook helpers for active meetings. They become active **only after the hooks are wired** — run `/thiscode:install-hooks` (it merges into `~/.claude/settings.json`, preserving any existing hooks):
+ThisCode ships hook helpers for active meetings. They become active **only after the hooks are wired** — run the `/thiscode:install-hooks` skill (`skills/install-hooks/SKILL.md`; it merges into `~/.claude/settings.json` when the fallback path is used, preserving any existing hooks):
 
 - `hooks/bot-session-init.sh` is the **SessionStart** helper. It injects soul.md
   (persona), the working-directory memory index, and — when present — the
@@ -100,7 +100,7 @@ registrations — hooks that already shipped a per-WD copy fired normally.
 Consequences for a deployment:
 
 1. **Mandatory hooks belong in user-global settings** (`~/.claude/settings.json`) —
-   exactly where `/thiscode:install-hooks` merges them. Never rely on a
+   exactly where the `/thiscode:install-hooks` skill merges them. Never rely on a
    project-root `settings.json` to cover nested bot WDs.
 2. **Globally registered hooks fire in every project**, so scope workspace-specific hooks
    with a cwd guard wrapper (generalized from the production fix):

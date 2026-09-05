@@ -62,21 +62,23 @@ Each step ends with a #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ This is wh
 
 #v(0.5em)
 
-== What is 4-Tier search?
+== What is the km plugin's 4-Tier search?
 
-The heart of thiscode is that search falls back across 4 tiers — if a faster tool can't find the answer, it escalates to a more accurate one.
+The km plugin's 4-Tier search tries GraphRAG, Obsidian CLI, vault-search MCP,
+then ripgrep. When a tier is unavailable or returns insufficient results, it
+falls back to the next one. ThisCode's installer scripts install the local tools.
 
 #box(fill: rgb("#f8f9fa"), inset: 10pt, radius: 4pt, width: 100%)[
   - #text(weight: "bold")[Tier 4 — ripgrep] (default, 0-min setup) — literal string match, very fast
-  - #text(weight: "bold")[Tier 3 — obsidian-cli] (3-min setup, Obsidian users only) — uses Obsidian's index
-  - #text(weight: "bold")[Tier 2 — vault-search MCP] (5-min setup) — embedding-based semantic search
+  - #text(weight: "bold")[Tier 2 — obsidian-cli] (3-min setup, Obsidian users only) — uses Obsidian's index
+  - #text(weight: "bold")[Tier 3 — vault-search MCP] (5-min setup) — embedding-based semantic search
   - #text(weight: "bold")[Tier 1 — GraphRAG] (25-min setup, advanced) — LLM + graph, the most accurate
 ]
 
 #v(0.5em)
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — For the fastest start, just Tier 4 + 3 (path 3-A) is enough. Try GraphRAG (path 4-C) once you're comfortable.
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — For the fastest start, just Tier 4 + 2 (path 3-A) is enough. Try GraphRAG (path 4-C) once you're comfortable.
 ]
 
 #pagebreak()
@@ -224,8 +226,8 @@ which obsidian-cli
 
 == 3-B. Skip — it still works without Obsidian ✅
 
-- Only Tier 3 (Obsidian CLI) is skipped among the 4 tiers
-- Tiers 1 / 2 / 4 still run normally — about 80% of the functionality remains
+- Only Tier 2 (Obsidian CLI) is skipped among the 4 tiers
+- Tiers 1 / 3 / 4 still run normally — about 80% of the functionality remains
 - Move on directly to Step 4
 
 #pagebreak()
@@ -240,7 +242,7 @@ Pick one of three options:
   align: (left, left, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
   [#text(weight: "bold")[Choice]], [#text(weight: "bold")[Who?]], [#text(weight: "bold")[Time]],
-  [4-A], [Skip for now, get started fast (up to Tier 3)], [0 min],
+  [4-A], [Skip for now, get started fast (up to Tier 2)], [0 min],
   [4-B], [Docker-comfortable user], [10 min],
   [4-C], [Want local Python + direct debugging], [25 min],
 )
@@ -298,8 +300,8 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
   thiscode healthcheck v1.0
   ─────────────────────────────────
   ✓ Tier 4 (ripgrep)  : OK
-  ✓ Tier 2 (MCP)      : OK
-  ○ Tier 3 (CLI)      : SKIP (no Obsidian — chose 3-B)
+  ✓ Tier 3 (MCP)      : OK
+  ○ Tier 2 (CLI)      : SKIP (no Obsidian — chose 3-B)
   ○ Tier 1 (GraphRAG) : SKIP (chose 4-A)
   ─────────────────────────────────
   all required checks passed ✅
@@ -347,14 +349,21 @@ macOS / Linux / WSL are verified. Windows native is on the roadmap (WSL recommen
 
 == Q3. I'm a student — what about cost?
 
-- Tier 4 (ripgrep) + Tier 3 (Obsidian) = 100% free
-- Tier 2 (MCP) = free (inside your Claude Code subscription)
+- Tier 4 (ripgrep) + Tier 2 (Obsidian) = 100% free
+- Tier 3 (MCP) = free (inside your Claude Code subscription)
 - Tier 1 (GraphRAG) = OpenAI / Anthropic API calls → roughly \$0.5\~5 for an initial indexing, depending on vault size
 
 == Q4. I already use just obsidian-cli — what's the difference?
 
-See the 5-axis benchmark in the README:
-- Tier 1 GraphRAG = recall +44% over Tier 2 obsidian-cli alone
+See the 5-axis benchmark in the README. An earlier ThisCode guide note described
+a GraphRAG recall uplift over the then-Obsidian CLI baseline, but the archived
+2026-05-13 result skipped Tier 1 and Tier 2 under its legacy engine IDs
+(vault-search MCP used 2, Obsidian CLI used 3), so it does not substantiate a percentage.
+The note is historical and is not a current km plugin runtime
+measurement.
+- Current trade-off: Tier 2 Obsidian CLI is a lightweight local option, while
+  Tier 1 GraphRAG adds semantic/graph retrieval with more setup and API cost.
+- Compare the two on your own fixture; do not reuse the historical percentage.
 - But 25-min setup + LLM cost
 
 == Q5. Where do I leave feedback?

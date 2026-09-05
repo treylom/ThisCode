@@ -12,7 +12,6 @@ set -euo pipefail
 MODE="${1:---apply}"
 LOG="${HOME}/.thiscode-setup.log"
 VENV="${CLAUDE_DISCODE_VENV:-${HOME}/.cache/thiscode/graphrag/venv}"
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-dense-embedding.sh mode=$MODE" >> "$LOG"
 
 usage() {
   cat <<EOF >&2
@@ -61,6 +60,7 @@ EOF
           ;;
       esac
     fi
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] install-dense-embedding.sh mode=$MODE" >> "$LOG"
     echo "[apply] pip install torch + transformers + sentence-transformers..."
     "$VENV/bin/pip" install --progress-bar=on torch transformers sentence-transformers 2>>"$LOG"
     if "$VENV/bin/python" -c "import torch, transformers, sentence_transformers" 2>/dev/null; then

@@ -7,7 +7,9 @@ allowed-tools: Bash Read Write Edit AskUserQuestion
 
 사용자가 이 스킬을 호출했다 — 아래 단계를 순서대로 지금 수행한다.
 
-# /thiscode:install-hooks — hook 등록
+# /thiscode:install-hooks — hook 등록 스킬
+
+이 호출의 구현은 본 `skills/install-hooks/SKILL.md`다. 별도의 `commands/install-hooks.md`는 제공하지 않는다.
 
 > 순정 Claude Code 에서 soul.md / WD memory / 슬래시 detect / 회귀 self-check 가 자동으로 도는 데 필요한 훅 7개를 다룬다.
 > **플러그인을 깔면 훅은 이미 등록돼 있다** — 플러그인에 `hooks/hooks.json` 이 동봉되고 Claude Code 가 그걸 직접 싣는다.

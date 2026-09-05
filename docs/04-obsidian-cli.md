@@ -1,6 +1,10 @@
 # 04. Obsidian CLI 설정
 
-> Obsidian vault 를 명령행에서 직접 조작하기 위한 CLI. Claude Code 의 vault 접근 3-Tier 폴백 (CLI → MCP → Write/Read/Grep) 의 1순위.
+> **Legacy local-tool guide:** Obsidian vault 를 명령행에서 직접 조작하기 위한
+> CLI와 당시 ThisCode의 3-Tier 폴백 (CLI → MCP → Write/Read/Grep)을 보존합니다.
+> 현재 km 플러그인의 4-Tier 계약은 GraphRAG → Obsidian CLI → vault-search MCP →
+> ripgrep 순서이며 [SETUP.md](SETUP.md)와
+> `contracts/search-fallback-4tier.md`를 따릅니다.
 
 ## 왜 Obsidian CLI 인가
 
@@ -83,25 +87,25 @@ VAULT="/mnt/c/Users/<windows-user>/Documents/Obsidian/<vault-name>"
 ✅ Library/Zettelkasten/note.md                 # vault root 기준
 ```
 
-## 3-Tier 폴백 패턴 — Claude Code 안에서
+## Legacy 3-Tier 폴백 패턴 — Claude Code 안에서
 
 thiscode 의 skills 가 vault 접근 시 자동 시도:
 
 ```python
 # Pseudocode (실제 skill 안 진행)
 try:
-    # Tier 1: Obsidian CLI
+    # Legacy Tier 1: Obsidian CLI
     result = subprocess.run(["obsidian", "search", "query"], ...)
 except (FileNotFoundError, subprocess.CalledProcessError):
     try:
-        # Tier 2: Obsidian MCP
+        # Legacy Tier 2: Obsidian MCP
         result = mcp__obsidian__search(query)
     except MCPError:
-        # Tier 3: Write/Read/Grep
+        # Legacy Tier 3: Write/Read/Grep
         result = grep_vault(query)
 ```
 
-→ 사용자 환경에 따라 Tier 1 또는 2 또는 3 작동. wizard 가 환경 인식 후 default 시도 순서 설정.
+→ 사용자 환경에 따라 legacy Tier 1 또는 2 또는 3 작동. wizard 가 환경 인식 후 default 시도 순서 설정.
 
 ## 알려진 버그 + 워크어라운드
 
@@ -167,7 +171,7 @@ obsidian search "test" 2>&1 | head -5
 obsidian "obsidian://open?vault=<vault-name>" &
 sleep 1; kill $! 2>/dev/null
 
-# Step 5. MCP fallback 확인 (Tier 2)
+# Step 5. MCP fallback 확인 (legacy Tier 2)
 claude mcp list 2>&1 | grep -i obsidian
 ```
 

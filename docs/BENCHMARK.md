@@ -1,6 +1,20 @@
-# 5-axis Benchmark — thiscode 4-Tier Search
+# Historical 5-axis Benchmark — ThisCode legacy local search-tool baseline
 
-본 benchmark 는 thiscode 의 4-Tier search 가 `obsidian-cli` 단독 / Claude `/search` / vault-search MCP 단독 대비 어떤 trade-off 를 보이는지 5 차원으로 측정합니다.
+> **Historical baseline (2026-05-13):** 이 문서는 ThisCode legacy local
+> search-tool stack의 기록입니다. `benchmark/results/2026-05-13.json`에는 해당
+> 날짜의 실행 메타데이터가 남아 있지만 Tier 1·2를 건너뛰었으므로 아래의 모든
+> 기대 범위나 과거 문서 수치를 검증하는 자료는 아닙니다. km 플러그인의 현재
+> runtime 성능 측정으로 읽지 말고, 현재 vault 검색은 `/km:search`를 사용하세요.
+
+이 benchmark 는 ThisCode로 설치할 수 있는 로컬 검색 도구
+(`obsidian-cli`, vault-search MCP, GraphRAG, ripgrep)의 5차원 trade-off를
+기록하는 개발자용 방법론입니다. km 플러그인의 현재 실행 성능을 측정하는 문서가
+아니며, 새 수치를 만들 때도 결과 파일과 측정일을 함께 남기세요.
+
+> 이 역사 문서의 Tier ID는 2026-05-13 당시 표기(legacy Tier 2 = vault-search
+> MCP, legacy Tier 3 = Obsidian CLI)를 그대로 보존합니다. 현재 km 계약은 Tier 1
+> GraphRAG → Tier 2 Obsidian CLI → Tier 3 vault-search MCP → Tier 4 ripgrep입니다.
+> 아래 기대 범위와 보관된 JSON은 현재 km runtime 성능 수치로 재해석하지 마세요.
 
 ## ⚠ 본인 vault 측정이 정공법
 
@@ -22,22 +36,34 @@ python3 benchmark/report-generator.py --print-only
 
 ## GraphRAG (Tier 1) 본인 vault 사용
 
-Tier 1 GraphRAG 가 본인 vault 를 인덱싱해야 의미 있는 recall + kg_depth 측정 가능. thiscode 의 `scripts/install-graphrag.sh` 는 본인 vault 인덱싱 + 서버 띄움까지 자동화 (CLAUDE_DISCODE_VAULT env 또는 `--vault` flag).
+Tier 1 GraphRAG가 본인 vault를 인덱싱해야 의미 있는 recall + kg_depth를 측정할 수
+있습니다. ThisCode의 `scripts/install-graphrag.sh --apply`는 vendored 서버와
+환경을 설치·기동하지만 vault 인덱스를 자동으로 만들거나 `--vault` 인자를
+받지는 않습니다. 서버의 `GRAPHRAG_VAULT_PATH`를 설정하고, vendored CLI의
+`--vault` 옵션으로 인덱스를 빌드하세요.
 
 ```bash
-CLAUDE_DISCODE_VAULT=~/your-vault \
+GRAPHRAG_VAULT_PATH=~/your-vault \
   bash scripts/install-graphrag.sh --apply
+python3 vendor/graphrag/scripts/cli.py --vault ~/your-vault build --apply
 ```
 
-별도 포트 (예: 8401) 사용 시 `GRAPHRAG_PORT=8401` env + `GRAPHRAG_URL=http://localhost:8401` env (benchmark/runners/tier1.sh 가 받음).
+`benchmark/runners/tier1.sh`는 `GRAPHRAG_URL`(기본값
+`http://localhost:8400`)을 받습니다. 별도 포트를 직접 구성했다면 이 runner에
+해당 URL을 지정하세요. `scripts/install-graphrag.sh`의 기본 서버 포트는
+8400이며 `GRAPHRAG_PORT` 인자를 받지 않습니다.
 
 ## 5 Axes
+
+아래의 latency·recall·setup 범위는 legacy 문서에 보존된 illustrative
+expectations(설명용 기대 범위)이며, 측정 결과나 현재 km runtime 성능 수치가
+아닙니다. 실제 비교는 본인 fixture로 runner를 실행해 새 결과 파일에 남기세요.
 
 ### 1. `latency_ms` — 응답 시간 (P50, milliseconds)
 
 각 query 에 대한 응답 시간. 3회 반복 후 P50. 빠를수록 좋음.
 
-| Tier | 기대 범위 | 이유 |
+| Legacy Tier ID | 기대 범위 | 이유 |
 |---|---|---|
 | 4 (ripgrep) | 30-100 ms | local file scan, no network |
 | 3 (obsidian-cli) | 200-500 ms | local index lookup |
@@ -48,7 +74,7 @@ CLAUDE_DISCODE_VAULT=~/your-vault \
 
 20 queries 각각의 `expected_hits` (ground truth) 가 top-5 에 들어있는 비율. 높을수록 좋음.
 
-기대 범위:
+기대 범위 (legacy Tier ID):
 - ripgrep (Tier 4): 0.3-0.5 (literal string 만)
 - obsidian-cli (Tier 3): 0.5-0.7 (light fuzzy)
 - vault-search MCP (Tier 2): 0.6-0.8 (embedding)
@@ -64,7 +90,7 @@ LLM 사용 시점만 발생. ripgrep/CLI = 0, MCP/GraphRAG > 0.
 
 ### 4. `setup_time_min` — 설치 + 첫 indexing 까지 시간 (사용자 self-report cohort 평균)
 
-| Tier | 기본 | 도구 |
+| Legacy Tier ID | 기본 | 도구 |
 |---|---|---|
 | 4 | 0 min | (기본 시스템) |
 | 3 | ~5 min | obsidian-cli 설치 |
@@ -129,7 +155,7 @@ VAULT=~/Documents/Obsidian/MyVault bash benchmark/runners/run-all.sh
 
 - **"왜 GraphRAG 가 느린가요?"** → LLM 호출 + graph traversal 때문. 단 recall + kg_depth 우위
 - **"ripgrep 만으로 충분?"** → literal 검색은 OK. 단 "ARR 증가 추세" 같은 semantic query 는 recall < 0.3
-- **"Tier 3 vs Tier 2 차이는?"** → Tier 2 (MCP) 는 embedding 으로 fuzzy match. Tier 3 (CLI) 는 light index, 빠르지만 semantic 약함
+- **"Tier 3 vs Tier 2 차이는?"** → 이 역사 문서의 legacy ID 기준으로 Tier 2 (MCP) 는 embedding 으로 fuzzy match. Tier 3 (CLI) 는 light index, 빠르지만 semantic 약함. 현재 km 계약에서는 CLI가 Tier 2, MCP가 Tier 3입니다.
 - **"kg_depth = 0 은 왜?"** → Tier 2/3/4 는 graph 가 없음. Tier 1 만 의미
 - **"내 vault 에서 직접 측정?"** → `VAULT=~/path bash benchmark/runners/run-all.sh` (fixture 수정 필요)
 

@@ -129,8 +129,8 @@ which obsidian-cli
 
 ### 3-B. Skip — Obsidian 없이도 잘 작동 ✅
 
-- 4-Tier 중 Tier 3 (Obsidian CLI) 만 SKIP
-- 나머지 Tier 1 (GraphRAG) / Tier 2 (MCP) / Tier 4 (ripgrep) 정상 작동
+- 4-Tier 중 Tier 2 (Obsidian CLI) 만 SKIP
+- 나머지 Tier 1 (GraphRAG) / Tier 3 (MCP) / Tier 4 (ripgrep) 정상 작동
 - 기능 80% 동일, 단 Obsidian graph view 와 연동 X
 
 **Obsidian 없이 뭐가 되고 뭐가 안 되나 (구체적으로):**
@@ -141,7 +141,7 @@ which obsidian-cli
 | 키워드 검색 (`ripgrep`) | ✅ 100% | 파일명·본문 문자 일치 검색 |
 | 의미 기반 검색 (GraphRAG/MCP) | ✅ 가능 | 노트 폴더(.md 모음)만 있으면 됨 — Obsidian *앱* 필수 아님 |
 | 노트 graph view·백링크 UI | ❌ | Obsidian 앱 전용 |
-| Obsidian CLI 구조 질의 (tags·backlinks) | ❌ | Tier 3 만 빠짐 — 검색은 다른 Tier 가 대신 |
+| Obsidian CLI 구조 질의 (tags·backlinks) | ❌ | Tier 2 만 빠짐 — 검색은 다른 Tier 가 대신 |
 
 → 결론: **첫 봇 운영엔 충분**합니다. 노트가 수백 개 이상 쌓이고 그래프
 시각화가 필요해질 때 Obsidian 을 설치해도 늦지 않습니다. 바로 4단계로 진행
@@ -154,7 +154,7 @@ which obsidian-cli
 
 | 선택 | 누가? | 시간 |
 |---|---|---|
-| **A. 지금은 패스** | 빠르게 도입, Tier 3 까지만 | 0분 |
+| **A. 지금은 패스** | 빠르게 도입, Tier 2 까지만 | 0분 |
 | **B. 도커로 간편 설치** | 도커 익숙한 사용자 | 10분 |
 | **C. Python 로컬 설치** | 직접 디버깅 원하는 사용자 | 25분 |
 
@@ -260,7 +260,7 @@ A. macOS / Linux / WSL 은 검증 완료. Windows native 는 추후 지원 예�
 A. Tier 4 (ripgrep) + Tier 2 (Obsidian) 는 100% 무료. Tier 3 (MCP) 도 무료 (Claude Code 구독 안에). Tier 1 (GraphRAG) 만 OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing $0.5-5 정도.
 
 **Q. 이미 obsidian-cli 만 쓰고 있는데 차이는?**
-A. README 의 5-axis benchmark 표 참고. 짧게: Tier 1 GraphRAG 는 recall +44% / Tier 2 obsidian-cli 단독 대비.
+A. README 의 5-axis benchmark 표 참고. 예전 ThisCode 가이드 메모에는 당시 Obsidian CLI 기준선보다 GraphRAG recall이 높다고 적혀 있었지만, 보관된 2026-05-13 결과는 legacy engine ID(vault-search MCP는 2, Obsidian CLI는 3)로 Tier 1·2를 건너뛰어 정확한 상승률을 입증하지 않습니다. 이 메모는 역사적 기록이며 현재 km 플러그인 runtime 성능 비교를 뜻하지 않습니다. 현재는 Tier 2 Obsidian CLI(가벼운 로컬 검색)와 Tier 1 GraphRAG(semantic/graph 검색, 더 큰 셋업·API 비용)의 trade-off를 본인 fixture로 비교하고, 역사적 상승률은 재사용하지 마세요.
 
 **Q. 피드백 어디 남기나요?**
 A. GitHub Discussions Feedback category: https://github.com/treylom/ThisCode/discussions/categories/feedback (Round 3 outcome). 5 질문 schema 로 2분 응답 → v1.1 graduate decision 에 반영.

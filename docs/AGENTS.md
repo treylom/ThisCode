@@ -109,8 +109,8 @@ benchmark:
 | Tier | Method | 이유 |
 |---|---|---|
 | 1 | GraphRAG | LLM + graph, recall 0.80-0.95 |
-| 2 | vault-search MCP | embedding semantic |
-| 3 | Obsidian CLI | Obsidian index light fuzzy |
+| 2 | Obsidian CLI | Obsidian index light fuzzy |
+| 3 | vault-search MCP | embedding semantic |
 | 4 | ripgrep | literal baseline |
 
 ## Tier 의미 (Round 2 outcome — 4개 enum)

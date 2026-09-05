@@ -61,10 +61,10 @@ claude plugin install km@tofukyung-plugins
 # 5. Tier 4 ripgrep (local tool)
 bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
 
-# 6. Tier 3 Obsidian CLI detection and Obsidian app guidance (optional)
+# 6. Tier 2 Obsidian CLI detection and Obsidian app guidance (optional)
 bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
 
-# 7. Tier 2 vault-search MCP (recommended)
+# 7. Tier 3 vault-search MCP (recommended)
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
 
 # 8. Tier 1 GraphRAG (optional; advanced)
@@ -74,11 +74,19 @@ bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
-ThisCode provides the local search-tool scripts. Run `/km:setup` separately in Claude Code to configure KM storage, MCP integrations, and settings; use `/km:search` to run the fallback.
+ThisCode's scripts install the local search tools; the km plugin's `/km:search` runs the fallback. Run `/km:setup` separately in Claude Code to configure KM storage, MCP integrations, and settings.
 
 For a branching, beginner-friendly guide: SETUP-BEGINNER.md
 
 = 4-Tier Search
+
+_Note: The speed, accuracy, and setup figures below are illustrative expectations
+preserved from the historical ThisCode local search-tool baseline documentation,
+not measurements or current km plugin runtime values. The archived
+`benchmark/results/2026-05-13.json` records run metadata but, under that run's
+legacy engine IDs (vault-search MCP used 2 and Obsidian CLI used 3), skips Tier 1
+and Tier 2, so it does not validate the table values. The labels in the table below
+follow the current km contract._
 
 #table(
   columns: (auto, 1fr, auto, auto, auto),
@@ -87,14 +95,14 @@ For a branching, beginner-friendly guide: SETUP-BEGINNER.md
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
   [Tier], [Tool], [Speed], [Accuracy], [Setup],
   [1], [GraphRAG (LLM + graph)], [1500-3000ms], [Very high], [25 min],
-  [2], [vault-search MCP (embedding)], [500-1000ms], [High], [5 min],
-  [3], [obsidian-cli (Obsidian index)], [200-500ms], [Medium], [3 min],
+  [2], [obsidian-cli (Obsidian index)], [200-500ms], [Medium], [3 min],
+  [3], [vault-search MCP (embedding)], [500-1000ms], [High], [5 min],
   [4], [ripgrep (literal)], [30-100ms], [Low], [0 min],
 )
 
 The km plugin's dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
 
-= Knowledge Manager (KM plugin)
+= Knowledge Manager (km plugin)
 
 Knowledge management and search are not bundled in ThisCode. Install the km plugin and use:
 

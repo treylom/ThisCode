@@ -4,17 +4,18 @@ version: 0.1.0
 date: 2026-05-13
 ---
 
-# KM Variant Responsibility Matrix
+# KM Variant Migration Pointer
 
-| Variant | Mode I | Mode R | Mode G | Python deps | Agent Teams | Default for |
-|---|---|---|---|---|---|---|
-| **lite** | ✓ | ✗ (notice) | ✓ read-only | None | No | Phase 1·2 입문 사용자 |
-| **at** | ✓ | ✓ | ✓ full | km-tools.py + jq | Yes (Category Lead + RALPH + DA) | Phase 3 심화 |
-| **plain** | ✓ | ✗ | ✗ | None | No | fallback (no AskUserQuestion env) |
+ThisCode no longer implements KM modes or variant selection. The old variant
+matrix is retained here only as a migration pointer for installations that still
+refer to this contract; it is not a ThisCode command surface.
 
-## Decision rules
+The km plugin is the current owner of knowledge management and vault search:
 
-- Headless environment ($CLAUDE_DISCODE_HEADLESS=1) → force `plain`.
-- User did not specify variant + interactive → `lite` (Phase 1·2 default).
-- User explicit `/thiscode:km --variant at` → `at` (after env check for jq+km-tools).
-- Mode R requested + variant ≠ at → suggest `--variant at` + abort.
+- `/km:knowledge-manager` handles knowledge collection and organization.
+- `/km:search` runs the search fallback dispatcher.
+- `/km:setup` configures the km plugin and its integrations.
+
+ThisCode's `/thiscode:km` command points users to those km plugin commands. The
+local search-tool installers remain in ThisCode (`scripts/install-*.sh`); they
+install optional engines but do not provide the km workflows or dispatcher.

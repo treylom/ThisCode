@@ -61,7 +61,7 @@ preflight() {
   fi
   if [ "${ram_gb:-0}" -lt 8 ]; then
     echo "  ⚠ RAM ${ram_gb}GB < 8GB 권장. GraphRAG(Dense embedding + FastAPI + index)는 메모리 과다 — 저사양에서 thrash 위험." >&2
-    echo "    → 권고: GraphRAG 미사용, Obsidian CLI(Tier 3) 사용: bash scripts/install-obsidian-cli.sh (검색 품질은 Tier 1보다 낮으나 메모리 안전)" >&2
+    echo "    → 권고: GraphRAG 미사용, Obsidian CLI(Tier 2) 사용: bash scripts/install-obsidian-cli.sh (로컬 전문 검색으로 시작)" >&2
     echo "    → 그래도 설치 강행: GRAPHRAG_FORCE=1 $0 --apply" >&2
     if [ "$MODE" = "apply" ] && [ "${GRAPHRAG_FORCE:-0}" != "1" ]; then
       echo "  ✗ RAM 부족 — apply 중단 (Obsidian CLI 권고. override: GRAPHRAG_FORCE=1)" >&2; fail=1
