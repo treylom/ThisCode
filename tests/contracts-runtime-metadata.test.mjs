@@ -1,12 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
-import yaml from 'js-yaml';
 
 const read = (relativePath) =>
   readFileSync(new URL(`../${relativePath}`, import.meta.url), 'utf8').replace(/\r\n?/g, '\n');
 const contract = read('contracts/search-fallback-4tier.md');
-const hermes = yaml.load(read('hermes-plugin/plugin.yaml'));
+const hermes = read('hermes-plugin/plugin.yaml');
 const schema = JSON.parse(read('schemas/agent-spec.json'));
 const mcpSource = read('vendor/vault-search-mcp/src/index.ts');
 const contractFiles = readdirSync(new URL('../contracts/', import.meta.url))
@@ -59,18 +58,14 @@ test('Hermes metadata and the agent schema carry the current external contracts'
   }
 
   const contractVersion = contract.match(/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\s*$/m)?.[1];
-  assert.equal(hermes.metadata.contract_version, '0.2.0');
-  assert.equal(contractVersion, hermes.metadata.contract_version);
-  const tierOrder = hermes.metadata.tier_order.map((entry) => {
-    const [tier, engine] = Object.entries(entry)[0];
-    return `${tier}:${engine}`;
-  });
-  assert.deepEqual(tierOrder, [
-    '1:GraphRAG',
-    '2:Obsidian CLI',
-    '3:vault-search MCP',
-    '4:ripgrep',
-  ]);
+  // The smoke suite runs before npm install; validate this manifest's literal
+  // metadata shape with built-ins. Full YAML/schema validation runs separately.
+  const metadata = hermes.match(/^metadata:\n((?:[ \t]+[^\n]*(?:\n|$)|\n)*)/m)?.[1];
+  assert.ok(metadata, 'Hermes manifest must contain a metadata mapping');
+  const hermesVersion = metadata.match(/^  contract_version: "([0-9]+\.[0-9]+\.[0-9]+)"$/m)?.[1];
+  assert.equal(hermesVersion, '0.2.0');
+  assert.equal(contractVersion, hermesVersion);
+  assert.match(metadata, /^  tier_order:\n    - 1: GraphRAG\n    - 2: Obsidian CLI\n    - 3: vault-search MCP\n    - 4: ripgrep(?:\n|$)/m);
 
   const phaseDescription = schema.properties.phases.description;
   assert.match(phaseDescription, /historical.*external km plugin/i);
