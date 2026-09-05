@@ -34,14 +34,21 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   fallback, while `/km:setup` configures storage, MCP integrations, and
   settings without installing GraphRAG or other search tiers.
 - The current km fallback order is Tier 1 GraphRAG → Tier 2 Obsidian CLI →
-  Tier 3 vault-search MCP → Tier 4 ripgrep. Older entries below retain the tier
-  numbering used when they were written and are historical.
+  Tier 3 Obsidian MCP → Tier 4 text search.
+  ThisCode's `vault-search MCP`
+  installer provides a separate local tool; it is not a `/km:search` fallback
+  tier. Older entries below keep the tier numbering they were written with.
 - Documented the actual Codex export conditions: check mode is the default,
   and `--apply` reports an empty export only for the selected Codex layers
   outside the `repo` layer. The empty-export list remains a supported diagnostic
   result, not a removed command surface.
 - Aligned public references on the `km` plugin id and marked the benchmark
   discussion as historical, with its 2026-05-13 result file as provenance.
+- Kept archived local-tool benchmark IDs and figures explicitly historical while
+  separating the current km order in setup, architecture, glossary, and
+  chapter-mapping copy; README setup links now target the live setup heading.
+- Matched the Korean README hook inventory to all seven registered hooks and
+  generalized private deployment examples in the public Slack setup skills.
 - Clarified that `/thiscode:install-hooks` is the
   `skills/install-hooks/SKILL.md` skill entry, and kept the multi-harness
   entry documents discoverable from the package metadata.
@@ -89,9 +96,9 @@ other search tiers.
 - **vault-search MCP is now vendored** at `vendor/vault-search-mcp/` and
   `scripts/install-vault-search.sh` builds it from there. The old path (git
   clone of `treylom/vault-search-mcp`) pointed at a repo that does not exist
-  publicly, so a fresh **legacy Tier-2** install always failed. (The current
-  contract labels vault-search MCP as Tier 3; this historical entry preserves
-  its original numbering.) Registration now uses
+  publicly, so a fresh **legacy Tier-2** install always failed. (The historical
+  ThisCode contract put the local embedding server in the third slot; this entry
+  preserves its original numbering and does not describe the current km order.) Registration now uses
   **`claude mcp add`** when the `claude` CLI exists (Claude Code does NOT read
   `claude_desktop_config.json`; that file is only a Claude Desktop fallback).
   The server receives your vault path via the `VAULT_PATH` env var.

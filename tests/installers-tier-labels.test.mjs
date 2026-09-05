@@ -26,8 +26,8 @@ test('healthcheck labels match the current search contract without probing host 
   });
   assert.ifError(result.error);
   assert.equal(result.status, 2, result.stdout + result.stderr); // Optional tools are intentionally absent.
-  assert.match(result.stdout, /Phase 2 obsidian-cli \(Tier 2\)/);
-  assert.match(result.stdout, /Phase 3 vault-search MCP \(Tier 3\)/);
+  assert.match(result.stdout, /Phase 2 obsidian-cli \(local tool\)/);
+  assert.match(result.stdout, /Phase 3 vault-search MCP \(local embedding\)/);
 });
 
 test('missing Obsidian keeps MCP ahead of ripgrep in both fallback notices', { skip: posixOnlySkip }, (t) => {
@@ -45,6 +45,6 @@ test('missing Obsidian keeps MCP ahead of ripgrep in both fallback notices', { s
     });
     assert.ifError(result.error);
     assert.equal(result.status, args.length ? 1 : 0, result.stdout + result.stderr);
-    assert.match(result.stdout, /Tier 3 \(MCP\), then Tier 4 \(ripgrep\) remain as fallbacks/);
+    assert.match(result.stdout, /Tier 3 \(Obsidian MCP\), then Tier 4 \(text search\) remain as km fallbacks/);
   }
 });

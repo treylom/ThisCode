@@ -18,7 +18,10 @@ claude plugin install km@tofukyung-plugins
 
 ## 로컬 검색 도구
 
-필요한 Tier에 따라 ThisCode의 `scripts/install-ripgrep.sh`, `install-obsidian-cli.sh`, `install-vault-search.sh`, `install-graphrag.sh`를 사용한다. 자세한 실행 방법은 `docs/SETUP.md` §3을 따른다.
+필요한 ThisCode 로컬 도구 단계에 따라 `scripts/install-ripgrep.sh`,
+`install-obsidian-cli.sh`, `install-vault-search.sh`, `install-graphrag.sh`를
+사용한다. 이 번호 체계는 km `/km:search` fallback과 별개이며, 자세한 실행 방법은
+`docs/SETUP.md` §3을 따른다.
 
 처음 설치할 때, 검색이 모든 단계에서 실패할 때, 머신을 옮긴 뒤 환경을 다시 잡을 때 이 안내를 쓴다. 이 명령 자체는 도구나 설정을 설치하지 않는다.
 

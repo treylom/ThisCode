@@ -64,21 +64,25 @@
 
 == km 플러그인의 4-Tier 검색이 뭔가요?
 
-km 플러그인의 4-Tier 검색은 GraphRAG → Obsidian CLI → vault-search MCP →
-ripgrep 순으로 시도합니다. 한 Tier가 미설치이거나 결과가 부족하면 다음
-Tier로 fallback하며, 로컬 도구는 thiscode 설치 스크립트로 설치합니다.
+km 플러그인의 4-Tier 검색은 GraphRAG → Obsidian CLI → Obsidian MCP →
+텍스트 검색 순으로 시도합니다. 앞 단계가 없거나 실패하면 다음 단계로
+넘어갑니다. 로컬 도구 설치는 ThisCode 스크립트, 검색 실행은 `/km:search`,
+저장 위치·Obsidian MCP·설정 구성은 `/km:setup`의 역할입니다.
 
 #box(fill: rgb("#f8f9fa"), inset: 10pt, radius: 4pt, width: 100%)[
-  - #text(weight: "bold")[Tier 4 — ripgrep] (기본, 0분 셋업) — 문자열 일치, 매우 빠름
-  - #text(weight: "bold")[Tier 2 — obsidian-cli] (3분 셋업, Obsidian 사용자만) — Obsidian index 활용
-  - #text(weight: "bold")[Tier 3 — vault-search MCP] (5분 셋업) — embedding semantic 검색
-  - #text(weight: "bold")[Tier 1 — GraphRAG] (25분 셋업, advanced) — LLM + graph + 가장 정확
+  - #text(weight: "bold")[Tier 1 — GraphRAG] — 구성된 서버의 그래프·의미 검색
+  - #text(weight: "bold")[Tier 2 — Obsidian CLI] — Obsidian의 문서 검색
+  - #text(weight: "bold")[Tier 3 — Obsidian MCP] — km에서 구성하는 Obsidian 연동
+  - #text(weight: "bold")[Tier 4 — 텍스트 검색] — 사용 가능한 텍스트 검색 도구로 검색
 ]
+
+Step 2의 vault-search MCP는 별도 로컬 임베딩 도구입니다. km 검색의 어느
+Tier도 대신하지 않으며 `/km:search`를 쓰기 위한 필수 설치가 아닙니다.
 
 #v(0.5em)
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — 빠르게 도입하려면 Tier 4 + 2 까지만 (3-A) 충분합니다. 익숙해진 후 GraphRAG (4-C) 도전.
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — 먼저 km를 설정하고 사용 가능한 텍스트 검색이나 CLI로 시작하세요. GraphRAG(4-B)는 나중에 추가해도 됩니다.
 ]
 
 #pagebreak()
@@ -180,7 +184,10 @@ git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
   - "already exists" → 이미 설치됨. `cd ~/.claude/plugins/thiscode && git pull` 로 update
 ]
 
-= Step 2 — 검색 MCP 설치 (5분, 권장)
+= Step 2 — 별도 로컬 vault-search MCP 설치 (선택)
+
+이 설치기는 로컬 임베딩 도구를 추가합니다. km의 Tier 3 Obsidian MCP는
+별도로 `/km:setup`에서 구성하며 이 설치기로 대체되지 않습니다.
 
 ```bash
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
@@ -226,15 +233,16 @@ which obsidian-cli
 
 == 3-B. SKIP — Obsidian 없이도 잘 작동 ✅
 
-- 4-Tier 중 Tier 2 (Obsidian CLI) 만 SKIP
-- 나머지 Tier 1 / 3 / 4 정상 작동, 기능 80% 동일
+- Obsidian을 쓰지 않으면 CLI와 Obsidian MCP의 사용 가능 여부를 별도로 확인합니다.
+- km는 사용할 수 없는 단계를 건너뜁니다. GraphRAG 서버나 텍스트 검색 등
+  실제로 구성된 경로로 검색되며, 특정 기능 비율을 보장하지 않습니다.
 - 바로 Step 4 로 진행
 
 #pagebreak()
 
 = Step 4 — GraphRAG 까지 가실래요? 🚀
 
-3가지 옵션 중 선택:
+두 가지 옵션 중 선택:
 
 #table(
   columns: (auto, 1fr, auto),
@@ -242,37 +250,15 @@ which obsidian-cli
   align: (left, left, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
   [#text(weight: "bold")[선택]], [#text(weight: "bold")[누가?]], [#text(weight: "bold")[시간]],
-  [4-A], [지금은 패스, 빠르게 도입 (Tier 2 까지만)], [0분],
-  [4-B], [도커 익숙한 사용자], [10분],
-  [4-C], [Python 로컬 + 직접 디버깅 원함], [25분],
+  [4-A], [지금은 패스, 사용 가능한 검색으로 시작], [0분],
+  [4-B], [Python 로컬 + 직접 디버깅 원함], [약 25분],
 )
 
 == 4-A. 지금은 패스 ✅
 
 $arrow$ 바로 Step 5 로
 
-== 4-B. 도커로 간편 설치
-
-```bash
-docker --version
-docker pull ghcr.io/treylom/ThisCode-graphrag:v1.0
-docker run -d -p 8400:8400 -v ~/vault:/vault \
-  --name thiscode-graphrag \
-  ghcr.io/treylom/ThisCode-graphrag:v1.0
-curl localhost:8400/health
-```
-
-#box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ 성공 모습] — `{"status":"ok"}`
-]
-
-#box(fill: rgb("#fde8e8"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#c53030"))[❌ 실패 시]
-  - Docker 미설치 $arrow$ https://docs.docker.com/get-docker/
-  - port 8400 충돌 $arrow$ `-p 8401:8400` 변경 + `GRAPHRAG_URL=http://localhost:8401` env 설정
-]
-
-== 4-C. Python 로컬 설치
+== 4-B. Python 로컬 설치
 
 ```bash
 python3 --version
@@ -295,18 +281,24 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ 성공 모습 — 본인 선택에 따라 SKIP 표기]
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ 로컬 도구 진단 예시 — 미구성 선택 도구는 NOT YET]
   ```
-  thiscode healthcheck v1.0
+  thiscode healthcheck v2.3 — Phase progress
   ─────────────────────────────────
-  ✓ Tier 4 (ripgrep)  : OK
-  ✓ Tier 3 (MCP)      : OK
-  ○ Tier 2 (CLI)      : SKIP (Obsidian 미사용 — 3-B 선택)
-  ○ Tier 1 (GraphRAG) : SKIP (4-A 선택)
+  ✓ Phase 0 superpowers (plugin)              : OK
+  ✓ Phase 1 ripgrep (local text)              : OK
+  ○ Phase 2 obsidian-cli (local tool)         : NOT YET
+  ○ Phase 3 vault-search MCP (local embedding): NOT YET
+  ○ Phase 4 GraphRAG (local server)           : NOT YET
+  ○ Phase 5 Dense embedding (4-channel)       : NOT YET
   ─────────────────────────────────
-  all required checks passed ✅
+  Summary: 2 OK, 4 NOT YET (all required passed) ✅
   ```
 ]
+
+이 진단은 로컬 도구 상태이며 km의 Obsidian MCP 연결이나 검색 결과를
+검증하지 않습니다. 선택 도구가 미구성이면 exit 2, 필수 항목 실패는 exit 1,
+모든 항목 통과는 exit 0입니다. km 검색은 `/km:search`로 별도 확인합니다.
 
 #box(fill: rgb("#fde8e8"), inset: 8pt, radius: 4pt)[
   #text(weight: "bold", fill: rgb("#c53030"))[❌ 실패 시]
@@ -341,7 +333,8 @@ claude plugin install km@tofukyung-plugins
 
 == Q1. 셋업 도중 중간에 멈춰도 되나요?
 
-네. 각 단계가 독립적이라 1-3단계까지만 해도 Tier 4 (ripgrep) 검색은 작동합니다.
+네. km 플러그인을 설치·설정한 뒤 사용 가능한 검색 경로로 시작할 수 있습니다.
+`/km:search`로 실제 결과를 확인하고 선택 도구 설치는 나중에 이어가세요.
 
 == Q2. macOS / Linux / Windows / WSL 다 됩니까?
 
@@ -349,9 +342,10 @@ macOS / Linux / WSL 은 검증 완료. Windows native 는 추후 지원 예정 (
 
 == Q3. 학생인데 비용 걱정?
 
-- Tier 4 (ripgrep) + Tier 2 (Obsidian) = 100% 무료
-- Tier 3 (MCP) = 무료 (Claude Code 구독 안에)
-- Tier 1 (GraphRAG) = OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing \$0.5\~5
+- ripgrep과 로컬 임베딩 도구 vault-search MCP는 로컬에서 실행됩니다.
+  MCP 연결 자체가 Claude Code 구독 혜택이나 API 비용 면제를 뜻하지는 않습니다.
+- Obsidian 및 호스트 앱 요금은 각 서비스 조건을 확인하세요.
+- GraphRAG는 구성한 API 제공자·모델과 vault 크기에 따라 별도 비용이 듭니다.
 
 == Q4. 이미 obsidian-cli 만 쓰고 있는데 차이는?
 

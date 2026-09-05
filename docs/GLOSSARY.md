@@ -96,7 +96,9 @@ Common Expression Language — Google 이 만든 식 평가 언어. Kubernetes /
 ## Plugin / Agent / Tier
 
 ### Tier
-계층. km 플러그인의 4-Tier search fallback 계층 (검색 도구는 ThisCode 설치 스크립트로 설치; Tier 1=GraphRAG → Tier 2=Obsidian CLI → Tier 3=vault-search MCP → Tier 4=ripgrep).
+계층. km 플러그인의 4-Tier search fallback 계층: Tier 1=GraphRAG →
+Tier 2=Obsidian CLI → Tier 3=Obsidian MCP → Tier 4=text search. ThisCode의
+`vault-search MCP` 설치기는 별도 로컬 도구이며 km fallback의 Tier가 아니다.
 
 ### fallback
 대체. 한 Tier 결과 부족 시 다음 Tier 시도.

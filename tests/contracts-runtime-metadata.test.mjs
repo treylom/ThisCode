@@ -11,7 +11,7 @@ const mcpSource = read('vendor/vault-search-mcp/src/index.ts');
 const contractFiles = readdirSync(new URL('../contracts/', import.meta.url))
   .filter((name) => name.endsWith('.md'));
 
-test('search fallback contract matches the bundled vault-search MCP tools', () => {
+test('search fallback contract keeps km order separate from the bundled local MCP', () => {
   assert.match(mcpSource, /name:\s*['"]search['"]/);
   assert.match(mcpSource, /name:\s*['"]vault_search['"]/);
   assert.match(
@@ -32,15 +32,14 @@ test('search fallback contract matches the bundled vault-search MCP tools', () =
 
   const tier3Row = contract.split('\n').find((line) => /^\| 3 \|/.test(line));
   assert.ok(tier3Row, 'contract must define a Tier 3 row');
-  assert.match(tier3Row, /vault-search MCP/);
-  assert.match(tier3Row, /vault_search/);
-  assert.match(tier3Row, /query/);
-  assert.match(tier3Row, /topK/);
-  assert.match(tier3Row, /content\[0\]\.text/);
-  assert.doesNotMatch(
-    contract,
-    /mcp__vault-search__list_notes|mcp__vault-search__search\(\{[^}]*"q"|mcp__vault-search__search\(\{[^}]*"top_k"/,
-  );
+  assert.match(tier3Row, /Obsidian MCP/);
+  assert.doesNotMatch(tier3Row, /vault-search MCP/);
+  assert.match(contract, /^\| Tier \| Current km stage \|/m);
+  assert.match(contract, /^\| 4 \| Text search \(`ripgrep` \/ `grep`\) \|/m);
+  assert.doesNotMatch(contract, /^\| Tier \| Engine \| Trigger Check \|/m);
+  assert.doesNotMatch(contract, /MUST include `\[Tier 4:/);
+  assert.match(contract, /current order is\s+GraphRAG, Obsidian CLI, Obsidian MCP, then text search/i);
+  assert.match(contract, /Separate ThisCode local vault-search MCP \(not km Tier 3\)/);
   assert.match(contract, /mcp__vault-search__vault_search\(\{\s*"query":\s*"\$QUERY",\s*"topK":\s*N\s*\}\)/);
   assert.match(contract, /content\[0\]\.text[\s\S]{0,240}JSON/i);
   assert.match(contract, /results[\s\S]{0,180}title[\s\S]{0,180}slug[\s\S]{0,180}snippet[\s\S]{0,180}score[\s\S]{0,180}source/i);
@@ -48,6 +47,11 @@ test('search fallback contract matches the bundled vault-search MCP tools', () =
   assert.match(
     contract,
     /encoded JSON payload[\s\S]{0,200}"results"[\s\S]{0,100}"id"[\s\S]{0,100}"title"[\s\S]{0,100}"url"/i,
+  );
+  assert.match(contract, /server does not register a `list_notes` tool/i);
+  assert.doesNotMatch(
+    contract,
+    /mcp__vault-search__list_notes|mcp__vault-search__search\(\{[^}]*"q"|mcp__vault-search__search\(\{[^}]*"top_k"/,
   );
 });
 
@@ -63,9 +67,9 @@ test('Hermes metadata and the agent schema carry the current external contracts'
   const metadata = hermes.match(/^metadata:\n((?:[ \t]+[^\n]*(?:\n|$)|\n)*)/m)?.[1];
   assert.ok(metadata, 'Hermes manifest must contain a metadata mapping');
   const hermesVersion = metadata.match(/^  contract_version: "([0-9]+\.[0-9]+\.[0-9]+)"$/m)?.[1];
-  assert.equal(hermesVersion, '0.2.0');
+  assert.equal(hermesVersion, '0.3.0');
   assert.equal(contractVersion, hermesVersion);
-  assert.match(metadata, /^  tier_order:\n    - 1: GraphRAG\n    - 2: Obsidian CLI\n    - 3: vault-search MCP\n    - 4: ripgrep(?:\n|$)/m);
+  assert.match(metadata, /^  tier_order:\n    - 1: GraphRAG\n    - 2: Obsidian CLI\n    - 3: Obsidian MCP\n    - 4: text search \(ripgrep\/grep\)(?:\n|$)/m);
 
   const phaseDescription = schema.properties.phases.description;
   assert.match(phaseDescription, /historical.*external km plugin/i);

@@ -13,7 +13,7 @@
 
 > 이 역사 문서의 Tier ID는 2026-05-13 당시 표기(legacy Tier 2 = vault-search
 > MCP, legacy Tier 3 = Obsidian CLI)를 그대로 보존합니다. 현재 km 계약은 Tier 1
-> GraphRAG → Tier 2 Obsidian CLI → Tier 3 vault-search MCP → Tier 4 ripgrep입니다.
+> GraphRAG → Tier 2 Obsidian CLI → Tier 3 Obsidian MCP → Tier 4 text search입니다.
 > 아래 기대 범위와 보관된 JSON은 현재 km runtime 성능 수치로 재해석하지 마세요.
 
 ## ⚠ 본인 vault 측정이 정공법
@@ -38,20 +38,19 @@ python3 benchmark/report-generator.py --print-only
 
 Tier 1 GraphRAG가 본인 vault를 인덱싱해야 의미 있는 recall + kg_depth를 측정할 수
 있습니다. ThisCode의 `scripts/install-graphrag.sh --apply`는 vendored 서버와
-환경을 설치·기동하지만 vault 인덱스를 자동으로 만들거나 `--vault` 인자를
-받지는 않습니다. 서버의 `GRAPHRAG_VAULT_PATH`를 설정하고, vendored CLI의
-`--vault` 옵션으로 인덱스를 빌드하세요.
+환경을 설치·기동할 뿐, vault 경로·`--vault`·포트를 인자로 받지 않습니다. 설치기가
+띄운 기본 포트(8400)에 서버를 둔 뒤, vendored CLI의 `--vault` 옵션으로 인덱스를
+빌드하세요.
 
 ```bash
-GRAPHRAG_VAULT_PATH=~/your-vault \
-  bash scripts/install-graphrag.sh --apply
+bash scripts/install-graphrag.sh --apply
 python3 vendor/graphrag/scripts/cli.py --vault ~/your-vault build --apply
 ```
 
 `benchmark/runners/tier1.sh`는 `GRAPHRAG_URL`(기본값
-`http://localhost:8400`)을 받습니다. 별도 포트를 직접 구성했다면 이 runner에
-해당 URL을 지정하세요. `scripts/install-graphrag.sh`의 기본 서버 포트는
-8400이며 `GRAPHRAG_PORT` 인자를 받지 않습니다.
+`http://localhost:8400`) 환경 변수를 받습니다. 별도 포트의 서버를 직접 구성했다면
+이 변수에 해당 URL을 지정하세요. `scripts/install-graphrag.sh`의 서버 포트는
+8400으로 고정되어 있으며 `GRAPHRAG_PORT` 인자를 받지 않습니다.
 
 ## 5 Axes
 

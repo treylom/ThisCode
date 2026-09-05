@@ -49,8 +49,9 @@ status: draft (v0.2.0)
 - 영상 길이: 9 min.
 
 ### C8. MOC-Map 진입점 + km 플러그인의 4-Tier search
-- 학습: km 플러그인의 4-Tier search (검색 도구는 thiscode 설치 스크립트로 설치; GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). MOC 우선 라우팅.
-- contract: `contracts/search-fallback-4tier.md` v0.2.0.
+- 학습: km 플러그인의 4-Tier search (GraphRAG → Obsidian CLI → Obsidian MCP → text search).
+  ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구이며 km fallback에 포함되지 않는다. MOC 우선 라우팅.
+- contract: `contracts/search-fallback-4tier.md` v0.3.0.
 - 영상 길이: 12-15 min.
 
 ### C9. km plugin commands and boundary
@@ -159,7 +160,7 @@ status: draft (v0.2.0)
 ## Cross-reference
 
 - vault SHARED-INDEX.md — 본 카테고리의 fact source
-- `contracts/search-fallback-4tier.md` — 현재 km `/km:search` fallback 계약 (Tier 1 GraphRAG → Tier 2 Obsidian CLI → Tier 3 vault-search MCP → Tier 4 ripgrep)
+- `contracts/search-fallback-4tier.md` — 현재 km `/km:search` fallback 계약 (Tier 1 GraphRAG → Tier 2 Obsidian CLI → Tier 3 Obsidian MCP → Tier 4 text search)
 - km 모드·설정 동작은 km 플러그인의 `/km:*` 문서를 따른다.
 - 어제 회의 03-outcome.md §5 — thiscode plugin spec 의 영상 mapping 초안
 - 본 사이클 outcome (`AI_Second_Brain/.claude-meetings/2026-05-12-thiscode-plugin/03-outcome.md` 2026-05-13 followup)

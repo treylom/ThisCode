@@ -85,7 +85,21 @@ Receiving objects: 100% (...), done.
 
 ---
 
-## 2단계: 검색 MCP 설치 (5분, 권장)
+## 2단계: km 플러그인 설정 + 선택적 로컬 도구 (5분, 권장)
+
+현재 vault 검색은 km 플러그인의 `/km:search`가 담당합니다. 폴백 순서는
+GraphRAG → Obsidian CLI → Obsidian MCP → text search입니다. 먼저 km 플러그인을
+설정하세요.
+
+```text
+/km:setup
+```
+
+`/km:setup`은 저장 위치·MCP·vault 설정을 구성하지만 검색 도구를 설치하지는
+않습니다. ThisCode의 `vault-search MCP`가 필요한 경우에만 아래 선택 단계를
+진행하세요. 이 도구는 km의 Tier 3가 아닌 별도 로컬 도구입니다.
+
+### 선택: ThisCode 로컬 vault-search MCP 설치 (5분)
 
 ```bash
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
@@ -103,7 +117,7 @@ claude mcp list | grep vault-search
 - `claude: command not found` → Claude Code 미설치. https://claude.com/code 에서 설치
 - npm install 실패 → `nvm use 18` 또는 `nvm install 18` 시도
 
-**중요:** 설치 후 Claude Code 를 한 번 재시작하세요 (`exit` 후 재실행).
+**중요:** 선택 도구를 설치했다면 Claude Code 를 한 번 재시작하세요 (`exit` 후 재실행).
 
 ---
 
@@ -129,9 +143,11 @@ which obsidian-cli
 
 ### 3-B. Skip — Obsidian 없이도 잘 작동 ✅
 
-- 4-Tier 중 Tier 2 (Obsidian CLI) 만 SKIP
-- 나머지 Tier 1 (GraphRAG) / Tier 3 (vault-search MCP) / Tier 4 (ripgrep) 정상 작동
-- 기능 80% 동일, 단 Obsidian graph view 와 연동 X
+- km `/km:search`는 GraphRAG → Obsidian CLI → Obsidian MCP → text search 순서로
+  가능한 경로를 시도하고, 사용할 수 없는 경로는 건너뜁니다.
+- km Tier 3를 대신하지 않습니다.
+  ThisCode의 `vault-search MCP`는 별도 로컬 도구입니다.
+- Obsidian graph view·백링크 UI와 Obsidian CLI 구조 질의는 사용할 수 없습니다.
 
 **Obsidian 없이 뭐가 되고 뭐가 안 되나 (구체적으로):**
 
@@ -154,7 +170,7 @@ which obsidian-cli
 
 | 선택 | 누가? | 시간 |
 |---|---|---|
-| **A. 지금은 패스** | 빠르게 도입, Tier 2 까지만 | 0분 |
+| **A. 지금은 패스** | 빠르게 도입, text search부터 시작 | 0분 |
 | **B. Python 로컬 설치** | 직접 디버깅 원하는 사용자 | 25분 |
 
 ### 4-A. 지금은 패스 ✅
@@ -191,10 +207,10 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 thiscode healthcheck v2.3 — Phase progress
 ─────────────────────────────────
 ✓ Phase 0 superpowers (plugin)       : OK
-✓ Phase 1 ripgrep (Tier 4)           : OK
-○ Phase 2 obsidian-cli (Tier 2)      : NOT YET
-○ Phase 3 vault-search MCP (Tier 3)  : NOT YET
-○ Phase 4 GraphRAG (Tier 1)          : NOT YET
+✓ Phase 1 ripgrep (local text)        : OK
+○ Phase 2 obsidian-cli (local tool)   : NOT YET
+○ Phase 3 vault-search MCP (local embedding) : NOT YET
+○ Phase 4 GraphRAG (local server)     : NOT YET
 ○ Phase 5 Dense embedding (4-channel): NOT YET
 ─────────────────────────────────
 Summary: 2 OK, 4 NOT YET (all required passed) ✅
@@ -234,13 +250,17 @@ claude plugin install km@tofukyung-plugins
 ## ❓ 자주 묻는 질문
 
 **Q. 셋업 도중 중간에 멈춰도 되나요?**
-A. 네. 각 단계가 독립적이라 1-3단계까지만 해도 Tier 4 (ripgrep) 검색은 작동합니다.
+A. 네. 각 단계가 독립적이라 text search(ripgrep)까지는 작동합니다.
 
 **Q. macOS / Linux / Windows / WSL 다 됩니까?**
 A. macOS / Linux / WSL 은 검증 완료. Windows native 는 추후 지원 예정 (현재 WSL 권장).
 
 **Q. 학생인데 비용 걱정?**
-A. Tier 4 (ripgrep) + Tier 2 (Obsidian CLI) 는 100% 무료. Tier 3 (vault-search MCP) 도 무료 (Claude Code 구독 안에). Tier 1 (GraphRAG) 만 OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing $0.5-5 정도.
+A. km의 Tier 2 (Obsidian CLI)와 Tier 4 (text search)는 무료입니다. Tier 3
+(Obsidian MCP)는 별도 로컬 MCP 서버로 구성하며 Claude Code 구독에 포함된다고
+전제하지 않습니다. ThisCode의 선택적 `vault-search MCP`도 로컬에서 실행하는
+별도 도구입니다. Tier 1 (GraphRAG)만 OpenAI/Anthropic API를 호출하므로 본인
+vault 크기에 따라 1회 indexing 비용이 달라집니다.
 
 **Q. 이미 obsidian-cli 만 쓰고 있는데 차이는?**
 A. README 의 5-axis benchmark 표 참고. 예전 ThisCode 가이드 메모에는 당시 Obsidian CLI 기준선보다 GraphRAG recall이 높다고 적혀 있었지만, 보관된 2026-05-13 결과는 legacy engine ID(vault-search MCP는 2, Obsidian CLI는 3)로 Tier 1·2를 건너뛰어 정확한 상승률을 입증하지 않습니다. 이 메모는 역사적 기록이며 현재 km 플러그인 runtime 성능 비교를 뜻하지 않습니다. 현재는 Tier 2 Obsidian CLI(가벼운 로컬 검색)와 Tier 1 GraphRAG(semantic/graph 검색, 더 큰 셋업·API 비용)의 trade-off를 본인 fixture로 비교하고, 역사적 상승률은 재사용하지 마세요.

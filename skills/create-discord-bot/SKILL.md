@@ -15,6 +15,6 @@ $ARGUMENTS
 
 ## 관련 자원
 
-- 위임 대상(정본): [`../create-bot/SKILL.md`](../create-bot/SKILL.md)
+- 실행 대상 문서: [`../create-bot/SKILL.md`](../create-bot/SKILL.md)
 - Slack 대응: `/thiscode:create-slack-bot`
 - 구 이름(하위 호환 별칭, `commands/add-bot.md` 유지): `/thiscode:add-bot`

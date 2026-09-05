@@ -4,30 +4,30 @@ thiscode 의 구조 + 흐름을 mermaid 차트로 시각화. GitHub 에서 자�
 
 ## 1. km plugin search fallback (external)
 
-아래 검색 fallback은 km 플러그인이 소유하고 실행합니다. ThisCode는 봇 하네스와 각 Tier의 로컬 도구 설치기를 제공하지만 이 검색 흐름을 실행하지 않습니다.
+아래 검색 fallback은 km 플러그인이 소유하고 실행합니다. 현재 순서는
+GraphRAG → Obsidian CLI → Obsidian MCP → text search입니다. ThisCode는 봇
+하네스와 별도의 로컬 도구 설치기를 제공하며, 그 설치기가 제공하는
+`vault-search MCP`는 이 km 검색 흐름에 포함되지 않습니다.
 
-> 차트의 latency/recall 수치는 ThisCode 로컬 검색 도구 문서에 남은 역사적
-> illustrative expectations(설명용 기대 범위)입니다. 측정 결과나 현재 km
-> 플러그인 runtime 성능 수치가 아닙니다. `benchmark/results/2026-05-13.json`은
-> 2026-05-13 실행 메타데이터를 기록하지만 당시 legacy engine ID(vault-search
-> MCP는 2, Obsidian CLI는 3)로 Tier 1·2를 건너뛰었으므로 차트 수치를 검증하지
-> 않습니다. 차트의 라벨은 현재 km 계약을 따릅니다.
+> 이 차트는 현재 km fallback의 순서만 보여 줍니다. latency/recall 수치는
+> 현재 km runtime의 성능값으로 싣지 않으며, 역사적 로컬 도구 범위는
+> [BENCHMARK.md](BENCHMARK.md)에 당시 도구 ID와 함께 남아 있습니다.
 
 ```mermaid
 flowchart TD
     Start([사용자 query]) --> Disp{dispatcher}
 
-    Disp -->|시작| T1[Tier 1<br/>GraphRAG<br/>1500-3000ms<br/>recall 0.85]
+    Disp -->|시작| T1[Tier 1<br/>GraphRAG]
     T1 -->|결과 있음| Return([결과 반환])
     T1 -->|미설치/server down| T2
 
-    T2[Tier 2<br/>Obsidian CLI<br/>200-500ms<br/>recall 0.62] -->|결과 있음| Return
+    T2[Tier 2<br/>Obsidian CLI] -->|결과 있음| Return
     T2 -->|미설치| T3
 
-    T3[Tier 3<br/>vault-search MCP<br/>500-1000ms<br/>recall 0.71] -->|결과 있음| Return
+    T3[Tier 3<br/>Obsidian MCP] -->|결과 있음| Return
     T3 -->|미설치| T4
 
-    T4[Tier 4<br/>ripgrep<br/>30-100ms<br/>recall 0.41<br/>baseline] --> Return
+    T4[Tier 4<br/>text search] --> Return
 
     classDef tier1 fill:#fff8e1,stroke:#f57c00,stroke-width:2px
     classDef tier2 fill:#f0f4ff,stroke:#1976d2,stroke-width:2px
@@ -39,7 +39,9 @@ flowchart TD
     class T4 tier4
 ```
 
-각 Tier의 로컬 도구는 ThisCode의 `scripts/install-*.sh`로 설치합니다. `/km:search`는 검색 fallback을 실행하고 `/km:setup`은 km 저장 위치·MCP·설정을 구성하며, 검색 Tier를 설치하지 않습니다.
+ThisCode의 별도 로컬 도구는 `scripts/install-*.sh`로 설치합니다. `/km:search`는
+위의 km fallback을 실행하고 `/km:setup`은 km 저장 위치·MCP·설정을 구성하며,
+검색 Tier 설치를 대신하지 않습니다.
 
 ---
 
@@ -170,8 +172,8 @@ flowchart LR
     subgraph Backend[검색 backend]
         T1[Tier 1<br/>GraphRAG]
         T2[Tier 2<br/>Obsidian CLI]
-        T3[Tier 3<br/>vault-search MCP]
-        T4[Tier 4<br/>ripgrep]
+        T3[Tier 3<br/>Obsidian MCP]
+        T4[Tier 4<br/>text search]
     end
 
     subgraph CI[GitHub Actions]

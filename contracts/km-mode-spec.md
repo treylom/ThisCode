@@ -1,7 +1,7 @@
 ---
 contract: km-mode-spec
-version: 0.1.0
-date: 2026-05-13
+version: 0.2.0
+date: 2026-09-05
 ---
 
 # KM Mode Migration Pointer

@@ -19,9 +19,11 @@
 
 ## Contract version
 
-Versions are per contract: `search-fallback-4tier` is `0.2.0`;
-`km-mode-spec`, `km-variant-matrix`, and `repo-handoff-install-contract` are
-`0.1.0`. See each file's `contracts/*.md` frontmatter.
+Versions are per contract: `search-fallback-4tier` is `0.3.0`;
+`km-mode-spec` and `km-variant-matrix` are `0.2.0`, while
+`repo-handoff-install-contract` is `0.1.0`. See each file's
+`contracts/*.md` frontmatter. The optional local `vault-search MCP` installer
+is separate from the km plugin's Tier 3 Obsidian MCP integration.
 
 ## Drift detection
 

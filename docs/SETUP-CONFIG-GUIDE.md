@@ -279,7 +279,7 @@ Plain intro: [memory-dreaming.md](memory-dreaming.md).
 
 ## §4 — How to set up & how to ask (first run)
 
-![Historical km/ThisCode search fallback illustration — archived GraphRAG → vault-search MCP → Obsidian CLI → ripgrep numbering; current contract is GraphRAG → Obsidian CLI → vault-search MCP → ripgrep](../assets/search-fallback-4tier.png)
+![Historical km/ThisCode search fallback illustration — archived GraphRAG → vault-search MCP → Obsidian CLI → ripgrep numbering; current km contract is GraphRAG → Obsidian CLI → Obsidian MCP → text search](../assets/search-fallback-4tier.png)
 
 > The embedded illustration is retained as a historical artifact; its legacy tier numbering is not a current km runtime claim. Use the current contract and text above for today’s fallback order.
 
@@ -506,8 +506,8 @@ harness 가 실제 노출하는 모델 id 로.
 
 ### §4 설정·질문 방법
 설치 후 `/thiscode:setup`, 그리고 km 플러그인의 `/km:search "질의"`. 예: "내 attention 노트
-요약" → km 플러그인의 4-Tier 검색 fallback 후 출처 경로 포함 요약(검색 도구는 ThisCode
-설치 스크립트로 설치). 응답이 페르소나/규칙을 벗어나면
+요약" → km 플러그인의 4-Tier 검색 fallback 후 출처 경로 포함 요약. ThisCode의
+로컬 도구 설치기는 이 km fallback과 별개다. 응답이 페르소나/규칙을 벗어나면
 soul.md frontmatter 유효성 + INDEX 트리거 매칭을 점검.
 
 ### §5 Skills 2.0 체크리스트

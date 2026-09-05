@@ -64,7 +64,7 @@ bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
 # 6. Tier 2 Obsidian CLI detection and Obsidian app guidance (optional)
 bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
 
-# 7. Tier 3 vault-search MCP (recommended)
+# 7. Separate local embedding tool: vault-search MCP (optional; not a km tier)
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
 
 # 8. Tier 1 GraphRAG (optional; advanced)
@@ -80,27 +80,29 @@ For a branching, beginner-friendly guide: SETUP-BEGINNER.md
 
 = 4-Tier Search
 
-_Note: The speed, accuracy, and setup figures below are illustrative expectations
-preserved from the historical ThisCode local search-tool baseline documentation,
-not measurements or current km plugin runtime values. The archived
-`benchmark/results/2026-05-13.json` records run metadata but, under that run's
-legacy engine IDs (vault-search MCP used 2 and Obsidian CLI used 3), skips Tier 1
-and Tier 2, so it does not validate the table values. The labels in the table below
-follow the current km contract._
+ThisCode's `scripts/install-*.sh` install local tools; km's `/km:search` runs
+search; `/km:setup` configures storage, Obsidian MCP, and settings.
+The km order is GraphRAG → Obsidian CLI → Obsidian MCP → text search.
+Installing the separate vault-search MCP does not substitute for any km tier.
+
+_The figures below are old illustrative expectations, not measurements._
+They describe historical local tools, not the km search stages. The archived
+`benchmark/results/2026-05-13.json` skipped legacy engine IDs 1 (GraphRAG) and
+2 (vault-search MCP); it does not validate these expectations or current km performance.
 
 #table(
-  columns: (auto, 1fr, auto, auto, auto),
+  columns: (1fr, auto, auto, auto),
   inset: 6pt,
-  align: (center, left, center, center, center),
+  align: (left, center, center, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
-  [Tier], [Tool], [Speed], [Accuracy], [Setup],
-  [1], [GraphRAG (LLM + graph)], [1500-3000ms], [Very high], [25 min],
-  [2], [obsidian-cli (Obsidian index)], [200-500ms], [Medium], [3 min],
-  [3], [vault-search MCP (embedding)], [500-1000ms], [High], [5 min],
-  [4], [ripgrep (literal)], [30-100ms], [Low], [0 min],
+  [Historical local tool], [Expected speed], [Expected accuracy], [Expected setup],
+  [GraphRAG (LLM + graph)], [1500-3000ms], [Very high], [25 min],
+  [obsidian-cli (Obsidian index)], [200-500ms], [Medium], [3 min],
+  [vault-search MCP (embedding)], [500-1000ms], [High], [5 min],
+  [ripgrep (literal)], [30-100ms], [Low], [0 min],
 )
 
-The km plugin's dispatcher tries Tier 1 → falls back to Tier 2 if results are insufficient → and so on.
+For current search-stage conditions and execution, follow the km plugin's `/km:search`.
 
 = Knowledge Manager (km plugin)
 

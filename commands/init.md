@@ -20,11 +20,15 @@ vault 상태 / OS / 도구 / 자원 감지 → 8 Phase progressive journey 추�
 | 0 | vault 미설치 | Obsidian app (link 안내) |
 | 1 | vault 시작 | ThisCode `scripts/install-ripgrep.sh` (ripgrep, Tier 4) |
 | 2 | Zettelkasten 시도 | ThisCode `scripts/install-obsidian-cli.sh` (Obsidian CLI, Tier 2) |
-| 3 | 100+ 노트 의미 검색 갈증 | ThisCode `scripts/install-vault-search.sh` (vault-search MCP, Tier 3) |
+| 3 | 100+ 노트 의미 검색 갈증 | ThisCode `scripts/install-vault-search.sh` (선택적 로컬 vault-search MCP) |
 | 4 | 500+ 권유 / 1000+ strong / 옵션 언제나 | ThisCode `scripts/install-graphrag.sh` (GraphRAG, Tier 1) |
 | 5 | 2000+ 노트 혼란 | km 플러그인 `/km:knowledge-manager-at` 의 Mode R preflight (Claude Code 전용 — Codex는 km 플러그인 문서를 따름) |
 | 6 | 3000+ + GraphRAG installed | Dashboard 시각화 (선택, 외부 link) |
 | 7 | advanced | 하이브리드 4채널 (선택, Journey-12/13) |
+
+위 표의 Tier 번호는 ThisCode가 설치·점검하는 로컬 도구 단계입니다. km
+플러그인의 `/km:search`는 GraphRAG → Obsidian CLI → Obsidian MCP → text
+search 순서로 별도 실행하며, `vault-search MCP`는 이 fallback의 Tier가 아닙니다.
 
 ## Flow
 

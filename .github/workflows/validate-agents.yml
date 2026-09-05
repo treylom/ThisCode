@@ -58,7 +58,8 @@ jobs:
           # ajv-cli also needed on PATH for shell-script validators, keep -g install.
           npm install -g ajv-cli ajv-formats js-yaml
           sudo apt-get update
-          sudo apt-get install -y jq ripgrep
+          # Published PDF regression tests need real text extraction, not file timestamps.
+          sudo apt-get install -y jq ripgrep poppler-utils
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 

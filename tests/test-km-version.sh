@@ -108,8 +108,16 @@ OUTPUT=$(CLAUDE_DISCODE_HOME="$FIXTURE_ROOT/plugin" CLAUDE_DISCODE_VAULT="$FIXTU
 STATUS=$?
 set -e
 [ "$STATUS" -eq 2 ] || { echo "FAIL: missing mirror status"; exit 1; }
-echo "$OUTPUT" | grep -q "vault mirror missing: .* — populate it from .* before rerunning" || {
+echo "$OUTPUT" | grep -q "vault mirror missing: .* — copy or sync contracts from .* into this destination before rerunning" || {
   echo "FAIL: missing mirror remediation"
+  exit 1
+}
+echo "$OUTPUT" | grep -q "no ThisCode installer or /km:setup creates contract mirrors" || {
+  echo "FAIL: missing mirror producer boundary"
+  exit 1
+}
+! echo "$OUTPUT" | grep -q '/thiscode:km-bootstrap' || {
+  echo "FAIL: missing mirror points to non-producing bootstrap command"
   exit 1
 }
 

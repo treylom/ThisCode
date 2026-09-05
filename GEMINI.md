@@ -22,6 +22,7 @@ This is the Gemini CLI / multi-harness entry context for the `thiscode` plugin.
 
 - ThisCode documents bot-harness operations and its install contracts.
 - KM behavior and command variants are documented by the km plugin; thiscode does not bundle those skills.
+- ThisCode's optional local-engine installers (including `vault-search MCP`) are separate from the km dispatcher's Obsidian MCP stage.
 - Drift detection: `bash scripts/km-version.sh` — compares `contracts/*.md` vs the vault mirror.
 
 ## Suggested first actions

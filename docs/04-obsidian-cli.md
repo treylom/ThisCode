@@ -2,9 +2,11 @@
 
 > **Legacy local-tool guide:** Obsidian vault 를 명령행에서 직접 조작하기 위한
 > CLI와 당시 ThisCode의 3-Tier 폴백 (CLI → MCP → Write/Read/Grep)을 보존합니다.
-> 현재 km 플러그인의 4-Tier 계약은 GraphRAG → Obsidian CLI → vault-search MCP →
-> ripgrep 순서이며 [SETUP.md](SETUP.md)와
+> 현재 km 플러그인의 4-Tier 계약은 GraphRAG → Obsidian CLI → Obsidian MCP →
+> text search 순서이며 [SETUP.md](SETUP.md)와
 > `contracts/search-fallback-4tier.md`를 따릅니다.
+> ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구를 제공하며 km
+> `/km:search`의 Tier 3를 대체하지 않습니다.
 
 ## 왜 Obsidian CLI 인가
 

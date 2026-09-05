@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # install-graphrag.sh — thiscode v2.3
-# GraphRAG FastAPI server (port 8400) — Tier 1 search 백엔드
-# v2.3: v2.1.1 backbone + vault SoT 의존 → thiscode vendor/graphrag/ 의존 정정
+# GraphRAG FastAPI server (port 8400) — optional local engine for km Tier 1
+# v2.3: v2.1.1 backbone + bundled vendor/graphrag/ source path
 #       venv 위치 = ~/.cache/thiscode/graphrag/venv (writable home cache)
-# 출처: thiscode/vendor/graphrag/ ← obsidian-ai-vault `.team-os/graphrag/` vendor 박제
+# source: thiscode/vendor/graphrag/ (bundled GraphRAG source snapshot)
 # RRF 가중치: α=0.3 (Dense) / β=0.4 (Sparse) / γ=0.15 (Decomposed) / δ=0.15 (Entity)
 set -euo pipefail
 
@@ -20,7 +20,7 @@ usage() {
 Usage: $0 [--check | --apply | --preflight]
   --check      (default) health probe + venv/requirements report
   --apply      preflight → venv → pip install → uvicorn nohup
-  --preflight  preflight only (Python / disk / port / vendor SoT)
+  --preflight  preflight only (Python / disk / port / bundled source)
 EOF
 }
 
@@ -52,7 +52,7 @@ preflight() {
   else
     echo "  ✓ ${free_gb}GB free"
   fi
-  echo "[preflight] RAM check (GraphRAG Tier 1 = memory-heavy)..."
+  echo "[preflight] RAM check (optional local GraphRAG server = memory-heavy)..."
   local ram_gb=0
   if [ "$(uname)" = "Darwin" ]; then
     ram_gb=$(( $(sysctl -n hw.memsize 2>/dev/null || echo 0) / 1024 / 1024 / 1024 ))
@@ -61,7 +61,7 @@ preflight() {
   fi
   if [ "${ram_gb:-0}" -lt 8 ]; then
     echo "  ⚠ RAM ${ram_gb}GB < 8GB 권장. GraphRAG(Dense embedding + FastAPI + index)는 메모리 과다 — 저사양에서 thrash 위험." >&2
-    echo "    → 권고: GraphRAG 미사용, Obsidian CLI(Tier 2) 사용: bash scripts/install-obsidian-cli.sh (로컬 전문 검색으로 시작)" >&2
+    echo "    → 권고: GraphRAG 미사용, Obsidian CLI(km Tier 2 when configured) 사용: bash scripts/install-obsidian-cli.sh (로컬 전문 검색으로 시작)" >&2
     echo "    → 그래도 설치 강행: GRAPHRAG_FORCE=1 $0 --apply" >&2
     if [ "$MODE" = "apply" ] && [ "${GRAPHRAG_FORCE:-0}" != "1" ]; then
       echo "  ✗ RAM 부족 — apply 중단 (Obsidian CLI 권고. override: GRAPHRAG_FORCE=1)" >&2; fail=1
@@ -75,13 +75,13 @@ preflight() {
   else
     echo "  ✓ port $PORT free"
   fi
-  echo "[preflight] vendor SoT check..."
+  echo "[preflight] bundled GraphRAG source check..."
   if [ ! -d "$GRAPHRAG_VENDOR/scripts" ]; then
     echo "  ✗ vendor/graphrag/scripts/ missing at $GRAPHRAG_VENDOR" >&2; fail=1
   else
     local n
     n=$(find "$GRAPHRAG_VENDOR/scripts" -maxdepth 1 -name "*.py" 2>/dev/null | wc -l | tr -d ' ')
-    echo "  ✓ vendor SoT present ($n Python files)"
+    echo "  ✓ bundled GraphRAG source present ($n Python files)"
   fi
   return $fail
 }
@@ -95,9 +95,9 @@ if [ "$MODE" = "check" ]; then
   local_fail=0
   echo "python3: $(command -v python3 2>/dev/null || { echo MISSING; local_fail=1; })"
   if [ -d "$GRAPHRAG_VENDOR/scripts" ]; then
-    echo "vendor SoT: $GRAPHRAG_VENDOR/scripts present"
+    echo "bundled GraphRAG source: $GRAPHRAG_VENDOR/scripts present"
   else
-    echo "vendor SoT: $GRAPHRAG_VENDOR/scripts MISSING (required — vendor 박제 누락)"
+    echo "bundled GraphRAG source: $GRAPHRAG_VENDOR/scripts MISSING (required)"
     local_fail=1
   fi
   if [ -f "$GRAPHRAG_VENDOR/scripts/requirements.txt" ]; then
@@ -130,7 +130,7 @@ preflight || { echo "[apply] preflight FAILED — fix issues above" >&2; exit 1;
 
 if [ ! -d "$GRAPHRAG_VENDOR/scripts" ]; then
   echo "vendor/graphrag/scripts/ missing — thiscode repo corrupted?" >&2
-  echo "  Expected: $GRAPHRAG_VENDOR/scripts/ (vendored from vault SoT)" >&2
+  echo "  Expected: $GRAPHRAG_VENDOR/scripts/ (bundled in thiscode)" >&2
   exit 5
 fi
 

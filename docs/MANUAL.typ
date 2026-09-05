@@ -64,7 +64,7 @@ bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
 # 6. Tier 2 Obsidian CLI 감지·Obsidian 앱 안내 (선택)
 bash ~/.claude/plugins/thiscode/scripts/install-obsidian-cli.sh
 
-# 7. Tier 3 vault-search MCP (권장)
+# 7. 별도 로컬 임베딩 도구 vault-search MCP (선택; km Tier 아님)
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
 
 # 8. Tier 1 GraphRAG (선택, advanced)
@@ -80,26 +80,29 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 
 = 4-Tier Search
 
-_참고: 아래 속도·정확도·셋업 수치는 ThisCode 로컬 검색 도구 기준선 문서에
-보존된 illustrative expectations(설명용 기대 범위)입니다. 측정 결과나 현재 km
-플러그인 runtime 성능 수치가 아닙니다. `benchmark/results/2026-05-13.json`은
-2026-05-13 실행 메타데이터를 남기지만 당시 legacy engine ID(vault-search MCP는
-2, Obsidian CLI는 3)로 Tier 1·2를 건너뛰었으므로 표 수치를 검증하지 않습니다.
-아래 표의 라벨은 현재 km 계약에 맞춥니다._
+로컬 도구 설치는 ThisCode의 `scripts/install-*.sh`, 검색 실행은 km의
+`/km:search`, 저장 위치·Obsidian MCP·설정은 `/km:setup`이 담당합니다.
+km 검색 순서는 GraphRAG → Obsidian CLI → Obsidian MCP → 텍스트 검색입니다.
+별도 vault-search MCP 설치 여부는 km의 어느 Tier도 대신하지 않습니다.
+
+_아래는 옛 로컬 도구 안내의 설명용 기대값이며 측정 결과가 아닙니다._
+숫자는 km 검색 단계와 대응시키지 않습니다. 보관된
+`benchmark/results/2026-05-13.json`은 당시 엔진 ID 1(GraphRAG)·2(vault-search
+MCP)를 건너뛴 실행 기록으로, 이 기대값이나 현재 km 성능을 검증하지 않습니다.
 
 #table(
-  columns: (auto, 1fr, auto, auto, auto),
+  columns: (1fr, auto, auto, auto),
   inset: 6pt,
-  align: (center, left, center, center, center),
+  align: (left, center, center, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
-  [Tier], [도구], [속도], [정확도], [셋업],
-  [1], [GraphRAG (LLM + graph)], [1500-3000ms], [매우 높음], [25분],
-  [2], [obsidian-cli (Obsidian index)], [200-500ms], [중간], [3분],
-  [3], [vault-search MCP (embedding)], [500-1000ms], [높음], [5분],
-  [4], [ripgrep (literal)], [30-100ms], [낮음], [0분],
+  [옛 로컬 도구], [속도 기대값], [정확도 기대값], [셋업 기대값],
+  [GraphRAG (LLM + graph)], [1500-3000ms], [매우 높음], [25분],
+  [obsidian-cli (Obsidian index)], [200-500ms], [중간], [3분],
+  [vault-search MCP (embedding)], [500-1000ms], [높음], [5분],
+  [ripgrep (literal)], [30-100ms], [낮음], [0분],
 )
 
-km 플러그인의 dispatcher가 Tier 1 시도 → 결과 부족 시 Tier 2 → ... 순서 fallback.
+현재 검색 단계의 조건과 실행은 km 플러그인의 `/km:search`를 따릅니다.
 
 = Knowledge Manager (km plugin)
 

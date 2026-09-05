@@ -13,7 +13,7 @@ if [ ! -d "$PLUGIN_DIR" ]; then
 fi
 
 if [ ! -d "$VAULT_DIR" ]; then
-  echo "vault mirror missing: $VAULT_DIR — populate it from $PLUGIN_DIR before rerunning; no installer creates contract mirrors" >&2
+  echo "vault mirror missing: $VAULT_DIR — copy or sync contracts from $PLUGIN_DIR into this destination before rerunning; no ThisCode installer or /km:setup creates contract mirrors" >&2
   exit 2
 fi
 

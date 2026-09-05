@@ -86,7 +86,8 @@ files stay lean by design).
 ### knowledge-retrieval.md (×2 fill-ins) — KB tools · memory search · split
 - **Filled example**:
   ```
-  KB: vault-search MCP (semantic) → obsidian-cli (exact) → ripgrep (fallback)
+  KB: /km:search (km plugin) — GraphRAG → Obsidian CLI → Obsidian MCP → text search
+  Optional local tool: ThisCode's vault-search MCP is separate from km's fallback stages
   Memory search: grep SHARED-INDEX.md first, then fetch the linked entry
   Split: shared (cross-bot facts) vs per-bot WD memory (persona quirks)
   ```

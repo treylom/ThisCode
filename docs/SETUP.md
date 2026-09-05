@@ -63,13 +63,14 @@ node bin/thiscode.mjs --apply --yes # 비대화형 apply 동의; Codex export �
 
 ## 3. km 플러그인 설정과 선택 검색 도구
 
-`/km:setup`은 km 저장 위치·Playwright/Obsidian MCP·`km-config.json`·vault 경로와 구조 문서를 구성합니다. 검색 Tier 설치 명령은 아닙니다.
+`/km:setup`은 km 저장 위치·Playwright/Obsidian MCP·`km-config.json`·vault 경로와 구조 문서를 구성합니다. 검색 Tier 설치 명령은 아닙니다. 현재 `/km:search` 폴백 순서는 GraphRAG → Obsidian CLI → Obsidian MCP → text search입니다.
+ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구입니다.
 
 ```text
 /km:setup
 ```
 
-로컬 검색 도구가 필요하면 ThisCode의 아래 스크립트 중 필요한 Tier만 선택해 실행합니다.
+ThisCode의 별도 로컬 검색 도구가 필요하면 아래 스크립트 중 필요한 항목만 선택해 실행합니다. 이 도구들은 km `/km:search` fallback과 별개입니다.
 
 ```bash
 bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
@@ -92,10 +93,10 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 thiscode healthcheck v2.3 — Phase progress
 ─────────────────────────────────
 ✓ Phase 0 superpowers (plugin)       : OK
-✓ Phase 1 ripgrep (Tier 4)           : OK
-○ Phase 2 obsidian-cli (Tier 2)      : NOT YET
-○ Phase 3 vault-search MCP (Tier 3)  : NOT YET
-○ Phase 4 GraphRAG (Tier 1)          : NOT YET
+✓ Phase 1 ripgrep (local text)        : OK
+○ Phase 2 obsidian-cli (local tool)   : NOT YET
+○ Phase 3 vault-search MCP (local embedding) : NOT YET
+○ Phase 4 GraphRAG (local server)     : NOT YET
 ○ Phase 5 Dense embedding (4-channel): NOT YET
 ─────────────────────────────────
 Summary: 2 OK, 4 NOT YET (all required passed) ✅

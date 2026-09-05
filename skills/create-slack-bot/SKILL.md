@@ -9,13 +9,13 @@ allowed-tools: Bash Read Write AskUserQuestion
 
 # /thiscode:create-slack-bot — Slack 봇 연결 자동 셋업 (정식 진입점)
 
-> 이 스킬은 [`../slack-configure/SKILL.md`](../slack-configure/SKILL.md) 의 정식 대칭 이름이다. 지금 즉시 그 파일을 Read 하고 절차 전체를 그 정본대로 실행한다. 본 파일에 절차 사본을 두지 않는다(사본 drift 방지).
-> 정본의 마지막에는 단순 alias가 아니라, 기본 추천(Y)으로 설치하고 명시적 거부만 건너뛰는 재시작 안전 런처 단계가 포함된다.
+> 이 스킬은 [`../slack-configure/SKILL.md`](../slack-configure/SKILL.md)의 대칭 진입점이다. 지금 즉시 그 파일을 Read 하고 절차 전체를 따라 실행한다. 본 파일에 절차 사본을 두지 않는다(사본 drift 방지).
+> 참조한 절차의 마지막에는 단순 alias가 아니라, 기본 추천(Y)으로 설치하고 명시적 거부만 건너뛰는 재시작 안전 런처 단계가 포함된다.
 
 $ARGUMENTS
 
 ## 관련 자원
 
-- 위임 대상(정본): [`../slack-configure/SKILL.md`](../slack-configure/SKILL.md)
+- 실행 대상 문서: [`../slack-configure/SKILL.md`](../slack-configure/SKILL.md)
 - Discord 대응: `/thiscode:create-discord-bot`
 - 구 이름(하위 호환 별칭, `commands/slack-configure.md` 유지): `/thiscode:slack-configure`

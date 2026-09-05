@@ -48,7 +48,7 @@ This single command installs:
 4. **GraphRAG core** (Tier 1 — vendored Python runtime + 7-pkg pip install)
 5. **Dense embedding** (Optional 4-channel — user confirms once, ~1GB)
 
-After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
+After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers + local-tool checks + GraphRAG + Dense embedding).
 
 **Windows users:** two paths. **(a) Bot pairing only** — native **PowerShell works today**: Claude Code + the Discord plugin's *channels* directories (`~/.claude/channels/discord-<bot>/`) need **no tmux, no cmux, no daemon**; a bot session is just a PowerShell window running `claude` with `DISCORD_STATE_DIR` set ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) Full `install.sh` environment** (oh-my-tmux, multi-session helpers) — WSL 2 (Ubuntu 22.04+). If an AI assistant is driving your install on Windows, point it at path (a) — it must not try to recreate tmux with daemons or background services.
 
@@ -100,7 +100,7 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 The wizard detects your vault state / installed tools / resource limits, then recommends an **8-Phase progressive journey**:
 
 - **Phase 1–2**: immediate (ripgrep + obsidian-cli)
-- **Phase 3**: 100+ notes → vault-search MCP recommended
+- **Phase 3**: 100+ notes → ThisCode's optional local `vault-search MCP` recommended; it is separate from the km search fallback
 - **Phase 4**: 500+ notes (recommended) / 1000+ (strongly recommended) / always optional (GraphRAG)
 - **Phase 5**: 2000+ notes → km plugin `/km:knowledge-manager-at` **Mode R preflight** (read-only diagnostics, dry-run apply)
 - **Phase 6–7**: advanced (Dashboard / 4-channel hybrid retrieval)
@@ -187,7 +187,8 @@ After retrieval, thiscode picks a model by task complexity:
 
 `scripts/route-model.mjs` heuristic — query length + keyword classifier. User override: `--model haiku|sonnet|opus`.
 
-**Tier order:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [Obsidian CLI](docs/SETUP.md#tier-2) → Tier 3 [vault-search MCP](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). Accuracy-first fallback.
+**km search order:** Tier 1 [GraphRAG](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 2 [Obsidian CLI](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 3 [Obsidian MCP](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 4 text search (for example, ripgrep).
+ThisCode's `vault-search MCP` installer is a separate local tool; it is not a `/km:search` fallback tier.
 
 ## 📚 Lost on terms? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -455,7 +456,7 @@ thiscode includes Codex CLI as a first-class bridge layer:
 
 ### Custom Hybrid v1.0 agent spec
 
-`schemas/agent-spec.json` defines a per-agent contract registry combining agentskills.io base + Hermes `provides_*` + thiscode classroom policy + dynamic gates + benchmark integration. v1.0 adds `tier: core` (init wizard) and `phases:` for km-at Mode R preflight workflow.
+`schemas/agent-spec.json` defines a per-agent contract registry combining agentskills.io base + Hermes `provides_*` + thiscode classroom policy + dynamic gates + benchmark integration. v1.0 adds `tier: core` (init wizard) and `phases:` for the km plugin's `/km:knowledge-manager-at` Mode R preflight workflow.
 
 ---
 

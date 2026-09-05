@@ -48,7 +48,7 @@ bash scripts/install.sh --apply
 4. **GraphRAG core** (Tier 1 — vendored Python runtime + 7-pkg pip install)
 5. **Dense embedding** (옵션 4-channel — 사용자 confirm 1회, ~1GB)
 
-Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
+Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + 로컬 도구 점검 + GraphRAG + Dense embedding).
 
 **Windows 사용자:** 길이 둘입니다. **(a) 봇 페어링만 필요하면 — 네이티브 PowerShell 로 «지금» 됩니다.** Claude Code + Discord 플러그인의 *channels* 디렉터리(`~/.claude/channels/discord-<bot>/`)만 있으면 되고 **tmux·cmux·데몬이 전혀 필요 없습니다.** 봇 세션 = `DISCORD_STATE_DIR` 를 설정한 PowerShell 창에서 `claude` 를 띄운 것뿐입니다 ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) `install.sh` 전체 환경**(oh-my-tmux, 멀티세션 헬퍼)이 필요하면 — WSL 2 (Ubuntu 22.04+). Windows 에서 AI 어시스턴트가 설치를 대신 하고 있다면 **(a) 경로를 지정**하십시오 — 데몬이나 백그라운드 서비스로 tmux 를 재현하려 들면 안 됩니다.
 >
@@ -75,7 +75,7 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 
 wizard 가 vault 상태 / 도구 / 자원 detect 후 **8 Phase progressive journey** 추천:
 - **Phase 1-2**: 즉시 (ripgrep + obsidian-cli)
-- **Phase 3**: 100+ 노트 → vault-search MCP 권유
+- **Phase 3**: 100+ 노트 → ThisCode 선택 로컬 도구인 `vault-search MCP` 권유 (km 검색 fallback과 별개)
 - **Phase 4**: 500+ 노트 권유 / 1000+ strong / 옵션 언제나 (GraphRAG)
 - **Phase 5**: 2000+ 노트 → km 플러그인 `/km:knowledge-manager-at` Mode R preflight (read-only 진단)
 - **Phase 6-7**: advanced (Dashboard / 하이브리드 4채널)
@@ -135,8 +135,8 @@ km 플러그인의 현재 runtime 성능 측정이 아니며, 현재 vault 검�
 사용하십시오. 이 저장소에는 GraphRAG·vault-search
 MCP·Obsidian CLI·ripgrep의 성능 특성을 비교하는 개발자용 benchmark runner도 남아
 있으므로 **본인 vault에서 직접 측정**해 환경별 차이를 확인할 수 있습니다.
-연결된 benchmark 가이드는 당시 legacy engine ID(vault-search MCP는 2,
-Obsidian CLI는 3)를 보존하며, 현재 km 순서는 아래에 따로 적었습니다.
+연결된 benchmark 가이드는 그때 쓰던 번호(vault-search MCP=2,
+Obsidian CLI=3)를 그대로 두었고, 지금 km 순서는 아래에 따로 적었습니다.
 
 ```bash
 # 본인 vault 로 측정 (Tier 1 GraphRAG 사용 시 server 별도 띄움 필요)
@@ -164,7 +164,8 @@ thiscode 는 검색 결과 받은 후 응답 생성 시 task complexity 따라 �
 
 `scripts/route-model.mjs` heuristic — query length / 키워드 기반. user override `--model haiku|sonnet|opus`.
 
-**Tier 순서:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [Obsidian CLI](docs/SETUP.md#tier-2) → Tier 3 [vault-search MCP](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). 정확도 우선 fallback.
+**km 검색 순서:** Tier 1 [GraphRAG](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 2 [Obsidian CLI](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 3 [Obsidian MCP](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 4 텍스트 검색(ripgrep 등).
+ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구이며 `/km:search` fallback Tier가 아닙니다.
 
 ## 📚 용어 모르겠으면? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -427,14 +428,14 @@ git push
 ### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 
 ```bash
-bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
-bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / vendor SoT 점검
+bash scripts/install-graphrag.sh --check     # python3 + 번들 소스 + requirements + venv + server health
+bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / 번들 소스 점검
 bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup uvicorn
 ```
 
 `--apply` 의 동작:
 - venv 위치 = `~/.cache/thiscode/graphrag/venv` (writable home cache)
-- vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (vault SoT 와 동등 박제, 21 file)
+- 번들 소스 = `<thiscode>/vendor/graphrag/scripts/` (21 file)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
 - entry = `uvicorn search_server:app --host 127.0.0.1 --port 8400` (background nohup)
 - log = `~/.cache/thiscode/graphrag/run/graphrag.log`
@@ -443,11 +444,15 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 
 ## 🔬 내부 구조 (advanced)
 
-### 훅 3종
+### 훅 7종
 
 - **`bot-session-init.sh`** (SessionStart) — `DISCORD_STATE_DIR` env 로 봇 자동 감지 → soul.md + 봇별 WD 메모리 + 공용 규율 주입
 - **`discord-slash-cmd.sh`** (UserPromptSubmit) — 사용자 프롬프트 첫 줄이 `/cmd` 면 Skill 도구 호출 강제
 - **`regression-self-check.sh`** (UserPromptSubmit) — 회귀 패턴 방지용 4게이트 자가점검 표 주입
+- **`rule-router.sh`** (UserPromptSubmit) — 현재 프롬프트에 맞는 규칙 안내 연결
+- **`dispatch-room-gate.py`** (PreToolUse) — 봇 간 답장에 공유 회의실 규칙 적용
+- **`meeting-stop-reread.sh`** (Stop) — 종료 전 활성 회의 표식 재확인
+- **`reply-gate.sh`** (Stop) — 세션 종료 전 최종 답장 게이트 적용
 
 ### 스킬 (agentskills.io 표준)
 
@@ -468,7 +473,7 @@ thiscode 는 Codex CLI 를 1급 브리지 층으로 포함합니다:
 
 ### Custom Hybrid v1.0 에이전트 스펙
 
-`schemas/agent-spec.json` 이 agentskills.io 기본 + Hermes `provides_*` + thiscode classroom 정책 + 동적 게이트 + 벤치마크 통합을 묶은 에이전트별 계약 레지스트리를 정의합니다. v1.0 은 `tier: core`(init wizard)와 km-at Mode R 사전점검 워크플로우용 `phases:` 를 추가했습니다.
+`schemas/agent-spec.json` 이 agentskills.io 기본 + Hermes `provides_*` + thiscode classroom 정책 + 동적 게이트 + 벤치마크 통합을 묶은 에이전트별 계약 레지스트리를 정의합니다. v1.0 은 `tier: core`(init wizard)와 km 플러그인의 `/km:knowledge-manager-at` Mode R 사전점검 워크플로우용 `phases:` 를 추가했습니다.
 
 ---
 
