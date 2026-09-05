@@ -105,7 +105,7 @@ Stop hook 이 다른 marker 를 읽게 하려면 `MEETING_ACTIVE_FILE=/absolute/
 ### Step 4. Discord 스레드 신설 안내 (선택)
 
 ```bash
-# 어벤져스 (또는 적합) 채널 안에 새 스레드 생성
+# 메인 (또는 적합) 채널 안에 새 스레드 생성
 # Discord REST API 또는 봇 도구로:
 POST /channels/<parent-channel-id>/threads
 {

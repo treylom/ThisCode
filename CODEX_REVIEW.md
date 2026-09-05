@@ -8,7 +8,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
 
 # Codex Adversarial Review — 1차 draft
 
-> 본 보고서는 Karpathy 가 신규 파일 작성 + install.sh 정정 + README 보강 단계의 plan doc.
+> 본 보고서는 관리 봇이 신규 파일 작성 + install.sh 정정 + README 보강 단계의 plan doc.
 
 ## 회귀 4건 + 1건 (사용자 지적)
 
@@ -39,7 +39,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
    - **출처 기반 cross-check** (회의 신설 전 다축 grep)
    - **Discord REST API** thread 신설 (python urllib, POST /channels/{id}/threads type=11)
    - **audience direct mention** 의무 (텍스트만으로 부족)
-   - **3 channel 병행 보고** (회의 outcome + 어벤져스 본문 + 발의 봇 mention)
+   - **3 channel 병행 보고** (회의 outcome + 메인 채널 본문 + 발의 봇 mention)
 
 4. **`skills/codex-exec-bridge/SKILL.md`**
    - vault `.claude/skills/codex-exec-bridge/` 6-file anatomy 재활용
@@ -91,7 +91,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
 2. **fresh WSL sandbox docker** — Ubuntu 20.04 image 안에서 install.sh 실행
 3. **Codex 2차 review** — 신규 파일들 작성 후 `codex review --base HEAD~1` 또는 codex:codex-rescue 재호출
 
-## 작업 진행 순서 (Karpathy 본 plan 따라 정정)
+## 작업 진행 순서 (관리 봇 본 plan 따라 정정)
 
 - [x] Codex review 1차 받음
 - [x] CODEX_REVIEW.md 저장 (본 파일)

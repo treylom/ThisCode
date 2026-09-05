@@ -210,7 +210,7 @@ Full convention (problem, pattern, how-to-add, Claude Code + Codex variants):
 companion [ThisCodex](https://github.com/treylom/ThisCodex) ships the matching
 copy). Read it once; do not duplicate it here.
 
-회의 스레드·채널·대화기록 보관 거버넌스: [05-meeting-thread-protocol.md](05-meeting-thread-protocol.md) (정책 SoT = vault rules/channel-governance.md — 새 주제=새 스레드 / 보관=최종 산출만 / 기기간=멀티버스).
+회의 스레드·채널·대화기록 보관 거버넌스: [05-meeting-thread-protocol.md](05-meeting-thread-protocol.md) (정책 원본 = vault rules/channel-governance.md — 새 주제=새 스레드 / 보관=최종 산출만 / 기기간=cross-machine 채널).
 
 ![Companion + channel governance — ThisCode ↔ ThisCodex pairing, new-topic thread / archive-final-only / cross-machine multiverse](../assets/companion-governance.png)
 

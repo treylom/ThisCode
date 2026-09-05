@@ -95,7 +95,7 @@ git repo `020-Library/` ≠ Mac vault `Library/` (rsync 시점 prefix `020-` str
 
 - D-1. 출처 기반 cross-check (다축 grep) 의무
 - D-2. audience direct mention (텍스트만 ❌)
-- D-3. 3-channel 병행 보고 (회의 outcome + 어벤져스 본문 + 발의 봇 mention)
+- D-3. 3-channel 병행 보고 (회의 outcome + 메인 채널 본문 + 발의 봇 mention)
 
 ---
 
@@ -135,7 +135,7 @@ cron LLM prompt 에서 금지 단어 직접 사용 시 해당 단어 output leak
 
 Calendar MCP 헤드리스 OAuth 실패 + Gmail MCP 검색 인덱스 지연 사고 회피. 모든 봇 일정·캘린더·이메일 작업 gws CLI primary.
 
-회귀: 2026-05-05 Strange Gmail MCP 4번 시도 회귀 catch.
+회귀: 2026-05-05 스케줄 봇의 Gmail MCP 4번 시도 회귀 catch.
 
 ---
 
