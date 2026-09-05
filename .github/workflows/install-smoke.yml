@@ -6,11 +6,15 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-22.04, macos-latest, windows-latest]
+        node: ['20']
+        include:
+          - os: ubuntu-22.04
+            node: '18.19.1'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
+        with: { node-version: '${{ matrix.node }}' }
       - run: npm test
       - run: node bin/thiscode.mjs --check --non-interactive
       - name: non-TTY headline smoke (piped stdin, no --non-interactive)

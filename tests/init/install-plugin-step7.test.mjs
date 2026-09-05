@@ -8,12 +8,13 @@ import {
   symlinkSync,
   writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
-const repoRoot = resolve(import.meta.dirname, '../..');
+const repoRoot = fileURLToPath(new URL('../..', import.meta.url));
 const installScript = join(repoRoot, 'install.sh');
 const posixOnlySkip = process.platform === 'win32'
   ? 'POSIX-only install.sh runtime surface; exercised by macOS and Ubuntu jobs'
