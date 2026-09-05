@@ -1,6 +1,19 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { setupFlowAliases, setupFlowGuide } from '../../scripts/lib/setup-flow.mjs';
+import { installBotLauncher } from '../../scripts/lib/bot-launcher.mjs';
+
+test('setup aliases invoke the existing bot launcher output, not an unshipped repo script', () => {
+  const cfg = {
+    channel: 'discord', aliasName: 'reviewer', sessionName: 'reviewer',
+    botWd: '/bots/reviewer', stateDir: '/state/reviewer',
+  };
+  const preview = installBotLauncher(cfg);
+  const text = setupFlowAliases({ product: 'thiscode', repoRoot: '/repo/ThisCode', ...cfg });
+  assert.ok(text.includes(preview.launcherPath));
+  assert.doesNotMatch(text, /\.\/scripts\/launch\.sh/);
+  assert.match(text, /\.thiscode-bot-launcher\.sh.*start/);
+});
 
 test('setup flow aliases are repo and BOT_WD parameterized', () => {
   const text = setupFlowAliases({

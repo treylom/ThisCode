@@ -99,7 +99,7 @@ sqlite3 "file:index/<db>?mode=ro" "SELECT COUNT(*) FROM entities WHERE length(na
 
 ## 5. 벤치마크 (성적 재기)
 
-- 단일 정본 하네스 하나만 유지 (A축 retrieval hit@k/MRR + B축 answer 품질).
+- 기준 벤치마크 하네스는 하나만 유지 (A축 retrieval hit@k/MRR + B축 answer 품질).
 - ⚠ **오염 DB 위에서 잰 과거 수치는 비교 기준이 아니다** — 정화·구조 변경 후엔
   반드시 재측정값을 새 baseline 으로.
 - 결과는 KEEP/DISCARD 정직 기록으로 누적 (악화 실험도 기록이 자산).

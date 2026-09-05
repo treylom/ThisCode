@@ -104,14 +104,17 @@ benchmark:
 
 ## Tier 순서
 
-로컬 검색 도구용 스크립트는 ThisCode의 `scripts/install-*.sh`에 있고, 아래 fallback 순서는 km 플러그인의 `/km:search`가 실행합니다. `/km:setup`은 km 설정 위저드이며 검색 도구를 설치하지 않습니다.
+ThisCode의 로컬 검색 도구용 스크립트는 `scripts/install-*.sh`에 있습니다. km
+플러그인의 `/km:search` fallback은 GraphRAG → Obsidian CLI → Obsidian MCP →
+text search 순서로 실행하며, ThisCode의 `vault-search MCP` 설치기는 이 순서와
+별개입니다. `/km:setup`은 km 설정 위저드이며 검색 도구를 설치하지 않습니다.
 
 | Tier | Method | 이유 |
 |---|---|---|
 | 1 | GraphRAG | LLM + graph, recall 0.80-0.95 |
-| 2 | vault-search MCP | embedding semantic |
-| 3 | Obsidian CLI | Obsidian index light fuzzy |
-| 4 | ripgrep | literal baseline |
+| 2 | Obsidian CLI | Obsidian index light fuzzy |
+| 3 | Obsidian MCP | MCP-based vault search |
+| 4 | text search | literal baseline |
 
 ## Tier 의미 (Round 2 outcome — 4개 enum)
 

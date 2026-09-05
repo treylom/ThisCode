@@ -9,7 +9,8 @@
 ## How these reach a fresh install
 
 Most of the items below only take effect once the hooks are wired. After
-install, run **`/thiscode:install-hooks`** (it safely merges into
+install, run the **`/thiscode:install-hooks` skill**
+(`skills/install-hooks/SKILL.md`; it safely merges into
 `~/.claude/settings.json`, keeping any hooks you already have). That wires:
 
 - **SessionStart** → `hooks/bot-session-init.sh`: injects the persona
@@ -22,7 +23,40 @@ install, run **`/thiscode:install-hooks`** (it safely merges into
   hook that runs when the model is about to stop responding.)
 
 If hooks are not wired, the bot still runs but the items below do **not**
-auto-activate. The `/thiscode setup` skill drives this step.
+auto-activate. The `/thiscode:setup` skill drives this step.
+
+---
+
+## 2026-09-05 — ThisCode 1.4.1 documentation and ownership clarifications
+
+- Reconciled the Korean and English manuals: ThisCode's local installer scripts
+  install the selected search tools; the km plugin's `/km:search` runs the
+  fallback, while `/km:setup` configures storage, MCP integrations, and
+  settings without installing GraphRAG or other search tiers.
+- The current km fallback order is Tier 1 GraphRAG → Tier 2 Obsidian CLI →
+  Tier 3 Obsidian MCP → Tier 4 text search.
+  ThisCode's `vault-search MCP`
+  installer provides a separate local tool; it is not a `/km:search` fallback
+  tier. Older entries below keep the tier numbering they were written with.
+- Documented the actual Codex export conditions: check mode is the default,
+  and `--apply` reports an empty export only for the selected Codex layers
+  outside the `repo` layer. The empty-export list remains a supported diagnostic
+  result, not a removed command surface.
+- Aligned public references on the `km` plugin id and marked the benchmark
+  discussion as historical, with its 2026-05-13 result file as provenance.
+- Kept archived local-tool benchmark IDs and figures explicitly historical while
+  separating the current km order in setup, architecture, glossary, and
+  chapter-mapping copy; README setup links now target the live setup heading.
+- Matched the Korean README hook inventory to all seven registered hooks and
+  generalized private deployment examples in the public Slack setup skills.
+- Clarified that `/thiscode:install-hooks` is the
+  `skills/install-hooks/SKILL.md` skill entry, and kept the multi-harness
+  entry documents discoverable from the package metadata.
+- Updated the 1.4.1 plugin and marketplace metadata, added fail-closed
+  frontmatter/version validation for contract mirrors, and expanded CI with
+  positive/negative Hermes registration checks, contract-version checks, Node
+  regressions, and clone-relative installer checks. Read-only installer modes
+  now parse arguments before probing and do not create setup logs.
 
 ---
 
@@ -36,18 +70,24 @@ auto-activate. The `/thiscode setup` skill drives this step.
   `knowledge-manager-plain`, `search`, and `search-lite`.
 - Hermes search/ingest runtime registrations, including the former search and
   ingest tools and commands.
-- The empty Codex export surface: there is no longer an export list in ThisCode
-  1.4.0.
+
+### Changed
+
+- The Codex export list is now empty. The `--check` and `--apply` commands
+  remain: default check mode reports "nothing to export", while `--apply`
+  reports the same only when `harness` is `codex` or `both` and
+  `codex_skill_layer` is not `repo`.
 
 ### Moved to the km plugin
 
 - `knowledge-manager`, `knowledge-manager-at`, and `search`.
-- The lite flow is absorbed by the km plugin's search fallback.
-- KM configuration creation is `/km:setup`.
+- `km` configuration creation is `/km:setup`.
 
-ThisCode retains its bot-harness operations. The underlying installer scripts
-remain for compatibility, while the supported KM and search setup path is the
-km plugin's `/km:setup`.
+The former ThisCode lite flow is historical; ThisCode 1.4.0 does not provide a
+separate lite entry. ThisCode retains its bot-harness operations and
+the local-tool installer scripts. The km plugin owns fallback execution and
+storage/MCP/settings configuration; `/km:setup` does not install GraphRAG or
+other search tiers.
 
 ---
 
@@ -56,7 +96,9 @@ km plugin's `/km:setup`.
 - **vault-search MCP is now vendored** at `vendor/vault-search-mcp/` and
   `scripts/install-vault-search.sh` builds it from there. The old path (git
   clone of `treylom/vault-search-mcp`) pointed at a repo that does not exist
-  publicly, so a fresh Tier-2 install always failed. Registration now uses
+  publicly, so a fresh **legacy Tier-2** install always failed. (The historical
+  ThisCode contract put the local embedding server in the third slot; this entry
+  preserves its original numbering and does not describe the current km order.) Registration now uses
   **`claude mcp add`** when the `claude` CLI exists (Claude Code does NOT read
   `claude_desktop_config.json`; that file is only a Claude Desktop fallback).
   The server receives your vault path via the `VAULT_PATH` env var.

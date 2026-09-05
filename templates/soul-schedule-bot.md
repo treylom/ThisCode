@@ -85,7 +85,8 @@ triggers:
 
 - Google Calendar CLI (`gws calendar`) — primary
 - Google Calendar MCP — fallback
-- vault-search (Obsidian CLI / MCP)
+- `/km:search` (km 플러그인: GraphRAG → Obsidian CLI → Obsidian MCP → 텍스트 검색)
+- 선택 로컬 도구 `vault-search MCP`는 km 검색 단계와 별개
 - Discord 응답: `mcp__plugin_discord_discord__reply`
 
 ## ④ 작업 원칙 (봇 고유 게이트만)

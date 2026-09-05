@@ -51,23 +51,26 @@ ThisCode 1.4.0 부터 지식관리·vault 검색 스킬은 이 레포에 들어 
 `claude plugin install km@tofukyung-plugins`). Codex 쪽 사용법은 그 플러그인 문서를 따릅니다.
 
 1.4.0 부터 ThisCode 의 Codex 스킬 내보내기 목록은 비어 있습니다. 과거 목록은 KM 계열뿐이었고,
-그 기능은 km 플러그인이 Codex 를 직접 지원하므로 ThisCode 에서 내보낼 항목이 없습니다.
-`--check` 와 `--apply` 는 이 상태를 "nothing to export"로 알립니다.
+그 기능은 Codex를 직접 지원하는 km 플러그인으로 옮겨 갔으므로 ThisCode에서 내보낼 항목이 없습니다.
+기본 check 모드(`--check`는 별도 분기로 파싱되지 않음)는 빈 목록이면 "nothing to export"를 출력합니다.
+`--apply`는 비대화형 실행에서 `--yes` 또는 `--answers=...` 동의가 필요하며, `harness` 답변이
+`codex` 또는 `both`이고 `codex_skill_layer`가 `repo`가 아닐 때에만 같은 빈 내보내기 메시지를 출력합니다.
 
 ```bash
-node bin/thiscode.mjs --check    # 미리보기(무변경, nothing to export)
-node bin/thiscode.mjs --apply    # 내보낼 항목 없음 (harness=codex/both 선택 시에도 동일)
+node bin/thiscode.mjs --check       # --check는 기본 check 모드 실행(무변경, nothing to export)
+node bin/thiscode.mjs --apply --yes # 비대화형 apply 동의; Codex export 조건을 충족할 때만 같은 메시지 출력
 ```
 
 ## 3. km 플러그인 설정과 선택 검색 도구
 
-`/km:setup`은 km 저장 위치·Playwright/Obsidian MCP·`km-config.json`·vault 경로와 구조 문서를 구성합니다. 검색 Tier 설치 명령은 아닙니다.
+`/km:setup`은 km 저장 위치·Playwright/Obsidian MCP·`km-config.json`·vault 경로와 구조 문서를 구성합니다. 검색 Tier 설치 명령은 아닙니다. 현재 `/km:search` 폴백 순서는 GraphRAG → Obsidian CLI → Obsidian MCP → text search입니다.
+ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구입니다.
 
 ```text
 /km:setup
 ```
 
-로컬 검색 도구가 필요하면 ThisCode의 아래 스크립트 중 필요한 Tier만 선택해 실행합니다.
+ThisCode의 별도 로컬 검색 도구가 필요하면 아래 스크립트 중 필요한 항목만 선택해 실행합니다. 이 도구들은 km `/km:search` fallback과 별개입니다.
 
 ```bash
 bash ~/.claude/plugins/thiscode/scripts/install-ripgrep.sh --apply
@@ -84,20 +87,22 @@ bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
-예상 출력:
+예상 출력 (환경에 따라 각 단계의 상태가 달라집니다):
 
 ```
-thiscode healthcheck v1.0
+thiscode healthcheck v2.3 — Phase progress
 ─────────────────────────────────
-✓ Tier 4 (ripgrep)  : OK
-✓ Tier 3 (MCP)      : OK
-✓ Tier 2 (CLI)      : OK
-✓ Tier 1 (GraphRAG) : OK
+✓ Phase 0 superpowers (plugin)       : OK
+✓ Phase 1 ripgrep (local text)        : OK
+○ Phase 2 obsidian-cli (local tool)   : NOT YET
+○ Phase 3 vault-search MCP (local embedding) : NOT YET
+○ Phase 4 GraphRAG (local server)     : NOT YET
+○ Phase 5 Dense embedding (4-channel): NOT YET
 ─────────────────────────────────
-all required checks passed ✅
+Summary: 2 OK, 4 NOT YET (all required passed) ✅
 ```
 
-Exit code: `0` = all required OK / `1` = required FAIL / `2` = intentional SKIP only (예: Tier 1 안 깔음)
+Exit code: `0` = all phases OK / `1` = required FAIL / `2` = optional phase가 아직 준비되지 않음.
 
 ## 사용
 

@@ -85,7 +85,7 @@ Step 1-5. 본 wizard         → 환경 + Discord 봇 + 페어링 (아래 흐름
 순정 Claude Code 에 hook 이 없으면 soul.md 가 단순 markdown 파일로 방치 → 페르소나 inject 안 됨 (5/12 회귀 R5). hooks 먼저 등록.
 
 ```bash
-/thiscode:install-hooks   # 본 wizard 진입 전 실행 권장 (한 번만)
+/thiscode:install-hooks   # 훅 등록 스킬, 본 wizard 진입 전 실행 권장 (한 번만)
 ```
 
 이미 vault 운영 중인 사용자 (기존 hook 존재) 는 본 step skip.
@@ -218,5 +218,5 @@ Discord 앱에서 봇에 DM:
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 검증 (호출 layer 활성)
 - `/thiscode:self-update` — 메인봇 시작 시 git pull 체크
-- `/thiscode:install-hooks` — hook 재정비 (settings.json drift 시)
+- `/thiscode:install-hooks` 스킬 — hook 재정비 (settings.json drift 시)
 - `/thiscode:create-bot` — 추가 봇 자동 셋업 반복

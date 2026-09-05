@@ -75,7 +75,7 @@ def post(url, body):
     except urllib.error.HTTPError as e:
         return {'_err': e.code, '_msg': e.read().decode()[:300]}
 
-PARENT = '<parent-channel-id>'   # 어벤져스 또는 일반 채널
+PARENT = '<parent-channel-id>'   # 메인 또는 일반 채널
 
 thread = post(f"https://discord.com/api/v10/channels/{PARENT}/threads", {
     "name": "<topic> — meeting",
@@ -104,7 +104,7 @@ content = f"<@{bot1_id}> [회의 신설] <topic>\n- 위치: <meeting-path>\n- 00
 ⚠️ 회의 outcome 발생 시 다음 3 채널 동시 보고:
 
 1. **회의 스레드 안** — `03-outcome.md` 작성 + 스레드에 마감 메시지
-2. **어벤져스 본문 (또는 메인 채널)** — 단독 작업 완료 보고 (대화 기록방 지속)
+2. **메인 채널 본문** — 단독 작업 완료 보고 (대화 기록방 지속)
    - 형식: `✅ [<topic>] 완료. 산출: <경로>. 03-outcome 참조. — <bot>`
 3. **발의 봇 direct mention** — orchestrator 또는 발의 봇에게 mention 알림
 
@@ -131,7 +131,7 @@ trigger (왜 신설?):
 
 ### Step 4. Discord 스레드 신설 (위 python 패턴)
 
-parent 채널 결정 (어벤져스 / 일반 / 봇별 본부 채널) → REST API POST.
+parent 채널 결정 (메인 / 일반 / 봇별 본부 채널) → REST API POST.
 
 ### Step 5. audience 봇 mention (위 패턴)
 

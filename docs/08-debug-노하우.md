@@ -47,7 +47,7 @@ declarative hard rule 만으로는 attention drift 시 회귀 발생. UserPrompt
 
 ### A-3. 봇 self-skill 영역 R&R
 
-`/strange`, `/aktofu`, `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, Karpathy 가 검토·commit. design 사전 제시 redundant.
+`/strange`, `/aktofu`, `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇이 검토·commit. design 사전 제시 redundant.
 
 ---
 
@@ -95,7 +95,7 @@ git repo `020-Library/` ≠ Mac vault `Library/` (rsync 시점 prefix `020-` str
 
 - D-1. 출처 기반 cross-check (다축 grep) 의무
 - D-2. audience direct mention (텍스트만 ❌)
-- D-3. 3-channel 병행 보고 (회의 outcome + 어벤져스 본문 + 발의 봇 mention)
+- D-3. 3-channel 병행 보고 (회의 outcome + 메인 채널 본문 + 발의 봇 mention)
 
 ---
 
@@ -135,7 +135,7 @@ cron LLM prompt 에서 금지 단어 직접 사용 시 해당 단어 output leak
 
 Calendar MCP 헤드리스 OAuth 실패 + Gmail MCP 검색 인덱스 지연 사고 회피. 모든 봇 일정·캘린더·이메일 작업 gws CLI primary.
 
-회귀: 2026-05-05 Strange Gmail MCP 4번 시도 회귀 catch.
+회귀: 2026-05-05 스케줄 봇의 Gmail MCP 4번 시도 회귀 catch.
 
 ---
 

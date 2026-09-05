@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Dog-2: vault-search MCP installed but no GraphRAG / Obsidian CLI. Tier 3 path.
-# Note: MCP cannot be called from bash; this scenario covers config installation only.
+# Dog-2: optional local vault-search MCP installed but no GraphRAG / Obsidian CLI.
+# Note: MCP cannot be called from bash; this scenario covers local-tool config only.
 set -e
 
 ROOT="${CLAUDE_DISCODE_HOME:-/thiscode}"

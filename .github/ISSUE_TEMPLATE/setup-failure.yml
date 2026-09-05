@@ -7,7 +7,7 @@ body:
     id: step
     attributes:
       label: 어느 단계에서 실패했나요?
-      description: 0~5 단계 중 어디서? (예 - "3단계 MCP 설치 중")
+      description: "실행한 명령과 출력에 적힌 단계·도구 이름을 그대로 적어 주세요. 설치/로컬 진단과 /km:search 실행을 구분해 주세요."
     validations:
       required: true
   - type: textarea
@@ -39,8 +39,8 @@ body:
   - type: input
     id: tier
     attributes:
-      label: 어떤 Tier 까지 시도하셨나요?
-      placeholder: "Tier 4 OK / Tier 3 OK / Tier 2 SKIP / Tier 1 FAIL"
+      label: 출력된 단계·도구 상태
+      placeholder: "Phase 3 vault-search MCP (local embedding) : NOT YET; /km:search는 별도 실행 결과 기재"
   - type: checkboxes
     id: tried
     attributes:

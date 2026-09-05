@@ -62,21 +62,27 @@ Each step ends with a #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ This is wh
 
 #v(0.5em)
 
-== What is 4-Tier search?
+== What is the km plugin's 4-Tier search?
 
-The heart of thiscode is that search falls back across 4 tiers — if a faster tool can't find the answer, it escalates to a more accurate one.
+The km plugin's 4-Tier search tries GraphRAG → Obsidian CLI → Obsidian MCP →
+text search. It moves on when an earlier stage is unavailable or fails.
+ThisCode scripts install local tools; `/km:search` runs search;
+`/km:setup` configures storage, Obsidian MCP, and settings.
 
 #box(fill: rgb("#f8f9fa"), inset: 10pt, radius: 4pt, width: 100%)[
-  - #text(weight: "bold")[Tier 4 — ripgrep] (default, 0-min setup) — literal string match, very fast
-  - #text(weight: "bold")[Tier 3 — obsidian-cli] (3-min setup, Obsidian users only) — uses Obsidian's index
-  - #text(weight: "bold")[Tier 2 — vault-search MCP] (5-min setup) — embedding-based semantic search
-  - #text(weight: "bold")[Tier 1 — GraphRAG] (25-min setup, advanced) — LLM + graph, the most accurate
+  - #text(weight: "bold")[Tier 1 — GraphRAG] — graph and semantic search through a configured server
+  - #text(weight: "bold")[Tier 2 — Obsidian CLI] — search Obsidian documents
+  - #text(weight: "bold")[Tier 3 — Obsidian MCP] — the Obsidian integration configured in km
+  - #text(weight: "bold")[Tier 4 — text search] — use an available text-search tool
 ]
+
+The vault-search MCP in Step 2 is a separate local embedding tool. It substitutes
+for no km tier and is not required to use `/km:search`.
 
 #v(0.5em)
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — For the fastest start, just Tier 4 + 3 (path 3-A) is enough. Try GraphRAG (path 4-C) once you're comfortable.
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[Tip] — Configure km first and start with available text search or the CLI. You can add GraphRAG (4-B) later.
 ]
 
 #pagebreak()
@@ -178,7 +184,10 @@ git clone https://github.com/treylom/ThisCode ~/.claude/plugins/thiscode
   - "already exists" → already installed. Update with `cd ~/.claude/plugins/thiscode && git pull`
 ]
 
-= Step 2 — Search MCP install (5 min, recommended)
+= Step 2 — Install the separate local vault-search MCP (optional)
+
+This installer adds a local embedding tool. Configure km's Tier 3 Obsidian MCP
+separately through `/km:setup`; this installer does not replace it.
 
 ```bash
 bash ~/.claude/plugins/thiscode/scripts/install-vault-search.sh --apply
@@ -224,15 +233,16 @@ which obsidian-cli
 
 == 3-B. Skip — it still works without Obsidian ✅
 
-- Only Tier 3 (Obsidian CLI) is skipped among the 4 tiers
-- Tiers 1 / 2 / 4 still run normally — about 80% of the functionality remains
+- Without Obsidian, check availability of both the CLI and Obsidian MCP separately.
+- km skips unavailable stages and uses configured paths such as a GraphRAG server
+  or text search. No fixed percentage of functionality is guaranteed.
 - Move on directly to Step 4
 
 #pagebreak()
 
 = Step 4 — Going all the way to GraphRAG? 🚀
 
-Pick one of three options:
+Pick one of two options:
 
 #table(
   columns: (auto, 1fr, auto),
@@ -240,37 +250,15 @@ Pick one of three options:
   align: (left, left, center),
   fill: (_, row) => if row == 0 { rgb("#f0f4ff") } else { none },
   [#text(weight: "bold")[Choice]], [#text(weight: "bold")[Who?]], [#text(weight: "bold")[Time]],
-  [4-A], [Skip for now, get started fast (up to Tier 3)], [0 min],
-  [4-B], [Docker-comfortable user], [10 min],
-  [4-C], [Want local Python + direct debugging], [25 min],
+  [4-A], [Skip for now and start with available search], [0 min],
+  [4-B], [Want local Python + direct debugging], [About 25 min],
 )
 
 == 4-A. Skip for now ✅
 
 $arrow$ Jump straight to Step 5
 
-== 4-B. Easy install via Docker
-
-```bash
-docker --version
-docker pull ghcr.io/treylom/ThisCode-graphrag:v1.0
-docker run -d -p 8400:8400 -v ~/vault:/vault \
-  --name thiscode-graphrag \
-  ghcr.io/treylom/ThisCode-graphrag:v1.0
-curl localhost:8400/health
-```
-
-#box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ Success looks like] — `{"status":"ok"}`
-]
-
-#box(fill: rgb("#fde8e8"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#c53030"))[❌ If it fails]
-  - Docker not installed $arrow$ https://docs.docker.com/get-docker/
-  - Port 8400 conflict $arrow$ switch to `-p 8401:8400` and set env `GRAPHRAG_URL=http://localhost:8401`
-]
-
-== 4-C. Local Python install
+== 4-B. Local Python install
 
 ```bash
 python3 --version
@@ -293,18 +281,24 @@ bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
 #box(fill: rgb("#e8f5e9"), inset: 8pt, radius: 4pt)[
-  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ Success looks like — SKIP markers reflect your choices]
+  #text(weight: "bold", fill: rgb("#2c8a3d"))[✓ Local-tool example — unconfigured optional tools show NOT YET]
   ```
-  thiscode healthcheck v1.0
+  thiscode healthcheck v2.3 — Phase progress
   ─────────────────────────────────
-  ✓ Tier 4 (ripgrep)  : OK
-  ✓ Tier 2 (MCP)      : OK
-  ○ Tier 3 (CLI)      : SKIP (no Obsidian — chose 3-B)
-  ○ Tier 1 (GraphRAG) : SKIP (chose 4-A)
+  ✓ Phase 0 superpowers (plugin)              : OK
+  ✓ Phase 1 ripgrep (local text)              : OK
+  ○ Phase 2 obsidian-cli (local tool)         : NOT YET
+  ○ Phase 3 vault-search MCP (local embedding): NOT YET
+  ○ Phase 4 GraphRAG (local server)           : NOT YET
+  ○ Phase 5 Dense embedding (4-channel)       : NOT YET
   ─────────────────────────────────
-  all required checks passed ✅
+  Summary: 2 OK, 4 NOT YET (all required passed) ✅
   ```
 ]
+
+This checks local tools, not km's Obsidian MCP connection or search results.
+Unconfigured optional tools mean exit 2; a required failure means exit 1;
+all checks passing means exit 0. Check km search separately with `/km:search`.
 
 #box(fill: rgb("#fde8e8"), inset: 8pt, radius: 4pt)[
   #text(weight: "bold", fill: rgb("#c53030"))[❌ If it fails]
@@ -339,7 +333,8 @@ Congratulations! 🎉
 
 == Q1. Can I stop in the middle of setup?
 
-Yes. Each step is independent, so even just steps 1-3 give you working Tier 4 (ripgrep) search.
+Yes. After installing and configuring km, start with an available search path.
+Check actual results with `/km:search` and add optional tools later.
 
 == Q2. macOS / Linux / Windows / WSL — all supported?
 
@@ -347,14 +342,22 @@ macOS / Linux / WSL are verified. Windows native is on the roadmap (WSL recommen
 
 == Q3. I'm a student — what about cost?
 
-- Tier 4 (ripgrep) + Tier 3 (Obsidian) = 100% free
-- Tier 2 (MCP) = free (inside your Claude Code subscription)
-- Tier 1 (GraphRAG) = OpenAI / Anthropic API calls → roughly \$0.5\~5 for an initial indexing, depending on vault size
+- ripgrep and the separate vault-search MCP embedding tool run locally.
+  An MCP connection does not imply a Claude Code subscription benefit or waive API charges.
+- Check the applicable terms for Obsidian and your host application.
+- GraphRAG API costs depend on the configured provider, model, and vault size.
 
 == Q4. I already use just obsidian-cli — what's the difference?
 
-See the 5-axis benchmark in the README:
-- Tier 1 GraphRAG = recall +44% over Tier 2 obsidian-cli alone
+See the 5-axis benchmark in the README. An earlier ThisCode guide note described
+a GraphRAG recall uplift over the then-Obsidian CLI baseline, but the archived
+2026-05-13 result skipped Tier 1 and Tier 2 under its legacy engine IDs
+(vault-search MCP used 2, Obsidian CLI used 3), so it does not substantiate a percentage.
+The note is historical and is not a current km plugin runtime
+measurement.
+- Current trade-off: Tier 2 Obsidian CLI is a lightweight local option, while
+  Tier 1 GraphRAG adds semantic/graph retrieval with more setup and API cost.
+- Compare the two on your own fixture; do not reuse the historical percentage.
 - But 25-min setup + LLM cost
 
 == Q5. Where do I leave feedback?

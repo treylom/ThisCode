@@ -52,6 +52,7 @@ verdict: ❌ Needs fixes (3 critical/high)
 > When `/thiscode:install-hooks` is run more than once, this merge appends a fresh UserPromptSubmit entry every time while only SessionStart is deduped. In that scenario the slash detector and regression self-check run repeatedly for every prompt, duplicating injected context/output and making the command noisy.
 
 **위치**: `commands/install-hooks.md:94` — jq merge 안:
+이 인용은 당시 리뷰 기록이다. 현재 `/thiscode:install-hooks`는 `skills/install-hooks/SKILL.md`에 있는 스킬이며, 별도 command 파일은 제공하지 않는다.
 
 ```jq
 .hooks.SessionStart = ((.[0].hooks.SessionStart // []) + (.[1].hooks.SessionStart // []) | unique_by(.hooks[0].command))

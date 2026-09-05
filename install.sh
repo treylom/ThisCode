@@ -14,7 +14,7 @@
 #   4.5  Codex CLI global install (@openai/codex) — codex-layer dependency
 #   5.   oh-my-tmux (gpakosz/.tmux) auto-install
 #   6.   (optional) Apply thiscode tmux.conf.local
-#   6.5  Obsidian CLI environment branching — vault 3-Tier fallback, tier 1
+#   6.5  Obsidian CLI local setup — search execution belongs to /km:search
 #   7.   thiscode plugin automatic install (user scope, manual fallback)
 #   8.   First-bot wizard guidance (Claude Code, /thiscode:start)
 
@@ -292,7 +292,7 @@ print_plugin_ready_guidance() {
 
       /thiscode:help           — LIST EVERY command and skill, with descriptions
       /thiscode:start          — main wizard (env + bot + first chat)
-      /thiscode:install-hooks  — SessionStart + UserPromptSubmit hook merge
+      /thiscode:install-hooks  — skill: SessionStart + UserPromptSubmit hook merge
       /thiscode:create-bot     — new-bot directory + .env + soul.md auto-setup
       /thiscode:open-meeting   — new meeting folder (multi-bot 4-file pattern)
       …
@@ -319,7 +319,7 @@ install_plugin() {
   if installed_scope="$(plugin_installed_scope)"; then
     ok "thiscode plugin already installed (scope: $installed_scope) → skip"
     print_plugin_ready_guidance
-    warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+    warn "On a vanilla Claude Code, run the /thiscode:install-hooks skill first (prevents orphan soul.md regression when SessionStart hook is absent)"
     return 0
   fi
 
@@ -344,7 +344,7 @@ install_plugin() {
 
   ok "thiscode plugin installed and verified (scope: $installed_scope)"
   print_plugin_ready_guidance
-  warn "On a vanilla Claude Code, run /thiscode:install-hooks first (prevents orphan soul.md regression when SessionStart hook is absent)"
+  warn "On a vanilla Claude Code, run the /thiscode:install-hooks skill first (prevents orphan soul.md regression when SessionStart hook is absent)"
 }
 
 # ---------------------------------------------------------------- Step 8
@@ -496,7 +496,7 @@ report_obsidian_command() {
 
 install_obsidian_cli() {
   local obsidian_command=""
-  step "6.5" "Obsidian CLI (vault access 3-Tier fallback, tier 1)"
+  step "6.5" "Obsidian CLI (local tool setup; search via /km:search)"
 
   obsidian_command="$(command -v obsidian 2>/dev/null || true)"
   if [ -n "$obsidian_command" ]; then
@@ -546,7 +546,8 @@ EOF
   if [ -n "$obsidian_command" ]; then
     report_obsidian_command "$obsidian_command" "Obsidian CLI"
   else
-    warn "Obsidian CLI not installed — 3-Tier fallback will use Tier 2 (MCP) or Tier 3 (Write/Read/Grep)"
+    warn "Obsidian CLI not installed — configure km separately and use /km:search for available search paths"
+    warn "km order: GraphRAG → Obsidian CLI → Obsidian MCP → text search; this installer does not run that fallback"
     warn "If you don't use Obsidian, skipping this step is fine — most of thiscode still works"
   fi
 

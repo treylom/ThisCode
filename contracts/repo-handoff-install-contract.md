@@ -1,3 +1,9 @@
+---
+contract: repo-handoff-install-contract
+version: 0.1.0
+date: 2026-09-05
+---
+
 # Repo-Handoff Install Contract (ThisCode ⇄ ThisCodex — shared, normative)
 
 Mirror of the canonical copy in `ThisCodex/docs/repo-handoff-install-contract.md`.

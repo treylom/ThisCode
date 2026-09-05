@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-vault-search.sh — vault-search MCP server install + Claude config register (Tier 2).
+# install-vault-search.sh — optional local vault-search MCP tool install + Claude config register (not km Tier 3).
 # v2.2.0: vendored source (vendor/vault-search-mcp) + script-root detection + `claude mcp add` registration.
 #   - v2.1.1 까지는 github.com/treylom/vault-search-mcp clone 에 의존했으나 해당 레포는 비공개/부재 →
 #     신규 설치가 항상 실패했음. 소스를 vendor/ 에 동봉하는 방식으로 전환 (2026-06-10).

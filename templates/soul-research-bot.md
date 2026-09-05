@@ -80,7 +80,8 @@ triggers:
 
 ### 확정 도구 체인
 
-- vault-search (Obsidian CLI / MCP / Grep 3-Tier)
+- `/km:search` (km 플러그인: GraphRAG → Obsidian CLI → Obsidian MCP → 텍스트 검색)
+- 선택 로컬 도구 `vault-search MCP`는 km 검색 단계와 별개
 - 웹 검색 (WebSearch + WebFetch)
 - 학술 자료 (필요 시 다른 봇 협업)
 - (선택) 병렬 서브에이전트 dispatch — 대규모 다중 쿼리 조사 시

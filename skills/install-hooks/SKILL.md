@@ -7,7 +7,9 @@ allowed-tools: Bash Read Write Edit AskUserQuestion
 
 사용자가 이 스킬을 호출했다 — 아래 단계를 순서대로 지금 수행한다.
 
-# /thiscode:install-hooks — hook 등록
+# /thiscode:install-hooks — hook 등록 스킬
+
+이 호출의 구현은 본 `skills/install-hooks/SKILL.md`다. 별도의 `commands/install-hooks.md`는 제공하지 않는다.
 
 > 순정 Claude Code 에서 soul.md / WD memory / 슬래시 detect / 회귀 self-check 가 자동으로 도는 데 필요한 훅 7개를 다룬다.
 > **플러그인을 깔면 훅은 이미 등록돼 있다** — 플러그인에 `hooks/hooks.json` 이 동봉되고 Claude Code 가 그걸 직접 싣는다.
@@ -151,7 +153,7 @@ claude
 
 ### Step 6. (다봇 워크스페이스) 회의실 게이트 구성 + 연결 probe
 
-`dispatch-room-gate.py` 는 **top-level 공용 채널에서의 봇→봇 발주를 deny** 하는
+`dispatch-room-gate.py` 는 **top-level 공용 채널에서 봇이 다른 봇에게 작업을 지시하는 답장을 deny** 하는
 PreToolUse 훅이다 (rules-seed Rule 3 과 같은 판정 기준). 봇이 2개 이상인
 워크스페이스에서만 의미가 있다 — 단일 봇 설치면 이 Step 을 건너뛰어도 된다
 (설정 파일이 없으면 게이트는 조용히 비활성).
@@ -213,8 +215,8 @@ python3 "$PLUGIN_DIR/hooks/dispatch-room-gate.py" --probe
 
 ## 관련 자원
 
-- hooks 본문: [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../hooks/regression-self-check.sh) / [stop-debug-surface.sh](../hooks/stop-debug-surface.sh) (opt-in)
-- active meeting Stop reread(선택): [../hooks/meeting-stop-reread.sh](../hooks/meeting-stop-reread.sh) — bot session + active meeting + non-recursive Stop 일 때만 `{"decision":"block","reason":<재독 지시>}` (Stop 엔 hookSpecificOutput 변형 없음), 그 외 fail-open(빈 stdout + exit 0).
-- DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
-- 첫 봇 생성: [create-bot.md](create-bot.md)
-- 메인 wizard: [start.md](start.md)
+- hooks 본문: [bot-session-init.sh](../../hooks/bot-session-init.sh) / [discord-slash-cmd.sh](../../hooks/discord-slash-cmd.sh) / [regression-self-check.sh](../../hooks/regression-self-check.sh) / [stop-debug-surface.sh](../../hooks/stop-debug-surface.sh) (opt-in)
+- active meeting Stop reread(선택): [meeting-stop-reread.sh](../../hooks/meeting-stop-reread.sh) — bot session + active meeting + non-recursive Stop 일 때만 `{"decision":"block","reason":<재독 지시>}` (Stop 엔 hookSpecificOutput 변형 없음), 그 외 fail-open(빈 stdout + exit 0).
+- DISCORD_STATE_DIR 구조: [discord-state-dir-README.md](../../templates/discord-state-dir-README.md)
+- 첫 봇 생성: [create-bot](../create-bot/SKILL.md)
+- 메인 wizard: [start](../../commands/start.md)

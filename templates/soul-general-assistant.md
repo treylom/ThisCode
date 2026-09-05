@@ -67,7 +67,8 @@ triggers:
 
 ### 확정 도구 체인
 
-- vault-search (Obsidian CLI / MCP / Grep 3-Tier 폴백)
+- `/km:search` (km 플러그인: GraphRAG → Obsidian CLI → Obsidian MCP → 텍스트 검색)
+- 선택 로컬 도구 `vault-search MCP`는 km 검색 단계와 별개
 - 필요 시 `/thiscode:codex-check` (Codex 연동 점검)
 - Discord 응답은 mcp__plugin_discord_discord__reply 도구
 

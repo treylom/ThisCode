@@ -4,9 +4,9 @@
 
 > Claude Code + Discord 봇 + codex 호출 통합 플러그인 — 개인 vault 자동화 + 멀티에이전트 운영
 >
-> **역할 경계**: ThisCode = 봇 하네스 운영 번들(운영 규칙·GraphRAG 운영 vendor·배포 계약). 범용 지식관리 제품은 [knowledge-manager](https://github.com/treylom/knowledge-manager), 플러그인 설치 창구는 [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins)가 정본입니다.
+> **역할 경계**: ThisCode = 봇 하네스 운영 번들(운영 규칙·GraphRAG 운영 vendor·배포 계약). 범용 지식관리 제품은 [knowledge-manager](https://github.com/treylom/knowledge-manager), 플러그인 설치 창구는 [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins)입니다.
 >
-> 지식관리와 vault 검색은 **knowledge-manager** 플러그인이 제공합니다 — `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins` 로 설치한 뒤 `/km:search` 와 `/km:knowledge-manager` 를 사용하세요. ThisCode 1.4.0 부터는 이 스킬들의 자체 사본을 포함하지 않습니다.
+> 지식관리와 vault 검색은 **km (knowledge-manager)** 플러그인이 제공합니다 — `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins` 로 설치한 뒤 `/km:search` 와 `/km:knowledge-manager` 를 사용하세요. ThisCode 1.4.0 부터는 이 스킬들의 자체 사본을 포함하지 않습니다.
 >
 > 🌐 **English version**: [README.md](README.md) · 📘 **Setup**: [docs/SETUP.md](docs/SETUP.md) (개발자) · 🌱 [docs/SETUP-BEGINNER.md](docs/SETUP-BEGINNER.md) (초보자) · 🧩 [docs/AGENTS.md](docs/AGENTS.md) (Custom Hybrid v1.0) · ⚙️ **[설정 가이드](docs/SETUP-CONFIG-GUIDE.md)** (CLAUDE.md · soul.md · rules · Skills 2.0) · 🆕 **[최근 변경](docs/RECENT-CHANGES.md)** (설치 시 읽기 — AI가 자동 반영할 최신 변경 요약) · 📖 **[시작 안내서 (한국어 PDF)](docs/getting-started/ThisCode-ThisCodex-getting-started.pdf)** (초보자, 14p) · 📄 **[전체 정리 한 장 (HTML)](docs/SUMMARY.html)** · 🤝 **[ThisCodex](https://github.com/treylom/ThisCodex)** (Codex 동반 런타임)
 
@@ -44,11 +44,11 @@ bash scripts/install.sh --apply
 
 1. **superpowers** plugin (Claude Code plugin manager 호출)
 2. **ripgrep** (Tier 4 baseline — brew / apt / dnf / apk 다 pkg manager fallback)
-3. **Obsidian CLI** detect (Tier 3 — 미설치 시 manual download 안내)
+3. **Obsidian CLI** detect (Tier 2 — 미설치 시 manual download 안내)
 4. **GraphRAG core** (Tier 1 — vendored Python runtime + 7-pkg pip install)
 5. **Dense embedding** (옵션 4-channel — 사용자 confirm 1회, ~1GB)
 
-Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + ripgrep + obsidian-cli + vault-search MCP + GraphRAG + Dense embedding).
+Install 후: `bash scripts/healthcheck.sh` (6-phase 검증: superpowers + 로컬 도구 점검 + GraphRAG + Dense embedding).
 
 **Windows 사용자:** 길이 둘입니다. **(a) 봇 페어링만 필요하면 — 네이티브 PowerShell 로 «지금» 됩니다.** Claude Code + Discord 플러그인의 *channels* 디렉터리(`~/.claude/channels/discord-<bot>/`)만 있으면 되고 **tmux·cmux·데몬이 전혀 필요 없습니다.** 봇 세션 = `DISCORD_STATE_DIR` 를 설정한 PowerShell 창에서 `claude` 를 띄운 것뿐입니다 ([docs/10-windows-powershell-bots.md](docs/10-windows-powershell-bots.md)). **(b) `install.sh` 전체 환경**(oh-my-tmux, 멀티세션 헬퍼)이 필요하면 — WSL 2 (Ubuntu 22.04+). Windows 에서 AI 어시스턴트가 설치를 대신 하고 있다면 **(a) 경로를 지정**하십시오 — 데몬이나 백그라운드 서비스로 tmux 를 재현하려 들면 안 됩니다.
 >
@@ -75,9 +75,9 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 
 wizard 가 vault 상태 / 도구 / 자원 detect 후 **8 Phase progressive journey** 추천:
 - **Phase 1-2**: 즉시 (ripgrep + obsidian-cli)
-- **Phase 3**: 100+ 노트 → vault-search MCP 권유
+- **Phase 3**: 100+ 노트 → ThisCode 선택 로컬 도구인 `vault-search MCP` 권유 (km 검색 fallback과 별개)
 - **Phase 4**: 500+ 노트 권유 / 1000+ strong / 옵션 언제나 (GraphRAG)
-- **Phase 5**: 2000+ 노트 → km-at Mode R preflight (read-only 진단)
+- **Phase 5**: 2000+ 노트 → km 플러그인 `/km:knowledge-manager-at` Mode R preflight (read-only 진단)
 - **Phase 6-7**: advanced (Dashboard / 하이브리드 4채널)
 
 > **GraphRAG = 환경 감지 + 선택사항** (사용자 spec). 노트 수 미충족 시도 force install 가능.
@@ -94,15 +94,15 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 - `/thiscode:init` — 경험자용 경량 셋업
 - `/thiscode:add-bot` — 추가 Discord 봇 1개 신설 (soul.md 템플릿 + token + 페어링)
 - `/thiscode:slack-configure` — Discord 대신(또는 추가로) Slack에 봇 연결 (claude-channel-server 브리지 자동 셋업)
-- `/thiscode:km` — knowledge-manager 플러그인 안내 (`/km:knowledge-manager`)
+- `/thiscode:km` — km (knowledge-manager) 플러그인 안내 (`/km:knowledge-manager`)
 - `/thiscode:open-meeting` — 다봇 협업용 회의실 구조 생성
 - `/thiscode:codex-check` — Codex CLI 브리지 연결 확인
-- `/thiscode:install-hooks` — SessionStart / UserPromptSubmit / PreToolUse / Stop 훅의 등록 상태를 검사합니다 (**플러그인을 설치하면 훅은 이미 등록됩니다** — 동봉된 `hooks/hooks.json` 을 Claude Code 가 직접 싣습니다). 훅은 **봇 세션에서만**(`DISCORD_STATE_DIR` 이 있을 때) 동작하고, 일반 세션에서는 아무 출력도 동작 변화도 없습니다. 플러그인 설치본에서는 등록을 검사하고 옛 `~/.claude/settings.json` 병합 잔존을 정리하며(안 지우면 같은 훅이 두 번 발화), `hooks/hooks.json` 이 없는 체크아웃에서는 예전처럼 병합합니다. `/thiscode:create-bot` 이 같은 `scripts/install-hooks.sh` 를 대신 실행합니다.
+- `/thiscode:install-hooks` (skill: `skills/install-hooks/SKILL.md`) — SessionStart / UserPromptSubmit / PreToolUse / Stop 훅의 등록 상태를 검사합니다 (**플러그인을 설치하면 훅은 이미 등록됩니다** — 동봉된 `hooks/hooks.json` 을 Claude Code 가 직접 싣습니다). 훅은 **봇 세션에서만**(`DISCORD_STATE_DIR` 이 있을 때) 동작하고, 일반 세션에서는 아무 출력도 동작 변화도 없습니다. 플러그인 설치본에서는 등록을 검사하고 옛 `~/.claude/settings.json` 병합 잔존을 정리하며(안 지우면 같은 훅이 두 번 발화), `hooks/hooks.json` 이 없는 체크아웃에서는 예전처럼 병합합니다. `/thiscode:create-bot` 이 같은 `scripts/install-hooks.sh` 를 대신 실행합니다.
 - … 그 외 다수 — **`/thiscode:help` 가 설명과 함께 전량을 나열합니다** (문서에 박아둔 목록이 아니라, 실행 시점에 두 표면을 직접 훑습니다). `/` 를 입력해 `thiscode:` 로 필터해도 같습니다
 
 ### 스킬
 
-각 스킬 (bootstrap, init, meetings, shared-memory 등)의 SKILL.md 에는 **"How to Use This Skill"** 절이 있어 언제 호출하는지, 무엇을 하는지 설명합니다. 지식관리·vault 검색 스킬은 이제 여기 포함되지 않습니다 — knowledge-manager 플러그인을 설치해 `/km:knowledge-manager` · `/km:search` 를 쓰십시오.
+각 스킬 (bootstrap, init, meetings, shared-memory 등)의 SKILL.md 에는 **"How to Use This Skill"** 절이 있어 언제 호출하는지, 무엇을 하는지 설명합니다. 지식관리·vault 검색 스킬은 이제 여기 포함되지 않습니다 — km (knowledge-manager) 플러그인을 설치해 `/km:knowledge-manager` · `/km:search` 를 쓰십시오.
 
 ---
 
@@ -126,9 +126,17 @@ Claude Code 는 플러그인의 **`commands/` 와 `skills/` 를 둘 다** 슬래
 
 ---
 
-## 📊 검색 백엔드 벤치마크
+## 📊 과거 기준선: ThisCode 로컬 검색 도구 benchmark
 
-이 저장소에는 GraphRAG·vault-search MCP·Obsidian CLI·ripgrep의 성능 특성을 비교하는 개발자용 벤치마크 러너가 남아 있습니다. 사용자용 지식관리·볼트 검색 명령은 km 플러그인이 제공하므로 실제 사용은 `/km:search` 안내를 따르십시오. **본인 vault에서 직접 측정**하면 환경별 차이를 확인할 수 있습니다.
+이 절은 2026-05-13 ThisCode legacy 로컬 검색 도구 기준선입니다.
+`benchmark/results/2026-05-13.json`에는 해당 날짜 실행 메타데이터가 남아 있지만
+Tier 1·2를 건너뛰었으므로 과거 문서의 모든 수치를 검증하는 자료는 아닙니다.
+km 플러그인의 현재 runtime 성능 측정이 아니며, 현재 vault 검색은 `/km:search`를
+사용하십시오. 이 저장소에는 GraphRAG·vault-search
+MCP·Obsidian CLI·ripgrep의 성능 특성을 비교하는 개발자용 benchmark runner도 남아
+있으므로 **본인 vault에서 직접 측정**해 환경별 차이를 확인할 수 있습니다.
+연결된 benchmark 가이드는 그때 쓰던 번호(vault-search MCP=2,
+Obsidian CLI=3)를 그대로 두었고, 지금 km 순서는 아래에 따로 적었습니다.
 
 ```bash
 # 본인 vault 로 측정 (Tier 1 GraphRAG 사용 시 server 별도 띄움 필요)
@@ -156,7 +164,8 @@ thiscode 는 검색 결과 받은 후 응답 생성 시 task complexity 따라 �
 
 `scripts/route-model.mjs` heuristic — query length / 키워드 기반. user override `--model haiku|sonnet|opus`.
 
-**Tier 순서:** Tier 1 [GraphRAG](docs/SETUP.md#tier-1) → Tier 2 [vault-search MCP](docs/SETUP.md#tier-2) → Tier 3 [Obsidian CLI](docs/SETUP.md#tier-3) → Tier 4 [ripgrep](docs/SETUP.md#tier-4). 정확도 우선 fallback.
+**km 검색 순서:** Tier 1 [GraphRAG](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 2 [Obsidian CLI](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 3 [Obsidian MCP](docs/SETUP.md#3-km-플러그인-설정과-선택-검색-도구) → Tier 4 텍스트 검색(ripgrep 등).
+ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구이며 `/km:search` fallback Tier가 아닙니다.
 
 ## 📚 용어 모르겠으면? → [GLOSSARY.md](docs/GLOSSARY.md)
 
@@ -190,7 +199,7 @@ cd ~/code/thiscode && bash install.sh
 | 4.5 | **Codex CLI** (`@openai/codex`) 전역 설치 — codex 호출 layer 의존 | npm |
 | 5 | oh-my-tmux (`gpakosz/.tmux`) 자동 install | git |
 | 6 | (선택) thiscode `tmux.conf.local` 적용 | user confirm |
-| 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — 3-Tier 폴백 1순위 | brew / snap / 수동 |
+| 6.5 | **Obsidian CLI** (Mac brew cask / WSL Windows native / Linux snap·flatpak·deb) — Tier 2 fallback | brew / snap / 수동 |
 | 7 | Claude Code plugin install 안내 (marketplace 등록 + `commands/`·`skills/` 두 발견 표면의 슬래시) | (Claude Code 안 슬래시) |
 | 8 | 첫 봇 wizard 안내 (`/thiscode:start`) | (Claude Code 안 슬래시) |
 
@@ -201,21 +210,21 @@ Claude Code 는 플러그인의 **`commands/*.md` 와 `skills/<name>/SKILL.md` �
 아래는 **대표 진입점**입니다:
 
 - `/thiscode:start` — 메인 wizard (환경 인식 + Discord 봇 셋업 + 첫 대화 검증)
-- `/thiscode:install-hooks` — 플러그인이 `hooks/hooks.json` 으로 이미 등록한 SessionStart + UserPromptSubmit + **Stop(회의 재독)** 훅을 검사하고, 옛 `~/.claude/settings.json` 병합 잔존을 정리합니다(기존 사용자 훅 보존). 봇 세션 밖에서는 조용히 통과합니다.
+- `/thiscode:install-hooks` (skill: `skills/install-hooks/SKILL.md`) — 플러그인이 `hooks/hooks.json` 으로 이미 등록한 SessionStart + UserPromptSubmit + **Stop(회의 재독)** 훅을 검사하고, 옛 `~/.claude/settings.json` 병합 잔존을 정리합니다(기존 사용자 훅 보존). 봇 세션 밖에서는 조용히 통과합니다.
 - `/thiscode:create-bot` — 신규 봇 디렉토리 + soul.md template 셋업
 - `/thiscode:add-bot` — 추가 Discord 봇 1개를 기존 셋업에 신설
 - `/thiscode:create-slack-bot` — Slack 워크스페이스 연결 (claude-channel-server 브리지 자동 셋업, 별칭: `/thiscode:slack-configure`)
-- `/thiscode:km` — knowledge-manager 플러그인 안내 (`/km:knowledge-manager` · `/km:search`)
+- `/thiscode:km` — km (knowledge-manager) 플러그인 안내 (`/km:knowledge-manager` · `/km:search`)
 - `/thiscode:open-meeting` — 회의실 폴더 신설 (다 봇 협업 4-file)
 - `/thiscode:codex-check` — Codex CLI 설치 + OAuth 인증 + 모델 picker 검증
 - … 그 밖에 다수 (`/` → `thiscode:` 필터로 현재 세션의 전량 확인)
 
-> ℹ️ **훅은 플러그인 설치와 함께 등록됩니다**(`hooks/hooks.json` 동봉). 단 **봇 세션에서만** 동작하므로, `DISCORD_STATE_DIR` 없이 켠 세션에서는 soul.md 가 주입되지 않습니다 — 그건 고장이 아니라 설계입니다. 등록 상태가 궁금하면 `/thiscode:install-hooks` 로 검사하세요.
+> ℹ️ **훅은 플러그인 설치와 함께 등록됩니다**(`hooks/hooks.json` 동봉). 단 **봇 세션에서만** 동작하므로, `DISCORD_STATE_DIR` 없이 켠 세션에서는 soul.md 가 주입되지 않습니다 — 그건 고장이 아니라 설계입니다. 등록 상태가 궁금하면 `/thiscode:install-hooks` 스킬로 검사하세요.
 
 순정 Claude Code 부트스트랩 (hook + 봇 없는 상태):
 
 ```
-1. /thiscode:install-hooks   # SessionStart + UserPromptSubmit + Stop(회의 재독) hook 등록
+1. /thiscode:install-hooks   # install-hooks 스킬: SessionStart + UserPromptSubmit + Stop(회의 재독) hook 등록
 2. /thiscode:add-bot         # 첫 봇 디렉토리 + soul.md 셋업
 3. /thiscode:start           # 메인 wizard (Discord 페어링 + 첫 대화 검증)
 4. /thiscode:codex-check     # Codex CLI 활성 확인 (선택)
@@ -228,7 +237,7 @@ thiscode 가 packaging 한 우리 vault 운영 노하우:
 - [03-shared-memory.md](docs/03-shared-memory.md) — **공유 메모리 4-tier** (T1 git-tracked / T2 machine-specific / T3 project-meetings / T4 per-bot WD)
 - [memory-dreaming.md](docs/memory-dreaming.md) — **메모리 정리(지우지 않고 옮김) 쉬운 설명**: 안 쓰는 메모리를 작업공간 밖 보관소로 *옮기고* 명령 한 줄로 *되돌립니다*(체크섬 검증). 9칸 전부 같은 기준표(Codex 포함)·보수적(자동이동 실측 0건·애매하면 사람검토)·기준은 자기 실수서 학습. 도구 `scripts/memory_dreaming.py`(`--scan` 기본 미리보기 / `--apply` 게이트 / `--restore`), 주1회 강제(YAML+세션시작 경고+launchd 3중)
 - **orchestrator-watchdog** (`scripts/meeting_watchdog.py`) — **회의 진행 watchdog (회의마다 권장 — 감시 봇 1개 초대, 첫 dispatch 전에 가동)**: 회의 스레드 신설 시 ~5분마다 진행 점검(메인테이너 vault 는 ~3분 운영), 목표+전체 작업 완료 시에만 자동 종료(Claude `/goal` 응용). fail-closed = 살아있는 회의 절대 잘못 종료 안 함. [05-meeting-thread-protocol.md](docs/05-meeting-thread-protocol.md) §2.3 + [rules/meeting-protocol.md](rules/meeting-protocol.md) §5 와 짝
-- [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **Obsidian CLI 설정** (Mac brew / WSL Windows native / Linux snap·flatpak·deb) + 3-Tier 폴백 (CLI → MCP → Write/Read/Grep) + 알려진 버그·워크어라운드
+- [04-obsidian-cli.md](docs/04-obsidian-cli.md) — **과거 Obsidian CLI 설정 가이드** (기존 로컬 3-Tier CLI → MCP → Write/Read/Grep 흐름; 현재 km 계약은 별도 문서 참조) + 알려진 버그·워크어라운드
 - [06-claude-code-server.md](docs/06-claude-code-server.md) — **Claude Code 서버 기능** (`claude -p` 헤드리스 + MCP server + tmux session vs headless 분리 패턴)
 - [08-debug-노하우.md](docs/08-debug-노하우.md) — **디버깅 24+ 카테고리** (Workflow / Code Review / Vault Path / 회의 protocol / Security / Time / LLM Prompt / Schedule / Plugins / External Apps / Cross-bot SoP)
 - (예정) `05-meeting-thread-protocol.md` — 회의 신설 출처 기반 cross-check + Discord REST API thread + audience direct mention + 3-channel 병행 보고
@@ -288,7 +297,7 @@ thiscode/
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v1.3.0
+│   └── plugin.json                        # thiscode v1.4.1
 ├── commands/                              # 슬래시 발견 표면 ①
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── add-bot.md                         # 추가 Discord 봇 신설
@@ -305,10 +314,14 @@ thiscode/
 │   ├── meetings/                          # 회의실 4-file protocol
 │   ├── shared-memory/                     # 4-tier 메모리 정책
 │   └── …                                  # 전량은 `/` → thiscode: 필터로
-├── hooks/                                 # 봇 운영 hook 3종
+├── hooks/                                 # 봇 운영 hook 7종
 │   ├── bot-session-init.sh                # SessionStart → soul.md 자동 inject
 │   ├── discord-slash-cmd.sh               # UserPromptSubmit → 슬래시 강제
-│   └── regression-self-check.sh           # 4-gate self-check 표 주입
+│   ├── regression-self-check.sh           # 4-gate self-check 표 주입
+│   ├── rule-router.sh                      # UserPromptSubmit → 규칙 라우팅
+│   ├── dispatch-room-gate.py               # PreToolUse → 공용 채널 봇 응답 점검
+│   ├── meeting-stop-reread.sh              # Stop → 활성 회의 marker 재확인
+│   └── reply-gate.sh                       # Stop → 최종 답변 gate
 ├── templates/                             # 봇 페르소나 5종 + bot-roles-matrix · bot-checkup-checklist
 │   ├── soul-general-assistant.md          # default 범용 비서
 │   ├── soul-research-bot.md               # 자료조사·교차검증
@@ -407,22 +420,22 @@ git push
 봇 답변에 페르소나가 반영되지 않는다면 SessionStart 훅이 그 세션에 닿지 않은 것입니다. 플러그인이 설치 시 등록해 두고 훅은 `DISCORD_STATE_DIR` 이 없으면 일부러 조용히 지나가므로, 흔한 원인은 둘 — 그 변수 없이 켠 세션이거나, 플러그인이 꺼져 있는 경우입니다. 등록 상태 검사:
 
 ```
-/thiscode:install-hooks
+/thiscode:install-hooks   # install-hooks 스킬 실행
 ```
 
-`hooks/hooks.json` 에 `bot-session-init.sh` 가 실려 있고 그 파일이 실제로 있는지 확인하고, 옛 병합 경로가 `~/.claude/settings.json` 에 남긴 중복 항목을 제거합니다 — 사용자가 직접 넣은 훅은 보존하고, 파일명만 같고 ThisCode 소유 표식이 없는 항목은 지우지 않고 「손으로 검토」 경고로만 보여줍니다.
+`skills/install-hooks/SKILL.md` 스킬은 `hooks/hooks.json` 에 `bot-session-init.sh` 가 실려 있고 그 파일이 실제로 있는지 확인하고, 옛 병합 경로가 `~/.claude/settings.json` 에 남긴 중복 항목을 제거합니다 — 사용자가 직접 넣은 훅은 보존하고, 파일명만 같고 ThisCode 소유 표식이 없는 항목은 지우지 않고 「손으로 검토」 경고로만 보여줍니다.
 
 ### GraphRAG 서버가 안 뜨는 경우 (vendor 의존 + ~/.cache venv)
 
 ```bash
-bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
-bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / vendor SoT 점검
+bash scripts/install-graphrag.sh --check     # python3 + 번들 소스 + requirements + venv + server health
+bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / 번들 소스 점검
 bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup uvicorn
 ```
 
 `--apply` 의 동작:
 - venv 위치 = `~/.cache/thiscode/graphrag/venv` (writable home cache)
-- vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (vault SoT 와 동등 박제, 21 file)
+- 번들 소스 = `<thiscode>/vendor/graphrag/scripts/` (21 file)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
 - entry = `uvicorn search_server:app --host 127.0.0.1 --port 8400` (background nohup)
 - log = `~/.cache/thiscode/graphrag/run/graphrag.log`
@@ -431,11 +444,15 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 
 ## 🔬 내부 구조 (advanced)
 
-### 훅 3종
+### 훅 7종
 
 - **`bot-session-init.sh`** (SessionStart) — `DISCORD_STATE_DIR` env 로 봇 자동 감지 → soul.md + 봇별 WD 메모리 + 공용 규율 주입
 - **`discord-slash-cmd.sh`** (UserPromptSubmit) — 사용자 프롬프트 첫 줄이 `/cmd` 면 Skill 도구 호출 강제
 - **`regression-self-check.sh`** (UserPromptSubmit) — 회귀 패턴 방지용 4게이트 자가점검 표 주입
+- **`rule-router.sh`** (UserPromptSubmit) — 현재 프롬프트에 맞는 규칙 안내 연결
+- **`dispatch-room-gate.py`** (PreToolUse) — 봇 간 답장에 공유 회의실 규칙 적용
+- **`meeting-stop-reread.sh`** (Stop) — 종료 전 활성 회의 표식 재확인
+- **`reply-gate.sh`** (Stop) — 세션 종료 전 최종 답장 게이트 적용
 
 ### 스킬 (agentskills.io 표준)
 
@@ -456,7 +473,7 @@ thiscode 는 Codex CLI 를 1급 브리지 층으로 포함합니다:
 
 ### Custom Hybrid v1.0 에이전트 스펙
 
-`schemas/agent-spec.json` 이 agentskills.io 기본 + Hermes `provides_*` + thiscode classroom 정책 + 동적 게이트 + 벤치마크 통합을 묶은 에이전트별 계약 레지스트리를 정의합니다. v1.0 은 `tier: core`(init wizard)와 km-at Mode R 사전점검 워크플로우용 `phases:` 를 추가했습니다.
+`schemas/agent-spec.json` 이 agentskills.io 기본 + Hermes `provides_*` + thiscode classroom 정책 + 동적 게이트 + 벤치마크 통합을 묶은 에이전트별 계약 레지스트리를 정의합니다. v1.0 은 `tier: core`(init wizard)와 km 플러그인의 `/km:knowledge-manager-at` Mode R 사전점검 워크플로우용 `phases:` 를 추가했습니다.
 
 ---
 

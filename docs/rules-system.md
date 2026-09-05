@@ -64,7 +64,7 @@ The bot's `CLAUDE.md` (auto-loaded by Claude Code) carries **only** the INDEX po
 
 ### Meeting protocol hooks
 
-ThisCode ships hook helpers for active meetings. They become active **only after the hooks are wired** — run `/thiscode:install-hooks` (it merges into `~/.claude/settings.json`, preserving any existing hooks):
+ThisCode ships hook helpers for active meetings. They become active **only after the hooks are wired** — run the `/thiscode:install-hooks` skill (`skills/install-hooks/SKILL.md`; it merges into `~/.claude/settings.json` when the fallback path is used, preserving any existing hooks):
 
 - `hooks/bot-session-init.sh` is the **SessionStart** helper. It injects soul.md
   (persona), the working-directory memory index, and — when present — the
@@ -100,7 +100,7 @@ registrations — hooks that already shipped a per-WD copy fired normally.
 Consequences for a deployment:
 
 1. **Mandatory hooks belong in user-global settings** (`~/.claude/settings.json`) —
-   exactly where `/thiscode:install-hooks` merges them. Never rely on a
+   exactly where the `/thiscode:install-hooks` skill merges them. Never rely on a
    project-root `settings.json` to cover nested bot WDs.
 2. **Globally registered hooks fire in every project**, so scope workspace-specific hooks
    with a cwd guard wrapper (generalized from the production fix):
@@ -158,7 +158,7 @@ Caveats learned in production (obsidian-ai-vault charness adoption, 2026-06-11; 
 2. Verifying that a Codex agent actually receives the chain: echo-style probes get **contaminated** — the injected rules change the probe's own behavior. Use session-transcript forensics (inspect the injected payload in the agent's rollout log) with a read-only sandbox instead.
 3. **Make the chain visible at the top of every per-bot WD instruction file.** A bot's WD `CLAUDE.md` *receives* the shared rules via chain-load, but anyone auditing just that file cannot see it — which reads as "this bot has no shared rules." Add a one-line pointer at the top ("shared rules arrive via the root `@AGENTS.md` chain-load; no duplicate `@import` here — duplicating would inject the same body twice"). A pointer costs one line; a duplicate import costs the whole rules body per session.
 4. **Mirrors of live instruction files must be script-generated, never hand-copied.** If `CLAUDE.md`/`AGENTS.md`/persona files are mirrored into a human-readable wiki for owner review, the mirror must be produced by a maintained sync script — verbatim content plus an `AUTO-MIRROR` header naming the origin path. Orphan hand-made copies rot silently: in production, six hand-copied CLAUDE.md mirrors froze for 5+ weeks and the owner audited stale rules and model names as if they were current. Register every new bot's files in the sync script's mirror list as part of bot creation.
-5. **Derived surfaces quote exact launch flags and name the launch SoT.** Model/effort mentions in bot docs must carry the real launch arguments (e.g. `--model 'claude-opus-5[1m]' --effort xhigh`) plus where they are launched from (shell alias, launchd plist). Alias-form snapshots (`opus[1m]`) go stale silently when the alias retargets to a new model generation.
+5. **Derived surfaces quote exact launch flags and name where the process is launched.** Model/effort mentions in bot docs must carry the real launch arguments (e.g. `--model 'claude-opus-5[1m]' --effort xhigh`) plus where they are launched from (shell alias, launchd plist). Alias-form snapshots (`opus[1m]`) go stale silently when the alias retargets to a new model generation.
 
 ## Enforcement: when the self-check gets skipped (rule-router + action gates)
 

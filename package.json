@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Discord/Slack bot harness for Claude Code: setup, bots, meetings, shared memory, model router (knowledge management via the km plugin).",
+  "description": "Discord/Slack bot harness for Claude Code: setup, bots, meetings, shared memory, model router (knowledge management via the km plugin). Multi-harness entry docs: GEMINI.md / AGENTS.md.",
   "keywords": [
     "claude-code",
     "hermes-agent",
@@ -42,7 +42,7 @@
     "GEMINI.md",
     "AGENTS.md",
     "README.md",
-    "README.en.md",
+    "README.ko.md",
     "LICENSE",
     "install.sh"
   ],

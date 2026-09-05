@@ -48,12 +48,13 @@ status: draft (v0.2.0)
 - 학습: Discord chat archive + Obsidian vault + SessionStart 자동 주입 셋 다 필요.
 - 영상 길이: 9 min.
 
-### C8. MOC-Map 진입점 + GraphRAG 4-Tier search
-- 학습: thiscode 4-Tier (GraphRAG → Obsidian CLI → vault-search MCP → ripgrep). MOC 우선 라우팅.
-- contract: `contracts/search-fallback-4tier.md` v0.1.0.
+### C8. MOC-Map 진입점 + km 플러그인의 4-Tier search
+- 학습: km 플러그인의 4-Tier search (GraphRAG → Obsidian CLI → Obsidian MCP → text search).
+  ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구이며 km fallback에 포함되지 않는다. MOC 우선 라우팅.
+- contract: `contracts/search-fallback-4tier.md` v0.3.0.
 - 영상 길이: 12-15 min.
 
-### C9. KM plugin commands and boundary
+### C9. km plugin commands and boundary
 - 학습: 지식관리와 vault 검색은 km 플러그인이 담당한다. `/km:search` · `/km:knowledge-manager` · `/km:setup` 문서를 따른다.
 - 영상 길이: 10 min.
 
@@ -98,11 +99,11 @@ status: draft (v0.2.0)
 - 영상 길이: 11 min.
 
 ### C19. 봇 self-skill 영역 R&R
-- 학습: `/strange` · `/aktofu` · `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, Karpathy 검토·commit.
+- 학습: `/strange` · `/aktofu` · `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇 검토·commit.
 - 영상 길이: 7 min.
 
 ### C20. Discord 봇 mention 다축 channel reference fetch
-- 학습: 봇 위치 단정 전 reference doc + 어벤져스 + 멀티버스 채널 3축 cross-check 의무.
+- 학습: 봇 위치 단정 전 reference doc + 메인 채널 + cross-machine 채널 3축 cross-check 의무.
 - 영상 길이: 8 min.
 
 ## 보조 + 운영 카테고리 (Phase 1-3 분산)
@@ -159,12 +160,11 @@ status: draft (v0.2.0)
 ## Cross-reference
 
 - vault SHARED-INDEX.md — 본 카테고리의 fact source
-- `contracts/{search-fallback-4tier, km-mode-spec, km-variant-matrix}.md` — Phase 2-3 핵심 spec
+- `contracts/search-fallback-4tier.md` — 현재 km `/km:search` fallback 계약 (Tier 1 GraphRAG → Tier 2 Obsidian CLI → Tier 3 Obsidian MCP → Tier 4 text search)
+- km 모드·설정 동작은 km 플러그인의 `/km:*` 문서를 따른다.
 - 어제 회의 03-outcome.md §5 — thiscode plugin spec 의 영상 mapping 초안
 - 본 사이클 outcome (`AI_Second_Brain/.claude-meetings/2026-05-12-thiscode-plugin/03-outcome.md` 2026-05-13 followup)
 
 ## 잔존 작업 (chapter 본문 실제 작성)
 
 본 문서 = chapter index. 각 chapter 본문 (slide outline + 실습 script + 영상 녹화 cue) 은 별도 사이클. GPT-5.5 병렬 spawn 으로 chapter 별 outline draft 생성 가능.
-
-— Karpathy

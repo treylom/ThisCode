@@ -43,7 +43,7 @@
   <h2>1. 두 레포가 뭔가요</h2>
   <div class="grid">
     <div class="card"><b>ThisCode</b> <span class="pill">Claude Code 쪽</span><br>
-      <code>bash install.sh</code> 한 줄로 Claude Code + tmux + Discord 봇 환경을 세팅하는 종합 배포물. 핵심 가치는 4-Tier 볼트 검색(GraphRAG→vault-search→Obsidian CLI→ripgrep) + 모델 라우팅. 멀티 에이전트·옵시디언·rules 종합.<br>
+      <code>bash install.sh</code> 한 줄로 Claude Code + tmux + Discord 봇 환경을 세팅하는 종합 배포물. 핵심 가치는 봇 하네스·로컬 도구 설치·모델 라우팅입니다. 볼트 검색과 4-Tier fallback(GraphRAG→Obsidian CLI→Obsidian MCP→text search)은 km 플러그인이 실행하며, ThisCode의 vault-search MCP 설치기는 별도 로컬 도구입니다. 멀티 에이전트·옵시디언·rules 종합.<br>
       <a href="https://github.com/treylom/ThisCode">github.com/treylom/ThisCode</a></div>
     <div class="card"><b>ThisCodex</b> <span class="pill">Codex 쪽</span><br>
       OpenAI <code>codex</code> CLI 에이전트를 Claude Code 봇과 <b>똑같이</b> 동작하게 만드는 검증된 패턴 + 설치형 skill(<code>skills/thiscodex/</code>). 두 런타임 공통 규칙(이식성·rules·멀티에이전트)도 여기.<br>

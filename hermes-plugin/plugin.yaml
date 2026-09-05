@@ -23,12 +23,12 @@ platforms:
 requires_env: []
 metadata:
   hermes_status: "runtime subset: on_session_start drift-check hook; manifest-only tools/commands are deferred — see docs/HERMES-STATUS.md."
-  contract_version: "0.1.0"
+  contract_version: "0.3.0"
   contract_path: "contracts/search-fallback-4tier.md"
   agent_spec_version: "1.0.0"
   agent_spec_schema: "schemas/agent-spec.json"
   tier_order:
     - 1: GraphRAG
-    - 2: vault-search MCP
-    - 3: Obsidian CLI
-    - 4: ripgrep
+    - 2: Obsidian CLI
+    - 3: Obsidian MCP
+    - 4: text search (ripgrep/grep)

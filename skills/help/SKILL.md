@@ -35,7 +35,7 @@ disable-model-invocation: true
 | 증상 | 먼저 확인 | 흔한 원인과 해결 |
 |---|---|---|
 | 설치가 안 됐거나 됐는지 모르겠음 | `/thiscode:test` 실행 | 미설치·부분 설치 → `/thiscode:start` 재실행 (이미 설치된 부분은 건너뜀) |
-| 훅(자동 장치)이 없다는 안내 | `/thiscode:install-hooks` | settings.json 에 훅 미등록 → 위 명령 1회면 등록 끝 |
+| 훅(자동 장치)이 없다는 안내 | `/thiscode:install-hooks` (skill) | settings.json 에 훅 미등록 → 위 스킬 1회면 등록 끝 |
 | 봇 생성 마법사가 중간에 멈춤 | 마지막 화면 문구 확인 | 대부분 이전 단계 미완 → `/thiscode:create-discord-bot` 다시 실행 (이어하기 됨) |
 | Discord 개발자 포털에서 길을 잃음 | 지금 어느 페이지인지 확인 | **여기가 제일 많이 막히는 곳이었다 — 2026-08-10 B7 이후는 아니다**: `/thiscode:create-bot` 이 기본으로 포털을 직접 완주한다(hCaptcha·비밀번호/MFA 모달 2곳만 사람에게 넘긴다 — `skills/create-bot/SKILL.md` Step 3). 그런데도 막혔다면 그 기본 흐름 자체가 걸린 것 — STEP 2.5 직접 개입 제안 |
 | 토큰(출입증)을 어디 넣을지 모름 | `.env` 파일 위치 안내 | 토큰은 **사용자가 직접** 붙여넣는다 — 봇/AI 에게 토큰을 보여주거나 채팅에 붙이지 말 것 |
@@ -70,7 +70,7 @@ disable-model-invocation: true
 |---|---|
 | `/thiscode:start` | 처음 설치 — 환경 감지부터 첫 대화 확인까지 안내 마법사 |
 | `/thiscode:init` | 가볍게 다시 설정 (경험자용) |
-| `/thiscode:install-hooks` | 자동 장치(훅) 등록이 빠졌을 때 1회 |
+| `/thiscode:install-hooks` (skill: `skills/install-hooks/SKILL.md`) | 자동 장치(훅) 등록이 빠졌을 때 1회 |
 | `/thiscode:self-update` | 최신판으로 업데이트 |
 | `/thiscode:test` | 설치가 잘 됐는지 자가 점검 |
 
@@ -88,8 +88,8 @@ disable-model-invocation: true
 **지식·검색·협업**
 | 명령 | 언제 |
 |---|---|
-| `/thiscode:km` | km 플러그인 설치와 `/km:knowledge-manager`·`/km:search` 사용 안내 |
-| `/thiscode:km-bootstrap` | ThisCode 로컬 검색 도구 스크립트와 km 플러그인 설치·`/km:setup` 안내(직접 설치하지 않음) |
+| `/thiscode:km` | km 플러그인 설치 안내(포인터) — 설치 후 `/km:knowledge-manager`·`/km:search` 사용 |
+| `/thiscode:km-bootstrap` | ThisCode 로컬 검색 도구와 km 플러그인 설치 안내(포인터) — `/km:setup`으로 설정(직접 설치하지 않음) |
 | `/thiscode:prompt` | AI 프롬프트 생성기 |
 | `/thiscode:open-meeting` | 봇 여럿이 협업할 회의방 만들기 |
 | `/thiscode:codex-check` | Codex 연동 상태 점검 |
@@ -120,7 +120,7 @@ disable-model-invocation: true
 
 ## Learn More
 
-- **Setup guide**: [docs/SETUP.md](../docs/SETUP.md)
-- **Beginner guide**: [docs/SETUP-BEGINNER.md](../docs/SETUP-BEGINNER.md)
-- **Config guide**: [docs/SETUP-CONFIG-GUIDE.md](../docs/SETUP-CONFIG-GUIDE.md)
-- **Recent changes**: [docs/RECENT-CHANGES.md](../docs/RECENT-CHANGES.md)
+- **Setup guide**: [docs/SETUP.md](../../docs/SETUP.md)
+- **Beginner guide**: [docs/SETUP-BEGINNER.md](../../docs/SETUP-BEGINNER.md)
+- **Config guide**: [docs/SETUP-CONFIG-GUIDE.md](../../docs/SETUP-CONFIG-GUIDE.md)
+- **Recent changes**: [docs/RECENT-CHANGES.md](../../docs/RECENT-CHANGES.md)

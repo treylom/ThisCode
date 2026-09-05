@@ -6,7 +6,7 @@ allowedTools: Bash, AskUserQuestion, Read
 
 # init
 
-> obsidian-cli → GraphRAG 점진 진행을 학생이 자연스럽게 따라가도록 wizard 형 install 진입점 (사용자 v2.1 spec).
+> obsidian-cli → GraphRAG 점진 진행을 학생이 자연스럽게 따라가도록 wizard 형 install 진입점.
 
 ## Repo-handoff contract (read first)
 
@@ -57,4 +57,4 @@ GraphRAG 노트 수 미충족 시도 사용자 force install 가능. preflight (
 
 ## How to Use This Skill
 
-Use this skill during initial setup to run the interactive wizard that detects your environment (vault state, installed tools, system resources) and progressively recommends which phases to install next (ripgrep, obsidian-cli, vault-search MCP, GraphRAG, dense embeddings). Follow the wizard's prompts to match your setup stage.
+Use this skill during initial setup to run the interactive wizard that detects your environment (vault state, installed tools, system resources) and progressively recommends which local-tool phases to install next (ripgrep, obsidian-cli, vault-search MCP, GraphRAG, dense embeddings). The optional `vault-search MCP` installer is separate from the km plugin's `/km:search` fallback, whose order is GraphRAG → Obsidian CLI → Obsidian MCP → text search. Follow the wizard's prompts to match your setup stage.

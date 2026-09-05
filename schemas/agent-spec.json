@@ -61,7 +61,7 @@
     },
     "phases": {
       "type": "object",
-      "description": "v2.1 km-at Mode R preflight workflow (read-only preflight + dry_run_required apply)",
+      "description": "Historical phase metadata retained for compatibility with the external km plugin (read-only preflight; apply requires dry_run_required)",
       "properties": {
         "preflight": {
           "type": "object",

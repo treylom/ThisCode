@@ -11,9 +11,9 @@ Claude Code 세션이 Slack 채널·DM 메시지를 자기 컨텍스트로 직�
 
 ## ⚠️ 시작하기 전 — 브리지 소스는 번들에 동봉됨 (2026-08-06 결정 · vendor 동봉)
 
-이 브리지의 실제 코드(`claude-channel-server`)는 **`vendor/claude-channel-server/`에 ThisCode 번들 안에 동봉되어 있다**(재경님 결정 ⓐ — "ThisCode로 사람들이 앞으로 slack을 연결하려면 동봉되어 있어야 한다"). 소스만 있고 `dist/`(빌드 산출물)는 레포에 안 들어있다 — `.gitignore`가 명시적으로 제외한다(소스↔빌드본 drift 방지: 고치고 빌드 안 하면 옛 `dist`가 계속 도는 사고를 막기 위해서다). `slack:configure` 스킬의 Step 0이 이 vendor 경로를 기본값으로 찾고, `npm install && npm run build`를 자동 실행해 그 자리에서 `dist/`를 만든다.
+이 브리지의 실제 코드(`claude-channel-server`)는 **`vendor/claude-channel-server/`에 ThisCode 번들 안에 동봉되어 있다**(배포 결정). 소스만 있고 `dist/`(빌드 산출물)는 레포에 안 들어있다 — `.gitignore`가 명시적으로 제외한다(소스↔빌드본 drift 방지: 고치고 빌드 안 하면 옛 `dist`가 계속 도는 사고를 막기 위해서다). `slack:configure` 스킬의 Step 0이 이 vendor 경로를 기본값으로 찾고, `npm install && npm run build`를 자동 실행해 그 자리에서 `dist/`를 만든다.
 
-> 🔴 **라이선스 미확정(미해결)**: `vendor/claude-channel-server/package.json`에 `"license"` 필드가 없고(`"private": true`만 있음), 별도 `LICENSE` 파일도 없다 — 원본 소스 그대로 동봉했기 때문이다. ThisCode 루트 자체는 MIT(`LICENSE`, `package.json` `"license": "MIT"`)이지만, 동봉된 이 코드에 같은 라이선스를 적용할지는 **저작권자(재경님) 결정 사안**이라 아직 정하지 않았다 — 워커가 임의로 라이선스를 지어 넣지 않는다. 결정 전까지는 이 상태 그대로 두고, 결정되면 이 절과 `vendor/claude-channel-server/LICENSE`(필요시)·`package.json`을 갱신한다.
+> 🔴 **라이선스 미확정(미해결)**: `vendor/claude-channel-server/package.json`에 `"license"` 필드가 없고(`"private": true`만 있음), 별도 `LICENSE` 파일도 없다 — 원본 소스 그대로 동봉했기 때문이다. ThisCode 루트 자체는 MIT(`LICENSE`, `package.json` `"license": "MIT"`)이지만, 동봉된 이 코드에 같은 라이선스를 적용할지는 **저작권자의 결정 사안**이라 아직 정하지 않았다 — 워커가 임의로 라이선스를 지어 넣지 않는다. 결정 전까지는 이 상태 그대로 두고, 결정되면 이 절과 `vendor/claude-channel-server/LICENSE`(필요시)·`package.json`을 갱신한다.
 
 ## 아키텍처
 
@@ -53,7 +53,7 @@ Slack  <--Socket Mode-->  server.ts (resident)  <--Unix socket-->  mcp.ts (per-s
 | B — 워크스페이스 설치 승인 | 브라우저에서 "허용(Allow)" 클릭 | OAuth 권한 승인은 계정 소유자 행위 |
 | C(조건부) — 메시지 탭 켜기 | App Home → Messages Tab 토글 — **B 직후, 매니페스트 자동 반영이 이 설정까지 못 따라갔을 때만 발동**(평소엔 안 뜬다) | Slack 쪽 UI 토글이라 사람이 직접 켜야 한다 |
 | D — 토큰 값 입력 | Bot Token(`xoxb-`)·App Token(`xapp-`)을 클립보드 경유로 저장 | 토큰 값은 화면에서 사람이 직접 복사해야 나온다 |
-| E — 최초 채널 로드 확인 | 확인 창 **최대 3연속**: ①MCP 서버 승인(`.mcp.json`) ②외부 import 허용(`@../AGENTS.md`, 있을 때만) ③"I am using this for local development" — 전부 1번 선택 | Claude Code 최초 1회 안전 확인 다이얼로그 (3연속 인과·권장값 = slack-configure Step 14 정본) |
+| E — 최초 채널 로드 확인 | 확인 창 **최대 3연속**: ①MCP 서버 승인(`.mcp.json`) ②외부 import 허용(`@../AGENTS.md`, 있을 때만) ③"I am using this for local development" — 전부 1번 선택 | Claude Code 최초 1회 안전 확인 다이얼로그 (3연속 인과·권장값 = slack-configure Step 14 안내) |
 
 셋업이 끝나면 다음이 자동으로 확인된다(`slack:configure` 검증 단계): 소켓·pidfile 존재, 서버 로그의 `bridge live — channel ..., allowed user ...` 라인, `.env` mode 600 + 필수 키 4개(`SLACK_BOT_TOKEN`·`SLACK_APP_TOKEN`·`ALLOWED_SLACK_USER_ID`·`SLACK_CHANNEL_ID` — `config.ts` `REQUIRED_KEYS`), `.mcp.json` 유효성, **부여 scope 실측(선언 전부, 현 템플릿 5종)**(`auth.test` 응답 헤더 `x-oauth-scopes` 대조 — 선언 ≠ 부여, 2026-08-06 결함 15: `im:history` 미부여 시 `message.im` 이 애초에 안 와서 DM 이 무징후로 죽는다. 구 「매니페스트 로컬↔원격 일치」 확인은 웹 경로 앱에서 CLI 가 `installation_required` 로 돌아 폐기). 상태 디렉토리는 `CLAUDE_CHANNEL_SLACK_DIR` 환경변수로 바꿀 수 있고 기본값은 `~/.claude/channels/slack/`이다.
 
@@ -161,7 +161,7 @@ your message text
 
 ## 응답 (`reply` 도구) · 반응 (`react` 도구)
 
-`mcp.ts`가 노출하는 도구는 둘이다(2026-08-06 `react` 추가 — 재경님 요청 "응답때 이모지로 반응"):
+`mcp.ts`가 노출하는 도구는 둘이다(2026-08-06 `react` 추가 — 운영 요청 "응답때 이모지로 반응"):
 
 **`reply`** — 메시지 발신:
 
@@ -188,10 +188,10 @@ react 도 reply 와 같은 outbound allowlist 를 탄다 — 인바운드를 받
 - **채널 게이트**(`server.ts` `handleSlackEvent`, L299): `event.channel === SLACK_CHANNEL_ID` **이거나** `event.channel_type === 'im'`(DM)이면 통과. 그 외는 버림.
 - **발신자 게이트 — 저자 종류로 분기**(L310~, 2026-08-07 (B) 봇간 통신 이식): `bot_id`(또는 `subtype === 'bot_message'`) 유무로 사람/봇을 가른 뒤 —
   - **사람 경로**: `event.user === ALLOWED_SLACK_USER_ID` 아니면 버림(채널·DM·@멘션·승인 답장 전부 이 한 checkpoint 공유), `subtype`(수정·입장 등) 버림. 사람 발화는 그 스레드의 봇 왕복 예산을 리셋한다.
-  - **봇 경로**(전부 만족해야 통과): ①DM 아님(봇간 DM 금지 — DM 경로의 보안 논거는 «검증된 사람과 1:1») ②자기 에코 아님 + `user`(U…) 존재 ③`ALLOWED_SLACK_BOT_USER_IDS` 목록에 있음(**미설정/빈 값 = 봇 전면 차단 = 이식 전과 동일 — 기존 설치 회귀 0**) ④본문에 `<@이봇ID>` 명시 멘션(승인 답장 우회·스레드 면제 둘 다 봇에겐 없음 — VERDICT_PATTERN 은 anchored 라 멘션과 공존 불가 = 허용 봇도 권한 승인은 구조적으로 불가). **왕복 횟수 상한은 의도적으로 없다**(2026-08-07 재경님 «빼자» — 이식 원본인 디스코드 장치가 멘션 통과+허용목록 2겹뿐이고, 상한 6 을 잠깐 넣었다가 «정상 봇 회의 실측 11왕복»을 자르는 것이 확인돼 제거. 종료는 봇 규율 소관, 코드는 지목 없인 안 닿게만 한다). ⚠️ **게이트 순서 함정**(루돌프 라이브 실측): 구판은 사람 발신자 게이트가 봇 게이트보다 먼저라, `bot_id` 줄만 완화하면 봇 메시지(자기 U… 를 실음)가 사람 검사에서 먼저 죽어 **아무것도 안 열린다** — 그래서 한 분기로 접었다. id 축은 **U… 단일**(멘션 텍스트·사람 게이트와 같은 공간 — B…/U… 혼용이 낳은 태그 오독 재발 차단).
+  - **봇 경로**(전부 만족해야 통과): ①DM 아님(봇간 DM 금지 — DM 경로의 보안 논거는 «검증된 사람과 1:1») ②자기 에코 아님 + `user`(U…) 존재 ③`ALLOWED_SLACK_BOT_USER_IDS` 목록에 있음(**미설정/빈 값 = 봇 전면 차단 = 이식 전과 동일 — 기존 설치 회귀 0**) ④본문에 `<@이봇ID>` 명시 멘션(승인 답장 우회·스레드 면제 둘 다 봇에겐 없음 — VERDICT_PATTERN 은 anchored 라 멘션과 공존 불가 = 허용 봇도 권한 승인은 구조적으로 불가). **왕복 횟수 상한은 의도적으로 없다**(2026-08-07 운영 결정 «빼자» — 이식 원본의 멘션 통과+허용목록 2겹뿐이고, 상한 6 을 잠깐 넣었다가 «정상 봇 회의 실측 11왕복»을 자르는 것이 확인돼 제거. 종료는 봇 규율 소관, 코드는 지목 없인 안 닿게만 한다). ⚠️ **게이트 순서 함정**(라이브 실측): 구판은 사람 발신자 게이트가 봇 게이트보다 먼저라, `bot_id` 줄만 완화하면 봇 메시지(자기 U… 를 실음)가 사람 검사에서 먼저 죽어 **아무것도 안 열린다** — 그래서 한 분기로 접었다. id 축은 **U… 단일**(멘션 텍스트·사람 게이트와 같은 공간 — B…/U… 혼용이 낳은 태그 오독 재발 차단).
 - **대상 게이트 — 채널에서는 «이 봇을 멘션한 글»만 처리**(2026-08-06 결함 13 수리): 기동 시 `auth.test` 로 자기 봇 user id 를 1회 확보하고(실패 = fail-fast 종료), 채널 인바운드는 본문에 `<@봇ID>` 가 있어야 통과. 예외 셋 — ①DM(`channel_type === 'im'`)은 1:1 이라 발신자 게이트로 충분 ②승인 답장(`yes/no <id>`, VERDICT_PATTERN)은 멘션 없이 오는 게 설계라 우회 ③**이 봇이 참여한 스레드의 «멘션 없는» 후속 발화**(`activeThreads` — 결함 17 상호작용 해소 + T4 정제: 스레드 안이라도 명시 멘션(`<@U…>/<@W…>`)이 등장하면 명시 지목이 이긴다 — 다른 봇만 불리면 침묵, 2026-08-06). 이 게이트가 없으면 `message.channels` 구독 탓에 **같은 채널에 이 브리지 봇이 N개면 N개 전원이 모든 글에 답한다**(2026-08-06 라이브 3중창 실측).
 - **중복 방지**: `message`와 `app_mention`이 같은 포스트에 둘 다 발화할 수 있어 `ts`(최대 200개 evict 윈도)로 dedup.
-- **스레드 = 대화 종류로 분기**(2026-08-06 결함 17 — 재경님 지시 "채널에서 태그하면 스레드 답글로"): **채널 인바운드는 항상 스레드**(top-level 이면 그 메시지 `event.ts` 를 루트로 합성 — 채널이 봇 답변으로 도배되지 않게) / **DM 은 사용자가 스레드를 연 경우에만**(1:1 에서 강제 댓글은 어색 — 구 주석의 근거를 DM 범위로 한정 유지). 그리고 **봇이 참여한 스레드의 후속 발화는 멘션 없이 통과**한다(대상 게이트의 스레드 면제 — `activeThreads`, 이 봇이 받은 스레드 루트만 기억하므로 다봇 채널에서 결함 13 이 스레드 안에서 부활하지 않는다).
+- **스레드 = 대화 종류로 분기**(2026-08-06 결함 17 — 운영 지시 "채널에서 태그하면 스레드 답글로"): **채널 인바운드는 항상 스레드**(top-level 이면 그 메시지 `event.ts` 를 루트로 합성 — 채널이 봇 답변으로 도배되지 않게) / **DM 은 사용자가 스레드를 연 경우에만**(1:1 에서 강제 댓글은 어색 — 구 주석의 근거를 DM 범위로 한정 유지). 그리고 **봇이 참여한 스레드의 후속 발화는 멘션 없이 통과**한다(대상 게이트의 스레드 면제 — `activeThreads`, 이 봇이 받은 스레드 루트만 기억하므로 다봇 채널에서 결함 13 이 스레드 안에서 부활하지 않는다).
 
 ## 권한 relay (opt-in)
 

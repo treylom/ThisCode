@@ -19,7 +19,11 @@
 
 ## Contract version
 
-`0.1.0` — see `contracts/*.md` frontmatter.
+Versions are per contract: `search-fallback-4tier` is `0.3.0`;
+`km-mode-spec` and `km-variant-matrix` are `0.2.0`, while
+`repo-handoff-install-contract` is `0.1.0`. See each file's
+`contracts/*.md` frontmatter. The optional local `vault-search MCP` installer
+is separate from the km plugin's Tier 3 Obsidian MCP integration.
 
 ## Drift detection
 
@@ -35,7 +39,7 @@ Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/cont
 |---|---|---|
 | `/thiscode:add-bot` | `commands/add-bot.md` | Add a Discord bot to an existing setup |
 | `/thiscode:codex-check` | `commands/codex-check.md` | Verify the Codex CLI bridge |
-| `/thiscode:init` | `commands/init.md` | Detect the environment and guide selected ThisCode local setup scripts |
+| `/thiscode:init` | `commands/init.md` | Detect the environment and run the selected ThisCode local setup scripts |
 | `/thiscode:install-browser` | `commands/install-browser.md` | Install and verify the browser tool |
 | `/thiscode:km-bootstrap` | `commands/km-bootstrap.md` | Point to ThisCode local search-tool scripts and km plugin setup |
 | `/thiscode:km` | `commands/km.md` | Point to `/km:search` and `/km:knowledge-manager` |
@@ -44,7 +48,7 @@ Compares plugin contracts vs the vault mirror at `<vault>/.claude/reference/cont
 | `/thiscode:start` | `commands/start.md` | Run the main Discord bot setup wizard |
 | `/thiscode:test` | `commands/test.md` | Run feature smoke tests |
 
-`/thiscode:setup` is the separate `skills/setup/SKILL.md` entry point, not a file under `commands/`. Knowledge management and vault-search behavior are provided by the km plugin; the two ThisCode `km*` commands above are migration pointers, not local implementations.
+`/thiscode:setup` is the separate `skills/setup/SKILL.md` entry point, not a file under `commands/`. `/thiscode:install-hooks` is likewise the `skills/install-hooks/SKILL.md` skill, not a `commands/*.md` file. Knowledge management and vault-search behavior are provided by the km plugin; the two ThisCode `km*` commands above are migration pointers, not local implementations.
 
 ## Cross-harness invocation reference
 

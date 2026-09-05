@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# install-obsidian-cli.sh — Obsidian CLI / app detect + install (Tier 3 fallback).
+# install-obsidian-cli.sh — Obsidian CLI / app detect + install (local tool; km Tier 2 when configured).
 # v2.3: v2.1.1 backbone + 출처 명시.
 # 출처: obsidian.md (proprietary GUI, 별도 download 필요)
 # CLI 후보 (3-binary detect): obsidian-cli / obsidian / notesmd-cli
@@ -82,7 +82,7 @@ if [ "$CHECK_ONLY" = "1" ]; then
     echo "obsidian app: present ($app_path) — CLI missing"
     exit 0
   else
-    echo "obsidian: missing — fallback to Tier 4 (ripgrep)"
+    echo "obsidian: missing — Tier 3 (Obsidian MCP), then Tier 4 (text search) remain as km fallbacks; this installer does not install them"
     exit 1
   fi
 fi
@@ -103,7 +103,7 @@ install_obsidian() {
       if [ "$WSL" = "1" ]; then
         echo "[install] WSL detected — install Obsidian on Windows side:" >&2
         echo "  https://obsidian.md/download" >&2
-        echo "  Tier 3 (CLI) skip → Tier 4 (ripgrep) 가 fallback" >&2
+        echo "  Tier 2 (CLI) skip → Tier 3 (Obsidian MCP) → Tier 4 (text search) are km fallbacks; this installer does not install those stages" >&2
         return 1
       fi
       if command -v apt-get >/dev/null 2>&1; then
@@ -136,6 +136,6 @@ fi
 # no-arg interactive
 read -r -p "Obsidian CLI 미설치. install 시도할까요? [y/N] " ANS
 [ "${ANS:-N}" = "y" ] || [ "${ANS:-N}" = "Y" ] && install_obsidian || {
-  echo "[install] skip — Tier 4 (ripgrep) 가 fallback"
+  echo "[install] skip — Tier 3 (Obsidian MCP), then Tier 4 (text search) remain as km fallbacks; this installer does not install them"
   exit 0
 }

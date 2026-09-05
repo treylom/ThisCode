@@ -1,6 +1,12 @@
 # 04. Obsidian CLI 설정
 
-> Obsidian vault 를 명령행에서 직접 조작하기 위한 CLI. Claude Code 의 vault 접근 3-Tier 폴백 (CLI → MCP → Write/Read/Grep) 의 1순위.
+> **Legacy local-tool guide:** Obsidian vault 를 명령행에서 직접 조작하기 위한
+> CLI와 당시 ThisCode의 3-Tier 폴백 (CLI → MCP → Write/Read/Grep)을 보존합니다.
+> 현재 km 플러그인의 4-Tier 계약은 GraphRAG → Obsidian CLI → Obsidian MCP →
+> text search 순서이며 [SETUP.md](SETUP.md)와
+> `contracts/search-fallback-4tier.md`를 따릅니다.
+> ThisCode의 `vault-search MCP` 설치기는 별도 로컬 도구를 제공하며 km
+> `/km:search`의 Tier 3를 대체하지 않습니다.
 
 ## 왜 Obsidian CLI 인가
 
@@ -83,25 +89,25 @@ VAULT="/mnt/c/Users/<windows-user>/Documents/Obsidian/<vault-name>"
 ✅ Library/Zettelkasten/note.md                 # vault root 기준
 ```
 
-## 3-Tier 폴백 패턴 — Claude Code 안에서
+## Legacy 3-Tier 폴백 패턴 — Claude Code 안에서
 
 thiscode 의 skills 가 vault 접근 시 자동 시도:
 
 ```python
 # Pseudocode (실제 skill 안 진행)
 try:
-    # Tier 1: Obsidian CLI
+    # Legacy Tier 1: Obsidian CLI
     result = subprocess.run(["obsidian", "search", "query"], ...)
 except (FileNotFoundError, subprocess.CalledProcessError):
     try:
-        # Tier 2: Obsidian MCP
+        # Legacy Tier 2: Obsidian MCP
         result = mcp__obsidian__search(query)
     except MCPError:
-        # Tier 3: Write/Read/Grep
+        # Legacy Tier 3: Write/Read/Grep
         result = grep_vault(query)
 ```
 
-→ 사용자 환경에 따라 Tier 1 또는 2 또는 3 작동. wizard 가 환경 인식 후 default 시도 순서 설정.
+→ 사용자 환경에 따라 legacy Tier 1 또는 2 또는 3 작동. wizard 가 환경 인식 후 default 시도 순서 설정.
 
 ## 알려진 버그 + 워크어라운드
 
@@ -124,9 +130,9 @@ obsidian deadends --format=json
 obsidian deadends 2>&1 | python3 -c "import sys, json; ..."
 ```
 
-### Mac `/search` GraphRAG 인덱스 미배포 (deep 모드 약점)
+### Mac 레거시 `/search` GraphRAG 인덱스 미배포 메모
 
-Mac 환경에서 `/search --deep` 호출 시 GraphRAG FastAPI (port 8400) 와 로컬 SQLite 인덱스 둘 다 미배포 → 4차 폴백 Obsidian CLI + Grep 만 가능 → semantic 연결 탐지 실패.
+아래 내용은 Mac 환경의 레거시 `/search --deep` 설정을 기록한 메모다. 당시 GraphRAG FastAPI (port 8400) 와 로컬 SQLite 인덱스 둘 다 미배포되어 4차 폴백 Obsidian CLI + Grep 만 가능했고 semantic 연결 탐지가 실패했다. 현재 검색은 km 플러그인의 `/km:search` 계약과 `contracts/search-fallback-4tier.md`를 따른다.
 
 회복: vault 안 GraphRAG 빌드 또는 vault-search MCP 활용. 자세히는 vault `<vault>/.claude-memory/machine-mac/project_search_fallback_mac_weak.md` 참조.
 
@@ -167,7 +173,7 @@ obsidian search "test" 2>&1 | head -5
 obsidian "obsidian://open?vault=<vault-name>" &
 sleep 1; kill $! 2>/dev/null
 
-# Step 5. MCP fallback 확인 (Tier 2)
+# Step 5. MCP fallback 확인 (legacy Tier 2)
 claude mcp list 2>&1 | grep -i obsidian
 ```
 

@@ -28,7 +28,7 @@ Guide `thiscode setup` / `thiscode init` through a reason-first setup path.
 5. Ask `progress_report_cadence`: `per_task`, `1m`, `3m`, `5m`, `off`, or
    `custom`. `per_task` means a meaningful subtask or milestone completion,
    not every raw model turn boundary.
-6. Wire hooks: run `/thiscode:install-hooks` (safe `jq` merge into
+6. Wire hooks: run the `/thiscode:install-hooks` skill (safe `jq` merge into
    `~/.claude/settings.json`, existing hooks preserved). This registers the
    SessionStart helper (injects `soul.md` persona + working-dir memory index +
    the situational rules router `rules/INDEX.md`) and the active-meeting Stop
@@ -58,7 +58,7 @@ never be empty or omitted — a silent skip reads as an incomplete setup:
 
 ```yaml
 setup_completion:
-  aliases: installed | declined(<reason>)   # step 8 — REQUIRED (bot 생성 흐름은 create-bot 의 $BOT_DIR/bot.yaml 이 정본)
+  aliases: installed | declined(<reason>)   # step 8 — REQUIRED (bot 생성 흐름은 create-bot 의 $BOT_DIR/bot.yaml 을 기준으로 삼는다)
   wd_docs: created | declined(<reason>)     # WD CLAUDE.md — create-bot Step 6 결과(bot.yaml wd_docs 와 동일, REQUIRED)
   hooks_wired: true                         # step 6 — install-hooks verify passed
   doctor: pass                              # step 9
