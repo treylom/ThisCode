@@ -9,7 +9,7 @@ allowed-tools: Bash Read Write AskUserQuestion
 
 # /thiscode:create-discord-bot — Discord 봇 생성 (정식 진입점)
 
-> 이 스킬은 [`../create-bot/SKILL.md`](../create-bot/SKILL.md) 의 정식 대칭 이름이다. 지금 즉시 그 파일을 Read 하고 절차 전체를 그 정본대로 실행한다. 본 파일에 절차 사본을 두지 않는다(사본 drift 방지).
+> 이 스킬은 [`../create-bot/SKILL.md`](../create-bot/SKILL.md) 의 정식 대칭 이름이다. 지금 즉시 그 파일을 Read 하고 절차 전체를 그 파일대로 실행한다. 본 파일에 절차 사본을 두지 않는다(사본 drift 방지).
 
 $ARGUMENTS
 

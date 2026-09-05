@@ -279,12 +279,14 @@ Plain intro: [memory-dreaming.md](memory-dreaming.md).
 
 ## §4 — How to set up & how to ask (first run)
 
-![km plugin vault-search fallback with Obsidian-less degradation — GraphRAG → Obsidian CLI → vault-search MCP → ripgrep](../assets/search-fallback-4tier.png)
+![Historical km/ThisCode search fallback illustration — archived GraphRAG → vault-search MCP → Obsidian CLI → ripgrep numbering; current contract is GraphRAG → Obsidian CLI → vault-search MCP → ripgrep](../assets/search-fallback-4tier.png)
+
+> The embedded illustration is retained as a historical artifact; its legacy tier numbering is not a current km runtime claim. Use the current contract and text above for today’s fallback order.
 
 After install + the three files above:
 
 ```
-/thiscode:setup            # configure the ThisCode bot harness; use installer scripts for search tiers
+/thiscode:setup            # configure the ThisCode bot harness (search tiers: ThisCode scripts/install-*.sh; km config: /km:setup)
 /km:search "..."           # vault search fallback (km plugin)
 ```
 

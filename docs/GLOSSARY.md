@@ -20,7 +20,8 @@ LLM 에게 주는 명령어 / 질문 text.
 LLM 이 생성한 응답 text.
 
 ### temperature
-LLM 응답의 무작위성 (0=결정적, 1=창의적). thiscode 검색 응답은 보통 0.2~0.5.
+LLM 응답을 생성할 때 무작위성에 영향을 주는 설정.
+실제 값과 지원 범위는 사용하는 모델·호출 설정에 따라 달라진다.
 
 ### embedding
 단어 / 문장을 숫자 벡터로 변환한 표현. 예: "ARR" = [0.23, -0.45, 0.81, ...] (384-dim). 의미가 비슷한 단어는 벡터가 가까움.
@@ -66,7 +67,8 @@ entity (개체) + relation (관계) 그래프. 예: NuriFlow --[CEO of]--> John.
 Retrieval Augmented Generation — 검색 결과를 LLM 에게 context 로 주고 답변 생성.
 
 ### GraphRAG
-RAG + knowledge graph 통합. Microsoft Research 가 2024 발표한 패턴. thiscode Tier 1 의 backbone.
+RAG + knowledge graph 통합. Microsoft Research 가 2024 발표한 패턴. km 플러그인
+4-Tier 검색의 Tier 1 backbone이며, ThisCode는 관련 로컬 도구를 설치·점검한다.
 
 ### chunk
 문서를 LLM context 에 들어갈 크기 (예: 500 token) 로 자른 단위.

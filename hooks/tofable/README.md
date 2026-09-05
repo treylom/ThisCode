@@ -7,8 +7,8 @@ Python scripts driven over stdin/stdout — no dependencies beyond Python 3.
 
 This guide is for **Claude Code**. The same two scripts work in any harness
 that can run a command on a post-tool event and on a turn-end event; only
-the wiring syntax differs. If you're on **Codex**, prefer the upstream
-plugin instead — see [`../codex/README.md`](../codex/README.md).
+the wiring syntax differs. Codex-specific wiring is not included in this
+vendored hook guide; the installation steps below cover Claude Code only.
 
 ## The files
 

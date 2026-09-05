@@ -130,7 +130,7 @@ which obsidian-cli
 ### 3-B. Skip — Obsidian 없이도 잘 작동 ✅
 
 - 4-Tier 중 Tier 2 (Obsidian CLI) 만 SKIP
-- 나머지 Tier 1 (GraphRAG) / Tier 3 (MCP) / Tier 4 (ripgrep) 정상 작동
+- 나머지 Tier 1 (GraphRAG) / Tier 3 (vault-search MCP) / Tier 4 (ripgrep) 정상 작동
 - 기능 80% 동일, 단 Obsidian graph view 와 연동 X
 
 **Obsidian 없이 뭐가 되고 뭐가 안 되나 (구체적으로):**
@@ -150,39 +150,18 @@ which obsidian-cli
 
 ## 4단계: GraphRAG 까지 가실래요? 🚀
 
-3가지 옵션 중 선택:
+2가지 옵션 중 선택:
 
 | 선택 | 누가? | 시간 |
 |---|---|---|
 | **A. 지금은 패스** | 빠르게 도입, Tier 2 까지만 | 0분 |
-| **B. 도커로 간편 설치** | 도커 익숙한 사용자 | 10분 |
-| **C. Python 로컬 설치** | 직접 디버깅 원하는 사용자 | 25분 |
+| **B. Python 로컬 설치** | 직접 디버깅 원하는 사용자 | 25분 |
 
 ### 4-A. 지금은 패스 ✅
 
 → 바로 5단계로
 
-### 4-B. 도커로 간편 설치
-
-```bash
-docker --version   # 검증: Docker 설치 확인
-docker pull ghcr.io/treylom/ThisCode-graphrag:v1.0
-docker run -d -p 8400:8400 -v ~/vault:/vault --name thiscode-graphrag ghcr.io/treylom/ThisCode-graphrag:v1.0
-```
-
-**✅ 성공 모습:**
-
-```bash
-curl localhost:8400/health
-# {"status":"ok"}
-```
-
-**❌ 실패 시:**
-
-- Docker 미설치 → https://docs.docker.com/get-docker/
-- port 8400 충돌 → `-p 8401:8400` 으로 변경 후 `GRAPHRAG_URL=http://localhost:8401` env 설정
-
-### 4-C. Python 로컬 설치
+### 4-B. Python 로컬 설치
 
 ```bash
 python3 --version   # 검증: 3.10+
@@ -206,18 +185,22 @@ bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
-**✅ 성공 모습 (예시 — 본인 선택에 따라 SKIP 표기):**
+**✅ 성공 모습 (예시 — 환경에 따라 각 단계의 상태가 달라집니다):**
 
 ```
-thiscode healthcheck v1.0
+thiscode healthcheck v2.3 — Phase progress
 ─────────────────────────────────
-✓ Tier 4 (ripgrep)  : OK
-✓ Tier 3 (MCP)      : OK
-○ Tier 2 (CLI)      : SKIP (Obsidian 미사용 — 2-B 선택)
-○ Tier 1 (GraphRAG) : SKIP (4-A 선택)
+✓ Phase 0 superpowers (plugin)       : OK
+✓ Phase 1 ripgrep (Tier 4)           : OK
+○ Phase 2 obsidian-cli (Tier 2)      : NOT YET
+○ Phase 3 vault-search MCP (Tier 3)  : NOT YET
+○ Phase 4 GraphRAG (Tier 1)          : NOT YET
+○ Phase 5 Dense embedding (4-channel): NOT YET
 ─────────────────────────────────
-all required checks passed ✅
+Summary: 2 OK, 4 NOT YET (all required passed) ✅
 ```
+
+Exit code: `0` = all phases OK / `1` = required FAIL / `2` = optional phase가 아직 준비되지 않음.
 
 **❌ 실패 시:**
 
@@ -257,7 +240,7 @@ A. 네. 각 단계가 독립적이라 1-3단계까지만 해도 Tier 4 (ripgrep)
 A. macOS / Linux / WSL 은 검증 완료. Windows native 는 추후 지원 예정 (현재 WSL 권장).
 
 **Q. 학생인데 비용 걱정?**
-A. Tier 4 (ripgrep) + Tier 2 (Obsidian) 는 100% 무료. Tier 3 (MCP) 도 무료 (Claude Code 구독 안에). Tier 1 (GraphRAG) 만 OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing $0.5-5 정도.
+A. Tier 4 (ripgrep) + Tier 2 (Obsidian CLI) 는 100% 무료. Tier 3 (vault-search MCP) 도 무료 (Claude Code 구독 안에). Tier 1 (GraphRAG) 만 OpenAI/Anthropic API 호출 → 본인 vault 크기에 따라 1회 indexing $0.5-5 정도.
 
 **Q. 이미 obsidian-cli 만 쓰고 있는데 차이는?**
 A. README 의 5-axis benchmark 표 참고. 예전 ThisCode 가이드 메모에는 당시 Obsidian CLI 기준선보다 GraphRAG recall이 높다고 적혀 있었지만, 보관된 2026-05-13 결과는 legacy engine ID(vault-search MCP는 2, Obsidian CLI는 3)로 Tier 1·2를 건너뛰어 정확한 상승률을 입증하지 않습니다. 이 메모는 역사적 기록이며 현재 km 플러그인 runtime 성능 비교를 뜻하지 않습니다. 현재는 Tier 2 Obsidian CLI(가벼운 로컬 검색)와 Tier 1 GraphRAG(semantic/graph 검색, 더 큰 셋업·API 비용)의 trade-off를 본인 fixture로 비교하고, 역사적 상승률은 재사용하지 마세요.

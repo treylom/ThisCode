@@ -6,7 +6,11 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
-test('healthcheck labels match the current search contract without probing host services', (t) => {
+const posixOnlySkip = process.platform === 'win32'
+  ? 'POSIX shell fixtures; exercised by macOS and Ubuntu jobs'
+  : false;
+
+test('healthcheck labels match the current search contract without probing host services', { skip: posixOnlySkip }, (t) => {
   const fixture = mkdtempSync(join(tmpdir(), 'thiscode-health-labels-'));
   t.after(() => rmSync(fixture, { recursive: true, force: true }));
   const fixtureBin = join(fixture, 'bin');
@@ -24,4 +28,23 @@ test('healthcheck labels match the current search contract without probing host 
   assert.equal(result.status, 2, result.stdout + result.stderr); // Optional tools are intentionally absent.
   assert.match(result.stdout, /Phase 2 obsidian-cli \(Tier 2\)/);
   assert.match(result.stdout, /Phase 3 vault-search MCP \(Tier 3\)/);
+});
+
+test('missing Obsidian keeps MCP ahead of ripgrep in both fallback notices', { skip: posixOnlySkip }, (t) => {
+  const fixture = mkdtempSync(join(tmpdir(), 'thiscode-missing-obsidian-'));
+  t.after(() => rmSync(fixture, { recursive: true, force: true }));
+  const fixtureBin = join(fixture, 'bin');
+  mkdirSync(fixtureBin);
+  // Avoid detecting any host GUI installation; CLI candidates are excluded by PATH.
+  writeFileSync(join(fixtureBin, 'uname'), '#!/bin/sh\nprintf "FixtureOS\\n"\n', { mode: 0o755 });
+  const script = fileURLToPath(new URL('../scripts/install-obsidian-cli.sh', import.meta.url));
+  for (const args of [['--check'], []]) {
+    const result = spawnSync('/bin/bash', [script, ...args], {
+      encoding: 'utf8', input: 'n\n',
+      env: { ...process.env, HOME: fixture, PATH: `${fixtureBin}:/usr/bin:/bin` },
+    });
+    assert.ifError(result.error);
+    assert.equal(result.status, args.length ? 1 : 0, result.stdout + result.stderr);
+    assert.match(result.stdout, /Tier 3 \(MCP\), then Tier 4 \(ripgrep\) remain as fallbacks/);
+  }
 });

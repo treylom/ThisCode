@@ -11,7 +11,7 @@ Claude Code 세션이 Slack 채널·DM 메시지를 자기 컨텍스트로 직�
 
 ## ⚠️ 시작하기 전 — 브리지 소스는 번들에 동봉됨 (2026-08-06 결정 · vendor 동봉)
 
-이 브리지의 실제 코드(`claude-channel-server`)는 **`vendor/claude-channel-server/`에 ThisCode 번들 안에 동봉되어 있다**(재경님 결정 ⓐ — "ThisCode로 사람들이 앞으로 slack을 연결하려면 동봉되어 있어야 한다"). 소스만 있고 `dist/`(빌드 산출물)는 레포에 안 들어있다 — `.gitignore`가 명시적으로 제외한다(소스↔빌드본 drift 방지: 고치고 빌드 안 하면 옛 `dist`가 계속 도는 사고를 막기 위해서다). `slack:configure` 스킬의 Step 0이 이 vendor 경로를 기본값으로 찾고, `npm install && npm run build`를 자동 실행해 그 자리에서 `dist/`를 만든다.
+이 브리지의 실제 코드(`claude-channel-server`)는 **`vendor/claude-channel-server/`에 ThisCode 번들 안에 동봉되어 있다**(배포 결정). 소스만 있고 `dist/`(빌드 산출물)는 레포에 안 들어있다 — `.gitignore`가 명시적으로 제외한다(소스↔빌드본 drift 방지: 고치고 빌드 안 하면 옛 `dist`가 계속 도는 사고를 막기 위해서다). `slack:configure` 스킬의 Step 0이 이 vendor 경로를 기본값으로 찾고, `npm install && npm run build`를 자동 실행해 그 자리에서 `dist/`를 만든다.
 
 > 🔴 **라이선스 미확정(미해결)**: `vendor/claude-channel-server/package.json`에 `"license"` 필드가 없고(`"private": true`만 있음), 별도 `LICENSE` 파일도 없다 — 원본 소스 그대로 동봉했기 때문이다. ThisCode 루트 자체는 MIT(`LICENSE`, `package.json` `"license": "MIT"`)이지만, 동봉된 이 코드에 같은 라이선스를 적용할지는 **저작권자(재경님) 결정 사안**이라 아직 정하지 않았다 — 워커가 임의로 라이선스를 지어 넣지 않는다. 결정 전까지는 이 상태 그대로 두고, 결정되면 이 절과 `vendor/claude-channel-server/LICENSE`(필요시)·`package.json`을 갱신한다.
 

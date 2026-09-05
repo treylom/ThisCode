@@ -58,7 +58,7 @@ never be empty or omitted — a silent skip reads as an incomplete setup:
 
 ```yaml
 setup_completion:
-  aliases: installed | declined(<reason>)   # step 8 — REQUIRED (bot 생성 흐름은 create-bot 의 $BOT_DIR/bot.yaml 이 정본)
+  aliases: installed | declined(<reason>)   # step 8 — REQUIRED (bot 생성 흐름은 create-bot 의 $BOT_DIR/bot.yaml 을 기준으로 삼는다)
   wd_docs: created | declined(<reason>)     # WD CLAUDE.md — create-bot Step 6 결과(bot.yaml wd_docs 와 동일, REQUIRED)
   hooks_wired: true                         # step 6 — install-hooks verify passed
   doctor: pass                              # step 9

@@ -120,7 +120,7 @@ disable-model-invocation: true
 
 ## Learn More
 
-- **Setup guide**: [docs/SETUP.md](../docs/SETUP.md)
-- **Beginner guide**: [docs/SETUP-BEGINNER.md](../docs/SETUP-BEGINNER.md)
-- **Config guide**: [docs/SETUP-CONFIG-GUIDE.md](../docs/SETUP-CONFIG-GUIDE.md)
-- **Recent changes**: [docs/RECENT-CHANGES.md](../docs/RECENT-CHANGES.md)
+- **Setup guide**: [docs/SETUP.md](../../docs/SETUP.md)
+- **Beginner guide**: [docs/SETUP-BEGINNER.md](../../docs/SETUP-BEGINNER.md)
+- **Config guide**: [docs/SETUP-CONFIG-GUIDE.md](../../docs/SETUP-CONFIG-GUIDE.md)
+- **Recent changes**: [docs/RECENT-CHANGES.md](../../docs/RECENT-CHANGES.md)

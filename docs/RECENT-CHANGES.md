@@ -23,7 +23,7 @@ install, run the **`/thiscode:install-hooks` skill**
   hook that runs when the model is about to stop responding.)
 
 If hooks are not wired, the bot still runs but the items below do **not**
-auto-activate. The `/thiscode setup` skill drives this step.
+auto-activate. The `/thiscode:setup` skill drives this step.
 
 ---
 

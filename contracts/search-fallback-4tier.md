@@ -24,7 +24,7 @@ execution and km configuration. Knowledge workflows belong to
 |---|---|---|---|---|
 | 1 | GraphRAG FastAPI | `curl --connect-timeout 3 http://127.0.0.1:8400/health` returns 200 | 3s | Tier 2 |
 | 2 | Obsidian CLI | `obsidian-cli version` exits 0 (vault root resolvable) | 2s | Tier 3 |
-| 3 | vault-search MCP | `mcp__vault-search__list_notes({})` returns array | 5s | Tier 4 |
+| 3 | vault-search MCP | `mcp__vault-search__vault_search({ "query": "$QUERY", "topK": N })` succeeds and `content[0].text` contains parseable JSON | 5s | Tier 4 |
 | 4 | ripgrep / grep | `rg --version` exits 0 (or `grep` fallback) | 10s | Final fail |
 
 ## Tier 1 — GraphRAG call
@@ -46,11 +46,30 @@ Response: JSON array of vault-relative paths. Obsidian CLI is full-text, but has
 
 ## Tier 3 — vault-search MCP call
 
+The bundled `vault-search-mcp` server registers `vault_search` with a required
+`query` string and an optional numeric `topK`.
+
 ```
-mcp__vault-search__search({ "q": "$QUERY", "top_k": N })
+mcp__vault-search__vault_search({ "query": "$QUERY", "topK": N })
 ```
 
-Response: array of `{ note_path, snippet, score }`.
+The MCP response is a `CallToolResult`; its first text content block is an
+encoded JSON string. Parse `content[0].text` before reading the ranked results:
+
+```json
+{
+  "_instructions": "...",
+  "query": "...",
+  "results": [
+    { "title": "...", "slug": "...", "snippet": "...", "score": 0.0, "source": "bm25" }
+  ]
+}
+```
+
+The same server also exposes the compatibility tool
+`mcp__vault-search__search({ "query": "$QUERY" })`; its encoded JSON payload
+is `{ "results": [{ "id": "...", "title": "...", "url": "..." }] }`.
+The fallback uses `vault_search` because it returns ranked snippets and scores.
 
 ## Tier 4 — ripgrep fallback
 

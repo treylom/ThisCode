@@ -7,10 +7,13 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+const posixOnlySkip = process.platform === 'win32'
+  ? 'POSIX shell fixtures; exercised by macOS and Ubuntu jobs'
+  : false;
 
 for (const installer of ['ripgrep', 'superpowers', 'dense-embedding']) {
   for (const mode of ['--help', '-h', '--invalid', '--check']) {
-    test(`${installer} ${mode} does not write setup logs`, (t) => {
+    test(`${installer} ${mode} does not write setup logs`, { skip: posixOnlySkip }, (t) => {
       const fixture = mkdtempSync(join(tmpdir(), 'thiscode-readonly-'));
       t.after(() => rmSync(fixture, { recursive: true, force: true }));
       const fixtureBin = join(fixture, 'bin');

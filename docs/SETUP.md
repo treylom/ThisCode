@@ -86,20 +86,22 @@ bash ~/.claude/plugins/thiscode/scripts/install-graphrag.sh --apply
 bash ~/.claude/plugins/thiscode/scripts/healthcheck.sh
 ```
 
-예상 출력:
+예상 출력 (환경에 따라 각 단계의 상태가 달라집니다):
 
 ```
-thiscode healthcheck v1.0
+thiscode healthcheck v2.3 — Phase progress
 ─────────────────────────────────
-✓ Tier 4 (ripgrep)  : OK
-✓ Tier 2 (CLI)      : OK
-✓ Tier 3 (MCP)      : OK
-✓ Tier 1 (GraphRAG) : OK
+✓ Phase 0 superpowers (plugin)       : OK
+✓ Phase 1 ripgrep (Tier 4)           : OK
+○ Phase 2 obsidian-cli (Tier 2)      : NOT YET
+○ Phase 3 vault-search MCP (Tier 3)  : NOT YET
+○ Phase 4 GraphRAG (Tier 1)          : NOT YET
+○ Phase 5 Dense embedding (4-channel): NOT YET
 ─────────────────────────────────
-all required checks passed ✅
+Summary: 2 OK, 4 NOT YET (all required passed) ✅
 ```
 
-Exit code: `0` = all required OK / `1` = required FAIL / `2` = intentional SKIP only (예: Tier 1 안 깔음)
+Exit code: `0` = all phases OK / `1` = required FAIL / `2` = optional phase가 아직 준비되지 않음.
 
 ## 사용
 

@@ -25,7 +25,7 @@ $ARGUMENTS
 - `03-outcome.md` — 회의 마감 후 결론 + 후속 action
 
 Stop hook active marker:
-- `ACTIVE.md` — 현재 회의가 열려 있음을 표시하는 marker. `hooks/meeting-stop-reread.sh` 가 기본으로 읽는 SoT.
+- `ACTIVE.md` — 현재 회의가 열려 있음을 표시하는 marker. `hooks/meeting-stop-reread.sh` 가 기본으로 읽는 기준 파일.
 - 다른 파일명을 쓰는 설치자는 `MEETING_ACTIVE_FILE=<absolute-path>` 로 override.
 
 봇 N 분기:

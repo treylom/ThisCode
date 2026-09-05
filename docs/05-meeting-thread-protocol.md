@@ -1,6 +1,6 @@
 # Meeting Thread & Channel Governance Protocol
 
-> **Policy SoT**: vault `.claude/rules/channel-governance.md`  
+> **Policy source**: this document (the referenced `rules/channel-governance.md` is not bundled)
 > **Domain**: Dr. Strange (schedule / channel governance)  
 > **Status**: Active — 2026-05-16
 
@@ -107,7 +107,7 @@ Use a **separate cross-machine channel** when work crosses device or environment
 
 - `04-meeting-framework.md` — meeting structure (4-file template, agenda format)
 - `skills/meetings/SKILL.md` — `/open-meeting` skill usage
-- vault `.claude/rules/channel-governance.md` — policy SoT (authoritative)
+- vault `.claude/rules/channel-governance.md` — historical reference (not bundled); this document is the shipped policy text
 
 ---
 

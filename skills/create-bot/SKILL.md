@@ -79,23 +79,23 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 
 ### Step 3. Discord 봇 생성 (Developer Portal — 기본값 = 마법사가 완주, B7)
 
-> 🔴 **기본 계약(B7, 재경님 2026-08-10 결정 — 정본 문장)**: "캡차·사람 관문 직전까지는 알아서 전부 다 하는 것까지가 우리 설치기 역할. 안내는 강의 화면의 몫이지 사람에게 시키는 근거가 아니다." 안내문을 출력하고 멈추는 것은 **기본 흐름의 결함**이다 — 2026-08-05·2026-08-09 실측: 이 세션에 브라우저 자동화가 있고 "한 번 더 시키면" 앱 확인→Intent ON→초대 URL→서버 선택→승인까지 이미 완주된다. B7 은 **그 능력을 기본값으로 승격할 뿐, 새 자동화를 만들지 않는다.**
+> 🔴 **기본 계약(B7)**: "캡차·사람 관문 직전까지는 알아서 전부 다 하는 것까지가 우리 설치기 역할. 안내는 강의 화면의 몫이지 사람에게 시키는 근거가 아니다." 안내문을 출력하고 멈추는 것은 **기본 흐름의 결함**이다. B7 은 **그 능력을 기본값으로 승격할 뿐, 새 자동화를 만들지 않는다.**
 
-> **하드 인간 관문 — 정확히 3곳**(이 지점만은 봇이 절대 대신하지 않는다 — 계정 보안 경계. 2026-08-10 글재경 실측 보완 ④: 볼트 정본 60-doc:33·56-doc:25 "포털 자격증명·MFA·hCaptcha 셋"과 정합):
+> **하드 인간 관문 — 정확히 3곳**(이 지점만은 봇이 절대 대신하지 않는다 — 계정 보안 경계):
 > | # | 지점 | 요구 | 왜 |
 > |---|---|---|---|
 > | 1 | **포털 접속 직후 로그인 화면** | **계정 자격증명 + (설정돼 있으면) 다단계 인증(MFA)** | 로그인 세션 없이는 어떤 포털 조작도 못 한다 — 깨끗한(신규/미로그인) 계정의 실제 첫 화면이 이것이다. 구판은 이 분기가 없어 로그인 전제를 L109 OAuth 근거로만 1회 언급했다(막힘 재현) |
 > | 2 | "New Application" 생성 커밋 | **hCaptcha** | 봇 감지 — 계약 층의 `Bots cannot use this endpoint`(code 20001)를 UI 층에서 한 번 더 집행 |
 > | 3 | **Reset Token 최종 확인 모달** | **계정 비밀번호 + (설정돼 있으면) 다단계 인증(MFA)** | 토큰 = 그 봇의 통제권 전부. `네, 할게요!` **뒤에** 뜬다(1번의 로그인과는 별개 — 토큰 노출 직전 재확인용 step-up 인증) |
 >
-> **계약상 이름** (2026-08-13 — `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 등재된 이름과 1:1): 1 = `discord_portal_login` · 2 = `discord_hcaptcha` · 3 = `discord_reset_token_modal`. 이 세 이름은 **등재돼 있어** `install-gate.sh` 가 `exit 0` 을 준다 = 시도 없이 사람에게 부탁해도 되는 유일한 지점들이다. 여기 없는 이름으로 사람에게 넘기려 하면 게이트가 `exit 1` 로 막는다.
+> **계약상 이름** (`configs/install.yaml` 의 `manual_allowed_without_attempt` 에 등재된 이름과 1:1): 1 = `discord_portal_login` · 2 = `discord_hcaptcha` · 3 = `discord_reset_token_modal`. 이 세 이름은 **등재돼 있어** `install-gate.sh` 가 `exit 0` 을 준다 = 시도 없이 사람에게 부탁해도 되는 유일한 지점들이다. 여기 없는 이름으로 사람에게 넘기려 하면 게이트가 `exit 1` 로 막는다.
 >
-> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다 — slack-configure 의 "대신할까요?"(사용자가 먼저 선택) 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(재경님 지시 — create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
+> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다 — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
 
 **전제 — 가용성 탐지** (도구 이름 특정 ❌ — 환경마다 다르다, `/thiscode:help` STEP 2.5 와 동일 원칙): 이 세션에 브라우저 자동화(claude-in-chrome·playwright 계열 MCP 등)가 실제로 연결돼 있는지 먼저 확인한다.
 - **있으면** → 아래 "기본 흐름"을 그대로 실행.
-- **없으면** (Fix C, 2026-08-10 — 카파시 root-cause: 갓 설치한 세션엔 브라우저 자동화가 기본으로 없어, 이 분기가 B7 의 "기본값이 완주한다" 약속을 학생 기기에서 거짓으로 만들고 있었다) → 여기서 곧장 수동 안내로 떨어지지 않는다. **설치 모드에 따라 갈린다** (모드 = `~/.thiscode/install-state.yaml` 의 `mode`, 없으면 `configs/install.yaml` 의 `default_mode`):
-  - **`auto` 모드 (R5, 2026-08-13 재경님 "무조건 playwright / claude-in-chrome 끝까지 사용하게 할 것")** → **다시 묻지 않는다.** 사용자는 Step 0-A 에서 이미 "제가 최대한 직접 진행합니다"를 골랐고, 그 선택이 이 설치에 대한 동의다. 같은 동의를 두 번 받지 않는다. 알리고 바로 붙인다: '도구를 하나 붙이고 이어가겠습니다(1분 정도 걸립니다).' → `claude mcp add playwright -- npx @playwright/mcp@latest` → 재탐지 → "있으면" 가지로 합류.
+- **없으면** (Fix C: 갓 설치한 세션엔 브라우저 자동화가 기본으로 없어, 이 분기가 B7 의 "기본값이 완주한다" 약속을 학생 기기에서 거짓으로 만들 수 있다) → 여기서 곧장 수동 안내로 떨어지지 않는다. **설치 모드에 따라 갈린다** (모드 = `~/.thiscode/install-state.yaml` 의 `mode`, 없으면 `configs/install.yaml` 의 `default_mode`):
+  - **`auto` 모드 (R5: 자동화 도구를 끝까지 사용하도록 선택한 모드)** → **다시 묻지 않는다.** 사용자는 Step 0-A 에서 이미 "제가 최대한 직접 진행합니다"를 골랐고, 그 선택이 이 설치에 대한 동의다. 같은 동의를 두 번 받지 않는다. 알리고 바로 붙인다: '도구를 하나 붙이고 이어가겠습니다(1분 정도 걸립니다).' → `claude mcp add playwright -- npx @playwright/mcp@latest` → 재탐지 → "있으면" 가지로 합류.
     - **설치가 실제로 실패했을 때만** 아래 "수동 안내"로 간다. 그때는 **실패 사유를 함께** 보여준다('도구를 붙이려 했는데 <사유>로 안 됐습니다'). 사유 없이 수동으로 떨어지는 것은 계약 위반이다.
     - 그리고 시도 결과를 **남긴다** — 성공이든 실패든:
       ```bash
@@ -138,11 +138,11 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 
 > ⚠️ **봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 앱이라 OAuth 초대도 봇 앱마다
 > 따로. 다봇 셋업에서 신규 봇 초대를 빠뜨리면 그 봇만 무반응 (로컬 설정은 정상인데
-> 인바운드 0건이면 1순위 = 미초대). 진단: [docs/08-debug-노하우.md J-3](../docs/08-debug-노하우.md).
+> 인바운드 0건이면 1순위 = 미초대). 진단: [docs/08-debug-노하우.md J-3](../../docs/08-debug-노하우.md).
 
 **수동 안내 (도구 없음 — 사람이 직접 수행, 기존 절차 유지)**:
 
-> 🔴 **이 절을 출력하기 «전에» 게이트를 실제로 부른다** (R2 · 2026-08-13 재경님 지시 「'직접 해주셔야 할 것'을 띄우기 전에 반드시 한 번 확인」):
+> 🔴 **이 절을 출력하기 «전에» 게이트를 실제로 부른다** (R2: "직접 해주셔야 할 것"을 띄우기 전에 반드시 한 번 확인):
 > ```bash
 > bash <플러그인루트>/scripts/install-gate.sh discord_manual_full_flow
 > ```
@@ -386,7 +386,7 @@ command grep -o '<[^>]*>' "$BOT_DIR/soul.md" | grep -v '^<@[0-9]' | grep -v '^<!
 
 `/thiscode:create-bot` 인터뷰의 **1급 질문**이다 — soul.md 를 확정한 직후, WD·CLAUDE.md 를 굳히기 **전**에 묻는다 (ThisCodex `guided init` 의 `confirm_wiki_path` 가 `confirm_state_dir` 바로 앞에 오는 것과 동일한 순서 계약 — ThisCode·ThisCodex 는 같은 "위키 경로 우선" 계약을 쓴다).
 
-🔴 **기존 봇 힌트 = 보기로만, 기본값 ❌ (Fix E, 2026-08-10 — 루돌프 다봇 개발머신 실측)**: 에이전트가 이 세션에서 이미 다른 봇의 위키 경로를 알고 있다면(예: 다른 `~/.claude/channels/discord-*/CLAUDE.md` 의 "위키 연결" 절을 이전 대화에서 읽었거나, 이번 실행 중 우연히 확인했다면) 그 값을 **AskUserQuestion 의 옵션 중 하나**로 명시 제시해도 된다(예: "기존 봇과 같은 경로: `<경로>`" 라벨). 단 **사용자가 실제로 그 옵션을 선택할 때만** 채택한다 — 질문을 실제로 던지지 않고 그 값을 조용히 기본값·placeholder 로 흘려보내는 것은 금지다. 이를 어기면 "1급 질문"이 이름만 남고 실제로는 **가정**이 된다(실측: 다봇 개발머신에서 신규 봇이 기존 프로덕션 볼트를 자기 위키로 조용히 물려받았다 — 신규 학생 기기는 기존 봇이 없어 이 가지 자체가 뜨지 않는다, 격리 축이라 학생 산출물엔 영향 없음).
+🔴 **기존 봇 힌트 = 보기로만, 기본값 ❌ (Fix E)**: 에이전트가 이 세션에서 이미 다른 봇의 위키 경로를 알고 있다면(예: 다른 `~/.claude/channels/discord-*/CLAUDE.md` 의 "위키 연결" 절을 이전 대화에서 읽었거나, 이번 실행 중 우연히 확인했다면) 그 값을 **AskUserQuestion 의 옵션 중 하나**로 명시 제시해도 된다(예: "기존 봇과 같은 경로: `<경로>`" 라벨). 단 **사용자가 실제로 그 옵션을 선택할 때만** 채택한다 — 질문을 실제로 던지지 않고 그 값을 조용히 기본값·placeholder 로 흘려보내는 것은 금지다. 이를 어기면 "1급 질문"이 이름만 남고 실제로는 **가정**이 된다. 신규 환경에서는 이 선택지가 뜨지 않는다.
 
 AskUserQuestion:
 
@@ -397,7 +397,7 @@ AskUserQuestion:
 경로 (또는 Enter 로 건너뛰기):
 ```
 
-🔴 **구분자 충돌 가드 (255941b 보완 — 글재경 실측 프로브에서 `touch` 부수효과로 확인됨, 2026-08-10)**:
+🔴 **구분자 충돌 가드 (구분자 충돌 방지)**:
 아래 heredoc 을 만들기 **전에**, 에이전트가 (셸을 거치지 않고 — 자기 컨텍스트에 이미 있는 답변
 원문을 직접) 줄 단위로 스캔해 `THISCODE_WIKI_PATH_EOF` 와 **정확히 같은 줄**이 하나라도 있는지
 확인한다(부분 문자열 포함이 아니라 **줄 전체 일치** — `grep -qxF` 와 동일 판정 기준, `-x`=줄 전체
@@ -776,8 +776,8 @@ $BOT_NAME
 ## 관련 자원
 
 - hook 등록: [install-hooks 스킬](../install-hooks/SKILL.md) — **Step 6.7 ④ 가 자동으로 실행한다**(같은 `scripts/install-hooks.sh` 를 부른다). 수동 재실행용 스킬로 남겨 둔다.
-- DISCORD_STATE_DIR 구조: [../templates/discord-state-dir-README.md](../templates/discord-state-dir-README.md)
-- soul.md template: [../templates/soul-general-assistant.md](../templates/soul-general-assistant.md)
-- 규칙 시드 template (B3): [../templates/rules-seed.md](../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [../hooks/bot-session-init.sh](../hooks/bot-session-init.sh)
-- 샘플 위키 (B4, WIKI_PATH 없을 때 안내): [../sample-vault/README.md](../sample-vault/README.md)
-- 메인 wizard: [start.md](start.md)
+- DISCORD_STATE_DIR 구조: [discord-state-dir-README.md](../../templates/discord-state-dir-README.md)
+- soul.md template: [soul-general-assistant.md](../../templates/soul-general-assistant.md)
+- 규칙 시드 template (B3): [rules-seed.md](../../templates/rules-seed.md) — copy-once, 절대 덮어쓰지 않음. 낡음 WARN = [bot-session-init.sh](../../hooks/bot-session-init.sh)
+- 샘플 위키 (B4, WIKI_PATH 없을 때 안내): [sample-vault/README.md](../../sample-vault/README.md)
+- 메인 wizard: [start](../../commands/start.md)

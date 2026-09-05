@@ -159,12 +159,11 @@ status: draft (v0.2.0)
 ## Cross-reference
 
 - vault SHARED-INDEX.md — 본 카테고리의 fact source
-- `contracts/{search-fallback-4tier, km-mode-spec, km-variant-matrix}.md` — Phase 2-3 핵심 spec
+- `contracts/search-fallback-4tier.md` — 현재 km `/km:search` fallback 계약 (Tier 1 GraphRAG → Tier 2 Obsidian CLI → Tier 3 vault-search MCP → Tier 4 ripgrep)
+- km 모드·설정 동작은 km 플러그인의 `/km:*` 문서를 따른다.
 - 어제 회의 03-outcome.md §5 — thiscode plugin spec 의 영상 mapping 초안
 - 본 사이클 outcome (`AI_Second_Brain/.claude-meetings/2026-05-12-thiscode-plugin/03-outcome.md` 2026-05-13 followup)
 
 ## 잔존 작업 (chapter 본문 실제 작성)
 
 본 문서 = chapter index. 각 chapter 본문 (slide outline + 실습 script + 영상 녹화 cue) 은 별도 사이클. GPT-5.5 병렬 spawn 으로 chapter 별 outline draft 생성 가능.
-
-— Karpathy

@@ -8,6 +8,7 @@ on:
       - 'scripts/validate-agents.sh'
       - 'scripts/check-agents-index.mjs'
       - 'scripts/generate-agents-index.mjs'
+      - 'scripts/run-shell-tests.mjs'
       - 'hermes-plugin/plugin.yaml'
       - 'hermes-plugin/__init__.py'
       - 'docs/HERMES-STATUS.md'
@@ -20,6 +21,11 @@ on:
       - 'tests/test-install-*.sh'
       - 'scripts/healthcheck.sh'
       - 'tests/docs/**'
+      - 'tests/benchmark/test-*.sh'
+      - 'tests/init/test-*.sh'
+      - 'tests/push/**'
+      - 'tests/router/**'
+      - 'tests/SHELL-TESTS.md'
       - 'docs/**'
       - 'hooks/meeting-stop-reread.sh'
       - 'commands/open-meeting.md'
@@ -52,7 +58,7 @@ jobs:
           # ajv-cli also needed on PATH for shell-script validators, keep -g install.
           npm install -g ajv-cli ajv-formats js-yaml
           sudo apt-get update
-          sudo apt-get install -y jq
+          sudo apt-get install -y jq ripgrep
           sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.40.5/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
@@ -84,6 +90,9 @@ jobs:
 
       - name: Node regression tests
         run: npm test
+
+      - name: Hermetic shell regression tests (explicit allowlist)
+        run: node scripts/run-shell-tests.mjs
 
       - name: Clone-relative installer checks
         run: |

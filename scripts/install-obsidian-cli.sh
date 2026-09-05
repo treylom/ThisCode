@@ -82,7 +82,7 @@ if [ "$CHECK_ONLY" = "1" ]; then
     echo "obsidian app: present ($app_path) — CLI missing"
     exit 0
   else
-    echo "obsidian: missing — fallback to Tier 4 (ripgrep)"
+    echo "obsidian: missing — Tier 3 (MCP), then Tier 4 (ripgrep) remain as fallbacks"
     exit 1
   fi
 fi
@@ -136,6 +136,6 @@ fi
 # no-arg interactive
 read -r -p "Obsidian CLI 미설치. install 시도할까요? [y/N] " ANS
 [ "${ANS:-N}" = "y" ] || [ "${ANS:-N}" = "Y" ] && install_obsidian || {
-  echo "[install] skip — Tier 4 (ripgrep) 가 fallback"
+  echo "[install] skip — Tier 3 (MCP), then Tier 4 (ripgrep) remain as fallbacks"
   exit 0
 }

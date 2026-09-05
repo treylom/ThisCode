@@ -19,7 +19,9 @@
 
 ## Contract version
 
-`0.1.0` — see `contracts/*.md` frontmatter.
+Versions are per contract: `search-fallback-4tier` is `0.2.0`;
+`km-mode-spec`, `km-variant-matrix`, and `repo-handoff-install-contract` are
+`0.1.0`. See each file's `contracts/*.md` frontmatter.
 
 ## Drift detection
 

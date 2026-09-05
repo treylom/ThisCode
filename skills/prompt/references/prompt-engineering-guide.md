@@ -6949,16 +6949,9 @@ This collection integrates with itself—skills reference each other and build o
 
 #### References
 
-Internal skills in this collection:
-- [context-fundamentals](skills/context-fundamentals/SKILL.md)
-- [context-degradation](skills/context-degradation/SKILL.md)
-- [context-compression](skills/context-compression/SKILL.md)
-- [multi-agent-patterns](skills/multi-agent-patterns/SKILL.md)
-- [memory-systems](skills/memory-systems/SKILL.md)
-- [tool-design](skills/tool-design/SKILL.md)
-- [context-optimization](skills/context-optimization/SKILL.md)
-- [evaluation](skills/evaluation/SKILL.md)
-- [project-development](skills/project-development/SKILL.md)
+Skills named by the source collection (not bundled in ThisCode):
+context-fundamentals, context-degradation, context-compression, multi-agent-patterns,
+memory-systems, tool-design, context-optimization, evaluation, project-development.
 
 External resources on context engineering:
 - Research on attention mechanisms and context window limitations

@@ -10,8 +10,8 @@
 #
 # fail-open: no jq / empty prompt / no keyword match → emit nothing, exit 0. Never blocks.
 #
-# Register (~/.claude/settings.json) under UserPromptSubmit — see commands/install-hooks.md:
-#   {"type":"command","command":"bash ~/.claude/plugins/thiscode/hooks/rule-router.sh","timeout":3}
+# The plugin registers UserPromptSubmit in hooks/hooks.json.
+# For optional/manual registration, see skills/install-hooks/SKILL.md.
 INPUT="$(cat 2>/dev/null || true)"
 # .prompt 추출: jq → (Windows 등 jq 부재 시) python3 → python 폴백. 전부 없으면 fail-open.
 if command -v jq >/dev/null 2>&1; then

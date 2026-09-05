@@ -77,7 +77,7 @@ wizard 가 vault 상태 / 도구 / 자원 detect 후 **8 Phase progressive journ
 - **Phase 1-2**: 즉시 (ripgrep + obsidian-cli)
 - **Phase 3**: 100+ 노트 → vault-search MCP 권유
 - **Phase 4**: 500+ 노트 권유 / 1000+ strong / 옵션 언제나 (GraphRAG)
-- **Phase 5**: 2000+ 노트 → km-at Mode R preflight (read-only 진단)
+- **Phase 5**: 2000+ 노트 → km 플러그인 `/km:knowledge-manager-at` Mode R preflight (read-only 진단)
 - **Phase 6-7**: advanced (Dashboard / 하이브리드 4채널)
 
 > **GraphRAG = 환경 감지 + 선택사항** (사용자 spec). 노트 수 미충족 시도 force install 가능.
@@ -296,7 +296,7 @@ thiscode/
 ├── CODEX_VERIFY.md                        # Codex 2차 verify (회복 후)
 ├── .claude-plugin/
 │   ├── marketplace.json                   # thiscode-marketplace
-│   └── plugin.json                        # thiscode v1.3.0
+│   └── plugin.json                        # thiscode v1.4.1
 ├── commands/                              # 슬래시 발견 표면 ①
 │   ├── start.md                           # 메인 wizard (4-step 부트스트랩)
 │   ├── add-bot.md                         # 추가 Discord 봇 신설
@@ -313,10 +313,14 @@ thiscode/
 │   ├── meetings/                          # 회의실 4-file protocol
 │   ├── shared-memory/                     # 4-tier 메모리 정책
 │   └── …                                  # 전량은 `/` → thiscode: 필터로
-├── hooks/                                 # 봇 운영 hook 3종
+├── hooks/                                 # 봇 운영 hook 7종
 │   ├── bot-session-init.sh                # SessionStart → soul.md 자동 inject
 │   ├── discord-slash-cmd.sh               # UserPromptSubmit → 슬래시 강제
-│   └── regression-self-check.sh           # 4-gate self-check 표 주입
+│   ├── regression-self-check.sh           # 4-gate self-check 표 주입
+│   ├── rule-router.sh                      # UserPromptSubmit → 규칙 라우팅
+│   ├── dispatch-room-gate.py               # PreToolUse → 공용 채널 봇 응답 점검
+│   ├── meeting-stop-reread.sh              # Stop → 활성 회의 marker 재확인
+│   └── reply-gate.sh                       # Stop → 최종 답변 gate
 ├── templates/                             # 봇 페르소나 5종 + bot-roles-matrix · bot-checkup-checklist
 │   ├── soul-general-assistant.md          # default 범용 비서
 │   ├── soul-research-bot.md               # 자료조사·교차검증

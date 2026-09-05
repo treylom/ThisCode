@@ -102,7 +102,7 @@ The wizard detects your vault state / installed tools / resource limits, then re
 - **Phase 1–2**: immediate (ripgrep + obsidian-cli)
 - **Phase 3**: 100+ notes → vault-search MCP recommended
 - **Phase 4**: 500+ notes (recommended) / 1000+ (strongly recommended) / always optional (GraphRAG)
-- **Phase 5**: 2000+ notes → km-at **Mode R preflight** (read-only diagnostics, dry-run apply)
+- **Phase 5**: 2000+ notes → km plugin `/km:knowledge-manager-at` **Mode R preflight** (read-only diagnostics, dry-run apply)
 - **Phase 6–7**: advanced (Dashboard / 4-channel hybrid retrieval)
 
 > **GraphRAG = env-detected + opt-in** (user-spec). Force install is permitted even when note count is below the heuristic threshold.
@@ -410,14 +410,14 @@ The `skills/install-hooks/SKILL.md` skill verifies that `hooks/hooks.json` carri
 ### GraphRAG server won't start (vendor dependency + ~/.cache venv)
 
 ```bash
-bash scripts/install-graphrag.sh --check     # python3 + vendor SoT + requirements + venv + server health
-bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / vendor SoT check
+bash scripts/install-graphrag.sh --check     # python3 + vendored source + requirements + venv + server health
+bash scripts/install-graphrag.sh --preflight # Python 3.10+ / disk 5GB+ / port 8400 / vendored source check
 bash scripts/install-graphrag.sh --apply     # venv setup + pip install + nohup uvicorn
 ```
 
 The `--apply` mode:
 - venv location = `~/.cache/thiscode/graphrag/venv` (writable home cache)
-- vendor SoT = `<thiscode>/vendor/graphrag/scripts/` (equivalent snapshot of vault SoT, 21 files)
+- vendored source = `<thiscode>/vendor/graphrag/scripts/` (equivalent 21-file snapshot)
 - requirements = `vendor/graphrag/scripts/requirements.txt` (7 deps: networkx / louvain / pyyaml / fastapi / uvicorn / numpy / httpx)
 - entry = `uvicorn search_server:app --host 127.0.0.1 --port 8400` (background nohup)
 - log = `~/.cache/thiscode/graphrag/run/graphrag.log`
@@ -426,11 +426,15 @@ The `--apply` mode:
 
 ## 🔬 What's inside (advanced)
 
-### The 3 hooks
+### The 7 hooks
 
 - **`bot-session-init.sh`** (SessionStart) — auto-detects bot via `DISCORD_STATE_DIR` env var → injects soul.md + per-bot WD memory + common discipline
 - **`discord-slash-cmd.sh`** (UserPromptSubmit) — if user prompt's first line is `/cmd`, forces Skill tool invocation
 - **`regression-self-check.sh`** (UserPromptSubmit) — injects a 4-gate self-check table to refresh attention against regression patterns
+- **`rule-router.sh`** (UserPromptSubmit) — routes matching prompts to the applicable rule guidance
+- **`dispatch-room-gate.py`** (PreToolUse) — checks bot-to-bot replies against the shared-room gate
+- **`meeting-stop-reread.sh`** (Stop) — rereads the active meeting marker before stopping
+- **`reply-gate.sh`** (Stop) — applies the final reply gate before a bot session stops
 
 ### Skills (agentskills.io-standard)
 

@@ -128,9 +128,9 @@ obsidian deadends --format=json
 obsidian deadends 2>&1 | python3 -c "import sys, json; ..."
 ```
 
-### Mac `/search` GraphRAG 인덱스 미배포 (deep 모드 약점)
+### Mac 레거시 `/search` GraphRAG 인덱스 미배포 메모
 
-Mac 환경에서 `/search --deep` 호출 시 GraphRAG FastAPI (port 8400) 와 로컬 SQLite 인덱스 둘 다 미배포 → 4차 폴백 Obsidian CLI + Grep 만 가능 → semantic 연결 탐지 실패.
+아래 내용은 Mac 환경의 레거시 `/search --deep` 설정을 기록한 메모다. 당시 GraphRAG FastAPI (port 8400) 와 로컬 SQLite 인덱스 둘 다 미배포되어 4차 폴백 Obsidian CLI + Grep 만 가능했고 semantic 연결 탐지가 실패했다. 현재 검색은 km 플러그인의 `/km:search` 계약과 `contracts/search-fallback-4tier.md`를 따른다.
 
 회복: vault 안 GraphRAG 빌드 또는 vault-search MCP 활용. 자세히는 vault `<vault>/.claude-memory/machine-mac/project_search_fallback_mac_weak.md` 참조.
 

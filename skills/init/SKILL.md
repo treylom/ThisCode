@@ -6,7 +6,7 @@ allowedTools: Bash, AskUserQuestion, Read
 
 # init
 
-> obsidian-cli → GraphRAG 점진 진행을 학생이 자연스럽게 따라가도록 wizard 형 install 진입점 (사용자 v2.1 spec).
+> obsidian-cli → GraphRAG 점진 진행을 학생이 자연스럽게 따라가도록 wizard 형 install 진입점.
 
 ## Repo-handoff contract (read first)
 
