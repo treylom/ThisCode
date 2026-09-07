@@ -3,6 +3,8 @@
 Trigger: delegating to / waiting on another bot, convening a meeting,
 asserting another bot's identity or health, or coordinating multiple agents.
 
+- Worker recovery has two layers: the harness registry (clear with TaskStop <name>) and the OS process/pane (reap script). Reap alone leaves the teammate listed; TaskStop alone may leave a pane. Order = TaskStop → reap. A tool-restricted worker may write exactly one designated report file (e.g. /tmp/k-<name>.md) even when it has no Write tool.
+
 ## 1. Bot identity = verify, never assume
 - A bot's identity SoT is the persona injected at session start for **its own**
   `<bot>` (derived from its state dir / `~/.../discord-<bot>`), plus its own
