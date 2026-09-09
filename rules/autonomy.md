@@ -114,7 +114,6 @@ reached partial / blocked / awaiting-permission state.
   separate table.
 - Case-based; re-judge per situation; the maintainer's call wins.
 
-
 ## 2.11 No re-asking the operator about finished projects (2026-09-09)
 
 - If a deferred ledger row's release condition is "wait for the operator to confirm," and that confirmation is tied to a project or delivery that has already finished, do not raise it to the operator again. Close the row as not applicable instead.
