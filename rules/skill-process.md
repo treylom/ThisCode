@@ -42,10 +42,6 @@ an automated experiment loop; delegating to a sub-agent.
   the failure mode is invisible. See the periodic-review rule for the standing
   check and for why nested collisions behave differently.
 
-## 1.9 Pre-check before starting a provisionally assigned ledger row (2026-09-09)
-Before starting a ledger row that was provisionally assigned or handed over, run the pre-check script once for that owner. For any row it flags as a possible match, open the diff of the matching commit and judge whether the work was actually reflected in code, rules, skills, or config files, or merely quoted in a meeting note, log, or mirror copy. If it was reflected, close the row with a one-line receipt pointing to the exact file and line (or commit hash). If it was only quoted, leave the row's status unchanged and add a note explaining it was a false match. Only rows the script does not flag should be started as new work. The bot starting the row is responsible for writing the receipt or note directly on that row; the script's own exclusion list for quoted sources is the reference to follow, not a copy kept in this document.
-(vault docs/rules-full/skill-process.md, 2026-09-09)
-
 ## 2. Design-before-implement (hard gate)
 - "Let's build X" = present a design and get alignment **before** scaffolding
   or implementation. Exception: if the user explicitly said "proceed" under a
@@ -158,3 +154,7 @@ tool(s) and where the diversity check is recorded.
   sibling gates (other surfaces of the same defect) first; and never share a
   waiver key across surfaces whose recoverability differs — the agent who coined
   that principle violated it themselves three days later.
+
+## 10. Pre-check before starting a provisionally assigned ledger row (2026-09-09)
+Before starting a ledger row that was provisionally assigned or handed over, run the pre-check script once for that owner. For any row it flags as a possible match, open the diff of the matching commit and judge whether the work was actually reflected in code, rules, skills, or config files, or merely quoted in a meeting note, log, or mirror copy. If it was reflected, close the row with a one-line receipt pointing to the exact file and line (or commit hash). If it was only quoted, leave the row's status unchanged and add a note explaining it was a false match. Only rows the script does not flag should be started as new work. The bot starting the row is responsible for writing the receipt or note directly on that row; the script's own exclusion list for quoted sources is the reference to follow, not a copy kept in this document.
+(vault docs/rules-full/skill-process.md, 2026-09-09)
