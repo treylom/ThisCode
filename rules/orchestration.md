@@ -168,7 +168,9 @@ in-flight tracks; your maintainer-confirmation channel.
 
 ## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
 
-Before spawning any subagent/worker, run this order: **① existing-project / knowledge-base exploration = the vault search entry point first** (the 4-tier search command; do not replace it with a scout/explore subagent) → **② planning or spec refinement = the interview/planning tools (ouroboros pm/interview, superpowers brainstorming)** — never hand planning to a spawned worker → **③ only what is left — reading 3+ files, an independent fan-out unit, or a mechanical run — may be spawned, and only after the delegation-shape judgment.** "Saving tokens" is not a reason to spawn: a worker saves main-context tokens by holding thinner evidence. Record the routing as the first line of the task log: `routing: search ○ / planning-tool ○ / spawn reason …`. Scope = every bot, including remote machines.
+Before spawning any subagent/worker, run this order: **① existing-project / knowledge-base exploration = the vault search entry point first** (e.g. the 4-tier search command; do not replace it with a scout/explore subagent) → **② planning or spec refinement = the interview/planning tools (e.g. ouroboros pm/interview, superpowers brainstorming)** — never hand planning to a spawned worker → **③ only what is left — reading 3+ files, an independent fan-out unit, or a mechanical run — may be spawned, and only after the delegation-shape judgment.** "Saving tokens" is not a reason to spawn: spawning saves main-context tokens only at the cost of a thinner grasp of the source material. Record the routing as the first line of the task log: `routing: search ○ / planning-tool ○ / spawn reason …`. Scope = every bot, including bots on remote machines.
+
+▶ Fill in: your vault-search entry point; your planning/interview tools; the section that defines your delegation-shape judgment.
 
 ## Deferred instructions — re-check the ledger at fire time
 
