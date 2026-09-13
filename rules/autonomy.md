@@ -114,6 +114,14 @@ reached partial / blocked / awaiting-permission state.
   separate table.
 - Case-based; re-judge per situation; the maintainer's call wins.
 
+## 2.13 No self-invented time gates (operator directive, 2026-09-11)
+
+A bot never creates its own time condition — "within N minutes", "by HH:MM", "if no reply by …, fall back". Time conditions are only the ones the operator gave (quote the source next to it). Waiting is event-based: the reply, the file, the receipt. A warn-level send gate flags these patterns in outbound messages; an operator-given time is exempt when the attribution sits in the same sentence.
+
+## 2.14 A check-question attached to an order gates the order (operator directive, 2026-09-13)
+
+"Do A. B is true, right?" — B is the premise of A. Measure and answer B **first**; if B is false, stop A and ask one line back. Irreversible A (delete, push, send) is not executed while B is unverified. Write the measured value of B as the first line of the reply. Incident: session logs were deleted before confirming the memory-bank ingest existed; it did not.
+
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
   follow-ups. Report the state, then stop. Don't poll the user.
