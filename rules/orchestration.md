@@ -166,6 +166,10 @@ in-flight tracks; your maintainer-confirmation channel.
 
 ▶ Fill in: your write-capable worker roster (workflow engine / Agent Teams / specialist bots); your workflow-engine's opt-in mechanism; your bot roster's `domains:` field location; your designated general-purpose worker bot's identity; your delegation-ledger path; your knowledge-index registration step.
 
+## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
+
+Before spawning any subagent/worker, run this order: **① existing-project / knowledge-base exploration = the vault search entry point first** (the 4-tier search command; do not replace it with a scout/explore subagent) → **② planning or spec refinement = the interview/planning tools (ouroboros pm/interview, superpowers brainstorming)** — never hand planning to a spawned worker → **③ only what is left — reading 3+ files, an independent fan-out unit, or a mechanical run — may be spawned, and only after the delegation-shape judgment.** "Saving tokens" is not a reason to spawn: a worker saves main-context tokens by holding thinner evidence. Record the routing as the first line of the task log: `routing: search ○ / planning-tool ○ / spawn reason …`. Scope = every bot, including remote machines.
+
 ## Deferred instructions — re-check the ledger at fire time
 
 A scheduled instruction (cron, reminder, queued dispatch) is a **snapshot of the world at registration time** — and it is the *whole instruction* that goes stale, not just one value. Before executing any deferred instruction, re-read the tail of the relevant ledger/SoT: if a correction, cancellation, or resolution has been recorded since, **hold and report instead of executing** (a hold is a normal branch, not a failure). Stamp every scheduled instruction with its as-of time in the payload. Case-based (2026-07-25: an errand scheduled at 13:04 was resolved at 15:00 and cancelled in the ledger at 18:05, yet fired and executed verbatim at 19:00, emitting a stale credential request — a counterpart's refusal gate contained the damage); re-judge per situation; the maintainer's call wins.
