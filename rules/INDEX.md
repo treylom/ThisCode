@@ -23,7 +23,7 @@
 
 | Trigger (when this situation) | Rule file | One-line gist |
 |---|---|---|
-| Replying/reporting to an external channel (Discord etc.) | [discord-comms.md](discord-comms.md) | Send via the channel reply tool; terminal output ≠ delivered. Bot mention/thread/completion gate |
+| Replying/reporting to an external channel (Discord etc.) | [discord-comms.md](discord-comms.md) | Send via the channel reply tool; terminal output ≠ delivered. Readability shape — line breaks, one item per line (hook §1-c). Bot mention/thread/completion gate |
 | Asserting a fact / "it's empty/missing/exists" / acking a sub-agent report / about to run a count or absence check | [source-fact.md](source-fact.md) | No source → no assertion. Separate checked facts from interpretation in plain prose; don't single-grep |
 | Tempted to confirm every step / about to say "done" / partial·blocked / **before starting non-due work** | [autonomy.md](autonomy.md) | Self-judge & proceed; over-confirm ❌. Proactively report completion/partial/blocked without being pinged. **Before non-due work, cross-check the day's hard events → priority counter-question (§2.7)** · explicit waiting verdict when an approval is pending (§2) |
 | Starting a build/design / debug / verify task / seeing the same defect recur a third time | [skill-process.md](skill-process.md) | Invoke the relevant skill BEFORE responding. Root cause before fix. Design before implement (unless user said "proceed") |
