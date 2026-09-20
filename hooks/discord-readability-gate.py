@@ -9,7 +9,7 @@ Judgement (character counts = len):
   ③ one line outside a code fence ≥ 600 chars              → deny  (paragraph too long)
 Contract: deny = stdout JSON hookSpecificOutput.permissionDecision="deny" + exit 0. Non-target tool / unparsable input = exit 0 (fail-open).
 Bypass (only when a line break would change meaning — tables, code; issued by the sender itself):
-      python3 discord-readability-gate.py --allow-once "<reason>"  → ~/.claude/state/discord-readability/<bot>.allow-once (TTL 600 s · consumed once · logged)
+      python3 <absolute path of this file> --allow-once "<reason>"  (the deny text prints the exact command)  → ~/.claude/state/discord-readability/<bot>.allow-once (TTL 600 s · consumed once · logged)
 """
 from __future__ import annotations
 
@@ -29,11 +29,12 @@ LINE_DOTLIST_MIN = 300
 DOTS_MIN = 5
 LINE_MAX = 600
 ALLOW_ONCE_TTL = 600
+HOOK_PATH = os.path.abspath(__file__)  # printed in the deny text so the bypass command works from any cwd
 DENY = (
     "🚧 Readability gate: {reason}. "
     "Fix the shape and resend — first line = the conclusion in one line → blank line → one item per line (numbered or '-') → ids/hashes/paths in a final block → signature; one paragraph ≤ 3 sentences. "
     "Rule = rules/discord-comms.md §1-c. Only when a line break would change meaning (tables, code): "
-    "`python3 hooks/discord-readability-gate.py --allow-once \"<reason>\"` (one use · logged)."
+    "`python3 {hook} --allow-once \"<reason>\"` (one use · logged)."
 )
 
 
@@ -135,7 +136,7 @@ def main() -> int:
     sys.stdout.write(json.dumps({"hookSpecificOutput": {
         "hookEventName": "PreToolUse",
         "permissionDecision": "deny",
-        "permissionDecisionReason": DENY.format(reason=reason),
+        "permissionDecisionReason": DENY.format(reason=reason, hook=HOOK_PATH),
     }}, ensure_ascii=False))
     return 0
 

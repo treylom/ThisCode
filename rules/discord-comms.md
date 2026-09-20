@@ -49,7 +49,7 @@ Trigger: any moment you respond/report/notify to an external channel
   with 3+ items use the same shape (humans read those channels too).
 - **Shape (fixed order)**: ① first line = the conclusion / gist in one line
   ② blank line ③ **one item per line** (numbered `1.` or `-`; a " · "-joined run
-  is fine up to 3 items — beyond that, break it into a list) ④ coordinates —
+  is fine up to 3 items — beyond that, break it into a list; the hook only bounces at 5+) ④ coordinates —
   ids, hashes, paths — go in a **final block** of their own ⑤ signature. One
   paragraph ≤ 3 sentences; one line ≤ 300 chars recommended.
 - **Mechanical enforcement = `hooks/discord-readability-gate.py`** (`PreToolUse`
@@ -60,7 +60,7 @@ Trigger: any moment you respond/report/notify to an external channel
   fix and resend and it passes (a bounce, not a wall). Log =
   `~/.claude/state/discord-readability/log.jsonl`.
 - **Exception (only where a line break would change meaning — tables, code)**:
-  `python3 hooks/discord-readability-gate.py --allow-once "<reason>"` → one
+  `python3 <installed path of hooks/discord-readability-gate.py> --allow-once "<reason>"` (the deny text prints the exact command with the absolute path — copy it as-is) → one
   pass for that bot (TTL 600 s · logged · issued by the sender itself).
   Habitual bypass = violating the directive.
 - **Why**: a 700-char single-block DM drew the maintainer's "put some line
