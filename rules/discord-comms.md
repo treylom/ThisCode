@@ -44,6 +44,31 @@ Trigger: any moment you respond/report/notify to an external channel
   not a default. Prose that reads fine as prose stays plain text; everyday
   conversation is never card-ified.
 
+## 1-c. Readability shape — line breaks, not walls of text (maintainer directive, 2026-09-20)
+- **Applies to**: every message a human reads = mandatory. Bot-to-bot messages
+  with 3+ items use the same shape (humans read those channels too).
+- **Shape (fixed order)**: ① first line = the conclusion / gist in one line
+  ② blank line ③ **one item per line** (numbered `1.` or `-`; a " · "-joined run
+  is fine up to 3 items — beyond that, break it into a list) ④ coordinates —
+  ids, hashes, paths — go in a **final block** of their own ⑤ signature. One
+  paragraph ≤ 3 sentences; one line ≤ 300 chars recommended.
+- **Mechanical enforcement = `hooks/discord-readability-gate.py`** (`PreToolUse`
+  on the channel `reply` / `edit_message` tools; body = `tool_input.text`):
+  ① total ≥ 350 chars with zero line breaks → deny ② one line outside a code
+  fence ≥ 300 chars carrying 5+ " · " separators → deny ③ one line outside a
+  code fence ≥ 600 chars → deny. The deny text carries the required shape —
+  fix and resend and it passes (a bounce, not a wall). Log =
+  `~/.claude/state/discord-readability/log.jsonl`.
+- **Exception (only where a line break would change meaning — tables, code)**:
+  `python3 hooks/discord-readability-gate.py --allow-once "<reason>"` → one
+  pass for that bot (TTL 600 s · logged · issued by the sender itself).
+  Habitual bypass = violating the directive.
+- **Why**: a 700-char single-block DM drew the maintainer's "put some line
+  breaks in this" (2026-09-20). Pairs with §7 (pointers to detail): *attach
+  the coordinates, but not as one lump*.
+- Hooks load at session start — sessions already running hold the shape by
+  hand until their next restart.
+
 ## 2. Addressing another bot
 - In a shared channel, a message aimed at another bot **must** carry its
   `<@user_id>` mention or a `reply_to` — otherwise the receiving bot silently

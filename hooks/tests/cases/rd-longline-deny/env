@@ -1,0 +1,2 @@
+DISCORD_STATE_DIR=/x/discord-testbot
+DISCORD_READABILITY_STATE_DIR=/tmp/rd-gate-test-state

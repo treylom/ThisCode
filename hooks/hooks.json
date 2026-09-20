@@ -42,6 +42,11 @@
             "type": "command",
             "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/dispatch-room-gate.py\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/discord-readability-gate.py\"",
+            "timeout": 5
           }
         ],
         "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message"
