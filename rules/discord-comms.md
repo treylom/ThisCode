@@ -183,6 +183,49 @@ When a report or completion message mentions items whose detail lives in a separ
 - Form: short reports use inline parenthesized paths; long reports use a shortcuts table at the top.
 - Case boundary: items whose one-line mention IS the full record need no coordinate — do not fabricate links; say the line is all there is.
 
+## 8. Send restraint — two independent limits (maintainer directives, 2026-09-10 · 2026-09-21)
+
+Both limits govern *how many messages you send*, not their contents. They fail in
+opposite directions, and one does not catch the other.
+
+### 8-a. Cap on consecutive unanswered sends
+
+Sending again before the recipient has answered is capped. Each individual send
+looks justified in the moment ("the reviewer didn't catch it", "they may be
+filling in the old draft"); the violation only exists **in the sum**, and the sum
+is invisible once the turn ends.
+
+- For a long worker turn (≥5 min expected): **one line on start, one progress
+  line in the middle.** Not one per intermediate artifact.
+- Past the cap (default: two unanswered sends), a further send must answer:
+  *what does the recipient decide with this?* If there is no answer, it is not
+  ready to send.
+- Rules that accumulate cannot be enforced by attention. If your harness can hold
+  a per-channel counter, put the limit there — the bot will not feel the sum.
+
+### 8-b. One question, one answer
+
+The cap in 8-a counts *unanswered* sends, so it resets whenever the user speaks.
+That leaves a second failure open: **splitting the answer to a single question
+across several messages.** Neither the send interval nor "has the user replied"
+can detect it.
+
+The root cause is not any single message's content — it is **sending before the
+work is done**. If an investigation (a background job, a subagent, a browser
+task) is running *because of that question*, anything you send meanwhile will
+need correcting when the result lands, and each correction is another
+notification the user did not ask for.
+
+- **Answer a research or verification request once, after it finishes.**
+- While a background task is running *for that question*, no substantive answer.
+  If the user must wait, send **one line** ("checking") — a status line stops
+  being a status line the moment it carries findings.
+- If a correction is unavoidable, keep it **short**: one or two lines on what
+  changed. Your own post-mortem belongs in memory, not on the user's screen.
+- Self-check before sending: **"is what I hold right now the final version?"**
+  If not, do not send.
+- Case-based (2026-09-10 · 2026-09-21); re-judge per situation; the maintainer's call wins.
+
 ## Upstream-outage rung (escalation ladders assume the bot is asleep)
 
 Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge debugging — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25, a global outage at a model provider); re-judge per situation; the maintainer's call wins.
