@@ -50,6 +50,15 @@
           }
         ],
         "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message"
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/slack-heartbeat-hook.py\"",
+            "timeout": 3
+          }
+        ]
       }
     ],
     "Stop": [
@@ -67,6 +76,15 @@
           }
         ],
         "matcher": ""
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh\" \"${CLAUDE_PLUGIN_ROOT}/hooks/slack-heartbeat-hook.py\"",
+            "timeout": 3
+          }
+        ]
       }
     ]
   }
