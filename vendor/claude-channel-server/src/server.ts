@@ -66,6 +66,8 @@ function main(): void {
   const configuredChannelIds = parseChannelIds(env.SLACK_CHANNEL_ID);
   const primaryChannelId = configuredChannelIds[0]!;
   const configuredChannels = new Set(configuredChannelIds);
+  // Per-bot receipt emoji (2026-09-23) — see SLACK_BOT_EMOJI in config.ts.
+  const receiptEmoji = (env.SLACK_BOT_EMOJI ?? 'eyes').replace(/^:+|:+$/g, '') || 'eyes';
 
   const clients = new Set<net.Socket>();
   const seenTsOrder: string[] = [];
@@ -152,12 +154,8 @@ function main(): void {
     const ref = pendingInboundByThread.get(key);
     if (!ref) return;
     pendingInboundByThread.delete(key);
-    try {
-      await web.reactions.remove({ channel: ref.channel, timestamp: ref.ts, name: 'eyes' });
-    } catch (err) {
-      const m = err instanceof Error ? err.message : String(err);
-      if (!m.includes('no_reaction')) log('react', `remove eyes on ${ref.channel}/${ref.ts} failed: ${m}`);
-    }
+    // The per-bot receipt emoji stays (it is the "who read this" record); ✅ is added
+    // beside it so the count of ✅ reads as "how many bots finished".
     try {
       await web.reactions.add({ channel: ref.channel, timestamp: ref.ts, name: 'white_check_mark' });
     } catch (err) {
@@ -234,7 +232,7 @@ function main(): void {
         text: msg.text,
       });
       sendAck(socket, msg.req_id, true);
-      // 👀 → ✅ on the inbound this reply answers (thread root = threadTs; a
+      // receipt emoji + ✅ on the inbound this reply answers (thread root = threadTs; a
       // top-level reply has no root and closes nothing). Fire-and-forget.
       if (threadTs) void markInboundDone(`${target}:${threadTs}`);
     } catch (err) {
@@ -460,14 +458,15 @@ function main(): void {
       return;
     }
 
-    // Auto progress reaction (2026-09-23, user request): 👀 the moment an
-    // inbound is accepted, replaced by ✅ once the session's reply is posted
-    // (handleReply). Best-effort — a failed reaction never blocks delivery.
+    // Auto progress reaction (2026-09-23, user request): the bot's receipt emoji
+    // (SLACK_BOT_EMOJI, default 👀) the moment an inbound is accepted, plus ✅
+    // once the session's reply is posted (handleReply). Best-effort — a failed
+    // reaction never blocks delivery.
     if (event.channel) {
       const inboundChannel = event.channel;
       void web.reactions
-        .add({ channel: inboundChannel, timestamp: ts, name: 'eyes' })
-        .catch((err) => log('react', `eyes on ${inboundChannel}/${ts} failed: ${err instanceof Error ? err.message : String(err)}`));
+        .add({ channel: inboundChannel, timestamp: ts, name: receiptEmoji })
+        .catch((err) => log('react', `${receiptEmoji} on ${inboundChannel}/${ts} failed: ${err instanceof Error ? err.message : String(err)}`));
       rememberPendingInbound(`${inboundChannel}:${event.thread_ts ?? ts}`, { channel: inboundChannel, ts });
     }
 
@@ -566,7 +565,7 @@ function main(): void {
       log(
         'server',
         `bridge live — channels ${configuredChannelIds.join(', ')}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
-          `(channel posts require @-mention; DMs and permission verdicts exempt; auto-react on; bot interop ` +
+          `(channel posts require @-mention; DMs and permission verdicts exempt; auto-react on (receipt ${receiptEmoji}); bot interop ` +
           `${allowedBotUserIds.size > 0 ? `enabled — ${allowedBotUserIds.size} peer(s)` : 'disabled'})`,
       ),
     )

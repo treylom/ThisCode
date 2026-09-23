@@ -25,6 +25,10 @@ export interface ChannelEnv {
   // first id in the list stays the "primary" one used as the outbound
   // fallback when a message carries no channel of its own (permission asks).
   SLACK_CHANNEL_ID: string;
+  // OPTIONAL (2026-09-23): emoji name this bot reacts with the moment it accepts an
+  // inbound — its per-bot "read receipt" (maintainer: every bot reacts differently so
+  // one glance shows who received a broadcast). Unset = 'eyes'.
+  SLACK_BOT_EMOJI?: string;
   // (B) bot-interop (2026-08-07) — OPTIONAL and absent by default.
   // Comma-separated U… ids of OTHER bridge bots allowed to speak to this
   // one. Unset/empty = every bot message drops, which is exactly the
