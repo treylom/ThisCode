@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """slack_heartbeat_daemon.py <env_file> <channel> <inbound_ts> <thread_ts> [bot_label] — 10-second Slack "working" heartbeat.
 
-스펙 46 §2. 스레드에 「⏳ 진행 중 · N초 · 도구 K회 · 마지막 <tool>」 1통 게시 후 10초마다 같은
-말풍선을 chat.update 로 갱신. 인바운드에 ⏳(hourglass_flowing_sand) 반응을 붙이고 끝나면 뗀다.
-종료 = stop 파일(훅) → 「✔ 처리 끝 · N초 · 도구 K회」 / refresh 300초 stale / API 3회 연속 실패.
-의존 0(urllib) · 토큰 값은 절대 출력·로그 ❌.  --selftest = urllib 스텁으로 호출 순서 검증.
+Posts one "working · Ns · K tool calls · last <tool>" bubble in the thread and edits it
+(chat.update) every 10 s; reacts hourglass on the inbound and removes it at the end.
+Ends on the hook's `stop` file ("done · Ns · K tool calls"), after 120 s without a tool
+call, or after 3 consecutive API failures. Stdlib only (urllib); the token value is never
+printed or logged. --selftest stubs the API and checks the call sequence.
 """
 import json
 import os

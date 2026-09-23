@@ -495,21 +495,13 @@ function main(): void {
         // roster lookup — meta is Record<string, string>, hence the string
         // 'true' and the conditional spread ((B) bot-interop, 2026-08-07).
         ...(fromBot ? { sender_is_bot: 'true' } : {}),
-        // Threading is scoped by conversation kind (2026-08-06 defect 17):
-        //   - CHANNEL: always thread — reply lands under the message that
-        //     summoned the bot (synthesize the root from event.ts when the
-        //     inbound is itself top-level), so the channel doesn't fill up
-        //     with bot answers ("스레드 답글로 달아야" — user requirement).
-        //   - DM: thread only when the user themselves threaded. The earlier
-        //     uniform event.ts fallback forced every 1:1 reply into an
-        //     awkward 댓글 thread — that rationale still holds, but only for
-        //     DMs; scoping (not reverting) is what defect 17 asked for.
-        // Conditional spread keeps the Record<string, string> meta type
-        // honest (no undefined value).
-        // 2026-09-23: DM and channel are now the same — the defect 17 DM
-        // exception above is withdrawn (user: "개인 DM이어도 스레드 하나 파서
-        // 거기서 답장"). thread_ts is always present: the thread the inbound
-        // was in, else the inbound itself as the new root.
+        // Threading: the reply always lands under the message that summoned
+        // the bot — the thread the inbound was already in, else the inbound
+        // itself becomes the root. Channels have worked this way since defect
+        // 17 (2026-08-06, so a channel doesn't fill up with bot answers); DMs
+        // originally threaded only when the user threaded first, and since
+        // 2026-09-23 they follow the same rule (user request: one thread per
+        // DM exchange). thread_ts is therefore always present in meta.
         thread_ts: event.thread_ts ?? event.ts ?? ts,
       },
     });
