@@ -495,14 +495,20 @@ function main(): void {
         // roster lookup — meta is Record<string, string>, hence the string
         // 'true' and the conditional spread ((B) bot-interop, 2026-08-07).
         ...(fromBot ? { sender_is_bot: 'true' } : {}),
-        // Threading: the reply always lands under the message that summoned
-        // the bot — the thread the inbound was already in, else the inbound
-        // itself becomes the root. Channels have worked this way since defect
-        // 17 (2026-08-06, so a channel doesn't fill up with bot answers); DMs
-        // originally threaded only when the user threaded first, and since
-        // 2026-09-23 they follow the same rule (user request: one thread per
-        // DM exchange). thread_ts is therefore always present in meta.
-        thread_ts: event.thread_ts ?? event.ts ?? ts,
+        // Threading: in a CHANNEL the reply always lands under the message
+        // that summoned the bot — the thread the inbound was in, else the
+        // inbound itself becomes the root (defect 17, 2026-08-06: a channel
+        // must not fill up with bot answers). In a DM the reply is top-level
+        // unless the user themselves wrote inside a thread: a threaded DM
+        // reply raises no notification on the user's side (maintainer,
+        // 2026-09-23 — the brief "always thread DMs" experiment was reverted
+        // the same day for exactly that reason). Conditional spread keeps
+        // the Record<string, string> meta type honest (no undefined value).
+        ...(event.thread_ts
+          ? { thread_ts: event.thread_ts }
+          : event.channel_type !== 'im'
+            ? { thread_ts: event.ts ?? ts }
+            : {}),
       },
     });
   }

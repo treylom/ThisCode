@@ -64,7 +64,10 @@ def run(bot: str, channel: str, inbound_ts: str, thread_ts: str, slack: Slack, s
         return k, tool
 
     slack.call('reactions.add', {'channel': channel, 'timestamp': inbound_ts, 'name': 'hourglass_flowing_sand'})
-    r = slack.call('chat.postMessage', {'channel': channel, 'thread_ts': thread_ts, 'text': '⏳ working · 0s · 0 tool calls'})
+    post = {'channel': channel, 'text': '⏳ working · 0s · 0 tool calls'}
+    if thread_ts and thread_ts != '-':
+        post['thread_ts'] = thread_ts  # '-' = top-level (DM inbound, 2026-09-23)
+    r = slack.call('chat.postMessage', post)
     if not r.get('ok'):
         note(f'post failed {r.get("error")}'); return 1
     msg_ts = r['ts']

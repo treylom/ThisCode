@@ -90,7 +90,11 @@ def last_slack_tag(text: str):
         attrs = dict(ATTR_RE.findall(m.group(1)))
         if not attrs.get('channel') or not attrs.get('ts'):
             continue
-        return attrs['channel'], attrs['ts'], attrs.get('thread_ts') or attrs['ts'], seen_reply
+        # Channel: the heartbeat lives in the inbound's thread. DM: top-level unless the user
+        # wrote inside a thread (a threaded DM post raises no notification — 2026-09-23).
+        is_dm = attrs['channel'].startswith('D')
+        thread = attrs.get('thread_ts') or ('' if is_dm else attrs['ts'])
+        return attrs['channel'], attrs['ts'], thread, seen_reply
     return None
 
 
@@ -162,7 +166,7 @@ def main() -> None:
         return
     with open(state / 'daemon.log', 'ab') as log:
         p = subprocess.Popen(
-            [sys.executable, str(DAEMON), str(env), channel, ts, thread_ts, bot],
+            [sys.executable, str(DAEMON), str(env), channel, ts, thread_ts or '-', bot],
             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=log,
             start_new_session=True,
         )
