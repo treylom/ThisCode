@@ -69,7 +69,7 @@ PY
 )" || true
 
 if [ "$RESULT" = "VIOLATION" ]; then
-  hk_log "B2 reply-gate: Discord 인바운드 미응답 종료 시도 → block"
+  hk_log "B2 reply-gate: 외부 채널(Discord/Slack) 인바운드 미응답 종료 시도 → block"
   hk_block_stop "[reply 게이트 · discord-comms §1] 외부 채널(Discord/Slack) 사용자 인바운드에 그 채널의 reply 도구(mcp__plugin_discord_discord__reply / mcp__slack-channel__reply)로 응답하지 않은 채 종료하려 합니다. 사용자는 터미널이 아니라 그 채널을 보므로 터미널 출력만으로는 도달하지 않습니다. 응답이 필요하면 인바운드가 온 채널의 reply 로 발송하세요. 이미 다른 방식(REST 등)으로 보냈거나 응답이 불필요하면 이 메시지를 무시하고 정상 종료해도 됩니다."
 fi
 hk_allow_stop
