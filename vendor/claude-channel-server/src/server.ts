@@ -28,6 +28,7 @@ import { WebClient } from '@slack/web-api';
 import { ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log, parseChannelIds } from './config.js';
 import { ClientToServer, encodeLine, type ClientToServerMsg, type ServerToClientMsg } from './ipc-protocol.js';
 import { LineReader } from './line-reader.js';
+import { pickInboundDoneKey } from './pending-key.js';
 import { verifyPeerIsSelf } from './peercred.js';
 import { acquireSingleton } from './singleton.js';
 
@@ -146,9 +147,11 @@ function main(): void {
   // 👀 for ✅ on that exact message. Keyed `${channel}:${thread root}`; bounded
   // at 200 FIFO like the other trackers — an evicted entry just means no ✅.
   const pendingInboundByThread = new Map<string, { channel: string; ts: string }>();
+  const newestPendingKeyByChannel = new Map<string, string>();
   function rememberPendingInbound(key: string, ref: { channel: string; ts: string }): void {
     pendingInboundByThread.delete(key);
     pendingInboundByThread.set(key, ref);
+    newestPendingKeyByChannel.set(ref.channel, key); // a top-level DM reply closes this one
     if (pendingInboundByThread.size > 200) {
       const oldest = pendingInboundByThread.keys().next().value;
       if (oldest !== undefined) pendingInboundByThread.delete(oldest);
@@ -156,6 +159,7 @@ function main(): void {
   }
   async function markInboundDone(key: string): Promise<void> {
     const ref = pendingInboundByThread.get(key);
+    if (ref && newestPendingKeyByChannel.get(ref.channel) === key) newestPendingKeyByChannel.delete(ref.channel);
     if (!ref) return;
     pendingInboundByThread.delete(key);
     // The per-bot receipt emoji stays (it is the "who read this" record); ✅ is added
@@ -236,9 +240,11 @@ function main(): void {
         text: msg.text,
       });
       sendAck(socket, msg.req_id, true);
-      // receipt emoji + ✅ on the inbound this reply answers (thread root = threadTs; a
-      // top-level reply has no root and closes nothing). Fire-and-forget.
-      if (threadTs) void markInboundDone(`${target}:${threadTs}`);
+      // ✅ beside the receipt emoji on the inbound this reply answers: the thread
+      // root when threaded, the newest pending inbound of the DM when a DM reply
+      // is top-level (pending-key.ts). Fire-and-forget.
+      const doneKey = pickInboundDoneKey(target, threadTs, isImTarget, newestPendingKeyByChannel);
+      if (doneKey) void markInboundDone(doneKey);
     } catch (err) {
       sendAck(socket, msg.req_id, false, err instanceof Error ? err.message : String(err));
     }
@@ -435,13 +441,13 @@ function main(): void {
     // in this DM) so handleReply's guard above can tell that apart from a
     // model-supplied one. Channels don't need this — the guard never strips
     // their thread_ts.
-    // 2026-09-23 (user request, Slack DM 10:06): a DM is now threaded exactly
-    // like a channel — the reply lands under the message that summoned the
-    // bot. The inbound's own ts is therefore a legitimate anchor too, so it is
-    // registered here; handleReply's guard below is unchanged and still strips
-    // any thread_ts that no real DM inbound carried.
-    if (event.channel_type === 'im') {
-      rememberImInboundThreadTs(event.thread_ts ?? ts);
+    // Only a thread the user opened counts (2026-09-23: DM replies are
+    // top-level unless the user wrote inside a thread) — the inbound's own ts
+    // is deliberately NOT registered, so a model that echoes it as thread_ts
+    // gets it stripped by handleReply's guard and the DM reply stays
+    // top-level, where it raises a notification.
+    if (event.channel_type === 'im' && event.thread_ts) {
+      rememberImInboundThreadTs(event.thread_ts);
     }
 
     // Defect 17: in a channel this conversation now lives in a thread rooted

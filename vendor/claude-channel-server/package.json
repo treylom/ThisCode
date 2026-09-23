@@ -11,7 +11,8 @@
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "start": "node dist/server.js",
-    "mcp": "node dist/mcp.js"
+    "mcp": "node dist/mcp.js",
+    "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",

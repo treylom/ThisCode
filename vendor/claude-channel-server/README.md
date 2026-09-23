@@ -73,7 +73,7 @@ your message text
 </channel>
 ```
 
-and Claude replies using the `reply` tool, which posts back to that conversation, always threaded under the inbound message — DMs included — when it echoes the `thread_ts` from the tag.
+and Claude replies using the `reply` tool, which posts back to that conversation: in a channel always threaded under the inbound message; in a DM top-level unless the user wrote inside a thread (a threaded DM reply raises no notification). Echoing the tag's `thread_ts` when present, and omitting it otherwise, gives exactly that.
 
 ## Security model
 
