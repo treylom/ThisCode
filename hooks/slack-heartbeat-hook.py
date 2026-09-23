@@ -6,13 +6,15 @@ thread shows a "working · Ns" bubble refreshed every 10 s (plus ⏳ on the inbo
 Bot .env resolution: $SLACK_HEARTBEAT_ENV_FILE → $DISCORD_STATE_DIR (discord-<bot> →
 ~/.claude/channels/slack-<bot>/.env) → ~/.claude/channels/slack/.env.
 
-동작(항상 exit 0 · stdout 비움):
-  - 봇 = $DISCORD_STATE_DIR basename 의 discord-<bot> · Slack .env 없으면 무시.
-  - transcript 꼬리(256KB)에서 마지막 <channel source="slack…" …> 태그 1개 → 그 뒤에
-    mcp__slack-channel__reply tool_use 가 있으면 이미 답한 턴 → 무시. 태그 30분 초과도 무시.
-  - PreToolUse: 상태 dir 에 refresh touch · tool 기록 · count +1 · 데몬 없으면 기동.
-    reply 도구 호출 자체 = 답 직전 → stop 파일(데몬이 「✔ 처리 끝」 편집 후 종료).
-  - Stop: stop 파일.
+Behaviour (always exits 0, prints nothing):
+  - No Slack .env for this bot -> do nothing.
+  - Read the transcript tail (256KB) for the last <channel source="slack..."> tag; if a
+    mcp__slack-channel__reply tool_use follows it the turn is already answered -> do nothing.
+    Tags older than 30 minutes are ignored.
+  - PreToolUse: touch `refresh`, record the tool name, bump `count`, start the daemon if
+    none is alive. A call to the reply tool itself means the answer is about to be posted
+    -> write `stop` (the daemon edits the bubble to "done" and exits).
+  - Stop: write `stop`.
 """
 import json
 import os
@@ -47,9 +49,9 @@ def _texts(content) -> str:
 
 
 def last_slack_tag(text: str):
-    """transcript 꼬리를 «구조»로 읽는다(source-fact §8-3 자기오염 배제): 태그는 user 메시지 본문
-    또는 queue-operation enqueue 레코드의 것만 인정 — 내가 도구 입력·결과에 적은 같은 모양 문자열(스펙·코드)은 assistant/tool_result 라 제외.
-    뒤에서 앞으로 훑어 첫 태그를 찾고, 그보다 뒤에 reply tool_use 가 있었으면 answered."""
+    """Read the transcript tail structurally: only a tag inside a user message or a
+    queue-operation enqueue record counts (the same text inside tool input/results is the
+    bot quoting itself). Scan backwards; if a reply tool_use came after the tag, it is answered."""
     seen_reply = False
     dequeued = set()  # queue-operation remove = the session actually picked the message up
     for line in reversed(text.splitlines()):
@@ -70,10 +72,11 @@ def last_slack_tag(text: str):
             dequeued.add(str(rec.get('content') or ''))
             continue
         if role == 'queue-operation' and rec.get('operation') == 'enqueue':
-            body = str(rec.get('content') or '')  # 채널 인바운드 = 큐 투입 레코드(2026-09-23 실측)
+            body = str(rec.get('content') or '')  # a channel inbound arrives as a queue record
             if body not in dequeued:
-                # 아직 큐에만 있고 세션이 집어 들지 않은 메시지(다른 일 하는 중) → 하트비트 ❌
-                # (2026-09-23 재경님: 공지에 무관한 봇 3이 「진행 중」 말풍선을 단 사고)
+                # Still queued, not picked up by the session (it is busy with something
+                # else) -> no heartbeat. Otherwise a broadcast makes every busy bot post
+                # a "working" bubble on a message it is not actually handling.
                 continue
         elif role == 'user':
             body = _texts(content)

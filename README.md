@@ -85,7 +85,7 @@ bash ~/.claude/plugins/thiscode/scripts/claude-discode-init.sh
 > via `/plugin marketplace add treylom/ThisCode` → `/plugin install
 > thiscode@thiscode-marketplace` → `/reload-plugins` loaded *5 plugins · 23
 > skills · 8 agents · 4 hooks*) (that run predates 1.3.0; the plugin now ships
-> 7 hooks via `hooks/hooks.json` — see the `/thiscode:install-hooks` skill):
+> 8 hooks via `hooks/hooks.json` — see the `/thiscode:install-hooks` skill):
 >
 > ```
 > /plugin marketplace add treylom/ThisCode
@@ -436,6 +436,7 @@ The `--apply` mode:
 - **`dispatch-room-gate.py`** (PreToolUse) — checks bot-to-bot replies against the shared-room gate
 - **`meeting-stop-reread.sh`** (Stop) — rereads the active meeting marker before stopping
 - **`reply-gate.sh`** (Stop) — applies the final reply gate before a bot session stops
+- **`slack-heartbeat-hook.py`** (PreToolUse · Stop) — keeps a 10-second "working · Ns · K tool calls" bubble updated in the Slack thread while the bot works on an inbound (with `slack_heartbeat_daemon.py`); only active when a per-bot Slack `.env` exists, and inbounds older than 30 minutes are ignored
 
 ### Skills (agentskills.io-standard)
 
