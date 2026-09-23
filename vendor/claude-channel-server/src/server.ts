@@ -7,7 +7,7 @@
 // Everything a message has to clear before it reaches a Claude Code
 // session, in order:
 //   1. Slack Socket Mode envelope ack (protocol requirement, not a gate)
-//   2. event.channel === SLACK_CHANNEL_ID           (hardening a)
+//   2. event.channel is one of SLACK_CHANNEL_ID     (hardening a)
 //   3. sender gate, split by author kind ((B) bot-interop, 2026-08-07):
 //      a human post must be from ALLOWED_SLACK_USER_ID; a bot post must be
 //      from ALLOWED_SLACK_BOT_USER_IDS (unset = every bot drops — the
@@ -25,7 +25,7 @@ import { chmodSync, existsSync, unlinkSync } from 'node:fs';
 import net from 'node:net';
 import { SocketModeClient } from '@slack/socket-mode';
 import { WebClient } from '@slack/web-api';
-import { ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log } from './config.js';
+import { ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log, parseChannelIds } from './config.js';
 import { ClientToServer, encodeLine, type ClientToServerMsg, type ServerToClientMsg } from './ipc-protocol.js';
 import { LineReader } from './line-reader.js';
 import { verifyPeerIsSelf } from './peercred.js';
@@ -58,6 +58,14 @@ function main(): void {
   ensureStateDir();
   acquireSingleton();
   const env = loadEnv();
+  // Multi-channel (2026-08-13): the bridge may sit in several channels at
+  // once. `configuredChannels` is what gate (a) below tests membership
+  // against; `primaryChannelId` (the first id) is the outbound fallback for
+  // messages that carry no channel of their own — permission asks. A
+  // single-id .env therefore behaves identically to before this change.
+  const configuredChannelIds = parseChannelIds(env.SLACK_CHANNEL_ID);
+  const primaryChannelId = configuredChannelIds[0]!;
+  const configuredChannels = new Set(configuredChannelIds);
 
   const clients = new Set<net.Socket>();
   const seenTsOrder: string[] = [];
@@ -181,7 +189,7 @@ function main(): void {
     // Route to the conversation the session named (DM↔DM, channel↔channel),
     // but only if we've actually seen an allowed inbound from it; otherwise
     // fall back to the configured channel. Never post to an unseen chat_id.
-    const target = msg.channel && allowedChannels.has(msg.channel) ? msg.channel : (lastInboundChannel ?? env.SLACK_CHANNEL_ID);
+    const target = msg.channel && allowedChannels.has(msg.channel) ? msg.channel : (lastInboundChannel ?? primaryChannelId);
     // 겹1: strip a model-supplied thread_ts on a DM target unless it is one a
     // real DM inbound actually carried (see the guard comment above). Never
     // touches non-DM targets — msg.thread_ts passes through unchanged there,
@@ -235,7 +243,7 @@ function main(): void {
       `Reply "yes ${msg.request_id}" or "no ${msg.request_id}"`,
     ].join('\n');
     try {
-      await web.chat.postMessage({ channel: lastInboundChannel ?? env.SLACK_CHANNEL_ID, text });
+      await web.chat.postMessage({ channel: lastInboundChannel ?? primaryChannelId, text });
       sendAck(socket, msg.req_id, true);
     } catch (err) {
       sendAck(socket, msg.req_id, false, err instanceof Error ? err.message : String(err));
@@ -320,7 +328,7 @@ function main(): void {
     // §②): a DM is inherently 1:1 with whoever sent it, so once that sender
     // is verified as ALLOWED_SLACK_USER_ID there is no other channel this
     // event could have leaked from.
-    if (event.channel !== env.SLACK_CHANNEL_ID && event.channel_type !== 'im') return;
+    if (!(event.channel && configuredChannels.has(event.channel)) && event.channel_type !== 'im') return;
 
     const text = (event.text ?? '').trim();
 
@@ -419,7 +427,7 @@ function main(): void {
       meta: {
         // Must be the real event.channel/event.user, not the env values:
         // with DM support (spec 44 §③) a DM's channel is D… and a
-        // channel post's is C…, and env.SLACK_CHANNEL_ID is only ever the
+        // channel post's is C…, and primaryChannelId is only ever the
         // latter — hardcoding it here would route every DM reply back out
         // to the public channel instead of the DM it came from. The `??`
         // fallback is defensive only: both fields are guaranteed present
@@ -427,7 +435,7 @@ function main(): void {
         // forms, user matched the sender gate — human or allowed bot), so
         // this never actually falls through in practice — it just keeps the
         // optional typing honest without an assertion.
-        channel: event.channel ?? env.SLACK_CHANNEL_ID,
+        channel: event.channel ?? primaryChannelId,
         user: event.user ?? env.ALLOWED_SLACK_USER_ID,
         ts: event.ts ?? ts,
         // Lets the session tell an allowed peer bot from the human without a
@@ -507,7 +515,7 @@ function main(): void {
     .then(() =>
       log(
         'server',
-        `bridge live — channel ${env.SLACK_CHANNEL_ID}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
+        `bridge live — channels ${configuredChannelIds.join(', ')}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
           `(channel posts require @-mention; DMs and permission verdicts exempt; bot interop ` +
           `${allowedBotUserIds.size > 0 ? `enabled — ${allowedBotUserIds.size} peer(s)` : 'disabled'})`,
       ),

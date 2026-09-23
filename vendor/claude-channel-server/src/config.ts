@@ -20,6 +20,10 @@ export interface ChannelEnv {
   SLACK_BOT_TOKEN: string;
   SLACK_APP_TOKEN: string;
   ALLOWED_SLACK_USER_ID: string;
+  // One or more C… channel ids, comma-separated (2026-08-13). A single id —
+  // the only form that existed before — keeps behaving exactly as it did; the
+  // first id in the list stays the "primary" one used as the outbound
+  // fallback when a message carries no channel of its own (permission asks).
   SLACK_CHANNEL_ID: string;
   // (B) bot-interop (2026-08-07) — OPTIONAL and absent by default.
   // Comma-separated U… ids of OTHER bridge bots allowed to speak to this
@@ -32,6 +36,19 @@ export interface ChannelEnv {
 }
 
 const REQUIRED_KEYS = ['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN', 'ALLOWED_SLACK_USER_ID', 'SLACK_CHANNEL_ID'] as const;
+
+/**
+ * Splits the comma-separated SLACK_CHANNEL_ID into ids, first one first.
+ * Blank entries and stray whitespace are dropped so a trailing comma or a
+ * `C1, C2` spelling both parse. Throws rather than returning an empty list:
+ * an empty channel set would silently drop every channel message, which is
+ * safe but undiagnosable (same fail-fast argument as botUserId in server.ts).
+ */
+export function parseChannelIds(raw: string): string[] {
+  const ids = raw.split(',').map((id) => id.trim()).filter(Boolean);
+  if (ids.length === 0) throw new Error('SLACK_CHANNEL_ID has no channel ids after parsing');
+  return ids;
+}
 
 export function log(scope: string, message: string): void {
   // stderr only — stdout is the MCP stdio transport in mcp.ts and must stay
