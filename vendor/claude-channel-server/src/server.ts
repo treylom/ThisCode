@@ -75,7 +75,11 @@ function main(): void {
   // Outbound allowlist: only conversations we've received an allowed inbound
   // from can be replied to — stops a reply from being routed to any other
   // channel/DM (DM content leak) even if a chat_id says otherwise.
-  const allowedChannels = new Set<string>();
+  // Seeded with the configured channels (2026-09-23): a session may address a configured
+  // channel explicitly from the first send, instead of falling back to the home channel
+  // until an inbound from it has been seen (three misdeliveries in one morning). DMs and
+  // any other conversation still have to be seen first.
+  const allowedChannels = new Set<string>(configuredChannelIds);
   // The most recent conversation an allowed inbound arrived from. Reply (when
   // chat_id is omitted) and permission-ask (which carries no channel at all)
   // fall back to this so DM-derived content lands in the active conversation
