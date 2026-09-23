@@ -58,7 +58,10 @@ for ln in lines:
                     # react (non-verbal ack) also counts as reaching the user (2026-08-08):
                     # a deliberate emoji-ack to a pure acknowledgement is not "no response" —
                     # treating it as a violation pushed agents into infinite thank-you loops.
-                    if "discord" in name and ("reply" in name or "react" in name) and last_inbound >= 0:
+                    # Any external-channel reply tool counts (Discord plugin or the Slack
+                    # bridge, 2026-09-23): the inbound gate above already accepts every
+                    # <channel source=...> tag, so the answer side must accept every bridge.
+                    if ("discord" in name or "slack-channel" in name) and ("reply" in name or "react" in name) and last_inbound >= 0:
                         reply_after = True
     idx += 1
 print("VIOLATION" if (last_inbound >= 0 and not reply_after) else "OK")
@@ -67,6 +70,6 @@ PY
 
 if [ "$RESULT" = "VIOLATION" ]; then
   hk_log "B2 reply-gate: Discord 인바운드 미응답 종료 시도 → block"
-  hk_block_stop "[reply 게이트 · discord-comms §1] 외부 채널(Discord) 사용자 인바운드에 reply 도구(mcp__plugin_discord_discord__reply)로 응답하지 않은 채 종료하려 합니다. 사용자는 터미널이 아니라 Discord 를 보므로 터미널 출력만으로는 도달하지 않습니다. 응답이 필요하면 reply 로 발송하세요. 이미 다른 방식(REST 등)으로 보냈거나 응답이 불필요하면 이 메시지를 무시하고 정상 종료해도 됩니다."
+  hk_block_stop "[reply 게이트 · discord-comms §1] 외부 채널(Discord/Slack) 사용자 인바운드에 그 채널의 reply 도구(mcp__plugin_discord_discord__reply / mcp__slack-channel__reply)로 응답하지 않은 채 종료하려 합니다. 사용자는 터미널이 아니라 그 채널을 보므로 터미널 출력만으로는 도달하지 않습니다. 응답이 필요하면 인바운드가 온 채널의 reply 로 발송하세요. 이미 다른 방식(REST 등)으로 보냈거나 응답이 불필요하면 이 메시지를 무시하고 정상 종료해도 됩니다."
 fi
 hk_allow_stop
