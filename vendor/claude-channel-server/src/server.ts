@@ -92,6 +92,27 @@ function main(): void {
   // until an inbound from it has been seen (three misdeliveries in one morning). DMs and
   // any other conversation still have to be seen first.
   const allowedChannels = new Set<string>(configuredChannelIds);
+  // The allowed user's open DM is a valid reply target from the moment the
+  // bridge starts, not only after their next message: the allowlist used to
+  // live in memory only, so every restart made the first DM reply after it
+  // fail (or, before 2026-09-23, silently land in the home channel).
+  // Best-effort — a failed lookup just leaves the old "seen first" behaviour.
+  async function seedAllowedDms(): Promise<void> {
+    try {
+      const res = await web.users.conversations({ types: 'im', limit: 200 });
+      let seeded = 0;
+      for (const conv of res.channels ?? []) {
+        if (conv.id && conv.user === env.ALLOWED_SLACK_USER_ID) {
+          allowedChannels.add(conv.id);
+          channelKindByChannel.set(conv.id, 'im');
+          seeded += 1;
+        }
+      }
+      log('server', `allowed DMs seeded — ${seeded}`);
+    } catch (err) {
+      log('server', `DM seeding skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
   // The most recent conversation an allowed inbound arrived from. Reply (when
   // chat_id is omitted) and permission-ask (which carries no channel at all)
   // fall back to this so DM-derived content lands in the active conversation
@@ -244,7 +265,7 @@ function main(): void {
     // misdeliveries). The fallback (last inbound, else primary) applies only
     // when the session named no chat_id at all.
     if (msg.channel && !allowedChannels.has(msg.channel) && !(listenAnyMemberChannel && !msg.channel.startsWith('D'))) {
-      sendAck(socket, msg.req_id, false, `chat_id ${msg.channel} is not a conversation this bridge may post to (no allowed inbound seen from it) — reply NOT sent`);
+      sendAck(socket, msg.req_id, false, `chat_id ${msg.channel} is not a conversation this bridge may post to (not configured, and no allowed inbound seen from it) — reply NOT sent`);
       return;
     }
     const target = msg.channel ?? lastInboundChannel ?? primaryChannelId;
@@ -588,8 +609,9 @@ function main(): void {
       botUserId = String(auth.user_id ?? '');
       if (!botUserId) throw new Error('auth.test returned no user_id — cannot arm the mention target gate');
       log('server', `bot user resolved — ${botUserId}`);
-      return socketModeClient.start();
+      return seedAllowedDms();
     })
+    .then(() => socketModeClient.start())
     .then(() =>
       log(
         'server',

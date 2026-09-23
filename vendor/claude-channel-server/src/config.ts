@@ -62,8 +62,9 @@ export function parseChannelIds(raw: string): string[] {
  * channel plus every channel this bot has been invited to". The invite then
  * IS the allowlist — no .env edit and bridge restart per new channel. Slack
  * only delivers channel events for conversations the bot is a member of, and
- * the sender gate still applies, so the operator's act of inviting the bot is
- * the explicit opt-in this replaces.
+ * the sender gate still applies: inviting the bot — by anyone the workspace
+ * lets invite apps — is the opt-in, and the sender gate still limits what is
+ * forwarded. Note the outbound side widens too (see README, hardening (a)).
  */
 export const ANY_MEMBER_CHANNEL = '*';
 
