@@ -135,6 +135,37 @@ function main(): void {
     }
   }
 
+  // Auto progress reactions (2026-09-23): which inbound is still "being
+  // worked on" per conversation thread, so the reply that closes it can swap
+  // 👀 for ✅ on that exact message. Keyed `${channel}:${thread root}`; bounded
+  // at 200 FIFO like the other trackers — an evicted entry just means no ✅.
+  const pendingInboundByThread = new Map<string, { channel: string; ts: string }>();
+  function rememberPendingInbound(key: string, ref: { channel: string; ts: string }): void {
+    pendingInboundByThread.delete(key);
+    pendingInboundByThread.set(key, ref);
+    if (pendingInboundByThread.size > 200) {
+      const oldest = pendingInboundByThread.keys().next().value;
+      if (oldest !== undefined) pendingInboundByThread.delete(oldest);
+    }
+  }
+  async function markInboundDone(key: string): Promise<void> {
+    const ref = pendingInboundByThread.get(key);
+    if (!ref) return;
+    pendingInboundByThread.delete(key);
+    try {
+      await web.reactions.remove({ channel: ref.channel, timestamp: ref.ts, name: 'eyes' });
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      if (!m.includes('no_reaction')) log('react', `remove eyes on ${ref.channel}/${ref.ts} failed: ${m}`);
+    }
+    try {
+      await web.reactions.add({ channel: ref.channel, timestamp: ref.ts, name: 'white_check_mark' });
+    } catch (err) {
+      const m = err instanceof Error ? err.message : String(err);
+      if (!m.includes('already_reacted')) log('react', `check on ${ref.channel}/${ref.ts} failed: ${m}`);
+    }
+  }
+
   // (B) bot-interop (2026-08-07): which OTHER bridge bots may speak to this
   // one. U…-space on purpose — the same id axis as ALLOWED_SLACK_USER_ID and
   // as the `<@U…>` mention text, so there is exactly one id space to reason
@@ -203,6 +234,9 @@ function main(): void {
         text: msg.text,
       });
       sendAck(socket, msg.req_id, true);
+      // 👀 → ✅ on the inbound this reply answers (thread root = threadTs; a
+      // top-level reply has no root and closes nothing). Fire-and-forget.
+      if (threadTs) void markInboundDone(`${target}:${threadTs}`);
     } catch (err) {
       sendAck(socket, msg.req_id, false, err instanceof Error ? err.message : String(err));
     }
@@ -399,8 +433,13 @@ function main(): void {
     // in this DM) so handleReply's guard above can tell that apart from a
     // model-supplied one. Channels don't need this — the guard never strips
     // their thread_ts.
-    if (event.channel_type === 'im' && event.thread_ts) {
-      rememberImInboundThreadTs(event.thread_ts);
+    // 2026-09-23 (user request, Slack DM 10:06): a DM is now threaded exactly
+    // like a channel — the reply lands under the message that summoned the
+    // bot. The inbound's own ts is therefore a legitimate anchor too, so it is
+    // registered here; handleReply's guard below is unchanged and still strips
+    // any thread_ts that no real DM inbound carried.
+    if (event.channel_type === 'im') {
+      rememberImInboundThreadTs(event.thread_ts ?? ts);
     }
 
     // Defect 17: in a channel this conversation now lives in a thread rooted
@@ -419,6 +458,17 @@ function main(): void {
         behavior: (verb ?? '').toLowerCase().startsWith('y') ? 'allow' : 'deny',
       });
       return;
+    }
+
+    // Auto progress reaction (2026-09-23, user request): 👀 the moment an
+    // inbound is accepted, replaced by ✅ once the session's reply is posted
+    // (handleReply). Best-effort — a failed reaction never blocks delivery.
+    if (event.channel) {
+      const inboundChannel = event.channel;
+      void web.reactions
+        .add({ channel: inboundChannel, timestamp: ts, name: 'eyes' })
+        .catch((err) => log('react', `eyes on ${inboundChannel}/${ts} failed: ${err instanceof Error ? err.message : String(err)}`));
+      rememberPendingInbound(`${inboundChannel}:${event.thread_ts ?? ts}`, { channel: inboundChannel, ts });
     }
 
     broadcast({
@@ -453,11 +503,11 @@ function main(): void {
         //     DMs; scoping (not reverting) is what defect 17 asked for.
         // Conditional spread keeps the Record<string, string> meta type
         // honest (no undefined value).
-        ...(event.thread_ts
-          ? { thread_ts: event.thread_ts }
-          : event.channel_type !== 'im'
-            ? { thread_ts: event.ts ?? ts }
-            : {}),
+        // 2026-09-23: DM and channel are now the same — the defect 17 DM
+        // exception above is withdrawn (user: "개인 DM이어도 스레드 하나 파서
+        // 거기서 답장"). thread_ts is always present: the thread the inbound
+        // was in, else the inbound itself as the new root.
+        thread_ts: event.thread_ts ?? event.ts ?? ts,
       },
     });
   }
@@ -516,7 +566,7 @@ function main(): void {
       log(
         'server',
         `bridge live — channels ${configuredChannelIds.join(', ')}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
-          `(channel posts require @-mention; DMs and permission verdicts exempt; bot interop ` +
+          `(channel posts require @-mention; DMs and permission verdicts exempt; auto-react on; bot interop ` +
           `${allowedBotUserIds.size > 0 ? `enabled — ${allowedBotUserIds.size} peer(s)` : 'disabled'})`,
       ),
     )
