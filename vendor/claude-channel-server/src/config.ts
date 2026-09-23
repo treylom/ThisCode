@@ -51,8 +51,21 @@ const REQUIRED_KEYS = ['SLACK_BOT_TOKEN', 'SLACK_APP_TOKEN', 'ALLOWED_SLACK_USER
 export function parseChannelIds(raw: string): string[] {
   const ids = raw.split(',').map((id) => id.trim()).filter(Boolean);
   if (ids.length === 0) throw new Error('SLACK_CHANNEL_ID has no channel ids after parsing');
+  // ANY_MEMBER_CHANNEL may appear anywhere but first: the first entry is the
+  // primary channel (outbound fallback) and must be a real id.
+  if (ids[0] === ANY_MEMBER_CHANNEL) throw new Error(`SLACK_CHANNEL_ID: the first entry must be a channel id, not '${ANY_MEMBER_CHANNEL}'`);
   return ids;
 }
+
+/**
+ * Wildcard entry for SLACK_CHANNEL_ID (2026-09-23): `C…,*` means "the primary
+ * channel plus every channel this bot has been invited to". The invite then
+ * IS the allowlist — no .env edit and bridge restart per new channel. Slack
+ * only delivers channel events for conversations the bot is a member of, and
+ * the sender gate still applies, so the operator's act of inviting the bot is
+ * the explicit opt-in this replaces.
+ */
+export const ANY_MEMBER_CHANNEL = '*';
 
 export function log(scope: string, message: string): void {
   // stderr only — stdout is the MCP stdio transport in mcp.ts and must stay
