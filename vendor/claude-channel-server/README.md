@@ -17,7 +17,7 @@ This is a from-scratch implementation written against the official channels-refe
 
 ## Setup
 
-1. Create a Slack app (Socket Mode + Events API, `app_mention` and `message.channels` bot events, `chat:write` and `reactions:write` scopes — reactions are an add-on: if a reaction call fails the message is still delivered) and install it to your workspace. Invite the bot to the channel you want to bridge.
+1. Create a Slack app (Socket Mode + Events API, `app_mention`, `message.channels` and `message.im` bot events, `chat:write` and `reactions:write` scopes, plus `im:read` (optional — lets the bridge reply in the allowed user's DM right after a restart; without it the first DM has to arrive first) — reactions are an add-on: if a reaction call fails the message is still delivered) and install it to your workspace. Invite the bot to the channel you want to bridge.
 2. Install dependencies (not done automatically — see "Why no auto-install" below):
    ```bash
    npm install
