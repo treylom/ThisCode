@@ -231,3 +231,14 @@ notification the user did not ask for.
 Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge debugging — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25, a global outage at a model provider); re-judge per situation; the maintainer's call wins.
 
 ▶ Fill in: your independent probe path (isolated account/HOME) used for outage discrimination.
+
+## Slack: thread-first, automatic progress signals, canvas (2026-09-23)
+
+When the bridge in use is Slack (`vendor/claude-channel-server`), the Discord rules above apply unchanged; these are the Slack-specific additions.
+
+1. **Every reply goes in the thread.** Echo the inbound tag's `thread_ts` into the `reply` tool — DMs included. The bridge now puts a `thread_ts` on a DM's first message too (its own ts), so the bot's only job is not to drop it. A top-level post is for a topic the *bot* opens, nothing else.
+2. **Progress signals are automatic — do not add them by hand.** The bridge reacts 👀 when it accepts an inbound and swaps it for ✅ when the threaded reply lands. The heartbeat hook (`hooks/slack-heartbeat-hook.py` + `hooks/slack_heartbeat_daemon.py`, PreToolUse + Stop) reacts ⏳ while tools are running and keeps one "⏳ working · Ns · K tool calls" bubble in the thread updated every 10 s, closing it with "✔ done" at the reply/turn end. Calling `react` yourself duplicates these. No heartbeat visible = hook not registered, no `.env` for this bot, or the inbound is older than 30 min (state: `~/.claude-state/slack-heartbeat/<bot>/`).
+3. **Long content = canvas.** Status boards, agendas and tables go in one DM canvas (`conversations.canvases.create` / `canvases.edit` work with the bot token) that you keep updating; the thread gets a one-line "canvas updated". Canvases do not render diagrams — use a code-block ASCII diagram or attach an image.
+4. **Reply routing trap.** The bridge honors an explicit `chat_id` only for conversations it has already seen an inbound from; otherwise it falls back to the home channel. To open a conversation elsewhere, post via the Web API (`chat.postMessage`) directly.
+5. **Default channel.** Once the maintainer moves day-to-day traffic to Slack, reports, agendas and approval requests go to the maintainer's Slack DM (threaded) and bot-to-bot dispatch goes through Slack channel mentions; answer on Discord only what the maintainer sent on Discord.
+
