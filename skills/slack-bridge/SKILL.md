@@ -79,7 +79,7 @@ DM이 실제로 되려면 `messages_tab_enabled: true`가 필수다(과거 매�
   },
   "features": {
     "app_home": {
-      "home_tab_enabled": true,
+      "home_tab_enabled": false,
       "messages_tab_enabled": true,
       "messages_tab_read_only_enabled": false
     },
@@ -119,6 +119,8 @@ DM이 실제로 되려면 `messages_tab_enabled: true`가 필수다(과거 매�
 ```
 
 ⚠️ `messages_tab_read_only_enabled: false`는 필드 이름에 대한 추론으로 정정한 값이다(DM 왕복 = 사용자가 타이핑해야 하니 read_only도 함께 꺼야 한다는 판단) — 라이브 토글 재현으로 확정한 적은 없다. `shortcuts`·`slash_commands`·`commands` 스코프는 이 브리지 코드가 안 쓰는 Bolt-starter 잔재라 지워도 무해하다.
+
+🏠 **`home_tab_enabled: false`(2026-09-26 운영 기준)**: 홈 탭을 켜 두면 사람이 봇 DM 을 열 때 빈 홈 탭이 먼저 보인다 → 끄면 메시지 탭이 첫 화면이다. 이미 만든 앱은 api.slack.com/apps → 앱 → **App Home** → Show Tabs 에서 「Display Home tab」 을 끄면 확인 창(「Turn Off Home Tab?」 → **Turn Off**)이 한 번 뜬다. 「Display Messages tab」 과 「Allow users to send Slash commands and messages from the messages tab」 은 켜 둔다(같은 화면에서 보내기 허용 칸의 요소 id 는 `message_tab_read_only_toggle` — 체크 = 보내기 허용으로 관찰, 매니페스트 값과의 대응은 위 ⚠️ 그대로 미확정). 짝 = ThisCodex `skills/slack-bridge/SKILL.md` 2-B.
 
 ## Claude Code 세션에 채널 등록
 
