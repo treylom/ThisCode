@@ -241,7 +241,7 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
   },
   "features": {
     "app_home": {
-      "home_tab_enabled": true,
+      "home_tab_enabled": false,
       "messages_tab_enabled": true,
       "messages_tab_read_only_enabled": false
     },
@@ -281,6 +281,8 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
 ```
 
 핵심(DM·멘션이 실제로 되게 하려면 **필수**): `messages_tab_enabled: true` · `bot_events`에 `message.im`/`message.channels`/`app_mention` 전부 · 스코프 `chat:write`/`im:history`/`channels:history`/**`app_mentions:read`**(빠지면 `invalid_manifest` — `app_mention` 이벤트가 이 스코프를 요구, 2026-08-06 실측)/`reactions:write`(이모지 반응 도구 — 운영 요청) · `socket_mode_enabled: true`.
+
+🏠 **`home_tab_enabled: false`(2026-09-26 운영 기준)**: 홈 탭을 켜 두면 사람이 봇 DM 을 열 때 빈 홈 탭이 먼저 보인다 → 끄면 메시지 탭이 첫 화면이다. 이미 만든 앱은 App Home → Show Tabs 에서 「Display Home tab」 을 끄면 확인 창(「Turn Off Home Tab?」 → **Turn Off**)이 한 번 뜬다. 「Display Messages tab」·「Allow users to send Slash commands and messages from the messages tab」 은 켜 둔다. 짝 = `skills/slack-bridge/SKILL.md` 매니페스트 예시 · ThisCodex `skills/slack-bridge/SKILL.md` 2-B.
 
 ### Step 5. 앱 생성 + 워크스페이스 설치 — 관문 B [사용자 관문 / 조건부 자동화 대행]
 
