@@ -14,6 +14,13 @@ Trigger: generating, editing, labeling, or dispatching image work.
 - 한글 텍스트 = §3 생성 기본 그대로 + 생성 후 문구 verbatim 검증 유지. **한글 실측 2026-08-23(GD 2장 + 카파시 원본 확대 대조 — 37-doc 미확인 2 백필)**: 실사용 한글(겹받침 단어·유사 자형 쌍·숫자 혼합문·단락 72자) = **렌더 GREEN(잠정 1)** / 비존재·희귀 자모 조합·낯선 고유명사 = **이웃 글자 무징후 치환**(봟→밫·솗→솣·앍→앓 — 3/3). 치환형은 «깨져 보이지 않아» 사람 육안 흐름 읽기도 뚫린다(GD 1차 「전건 정확」 오판정 실증) → verbatim 대조 = **글자별 지목 표**(원문 글자 ↔ 렌더 크롭 1:1)로, OCR ❌.
 - 덱·슬라이드와의 관계: 덱 chrome/레이아웃 = DS 불변(slide-deck §2.9), **콘텐츠 자산(코스 지도·개념 도식·인포그래픽·정리 카드)** 은 본 절 라우팅으로 GD 생성 후보 상신.
 
+## 1.6 Images with Korean (Hangul) text — prompting tips (adapted from ima2-gen 3.23.1, MIT, `skills/ima2/SKILL.md`)
+- Put the exact Hangul string in quotes (`"오늘의 추천"`). Don't write a vague request such as "add some Korean text".
+- Describe the scene in English and keep only the visible Hangul in Korean: `A clean summer poster with the exact Korean headline "여름 축제"`. The source cites practitioner testing: all-Korean prompts produced garbled Hangul, while English prompts with a quoted Korean string rendered correctly (a heuristic, not a guarantee).
+- Start with short labels (titles, buttons) and leave body-length text for last. Hangul glyphs are complex, so long, dense paragraphs break most often.
+- Name the typeface (`고딕체 (Gothic/Sans-serif)` or `명조체 (Myeongjo/Serif)`), the position (top center, bottom left), and the approximate size relative to the canvas. For mixed Korean and English, say which text goes where and at what level of hierarchy.
+- After generation, verify the text as described in §1.5: check each character against the requested string, and don't treat one self-check as proof that all text is correct. This section covers what to do before generation; §1.5 covers checking afterwards.
+
 ## 2. Reference-first hard gate
 - Real people, brands, products, venues, screenshots, and other targets with a correct external appearance are **reference-first, no-imagination**.
 - Before generation, collect a reference asset: path, URL, user attachment, message ID, official image, profile/avatar fetch, or existing screenshot.
