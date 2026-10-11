@@ -11,6 +11,18 @@ KB CLI); a search just failed or came back empty.
 > is the usage-side discipline; tool *selection* lives in
 > [knowledge-retrieval.md](knowledge-retrieval.md) (its §1 is the SoT).
 
+## Search entry points
+
+- **Your knowledge base:** use the installed knowledge-search entry point. With
+  Knowledge Manager, use `/km:search` and let that plugin select its search
+  and fallback tools.
+- **External research:** use SearchFlow when it is installed. An Ouroboros
+  installation that exposes this skill uses `/ouroboros:searchflow` in Claude
+  Code; other runtimes should use the skill name exposed by their installation.
+- SearchFlow is an external research workflow, not a replacement for
+  `/km:search`. These rules do not install either provider. If a provider is
+  unavailable, use the available search tools and state that limitation.
+
 ## 1. Query writing (performance)
 - **3–7 word natural-language keyword queries** are the sweet spot (sample
   mean 5.3 words). Whole sentences / particle-heavy long strings degrade.
