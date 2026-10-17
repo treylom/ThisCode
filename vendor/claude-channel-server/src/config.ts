@@ -68,6 +68,19 @@ export function parseChannelIds(raw: string): string[] {
  */
 export const ANY_MEMBER_CHANNEL = '*';
 
+/**
+ * `app_mention` payloads carry no `channel_type` (see the payload examples at
+ * docs.slack.dev/reference/events/app_mention), and Slack never dispatches
+ * `app_mention` for DMs. With the default subscription (`app_mention` +
+ * `message.im`, no `message.channels`) channel posts arrive only as
+ * `app_mention`, so a missing type is tagged 'channel' — otherwise the `*`
+ * wildcard gate, which requires 'channel'/'group', would silently drop every
+ * channel that is not listed explicitly. A type Slack did send is kept.
+ */
+export function mentionChannelType(channelType: string | undefined): string {
+  return channelType ?? 'channel';
+}
+
 export function log(scope: string, message: string): void {
   // stderr only — stdout is the MCP stdio transport in mcp.ts and must stay
   // pure JSON-RPC. server.ts has no such constraint but uses stderr too for

@@ -266,7 +266,6 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
       "bot_events": [
         "app_home_opened",
         "app_mention",
-        "message.channels",
         "message.im"
       ]
     },
@@ -280,7 +279,9 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
 }
 ```
 
-핵심(DM·멘션이 실제로 되게 하려면 **필수**): `messages_tab_enabled: true` · `bot_events`에 `message.im`/`message.channels`/`app_mention` 전부 · 스코프 `chat:write`/`im:history`/`channels:history`/**`app_mentions:read`**(빠지면 `invalid_manifest` — `app_mention` 이벤트가 이 스코프를 요구, 2026-08-06 실측)/`reactions:write`(이모지 반응 도구 — 운영 요청) · `socket_mode_enabled: true`.
+핵심(DM·멘션이 실제로 되게 하려면 **필수**): `messages_tab_enabled: true` · `bot_events`에 `app_mention`·`message.im`(`message.channels` 는 넣지 않는다 — 아래 이유) · 스코프 `chat:write`/`im:history`/`channels:history`/**`app_mentions:read`**(빠지면 `invalid_manifest` — `app_mention` 이벤트가 이 스코프를 요구, 2026-08-06 실측)/`reactions:write`(이모지 반응 도구 — 운영 요청) · `socket_mode_enabled: true`.
+
+Slack 은 앱의 이벤트 전달이 60분 동안 95% 넘게 실패하면 그 앱의 Event Subscriptions 를 자동으로 끄고 소유자에게 그 사실을 메일로 알리며, 다시 켜는 곳은 앱 설정 화면이다(단 시간당 1,000건 미만을 받는 앱은 자동으로 끄지 않는다 — https://docs.slack.dev/apis/events-api/ ). `message.channels` 를 구독하면 봇이 들어가 있는 채널의 모든 글과 «수정»(message_changed — 봇의 진행 표시 갱신 등)까지 받는다 — 2026-10-17 실측: 봇 여럿이 있는 워크스페이스에서 24시간 채널 이벤트 19,131건, 그중 85% 가 수정 이벤트, 낮 시간당 1,000~1,650건이었고, 이 상태에서 봇 호스트가 절전·재시작으로 꺼지면 약 1시간 뒤 구독이 꺼졌다(Socket Mode 앱 2회 실측 — 공식 문서의 실패 조건은 HTTP 전달 기준으로 쓰여 있어, Socket Mode 적용은 이 실측이 근거다). 그래서 기본 구독은 `app_home_opened`·`app_mention`·`message.im` 이다(채널은 «부른 글(@멘션)»만 받고, DM 은 지금처럼 전부 받는다). 대가: 기본 구독에서는 ① 채널 스레드에서 멘션 없이 이어 쓴 후속 글 ② 채널에서 보낸 yes/no 텍스트 승인 답(승인 답은 그 문구 하나만 있어야 해서, 멘션을 앞이든 뒤든 붙이면 승인이 아니라 일반 글로 넘어간다) — 이 둘을 받지 않는다. 채널에서는 매번 @멘션, 승인은 DM 에서 답한다(DM 은 전부 그대로 된다). 다른 봇이 채널에서 이 봇을 @멘션한 글은 기본 구독으로도 들어온다(2026-10-17 실측 1회). 선택(고급): 위 둘이 꼭 필요하면 `message.channels` 를 다시 추가할 수 있다 — 단 봇 호스트가 «늘 켜져 있는» 경우만. 꺼질 수 있는 PC 면 넣지 말 것.
 
 🏠 **`home_tab_enabled: false`(2026-09-26 운영 기준)**: 홈 탭을 켜 두면 사람이 봇 DM 을 열 때 빈 홈 탭이 먼저 보인다 → 끄면 메시지 탭이 첫 화면이다. 이미 만든 앱은 App Home → Show Tabs 에서 「Display Home tab」 을 끄면 확인 창(「Turn Off Home Tab?」 → **Turn Off**)이 한 번 뜬다. 「Display Messages tab」·「Allow users to send Slash commands and messages from the messages tab」 은 켜 둔다. 짝 = `skills/slack-bridge/SKILL.md` 매니페스트 예시 · ThisCodex `skills/slack-bridge/SKILL.md` 2-B.
 
@@ -682,14 +683,14 @@ if [ -n "$MISSING" ]; then
   echo "   ⓪ 먼저 확인: 앱 설정에 이미 선언돼 있으면 «추가할 것이 없고» 재설치만 하면 됩니다(매니페스트 갱신 ≠ 재설치)"
   echo "   ① 선언에도 없으면: api.slack.com/apps/<APP_ID>/oauth 직행 → 범위(Scopes) 절에 위 항목 추가"
   echo "   ② 재설치: api.slack.com/apps/<APP_ID>/install-on-team 직행 → 다시 설치(Reinstall) 승인 (관문 B 와 같은 클릭)"
-  echo "   ③ 'Event Subscriptions' 에 message.im·message.channels·app_mention 구독 확인"
+  echo "   ③ 'Event Subscriptions' 에 app_mention·message.im 구독 확인"
   echo "   ④ 재설치로 토큰이 회전됐을 수 있으니 관문 D(토큰 캡처)부터 다시"
   exit 1
 fi
 echo "✅ 부여 스코프 4/4 — 선언·부여 일치 (값 미출력, scope 목록만 대조)"
 ```
 
-토큰 값은 출력하지 않는다. ⚠️ `im:history` 는 DM 경로 전체의 하중을 혼자 받는다 — 빠지면 Step 15 반자동 확인(DM 왕복)이 무징후로 실패한다. (`app_mentions:read` 는 현 구조(대상 게이트가 `message.channels` 본문 멘션을 봄)에서 하중이 없지만, 선언 전부(현 템플릿 5종)를 기준으로 대조한다 — 구조가 바뀌면 하중도 바뀐다.) ⚠️ 실동작 검증 함정(2026-08-06 실측): `conversations.list?types=im` 류 «다른 스코프를 요구하는 API» 로 DM 동작을 재면 `im:read` 부재 탓에 정상 상태에서도 ❌ 가 나온다(거짓 음성). 부여 목록 대조는 헤더로, 실동작 증명은 우리가 실제 쓰는 경로(라이브 DM 1건)로 한다.
+토큰 값은 출력하지 않는다. ⚠️ `im:history` 는 DM 경로 전체의 하중을 혼자 받는다 — 빠지면 Step 15 반자동 확인(DM 왕복)이 무징후로 실패한다. ⚠️ `app_mentions:read` 는 기본 구독(`message.channels` 없음)에서 채널 수신 전체의 하중을 받는다 — 빠지면 채널이 무징후로 조용해진다. (대조는 선언 전부(현 템플릿 5종)를 기준으로 한다.) ⚠️ 실동작 검증 함정(2026-08-06 실측): `conversations.list?types=im` 류 «다른 스코프를 요구하는 API» 로 DM 동작을 재면 `im:read` 부재 탓에 정상 상태에서도 ❌ 가 나온다(거짓 음성). 부여 목록 대조는 헤더로, 실동작 증명은 우리가 실제 쓰는 경로(라이브 DM 1건)로 한다.
 
 ### Step 11. `.env` 검증 [자동]
 
@@ -925,6 +926,7 @@ claude --dangerously-load-development-channels server:slack-channel
 | `npm run build` → `Missing script: "run"` | 셸 래퍼·프록시(토큰 절약 도구 등)가 `npm run` 을 다른 명령으로 재작성 — 번들 결함 아님(package.json 에 `build` 스크립트 실재, 2026-08-06 WSL 실측) | 우회: `./node_modules/.bin/tsc -p tsconfig.json` 직접 실행(= `build` 스크립트의 실체). `npm start` 가 같은 증상이면 `node dist/server.js` 직접 실행 |
 | `slack: command not found` (Step 1 자동 설치 후에도) | ①네트워크가 `downloads.slack-edge.com`에 못 닿음 ②설치는 됐는데 `$HOME/.local/bin`이 PATH에 없음(Step 1 이 프로필 영구 등록까지 자동 수행하나, 비표준 프로필 구성이면 빗나갈 수 있음) | ①curl 에러 메시지 확인(프록시·방화벽) ②`export PATH="$HOME/.local/bin:$PATH"`를 실제 사용하는 셸 프로필에 직접 추가 후 새 셸 재시작 ③그래도 안 되면 공식 문서의 수동 tar.gz 설치(sudo 불요) — [설치 가이드](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/). 🔴 `sudo apt install`류로 우회하지 말 것 — 무-sudo 환경(WSL 등)에서 관문 앞 탈락 재현됨(2026-08-06 실측) |
 | DM 보냈는데 반응 0 | `message.im` 이벤트 미구독 | Step 4 매니페스트 `bot_events`에 `message.im` 있는지, `slack manifest diff`로 원격 반영 재확인 |
+| 이벤트 구독이 꺼졌다는 Slack 메일이 오고, 봇은 살아 있는데 아무 글도 못 받음 | 봇 호스트가 꺼져(절전·재시작) 있던 동안 이벤트 전달이 95% 넘게 실패 + 구독이 시간당 1,000건 넘음(`message.channels` 가 채널 글 «수정»까지 받아 쉽게 넘김) — Slack 이 구독을 자동으로 끔(2026-10-17 실측) | ① `https://api.slack.com/apps/<APP_ID>/event-subscriptions` 에서 **Enable Events** 다시 켜기(공식 문서의 재활성화 경로 = 앱 관리 화면) ② 같은 화면 bot events 에서 `message.channels`·`message.groups`·`message.mpim` 중 있는 것을 삭제 → **Save Changes** ③ 채널에서 @멘션 1회로 수신 확인 |
 | DM 반응 0(이벤트는 옴, 로그엔 찍힘) | `ALLOWED_SLACK_USER_ID` 불일치 | 보낸 사람의 실제 Slack user ID와 `.env` 값 대조(`slack auth list`가 아니라 DM 보낸 계정 기준) |
 | 채널 메시지만 무반응(DM은 됨) | 채널 게이트 불일치 | `.env`의 `SLACK_CHANNEL_ID`와 실제 채널 ID 대조(`server.ts:299`) |
 | `npm start` 즉시 에러 종료 | 싱글톤 가드 — **대개 `STATE_DIR`이 다른 봇 폴더로 떨어진 것** | ①`$STATE_DIR` 확인 → 추가 봇인데 기본 경로면 Step 8 재실행 ②그 pid 가 남의 봇이면 **끄지 말고** 폴더를 나눈다 ③진짜 stale 이면 그 pidfile 만 정리 |

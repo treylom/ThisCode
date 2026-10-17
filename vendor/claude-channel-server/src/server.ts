@@ -25,7 +25,7 @@ import { chmodSync, existsSync, unlinkSync } from 'node:fs';
 import net from 'node:net';
 import { SocketModeClient } from '@slack/socket-mode';
 import { WebClient } from '@slack/web-api';
-import { ANY_MEMBER_CHANNEL, ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log, parseChannelIds } from './config.js';
+import { ANY_MEMBER_CHANNEL, ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log, mentionChannelType, parseChannelIds } from './config.js';
 import { ClientToServer, encodeLine, type ClientToServerMsg, type ServerToClientMsg } from './ipc-protocol.js';
 import { LineReader } from './line-reader.js';
 import { pickInboundDoneKey } from './pending-key.js';
@@ -442,8 +442,9 @@ function main(): void {
       if (!text.includes(`<@${botUserId}>`)) return;
     }
 
-    // Hardening (c) — target gate (2026-08-06, defect 13): `message.channels`
-    // is subscribed, so EVERY channel post from the allowed user reaches every
+    // Hardening (c) — target gate (2026-08-06, defect 13): when the optional
+    // `message.channels` subscription is on (the default manifest leaves it off
+    // and channel posts arrive only as app_mention), EVERY channel post from the allowed user reaches every
     // bridge attached to that channel — N bridge bots would all answer any
     // message (live incident: three bots chorused one greeting). In a channel
     // the post must name THIS bot to proceed. Two deliberate exemptions:
@@ -570,7 +571,9 @@ function main(): void {
 
   socketModeClient.on('app_mention', async ({ event, ack }) => {
     await ack();
-    await handleSlackEvent(event as SlackMessageEvent);
+    const mention = event as SlackMessageEvent;
+    // No channel_type on app_mention — tag it so the `*` wildcard gate sees a channel (config.ts mentionChannelType).
+    await handleSlackEvent({ ...mention, channel_type: mentionChannelType(mention.channel_type) });
   });
 
   socketModeClient.on('error', (err) => log('slack', `socket mode error: ${err instanceof Error ? err.message : String(err)}`));
