@@ -495,13 +495,18 @@ PATCH=$(cat <<EOF
     ],
     "PreToolUse": [
       { "matcher": "mcp__plugin_discord_discord__reply|mcp__plugin_discord_discord__edit_message", "hooks": [
-        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/dispatch-room-gate.py'", "timeout": 5 }
+        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/dispatch-room-gate.py'", "timeout": 5 },
+        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/discord-readability-gate.py'", "timeout": 5 }
+      ] },
+      { "matcher": "", "hooks": [
+        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/slack-heartbeat-hook.py'", "timeout": 3 }
       ] }
     ],
     "Stop": [
       { "matcher": "", "hooks": [
         { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/meeting-stop-reread.sh'", "timeout": 5 },
-        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/reply-gate.sh'", "timeout": 5 }
+        { "type": "command", "command": "bash '$PLUGIN_DIR_JSON/hooks/reply-gate.sh'", "timeout": 5 },
+        { "type": "command", "command": "python3 '$PLUGIN_DIR_JSON/hooks/slack-heartbeat-hook.py'", "timeout": 3 }
       ] }
     ]
   }

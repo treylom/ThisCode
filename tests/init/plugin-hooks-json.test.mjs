@@ -83,25 +83,30 @@ const commandsOf = (home) => {
 };
 
 // ───────────────────────────────────── P1 hooks.json 계약 (OS 무관)
-test('P1 — hooks.json 이 JSON 으로 읽히고 4 이벤트에 훅 7개가 있다', () => {
+test('P1 — hooks.json 이 JSON 으로 읽히고 4 이벤트에 훅 10개가 있다', () => {
   assert.ok(existsSync(HOOKS_JSON), 'hooks/hooks.json 이 없다 — 플러그인이 훅을 싣지 못한다');
   const j = JSON.parse(read(HOOKS_JSON));
   assert.deepEqual(Object.keys(j.hooks).sort(),
     ['PreToolUse', 'SessionStart', 'Stop', 'UserPromptSubmit'], '4 이벤트가 아니다');
   const perEvent = {};
   for (const ev of Object.keys(j.hooks)) perEvent[ev] = j.hooks[ev].flatMap((g) => g.hooks || []).length;
-  assert.deepEqual(perEvent, { SessionStart: 1, UserPromptSubmit: 3, PreToolUse: 1, Stop: 2 },
+  assert.deepEqual(perEvent, { SessionStart: 1, UserPromptSubmit: 3, PreToolUse: 3, Stop: 3 },
     '이벤트별 훅 수가 install-hooks.sh 의 PATCH 블록과 다르다');
 });
 
-test('P1 — 훅 7개가 전부 등록돼 있고 «전부» 래퍼를 거친다', () => {
+test('P1 — 훅 10개가 전부 등록돼 있고 «전부» 래퍼를 거친다', () => {
   const j = JSON.parse(read(HOOKS_JSON));
   const cmds = Object.keys(j.hooks).flatMap((ev) => j.hooks[ev].flatMap((g) => (g.hooks || []).map((h) => h.command)));
-  assert.equal(cmds.length, 7, `명령이 7개가 아니다 (${cmds.length})`);
+  assert.equal(cmds.length, 10, `명령이 10개가 아니다 (${cmds.length})`);
   for (const want of REQUIRED) {
     assert.equal(cmds.filter((c) => c.includes(`/hooks/${want}`)).length, 1, `${want} 가 정확히 1번 있지 않다`);
   }
-  assert.equal(cmds.filter((c) => c.includes('/hooks/lib/bot-only.sh')).length, 7,
+  // Registered by the plugin on top of REQUIRED: the readability gate once, the Slack heartbeat on PreToolUse and Stop.
+  assert.equal(cmds.filter((c) => c.includes('/hooks/discord-readability-gate.py')).length, 1,
+    'discord-readability-gate.py must be registered exactly once');
+  assert.equal(cmds.filter((c) => c.includes('/hooks/slack-heartbeat-hook.py')).length, 2,
+    'slack-heartbeat-hook.py must be registered exactly twice (PreToolUse + Stop)');
+  assert.equal(cmds.filter((c) => c.includes('/hooks/lib/bot-only.sh')).length, 10,
     '래퍼를 안 거치는 훅이 있다 — 그 훅은 일반 세션에서도 돈다');
   // 미끼: 등록한 적 없는 훅은 잡히면 안 된다(자가 고장 검출)
   assert.equal(cmds.filter((c) => c.includes('zzq-never-installed-hook')).length, 0, '미끼가 잡혔다 — 자가 고장났다');
@@ -122,7 +127,7 @@ test('P1 — matcher·timeout 이 install-hooks.sh 의 PATCH 블록과 «원문�
   // 병합 모드 PATCH 가 이벤트·matcher·timeout 의 정본이다. 두 표현이 갈리면 여기서 잡힌다.
   const fromScript = {};
   for (const m of script.matchAll(/hooks\/([A-Za-z0-9._-]+)'", "timeout": (\d+)/g)) fromScript[m[1]] = Number(m[2]);
-  assert.equal(Object.keys(fromScript).length, 7, 'PATCH 에서 훅·timeout 을 7개 못 뽑았다 — 정규식이 낡았다');
+  assert.equal(Object.keys(fromScript).length, 9, 'PATCH 에서 훅·timeout 을 9개 못 뽑았다 — 정규식이 낡았다');
 
   const j = JSON.parse(read(HOOKS_JSON));
   const fromJson = {};
@@ -490,12 +495,12 @@ test('P10 — F2: 래퍼를 우회한 hooks.json 을 --verify 가 1 로 잡는�
         h.command = h.command.replace('bash "${CLAUDE_PLUGIN_ROOT}/hooks/lib/bot-only.sh" ', 'bash ');
     const mutated = Object.keys(j.hooks).flatMap((ev) => j.hooks[ev].flatMap((g) => (g.hooks || []).map((h) => h.command)));
     assert.equal(mutated.filter((c) => c.includes('bot-only.sh')).length, 0, '미끼가 안 심겼다 — 명령에 래퍼가 남아 있다');
-    assert.equal(mutated.length, 7, `명령이 7개가 아니다 (${mutated.length})`);
+    assert.equal(mutated.length, 10, `명령이 10개가 아니다 (${mutated.length})`);
     writeFileSync(hj, JSON.stringify(j, null, 2));
 
     const r = sh([INSTALL_HOOKS, '--verify', '--home', home, '--plugin-dir', plug]);
-    assert.equal(r.code, 1, '7훅 전부 래퍼를 우회하는데 검사가 통과했다 — 「래퍼 경유」는 주장일 뿐이다');
-    assert.match(r.out, /래퍼를 거치지 않는 명령 7 건/, `우회 건수를 안 알려준다: ${r.out}`);
+    assert.equal(r.code, 1, '10훅 전부 래퍼를 우회하는데 검사가 통과했다 — 「래퍼 경유」는 주장일 뿐이다');
+    assert.match(r.out, /래퍼를 거치지 않는 명령 10 건/, `우회 건수를 안 알려준다: ${r.out}`);
   }));
 });
 

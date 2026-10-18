@@ -444,15 +444,17 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 
 ## 🔬 내부 구조 (advanced)
 
-### 훅 7종
+### 훅 9종
 
 - **`bot-session-init.sh`** (SessionStart) — `DISCORD_STATE_DIR` env 로 봇 자동 감지 → soul.md + 봇별 WD 메모리 + 공용 규율 주입
 - **`discord-slash-cmd.sh`** (UserPromptSubmit) — 사용자 프롬프트 첫 줄이 `/cmd` 면 Skill 도구 호출 강제
 - **`regression-self-check.sh`** (UserPromptSubmit) — 회귀 패턴 방지용 4게이트 자가점검 표 주입
 - **`rule-router.sh`** (UserPromptSubmit) — 현재 프롬프트에 맞는 규칙 안내 연결
 - **`dispatch-room-gate.py`** (PreToolUse) — 봇 간 답장에 공유 회의실 규칙 적용
+- **`discord-readability-gate.py`** (PreToolUse) — 줄바꿈 없는 350자+ 덩어리, ` · ` 5개+ 로 이은 300자+ 줄, 코드 블록 밖 600자+ 줄이 든 Discord 답장을 되돌려 보냄 (표·코드는 `--allow-once` 로 1회 통과)
 - **`meeting-stop-reread.sh`** (Stop) — 종료 전 활성 회의 표식 재확인
 - **`reply-gate.sh`** (Stop) — 세션 종료 전 최종 답장 게이트 적용
+- **`slack-heartbeat-hook.py`** (PreToolUse · Stop) — 봇이 Slack 인바운드를 처리하는 동안 스레드의 「작업 중 · N초 · 도구 호출 K회」 말풍선을 10초마다 갱신 (`slack_heartbeat_daemon.py` 와 함께) · 봇별 Slack `.env` 가 있을 때만 동작, 30분 넘은 인바운드는 무시
 
 ### 스킬 (agentskills.io 표준)
 
