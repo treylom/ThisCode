@@ -314,7 +314,7 @@ thiscode/
 │   ├── meetings/                          # 회의실 4-file protocol
 │   ├── shared-memory/                     # 4-tier 메모리 정책
 │   └── …                                  # 전량은 `/` → thiscode: 필터로
-├── hooks/                                 # 봇 운영 hook 7종
+├── hooks/                                 # 봇 운영 hook 9종
 │   ├── bot-session-init.sh                # SessionStart → soul.md 자동 inject
 │   ├── discord-slash-cmd.sh               # UserPromptSubmit → 슬래시 강제
 │   ├── regression-self-check.sh           # 4-gate self-check 표 주입
@@ -451,7 +451,7 @@ bash scripts/install-graphrag.sh --apply     # venv 생성 + pip install + nohup
 - **`regression-self-check.sh`** (UserPromptSubmit) — 회귀 패턴 방지용 4게이트 자가점검 표 주입
 - **`rule-router.sh`** (UserPromptSubmit) — 현재 프롬프트에 맞는 규칙 안내 연결
 - **`dispatch-room-gate.py`** (PreToolUse) — 봇 간 답장에 공유 회의실 규칙 적용
-- **`discord-readability-gate.py`** (PreToolUse) — 줄바꿈 없는 350자+ 덩어리, ` · ` 5개+ 로 이은 300자+ 줄, 코드 블록 밖 600자+ 줄이 든 Discord 답장을 되돌려 보냄 (표·코드는 `--allow-once` 로 1회 통과)
+- **`discord-readability-gate.py`** (PreToolUse) — 줄바꿈 없이 350자 이상인 덩어리, 또는 코드 블록 밖에서 ` · ` 5개 이상으로 이은 300자 이상 줄이나 600자 이상 줄이 든 Discord 답장을 막음(다시 쓰게 함) · 표처럼 줄바꿈이 뜻을 바꿀 때만 보내는 쪽이 `--allow-once "<사유>"` 로 한 번 통과(1회용 · 10분 안 · 기록 남음)
 - **`meeting-stop-reread.sh`** (Stop) — 종료 전 활성 회의 표식 재확인
 - **`reply-gate.sh`** (Stop) — 세션 종료 전 최종 답장 게이트 적용
 - **`slack-heartbeat-hook.py`** (PreToolUse · Stop) — 봇이 Slack 인바운드를 처리하는 동안 스레드의 「작업 중 · N초 · 도구 호출 K회」 말풍선을 10초마다 갱신 (`slack_heartbeat_daemon.py` 와 함께) · 봇별 Slack `.env` 가 있을 때만 동작, 30분 넘은 인바운드는 무시

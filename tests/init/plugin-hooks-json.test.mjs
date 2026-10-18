@@ -83,7 +83,7 @@ const commandsOf = (home) => {
 };
 
 // ───────────────────────────────────── P1 hooks.json 계약 (OS 무관)
-test('P1 — hooks.json 이 JSON 으로 읽히고 4 이벤트에 훅 10개가 있다', () => {
+test('P1 — hooks.json 이 JSON 으로 읽히고 4 이벤트에 훅 등록 10건(9종)이 있다', () => {
   assert.ok(existsSync(HOOKS_JSON), 'hooks/hooks.json 이 없다 — 플러그인이 훅을 싣지 못한다');
   const j = JSON.parse(read(HOOKS_JSON));
   assert.deepEqual(Object.keys(j.hooks).sort(),
@@ -94,7 +94,7 @@ test('P1 — hooks.json 이 JSON 으로 읽히고 4 이벤트에 훅 10개가 �
     '이벤트별 훅 수가 install-hooks.sh 의 PATCH 블록과 다르다');
 });
 
-test('P1 — 훅 10개가 전부 등록돼 있고 «전부» 래퍼를 거친다', () => {
+test('P1 — 훅 등록 10건(9종)이 전부 있고 «전부» 래퍼를 거친다', () => {
   const j = JSON.parse(read(HOOKS_JSON));
   const cmds = Object.keys(j.hooks).flatMap((ev) => j.hooks[ev].flatMap((g) => (g.hooks || []).map((h) => h.command)));
   assert.equal(cmds.length, 10, `명령이 10개가 아니다 (${cmds.length})`);
