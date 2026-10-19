@@ -12,6 +12,7 @@ index row pointing at a renamed file, a model note three upgrades stale.
 1. **Tool claims ↔ reality**: every tool the always-loaded docs mention (LSP,
    MCP servers, hooks, plugins) is actually installed / enabled / working —
    measure it (settings files, status commands), don't trust the doc.
+   - **Hook claims ↔ hook registration (2026-10-20)**: a rule that says "enforced by hook X" must match the live hook registration in your settings, not just the existence of the hook file. If the file exists but is not registered, reword the rule to "hook X — pending registration, not enforced now" (or register it — for a guard, after the security cross-review); if the check is a script someone runs by hand inside a skill, say "manual gate script, not a hook". Seen once: a hook cleanup dropped two registrations while the rules kept saying "enforced" for weeks.
 2. **Old rules ↔ new model capability**: rules written for a weaker model's
    limits (small-context assumptions, forced decomposition, excessive
    confirmation) may now be capping the current model.
