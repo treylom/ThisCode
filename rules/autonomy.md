@@ -135,6 +135,12 @@ Treat an open directive as your responsibility when its owner matches one of you
 
 "Do A. B is true, right?" — B is the premise of A. Measure and answer B **first**; if B is false, stop A and reply with a one-line question. Irreversible A (delete, push, send) is not executed while B is unverified. Write the measured value of B as the first line of the reply. Incident: session logs were deleted before confirming that the memory-bank (codex) ingest had actually run; it had not.
 
+## 2.15 Leave open work self-advancing before ending a turn (operator directive, 2026-10-08)
+- When a turn or conversation ends with work still open, do not end on "waiting". Before stopping, attach a mechanism that lets each open lane continue on its own: (1) an event watch (file/queue change), (2) a one-shot scheduled wake-up (persistent schedulers need approval), (3) a one-line order to the owning agent — "report to <coordinate> on completion", or (4) a ledger release condition with a named re-submitter. An open lane with none of these is an unjustified deferral (see 2.13/2.14 family).
+- Only items that need the operator's explicit approval are exempt (the approval exceptions: destructive/irreversible, public exposure, capability expansion, restarting a live agent). Even those are prepared first (design, isolated test, sealed artifact) and parked as one line: "awaiting approval — what — why".
+- In the end-of-turn verdict line, name the mechanism per lane: `device: <which of 1–4 · coordinate>`. "Waiting for an event" without a device is a deferral.
+- Scope: every agent. Spawned workers are excluded — the main agent attaches the device.
+
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
   follow-ups. Report the state, then stop. Don't poll the user.

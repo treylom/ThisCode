@@ -163,6 +163,7 @@ in-flight tracks; your maintainer-confirmation channel.
 - **Enforcement honesty**: R1 = a pre-tool counter hook (warn-and-observe first, promote later only after repeated confirmed misses) · R3 = roster `domains:` field + router suggestion line · R4 = the delegation ledger · R2 and R5 are procedural gates only — don't label them "mechanically enforced" when nothing counts them.
 - **Who records what, when, where** (per rule): the acting bot itself records — R1: before the first write, in the track's spec/log · R2: before spinning up the workflow · R3: before dispatch, in the track's spec/log · R4: at wakeup self-check, in the delegation ledger · R5b: right after the output is done, linking it into the knowledge index.
 - Case-based (operator directive, 2026-08-16); re-judge per situation; the maintainer's call wins.
+- **Security-review bots scope (2026-10-08)**: run the security-review bot pair only for externally published or externally shared deliverables (customer packages, public repos). Internal work — hooks, judges, shadow logs, internal tools — gets no security-bot round. Even for deliverables, do not run a pair per repair round; run it once, right before release/installation, with both reviewers in parallel and sealed.
 
 ▶ Fill in: your write-capable worker roster (workflow engine / Agent Teams / specialist bots); your workflow-engine's opt-in mechanism; your bot roster's `domains:` field location; your designated general-purpose worker bot's identity; your delegation-ledger path; your knowledge-index registration step.
 
