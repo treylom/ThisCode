@@ -372,7 +372,8 @@ idle" while the meeting was active in thread replies.
 
 1. Every project room keeps a **decision document** (e.g. `NN-decision.md`, or a designated existing decision ledger) that records the path **draft → interim feedback → final deliverable**: what was built first, which feedback changed it — **name the positive and the negative feedback separately** — and why each change was made. Written by the bot that finalizes the deliverable, in the same turn (every rule names who writes it, when, and where).
 2. The room's `01-spec` exit condition and its `03-outcome` both list a **decision retrospective plus a review of the skills / rules / hooks / instructions the work changed, held with every bot that took part** as a condition of closing. Hold it only after notifying the operator and receiving a yes/no — yes = hold it now, no = file it as an agenda item for the next improvement meeting. Holding it without that notice is not allowed.
-3. Case-based rule: the operator's explicit instruction for a given room overrides this section.
+3. **Close the agenda markers when you close the room (2026-10-20).** When the chair closes `03-outcome`, in that same turn it rewrites the source marker of every agenda item the meeting disposed of — the item's status line in the agenda backlog file and the `status` of any pending-agenda file — to «disposition + the `03-outcome` decision coordinate» (room and line, or disposition-table row). A backlog line left at «not started» after a decision re-raises the same item at every later meeting (live case: one item came back three weeks running). If another bot's uncommitted lines sit in that file, do not edit it — ask that bot to commit, and leave the exact replacement text in `02-progress`.
+4. Case-based rule: the operator's explicit instruction for a given room overrides this section.
 
 ## Liveness: two rulers, two questions
 
