@@ -10,11 +10,12 @@ Trigger: receiving a bug report, about to modify a file, about to claim "fixed/d
 ## 2. Before modifying a file
 - List what currently works → analyze blast radius → modify → verify. Write down what could break *before* touching it.
 
-## 3. 3-step verification after a change
-1. Checklist — only the intended change went in
-2. Run test — the changed feature works
-3. Integration test — adjacent features didn't regress
-- Never say "done" without verification.
+## 3. Verification matched to the change's impact (2026-10-12 — replaces the fixed three-step check)
+- Wording changes and low-risk, reversible edits: compare the result directly against the intent (only the intended change went in).
+- Behavior changes: run tests that exercise the affected behavior.
+- Shared or security-relevant changes: run the related integration tests and get an independent review.
+- Once the checks the change needs have passed, widen or repeat testing only for a new change, a failure, or an unresolved concern. Permission, security, data-loss checks and checks on real delivery to recipients are never dropped.
+- Never claim done without the verification that fits the change.
 - **Verifiers carry the same evidence bar (added 2026-07-29)**: before *declaring RED* on a web/rendered deliverable — not only before claiming GREEN — measure the delivery surface once (final HTTP status after redirects, rendered output), not static source parsing alone; static-only analysis has mis-attributed a RED to a healthy deliverable. Separate source-layer defects (warn) from delivery-layer defects (hard). Situational judgment; the user's call wins.
 
 ## 4. Don't conclude absence from limited observation
