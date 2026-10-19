@@ -167,7 +167,6 @@ tool(s) and where the diversity check is recorded.
 - Only rows the script does not flag should be started as new work.
 - Owner of this entry: the bot starting the row is responsible for writing the receipt or note directly on that row; the script's own exclusion list for quoted sources is the reference to follow, not a copy kept in this document.
 
-(vault docs/rules-full/skill-process.md, 2026-09-09)
 
 ## Experiments run to their verdict (operator directive, 2026-10-11)
 - An experiment, shadow observation or comparison you start keeps going until it reaches the verdict fixed at the start (a pass line, a comparison conclusion). Letting it drift and quietly carry over is not allowed.

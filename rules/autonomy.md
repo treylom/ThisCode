@@ -121,7 +121,6 @@ reached partial / blocked / awaiting-permission state.
 - Owner: the bot that defers the row writes the note "finished project: <name>" directly on that row.
 - Exception: if the same finished project still has an open follow-up contract, re-engagement, or maintenance window, it is not closed — the release condition should instead point to that open window.
 
-(vault docs/rules-full/autonomy.md, 2026-09-09)
 
 ## 2.13 No self-invented time gates (operator directive, 2026-09-11)
 
