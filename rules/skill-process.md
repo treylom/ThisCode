@@ -64,9 +64,13 @@ an automated experiment loop; delegating to a sub-agent.
   observation.
 
 ## 4. Delegation boundary
-- Read-only sub-agents must not be trusted to have written (false-completion
-  risk); independent worker processes may write. Verify a sub-agent's result
-  before relying on it.
+- Sub-agents write according to their role definition: explorers and verifiers
+  stay read-only, implementer roles write (2026-10-12 — the earlier blanket
+  "sub-agents are read-only" answered a fake-tool-call / false-completion bug
+  that has not recurred). Independent worker processes may write.
+- Collect any written output only after re-measuring the files yourself (hash,
+  diff, re-run); a worker's report alone never closes the item. Verify a
+  sub-agent's result before relying on it.
 
 ## 5. Diversity gate for automated loops
 - Iterative LLM-driven mutation/optimization loops (self-improving search,
@@ -163,4 +167,11 @@ tool(s) and where the diversity check is recorded.
 - Only rows the script does not flag should be started as new work.
 - Owner of this entry: the bot starting the row is responsible for writing the receipt or note directly on that row; the script's own exclusion list for quoted sources is the reference to follow, not a copy kept in this document.
 
-(vault docs/rules-full/skill-process.md, 2026-09-09)
+
+## Experiments run to their verdict (operator directive, 2026-10-11)
+- An experiment, shadow observation or comparison you start keeps going until it reaches the verdict fixed at the start (a pass line, a comparison conclusion). Letting it drift and quietly carry over is not allowed.
+- A stopped experiment ends in exactly one of two ways: (a) **resume** — owner, resume date and a mechanism that will finish it (a scheduled job or a watcher) written into the ledger row's release field; (b) **closed by decision** — one line on why it stops (no change to the conclusion expected · the premise is gone · absorbed into another experiment) with its evidence, carried into the maintainer's next decision batch.
+- This is the counterpart of capping refinement loops: a cap stops extra polishing once a verdict exists; this rule stops abandoning an experiment before it has one.
+- Who: the row's owner writes the resume or close line; the coordinating bot sweeps open experiment rows when it prepares the maintainer's decision batch.
+
+▶ Fill in: your ledger's release field; your decision-batch routine.

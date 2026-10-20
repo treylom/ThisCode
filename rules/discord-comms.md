@@ -183,6 +183,53 @@ When a report or completion message mentions items whose detail lives in a separ
 - Form: short reports use inline parenthesized paths; long reports use a shortcuts table at the top.
 - Case boundary: items whose one-line mention IS the full record need no coordinate — do not fabricate links; say the line is all there is.
 
+- **Reports and write-ups for the maintainer = a file plus a 3-line body (maintainer directive, 2026-09-27).** Anything longer than a short answer (status report, summary, comparison) goes out as an HTML file attached to the channel message (HTML only — not Markdown or plain-text attachments; maintainer directive, 2026-10-18 — a send gate can enforce this); the message body itself is at most three lines: conclusion, where the file is, what is asked of the reader. A long report pasted as message text is a violation even when the content is correct.
+- **§7-2 Maintainer-facing documents carry no coordinates (maintainer directive, 2026-10-09).** Anything the maintainer reads — DM text, HTML reports, decks, thread replies — must not contain hashes, file or rule paths, message/file ids, ledger row ids or commit hashes, nor jargon that only your bot team understands; rewrite it in plain words. Lead with a one-sentence conclusion, then the numbers, then the next actions; experiment write-ups follow "why we ran it → what came out → what we do next". Coordinates and jargon stay in progress logs, the ledger and bot-to-bot threads. Gate strength (2026-10-10): a send gate keeps blocking hashes, message/file ids, ledger row ids, team-only jargon and secrets, but a file path or file name on its own only gets a warning — it does not block the send.
+- **Documents for outside readers = real names hidden by default; the first draft is already the finished document (2026-10-13).** Reports and guides going to an external client hide the client company's name and its representative's real name unless the maintainer explicitly asks for a named version. The first draft is already the finished HTML document with a short "why" field — not a chat summary or a Markdown draft first. Contract and scope questions go in a separate field marked as the maintainer's call.
+
+## 8. Send restraint — two independent limits (maintainer directives, 2026-09-10 · 2026-09-21)
+
+Both limits govern *how many messages you send*, not their contents. They fail in
+opposite directions, and one does not catch the other.
+
+### 8-a. Cap on consecutive unanswered sends
+
+Sending again before the recipient has answered is capped. Each individual send
+looks justified in the moment ("the reviewer didn't catch it", "they may be
+filling in the old draft"); the violation only exists **in the sum**, and the sum
+is invisible once the turn ends.
+
+- For a long worker turn (≥5 min expected): **one line on start, one progress
+  line in the middle.** Not one per intermediate artifact.
+- Past the cap (default: two unanswered sends), a further send must answer:
+  *what does the recipient decide with this?* If there is no answer, it is not
+  ready to send.
+- Rules that accumulate cannot be enforced by attention. If your harness can hold
+  a per-channel counter, put the limit there — the bot will not feel the sum.
+
+### 8-b. One question, one answer
+
+The cap in 8-a counts *unanswered* sends, so it resets whenever the user speaks.
+That leaves a second failure open: **splitting the answer to a single question
+across several messages.** Neither the send interval nor "has the user replied"
+can detect it.
+
+The root cause is not any single message's content — it is **sending before the
+work is done**. If an investigation (a background job, a subagent, a browser
+task) is running *because of that question*, anything you send meanwhile will
+need correcting when the result lands, and each correction is another
+notification the user did not ask for.
+
+- **Answer a research or verification request once, after it finishes.**
+- While a background task is running *for that question*, no substantive answer.
+  If the user must wait, send **one line** ("checking") — a status line stops
+  being a status line the moment it carries findings.
+- If a correction is unavoidable, keep it **short**: one or two lines on what
+  changed. Your own post-mortem belongs in memory, not on the user's screen.
+- Self-check before sending: **"is what I hold right now the final version?"**
+  If not, do not send.
+- Case-based (2026-09-10 · 2026-09-21); re-judge per situation; the maintainer's call wins.
+
 ## Upstream-outage rung (escalation ladders assume the bot is asleep)
 
 Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. During an **upstream service outage** (model-provider backend down) every rung is attempt-able and every rung is useless — the ladder runs to the end and mis-files the incident as a bridge fault. Discriminating signal: **an independent path dies at the same moment** (e.g. an isolated second account/HOME hitting the identical error). On outage: no wake, no bridge debugging — wait for recovery, one ledger line (the bot is alive; it just cannot produce output). Case-based (2026-07-25, a global outage at a model provider); re-judge per situation; the maintainer's call wins.
@@ -193,11 +240,14 @@ Re-send → wake → "bridge problem" ladders presuppose an unresponsive *bot*. 
 
 When the bridge in use is Slack (`vendor/claude-channel-server`), the Discord rules above apply unchanged; these are the Slack-specific additions.
 
-1. **Thread in a channel, top-level in a DM.** If the inbound tag carries a `thread_ts`, echo it into the `reply` tool; if it does not, leave it out. In a channel the bridge always supplies one (the reply lands under the message that summoned the bot); in a DM it supplies one only when the user wrote inside a thread, because a threaded DM reply raises no notification on the user's side. A top-level post in a channel is for a topic the *bot* opens, nothing else.
+1. **Thread in a channel; in a DM, reply under the user's message (maintainer directive, 2026-10-18 — replaces "top-level in a DM").** In a channel the bridge always supplies a `thread_ts` (the reply lands under the message that summoned the bot) — echo it into the `reply` tool. In a DM, answer in the thread under the user's message as well: pass the inbound tag's `thread_ts` if it has one, otherwise that message's own `ts`; heartbeat and progress bubbles go into the same thread. A message the bot sends first (nothing to answer) still starts at the top of the DM. If your bridge drops `thread_ts` on DM replies, keep passing it (harmless) but do not claim the reply was threaded until the bridge is fixed. A top-level post in a channel is for a topic the *bot* opens, nothing else.
 2. **Progress signals are automatic — do not add them by hand.** The bridge reacts with its receipt emoji (`SLACK_BOT_EMOJI`, default 👀) when it accepts an inbound and adds ✅ beside it when the threaded reply lands. The heartbeat hook (`hooks/slack-heartbeat-hook.py` + `hooks/slack_heartbeat_daemon.py`, PreToolUse + Stop) reacts ⏳ while tools are running and keeps one "⏳ working · Ns · K tool calls" bubble in the thread updated every 10 s, closing it with "✔ done" at the reply/turn end. Calling `react` yourself duplicates these. No heartbeat visible = hook not registered, no `.env` for this bot, or the inbound is older than 30 min (state: `~/.claude-state/slack-heartbeat/<bot>/`).
 3. **Long content = canvas.** Status boards, agendas and tables go in one DM canvas (`conversations.canvases.create` / `canvases.edit` work with the bot token) that you keep updating; the thread gets a one-line "canvas updated". Canvases do not render diagrams — use a code-block ASCII diagram or attach an image.
 4. **Reply routing.** A configured channel (`SLACK_CHANNEL_ID`) accepts an explicit `chat_id` from the first send; with a trailing `*` entry every channel the bot is invited to does too. A DM is only a valid target after an inbound from it has been seen. A `chat_id` outside that set is refused with an error (the reply is not sent) — never silently redirected to the home channel — so treat an error from `reply` as "not delivered" and fix the target. To open a new DM first, post via the Web API (`chat.postMessage`) directly.
-5. **Default channel.** Once the maintainer moves day-to-day traffic to Slack, reports, agendas and approval requests go to the maintainer's Slack DM and bot-to-bot dispatch goes through Slack channel mentions; answer on Discord only what the maintainer sent on Discord.
+5. **Default channel.** Once the maintainer moves day-to-day traffic to Slack, reports, agendas and approval requests go to Slack — into the thread where the work is happening (item 9), not as a separate DM — and bot-to-bot dispatch goes through Slack channel mentions; answer on Discord only what the maintainer sent on Discord.
 
 6. **Stay in the thread the maintainer opened.** When the maintainer answers inside a specific thread, every further reply and report goes into that thread (no new top-level post, no new thread) — echo the inbound tag's `thread_ts`.
-7. **Progress board.** A long task (~5 min or more) gets one thread and one progress-board message that *code* rewrites (`hooks/slack_progress_board.py sync --key <k> --from <steps-file|progress-log> [--thread <ts>]`, zero model tokens). Step source = lines `[HH:MM] <bot> | ⬜⏳✅❌ | <step> | <one-line note>` (append with `step` mode) or a progress log filtered by task id. The heartbeat (item 2) says "tools are running right now"; the board says "which step we are on" — both automatic, neither hand-written by the bot.
+7. **Progress board.** A long task (~5 min or more) gets one thread and one progress-board message that *code* rewrites (`hooks/slack_progress_board.py sync --key <k> --from <steps-file|progress-log> [--thread <ts>]`, zero model tokens). Step source = lines `[HH:MM] <bot> | ⬜⏳✅❌ | <step> | <one-line note>` (append with `step` mode) or a progress log filtered by task id. The heartbeat (item 2) says "tools are running right now"; the board says "which step we are on" — both automatic, neither hand-written by the bot. Post the plan first (maintainer request 2026-09-26): `plan --from STEPS --steps "S1" "S2" ...` registers every step as ⬜ before the first step runs, so the board shows the whole route from the start and later `step` calls flip rows in place.
+8. **Opening or pointing to a thread = include its permalink (maintainer directive, 2026-10-03).** When you open a meeting, dispatch, or report thread and tell the maintainer or another bot about it, give the clickable permalink (`chat.getPermalink` with the channel and message ts, or `https://<workspace>.slack.com/archives/<channel_id>/p<ts with the dot removed>`) — a bare channel id plus message ts is something a person can neither click nor find. Machine-parsed fields (e.g. a ledger's dispatch column) may keep the `channel/ts` form; the permalink goes in text a person reads.
+9. **Calling the maintainer = one tag inside the work's thread, not a separate DM (maintainer directive, 2026-10-18).** Tag the maintainer only when something needs a decision, approval or manual step that only the maintainer can make, and once for the final report. If a bot's own repair loop can settle a problem, send the maintainer nothing (2026-10-10). Work running in a meeting or work thread is tagged there; work the maintainer started in a DM is tagged in the reply thread under that DM message (item 1). Progress, liveness, start and interim messages get no tag and no DM — they stay in the thread untagged. Report files go into the same thread, with the one tag on that message. Exception: if your approval tooling can only show its approval button card in the maintainer's DM, the card stays there — the explanation and the tag go in the work's thread.
+10. **One Slack post ≤ 3,500 characters (2026-10-20).** Slack splits a post of roughly 4,000+ characters at line boundaries into several messages, and a mention attaches only to the chunk that contains it (the sender gets back only the last chunk's `ts`) — so a long dispatch can reach the called bot cut in half, or not reach it at all. Keep each dispatch, report or reply ≤ 3,500 characters; put anything longer in an attached file (HTML) with a three-line summary in the post; and put the `<@id>` mention of every bot you are calling on the **first line**. (Observed once: an ~11,500-character dispatch arrived as three pieces.)

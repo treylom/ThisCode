@@ -61,14 +61,14 @@ test('both README search-setup fragment links resolve to actual SETUP headings',
   }
 });
 
-test('the Korean hook inventory names all seven registered hook commands', () => {
+test('the Korean hook inventory names every registered hook command (9 hooks, 10 registrations)', () => {
   const doc = read('README.ko.md');
   const commands = Object.values(JSON.parse(read('hooks/hooks.json')).hooks)
     .flatMap((groups) => groups.flatMap((group) => group.hooks.map((hook) => hook.command)));
-  assert.equal(commands.length, 7);
+  assert.equal(commands.length, 10);
   assert.doesNotMatch(doc, /훅\s*3종/);
-  const section = doc.split('### 훅 7종')[1]?.split('\n### ')[0];
-  assert.ok(section, 'seven-hook section must exist');
+  const section = doc.split('### 훅 9종')[1]?.split('\n### ')[0];
+  assert.ok(section, 'nine-hook section must exist');
   for (const command of commands) {
     const name = command.match(/\/hooks\/([^/" ]+)"$/)?.[1];
     assert.ok(name, `cannot extract registered hook: ${command}`);

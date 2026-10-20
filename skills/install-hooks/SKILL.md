@@ -1,6 +1,6 @@
 ---
 name: install-hooks
-description: thiscode 훅 7개의 등록 상태를 검사하고, 옛 병합 잔존을 정리한다 (hooks/hooks.json 없는 체크아웃에서는 예전처럼 ~/.claude/settings.json 에 안전 merge)
+description: thiscode 훅 9종(등록 10건)의 등록 상태를 검사하고, 옛 병합 잔존을 정리한다 (hooks/hooks.json 없는 체크아웃에서는 예전처럼 ~/.claude/settings.json 에 안전 merge)
 disable-model-invocation: true
 allowed-tools: Bash Read Write Edit AskUserQuestion
 ---
@@ -11,7 +11,7 @@ allowed-tools: Bash Read Write Edit AskUserQuestion
 
 이 호출의 구현은 본 `skills/install-hooks/SKILL.md`다. 별도의 `commands/install-hooks.md`는 제공하지 않는다.
 
-> 순정 Claude Code 에서 soul.md / WD memory / 슬래시 detect / 회귀 self-check 가 자동으로 도는 데 필요한 훅 7개를 다룬다.
+> 순정 Claude Code 에서 soul.md / WD memory / 슬래시 detect / 회귀 self-check 가 자동으로 도는 데 필요한 훅을 포함해 훅 9종(등록 10건)을 다룬다.
 > **플러그인을 깔면 훅은 이미 등록돼 있다** — 플러그인에 `hooks/hooks.json` 이 동봉되고 Claude Code 가 그걸 직접 싣는다.
 > 훅은 **봇 세션에서만**(`DISCORD_STATE_DIR` 이 있을 때만) 동작한다 — 일반 개발 세션에서는 래퍼가 아무 출력 없이 통과시킨다.
 > 그래서 이 스킬이 하는 일은 «검사 + 옛 병합 잔존 정리» 다. `hooks/hooks.json` 이 없는 체크아웃이면 예전처럼 `~/.claude/settings.json` 에 안전 merge 한다(기존 사용자 hook 보존).
@@ -25,7 +25,7 @@ $ARGUMENTS
 | 모드 | 조건 | 스크립트가 하는 일 |
 |---|---|---|
 | **플러그인 모드** (기본) | 플러그인 루트에 `hooks/hooks.json` 이 있다 | 병합하지 않는다. 옛 병합 방식으로 `~/.claude/settings.json` 에 남은 **같은** 훅만 지운다(안 지우면 한 번 일어난 일에 훅이 두 번 발화한다) + `--verify` 로 검사한다 |
-| **병합 모드** (fallback) | `hooks/hooks.json` 이 없다 | 예전 그대로 `~/.claude/settings.json` 에 훅 7개를 안전 merge 한다 |
+| **병합 모드** (fallback) | `hooks/hooks.json` 이 없다 | 예전 그대로 `~/.claude/settings.json` 에 훅 9종(등록 10건)을 안전 merge 한다 |
 
 되돌리기는 `hooks/hooks.json` 하나를 지우는 것으로 끝난다 — 그러면 자동으로 병합 모드로 돌아간다.
 
@@ -34,7 +34,7 @@ $ARGUMENTS
 훅이 모든 세션에 실리되 «봇 세션에서만» 동작하게 하는 것이 이 한 장이다.
 있으면 대상 훅을 그대로 실행한다(`.py` 는 python3, 그 외는 bash · stdin·인자·종료코드 전달).
 
-## 등록할 hooks 7개
+## 등록할 hooks 9종 (등록 10건)
 
 1. **SessionStart** → `bot-session-init.sh`
    - soul.md (페르소나) 자동 inject
@@ -53,11 +53,19 @@ $ARGUMENTS
 5. **PreToolUse** → `dispatch-room-gate.py`
    - 최상위 채널에서 다른 봇에게 일을 시키는 답장을 막는다(발주는 전용 스레드에서) — 설정 파일이 없으면 비활성(그대로 통과)
 
-6. **Stop** → `meeting-stop-reread.sh`
+6. **PreToolUse** → `discord-readability-gate.py`
+   - 줄바꿈 없이 350자 이상인 덩어리, 코드 블록 밖에서 ` · ` 5개 이상으로 이은 300자 이상 줄이나 600자 이상 줄이 든 Discord 답장을 막는다(코드 블록 안 줄은 줄 검사에서 뺀다)
+   - 표처럼 줄바꿈이 뜻을 바꿀 때만 보내는 쪽이 `--allow-once "<사유>"` 로 한 번 통과(1회용 · 10분 안 · 기록 남음)
+
+7. **PreToolUse** + **Stop** → `slack-heartbeat-hook.py` (등록 2건)
+   - 봇이 Slack 인바운드를 처리하는 동안 스레드의 「작업 중」 말풍선을 10초마다 갱신한다(`slack_heartbeat_daemon.py` 와 함께)
+   - 봇별 Slack `.env` 가 없으면 아무것도 하지 않는다 · 30분 넘은 인바운드는 무시
+
+8. **Stop** → `meeting-stop-reread.sh`
    - active meeting 이 열려 있는 봇 세션이면 종료 전 회의 state 재독을 요청
    - active meeting 없음 / 일반 개발 세션 / 재귀 Stop = fail-open allow-stop
 
-7. **Stop** → `reply-gate.sh`
+9. **Stop** → `reply-gate.sh`
    - Discord 로 온 요청인데 답장 도구를 한 번도 안 쓰고 턴을 끝내려 하면 막는다 —
      터미널에만 찍힌 출력은 사용자에게 **도달하지 않는다**
    - Discord 턴이 아니면 fail-open(그대로 통과)

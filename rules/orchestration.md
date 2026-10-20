@@ -33,6 +33,7 @@ asserting another bot's identity or health, or coordinating multiple agents.
 - Distinguish: **blocked on a user decision** → summarize, report, stop (no
   polling). **Teammate idle / oversight** → not a stop; drive and verify. Do
   not conflate the two into passive waiting.
+- **A stalled bot goes on the pause list in the same turn — check the list before you dispatch (2026-10-20).** A bot that finds another bot frozen (usage limit, expired auth, or no turn for N hours) adds it, in that turn, to the pause-switch file your bridge and stall alerts read (e.g. a `bots` list plus a reason and a release time), and every dispatcher reads that list once before sending work.
 
 ## 3. Meeting facilitation (no solo lock)
 - Convener does not force its own frame; adopt each bot's domain prep frame as
@@ -163,14 +164,51 @@ in-flight tracks; your maintainer-confirmation channel.
 - **Enforcement honesty**: R1 = a pre-tool counter hook (warn-and-observe first, promote later only after repeated confirmed misses) · R3 = roster `domains:` field + router suggestion line · R4 = the delegation ledger · R2 and R5 are procedural gates only — don't label them "mechanically enforced" when nothing counts them.
 - **Who records what, when, where** (per rule): the acting bot itself records — R1: before the first write, in the track's spec/log · R2: before spinning up the workflow · R3: before dispatch, in the track's spec/log · R4: at wakeup self-check, in the delegation ledger · R5b: right after the output is done, linking it into the knowledge index.
 - Case-based (operator directive, 2026-08-16); re-judge per situation; the maintainer's call wins.
+- **Security-review bots scope (2026-10-08, narrowed again 2026-10-13)**: run the security-review bot pair only for three kinds of work — publishing a website, code work that is delivered externally or goes to a public repo, and messaging-app chat-bot work. Reports and documents get no security-bot round, even when they go to outside readers; their author checks them instead (zero internal paths, bot names, message ids, client names, e-mail or phone-number patterns). Internal work — hooks, judges, shadow logs, internal tools — gets no security-bot round either. Even inside the three kinds, do not run a pair per repair round; run it once, right before release/installation, with both reviewers in parallel and sealed.
 
 ▶ Fill in: your write-capable worker roster (workflow engine / Agent Teams / specialist bots); your workflow-engine's opt-in mechanism; your bot roster's `domains:` field location; your designated general-purpose worker bot's identity; your delegation-ledger path; your knowledge-index registration step.
+
+## Dispatch hygiene — remote-command tests and worker habits (2026-10-20)
+
+- **Testing remote or deploy commands = a copy + a network-blocked box + fake `ssh`/`scp` first on `PATH` (they only log their arguments) — zero real servers (2026-10-20).** When you test, reproduce or verify anything that deploys or reaches a remote host (ssh, scp, remote rsync, deploy scripts), run it on a copy, inside a box with networking blocked, with stand-in `ssh`/`scp` at the front of `PATH` that record their arguments and do nothing else. Swapping a function inside the same process is not isolation — a child process still calls the real binary. Write these three conditions into the verification dispatch itself.
+- **Worker-dispatch habit line — paste it into every worker or child-session dispatch (2026-10-20).** "Write files with the file-write tool · append meeting progress lines with your meeting helper, not hand-built shell echo · read another terminal session with one plain, unquoted `tmux capture-pane` call (read-only, see the communication rule) · if the harness runs a destructive-command gate, it will refuse heredocs, `$(…)` and shell loops — write a script file and run it with `python3 -I <path>` instead." Why: a gate that refuses those shapes even for read-only commands burns worker turns; in one internal review, two audit workers each ran out of turns this way.
 
 ## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
 
 Before spawning any subagent/worker, run this order: **① existing-project / knowledge-base exploration = the vault search entry point first** (e.g. the 4-tier search command; do not replace it with a scout/explore subagent) → **② planning or spec refinement = the interview/planning tools (e.g. ouroboros pm/interview, superpowers brainstorming)** — never hand planning to a spawned worker → **③ only what is left — reading 3+ files, an independent fan-out unit, or a mechanical run — may be spawned, and only after the delegation-shape judgment.** "Saving tokens" is not a reason to spawn: spawning saves main-context tokens only at the cost of a thinner grasp of the source material. Record the routing as the first line of the task log: `routing: search ○ / planning-tool ○ / spawn reason …`. Scope = every bot, including bots on remote machines.
 
 ▶ Fill in: your vault-search entry point; your planning/interview tools; the section that defines your delegation-shape judgment.
+
+## Review and design requests · relayed directives · helper calls (operator directives, 2026-10-06 · 2026-10-13)
+
+- **A review or design request is a written brief, never one line (hard rule, 2026-10-06).** Generate it with your prompt-writing skill and keep the full text in a record file. Header = four fields: **reviewer · stance** (whose eyes — the recipient's and the maintainer's) **· reference documents · review target**. No role-play prompts ("You are X") and no repeated role lines. A review request also carries the protocol block (what changed · the whole structure · the logic before and after · forbidden classes, plus your QA axes), the FAIL conditions, and an output contract (report path · per-axis table · at most N recommendations saying where and how · limits · sealed hash). A design request carries concept · recipient · screen spec · forbidden classes · output contract in the same shape. "Please review" on its own is an incomplete request: the receiving bot answers "no protocol" instead of starting. A send hook can enforce this when the first line starts with a request prefix (e.g. `Request (review):`) or mentions a review/design bot — keyed on the first line, so ordinary coding or research requests are not blocked.
+- **Two more fields (2026-10-13).** ① The output contract of a design or diagram request adds a "skill call record" — which skill was called and whether its first principle was applied (calling a skill is not applying it). ② A request for the first draft of a report going outside includes one counter-review round by default, not only when someone asks.
+- **Relaying the maintainer's words = mark it (2026-10-13).** When a bot passes the maintainer's words on to another bot, the message starts with `Relayed from the maintainer:` + the original message key + one line on whom it applies to. A relayed message is not the original: the receiver records it apart from a direct message, and re-relaying the same original counts as one event.
+- **Helper workers are chosen by purpose; advisor calls have four moments (2026-10-13).** ① Pick the helper for the job — independent implementation and testing · important counterexamples and design risk · narrow extraction — never call them all at once. Skip re-verifying the same fingerprint on the same evidence (re-check only what changed or what a new counterexample touches); a timeout is not a success; an identical auth failure is not retried automatically until something that could change it has changed. ② Call a stronger advisor/reviewer model right before choosing a structure or approach · after the same draft is rejected twice · when deciding where a fix belongs (rule, skill or hook) · once before declaring done — no repeated calls outside those four, unless the maintainer or the requester asks for one.
+
+▶ Fill in: your prompt-writing skill; your review/design bot list for the send hook; your helper-worker roster by purpose; your advisor tool.
+
+## Model tiers & child sessions (operator directive, 2026-10-18)
+
+Pin models by layer, and let a busy bot hand whole chunks of work to child sessions instead of doing everything in its main session.
+
+| Layer | Claude-family bots | Codex-family bots | Note |
+|---|---|---|---|
+| Main session (pinned) | lead coordinating bot = top model · highest effort tier you run; second coordinating bot = top model · one tier lower | coordinating Codex bot = its standard model · medium | every other bot keeps its current launch setting (the launch config is the source; do not copy values here) |
+| Child session default | top model · medium effort | strongest coding model · high | raise model or effort per task, with a one-line reason |
+| Subagents (workers inside a session) | mix a mid-size and a small model — mid-size for exploration / mechanical edits / verification, small for single-value lookups; top model only for creative, design or complex-verification workers | mix the light, coding and research worker models | never route everything to one model |
+
+- **Division of roles**: the parent session mostly relays and judges (decompose, dispatch, collect, integrate); heavy execution happens in child sessions, which start at a higher model or effort when the task needs it.
+- **Use child sessions actively when there is a lot to do.** A bot can open its own thread, so a user DM is not required as the trigger: post the thread's opening message, then attach a child session to that thread.
+- **Working conditions** (provisional — re-check after the next bot restart):
+  1. Send only **independent chunks** to a child (3+ files · 30+ minutes · collectable in one pass). 1–2 file lookups stay with subagents; a single value stays direct.
+  2. Flow = thread opening message → child-session spawn tool with **model and effort written explicitly** (an omitted value silently inherits a default) → the parent collects the result file and judges it (a child's report is not a fact until verified).
+  3. The child's task text states **no outbound chat posting** (neither the reply tool nor any send script) — the parent posts after judging.
+  4. At most **2 concurrent child sessions per bot**.
+  5. On the first child collection, add one ledger note: the child shows under its parent in the session view · the report was collected · zero posts to other threads.
+- **Boundaries**: a child session is not a subagent and not a fork — subagent rules (unspecified model = inherits the parent; fork fan-out ban) apply to subagents only; a child session is a separate session whose model and effort come from the spawn arguments. The "≤2 per bot" cap applies to child sessions and does not reintroduce a worker concurrency cap. The delegation defaults above (document-count, multi-step, specialty and spawn-last routing) stay as they are; child sessions sit one layer above them.
+
+▶ Fill in: your model IDs per layer; your child-session spawn tool and its model/effort arguments; your ledger note command.
 
 ## Deferred instructions — re-check the ledger at fire time
 

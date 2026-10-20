@@ -427,13 +427,14 @@ The `--apply` mode:
 
 ## 🔬 What's inside (advanced)
 
-### The 7 hooks
+### The 9 hooks
 
 - **`bot-session-init.sh`** (SessionStart) — auto-detects bot via `DISCORD_STATE_DIR` env var → injects soul.md + per-bot WD memory + common discipline
 - **`discord-slash-cmd.sh`** (UserPromptSubmit) — if user prompt's first line is `/cmd`, forces Skill tool invocation
 - **`regression-self-check.sh`** (UserPromptSubmit) — injects a 4-gate self-check table to refresh attention against regression patterns
 - **`rule-router.sh`** (UserPromptSubmit) — routes matching prompts to the applicable rule guidance
 - **`dispatch-room-gate.py`** (PreToolUse) — checks bot-to-bot replies against the shared-room gate
+- **`discord-readability-gate.py`** (PreToolUse) — blocks a Discord reply that is one 350+ character block with no line break, or that has a line outside code fences which is 300+ characters with 5+ ` · ` separators or 600+ characters long; when a line break would change the meaning (e.g. a table), the sender can let one reply through with `--allow-once "<reason>"` (single use, expires in 10 minutes, logged)
 - **`meeting-stop-reread.sh`** (Stop) — rereads the active meeting marker before stopping
 - **`reply-gate.sh`** (Stop) — applies the final reply gate before a bot session stops
 - **`slack-heartbeat-hook.py`** (PreToolUse · Stop) — keeps a 10-second "working · Ns · K tool calls" bubble updated in the Slack thread while the bot works on an inbound (with `slack_heartbeat_daemon.py`); only active when a per-bot Slack `.env` exists, and inbounds older than 30 minutes are ignored

@@ -39,6 +39,7 @@ KB CLI); a search just failed or came back empty.
   2. **KB CLI full-text as the 2nd-tier fallback** (unranked — widen limit,
      use isolating keywords) →
   3. plain search (grep/find).
+- **The key noun of an instruction does not show up = reopen the source (2026-10-13).** If the key noun of the maintainer's instruction (e.g. *what* must be sent by Friday) is not found by search, do not fill the gap with a likely candidate — reopen the original message or meeting file; if it is still missing, write "source not secured" and ask.
 - Server timeout / HTTP 5xx = log & report, then fall back. Do not poll the
   server waiting for recovery.
 - Know the healthy latency envelope and treat exits from it as a system
