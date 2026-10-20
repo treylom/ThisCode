@@ -33,6 +33,7 @@ asserting another bot's identity or health, or coordinating multiple agents.
 - Distinguish: **blocked on a user decision** → summarize, report, stop (no
   polling). **Teammate idle / oversight** → not a stop; drive and verify. Do
   not conflate the two into passive waiting.
+- **A stalled bot goes on the pause list in the same turn — check the list before you dispatch (2026-10-20).** A bot that finds another bot frozen (usage limit, expired auth, or no turn for N hours) adds it, in that turn, to the pause-switch file your bridge and stall alerts read (e.g. a `bots` list plus a reason and a release time), and every dispatcher reads that list once before sending work.
 
 ## 3. Meeting facilitation (no solo lock)
 - Convener does not force its own frame; adopt each bot's domain prep frame as
@@ -166,6 +167,11 @@ in-flight tracks; your maintainer-confirmation channel.
 - **Security-review bots scope (2026-10-08, narrowed again 2026-10-13)**: run the security-review bot pair only for three kinds of work — publishing a website, code work that is delivered externally or goes to a public repo, and messaging-app chat-bot work. Reports and documents get no security-bot round, even when they go to outside readers; their author checks them instead (zero internal paths, bot names, message ids, client names, e-mail or phone-number patterns). Internal work — hooks, judges, shadow logs, internal tools — gets no security-bot round either. Even inside the three kinds, do not run a pair per repair round; run it once, right before release/installation, with both reviewers in parallel and sealed.
 
 ▶ Fill in: your write-capable worker roster (workflow engine / Agent Teams / specialist bots); your workflow-engine's opt-in mechanism; your bot roster's `domains:` field location; your designated general-purpose worker bot's identity; your delegation-ledger path; your knowledge-index registration step.
+
+## Dispatch hygiene — remote-command tests and worker habits (2026-10-20)
+
+- **Testing remote or deploy commands = a copy + a network-blocked box + fake `ssh`/`scp` first on `PATH` (they only log their arguments) — zero real servers (2026-10-20).** When you test, reproduce or verify anything that deploys or reaches a remote host (ssh, scp, remote rsync, deploy scripts), run it on a copy, inside a box with networking blocked, with stand-in `ssh`/`scp` at the front of `PATH` that record their arguments and do nothing else. Swapping a function inside the same process is not isolation — a child process still calls the real binary. Write these three conditions into the verification dispatch itself.
+- **Worker-dispatch habit line — paste it into every worker or child-session dispatch (2026-10-20).** "Write files with the file-write tool · append meeting progress lines with your meeting helper, not hand-built shell echo · read another terminal session with one plain, unquoted `tmux capture-pane` call (read-only, see the communication rule) · if the harness runs a destructive-command gate, it will refuse heredocs, `$(…)` and shell loops — write a script file and run it with `python3 -I <path>` instead." Why: a gate that refuses those shapes even for read-only commands burns worker turns; in one internal review, two audit workers each ran out of turns this way.
 
 ## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
 
