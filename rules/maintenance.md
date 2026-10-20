@@ -91,7 +91,7 @@ index row pointing at a renamed file, a model note three upgrades stale.
 
 ## On finding drift
 - Fix the document (rule / index / memory / note) immediately and run the
-  3-step verification from code-quality.md §3. Never leave a stale claim
+  change-matched verification from code-quality.md §3. Never leave a stale claim
   standing because "the review will catch it next quarter".
 
 ▶ Fill in: your always-loaded doc paths; every startup script/alias surface
