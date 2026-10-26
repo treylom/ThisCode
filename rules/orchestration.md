@@ -107,6 +107,17 @@ in-flight tracks; your maintainer-confirmation channel.
   is nearly exhausted, or a deadline is immediate: **send anyway, marked
   "cross-review not performed (reason)"** — the goal is preventing invisible
   solo closure, not blocking sends.
+- **Independent / security review = sealed copy by default**: hand the
+  reviewer a copy with no git history — copy only the files listed in the
+  SHA256SUMS of the sealed commit (the commit that freezes the bundle under
+  review) and verify their sha256 inside the copy; refuse any file changed
+  after the seal, any symlink, and any `../` path. Keep the reviewer's result
+  file outside the bundle and outside SUMS; commit messages carry only a label
+  and a fingerprint; publish only after the verdict. The copy has no git, so
+  run the official security review (`/security-review`) once, separately, on
+  the original repo's diff — if the fixed code lives outside git, make a fresh
+  git in a scratch folder (main = baseline, branch = candidate) and review that
+  diff; either way, first check that the diff actually shows the changed lines.
 - **Direction = "attack their claim with *your* data"** — not opening their
   sources for them. A verifier refutes the counterpart's hypothesis with data
   the verifier can access.
@@ -146,6 +157,8 @@ in-flight tracks; your maintainer-confirmation channel.
 - **A teammate's remaining-context % is NOT grounds for stopping, pausing, excluding, or restarting it.** Modern harnesses auto-compact on their own (Claude Code natively; Codex CLI likewise — for codex-family bots, ignore the gauge entirely). Default = keep pushing; compaction is each session harness's job.
 - Escalate only on **measured autocompact failure**: the gauge sits at the ceiling across multiple turns AND turns are actually dying. Until then, log one observation line and move on. Do not ask the operator for a manual compact; attribute a recovery to a human action only after verifying that action actually ran.
 - Stopping work, closing a queue, or restarting a session = **the operator's call** — never the orchestrator's unilateral declaration. (Promoted to rule level after the operator corrected the same mistake four times; the knowledge lived in memory notes while the rule text lacked the carve-out — knowledge ≠ enforcement.)
+- **Killing a process = one confirmed PID at a time (2026-10-25)**: first eyeball `ps -o pid,lstart,command -p <pid>` (PID, start time, command line), then `kill <pid>` for that one PID only. No `pkill` / `killall` / `pgrep … | xargs kill` / command-line-pattern kills. Incident: macOS `pkill -f "<pattern>" -0` read the trailing `-0` as a second pattern and killed every bot window (and child) whose command line contained `-0`. For several targets, write the PID list (PID + start time) to a file first, kill one at a time, and re-check each. Scripts and installer kits follow the same rule.
+- **Codex-model bot name command = restart in a fresh conversation (2026-10-25)**: for bots whose model is served through the Codex lane, the bot's launch command defaults to "stop the current session, start a fresh Claude Code conversation, attach" — an explicit exception to session-preserving restarts. It does nothing when run from a bot shell or script (non-interactive); the legacy Codex runtime starts only with an explicit opt-in env flag; killing follows the one-PID rule above; if another terminal is attached to that bot, stop and notify instead of cutting someone else's screen.
 
 ## 8. Same-machine session-to-session messaging = control signals only (2026-08-09)
 - If the harness offers direct session-to-session messaging on the same machine (e.g. Claude Code's `ListAgents` → `SendMessage` over local sockets), it is the **first-choice channel for control signals** between same-machine bots: liveness pings, wake nudges, receipt acks, small coordination signals. A mis-addressed send fails loudly (immediate error) — unlike an external-channel mention drop, which is silent.
@@ -163,6 +176,7 @@ in-flight tracks; your maintainer-confirmation channel.
 - **Enforcement honesty**: R1 = a pre-tool counter hook (warn-and-observe first, promote later only after repeated confirmed misses) · R3 = roster `domains:` field + router suggestion line · R4 = the delegation ledger · R2 and R5 are procedural gates only — don't label them "mechanically enforced" when nothing counts them.
 - **Who records what, when, where** (per rule): the acting bot itself records — R1: before the first write, in the track's spec/log · R2: before spinning up the workflow · R3: before dispatch, in the track's spec/log · R4: at wakeup self-check, in the delegation ledger · R5b: right after the output is done, linking it into the knowledge index.
 - Case-based (operator directive, 2026-08-16); re-judge per situation; the maintainer's call wins.
+- **Security review system (2026-10-25 — replaces the earlier two-bot review pair)**: default review = the official Claude Code security tooling (the `security-guidance` plugin always on for code-writing bots; `/security-review` or `/claude-security` once right before delivery/publish). Complex cases (threat modelling, bypass reproduction, multi-repo scope, or an official-tool result that is THREAT/ambiguous) go to the single dedicated security-verifier bot; the separate Claude-side security bot is retired. The official tools warn but never block writes or commits — the dispatching bot still holds the publish gate. Pilot caveats (n=1): in a very large git repo the end-of-turn review can time out on `git status` and silently review nothing, so the pre-publish manual run is the real defence; set `SECURITY_REVIEW_MODEL` to a full model id — a bare alias returned 404 and was logged as "no vulnerabilities found". Scope: external deliverables only (customer packages, public repos), once right before release — not per repair round; internal work (hooks, judges, shadow logs, internal tools) gets no security round.
 
 ▶ Fill in: your write-capable worker roster (workflow engine / Agent Teams / specialist bots); your workflow-engine's opt-in mechanism; your bot roster's `domains:` field location; your designated general-purpose worker bot's identity; your delegation-ledger path; your knowledge-index registration step.
 

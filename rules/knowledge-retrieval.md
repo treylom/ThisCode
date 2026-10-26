@@ -124,3 +124,13 @@ Situational judgment; the user's call wins.
 
 ▶ Fill in: your tool-inventory locations; the repo namespace to sweep;
 peer-agent memory paths + the roster mapping domains to agents.
+
+## 4. Web research — open pages with your own tools first; the browser agent only where they fail (operator directive, 2026-10-26)
+
+When research or search needs a web page opened or a video downloaded, use the agent's own tools first (web search, URL fetch, the research skill's page-opening steps, a media download tool). Hand a page to the browser agent (a tool that drives a real, logged-in browser for you) only when those tools cannot open it (login wall, script-only render, blocked fetch).
+- In that fallback the browser agent may run the job on its own; if your setup normally asks the user which browser-control mode to use, research fallback skips that question.
+- Acting on a site is not research: logging in, signing up, account or console settings, OAuth, token reissue, filling a shared sheet or form — these keep going through the browser agent (and its ask-which-mode step) as before.
+- Write the condition by purpose (reading for research vs acting on a site), not by tool name, so swapping in a different fetch tool cannot sidestep it.
+- Background: a research agent asked how to use the browser agent for page opening and video downloads; the operator answered that the browser agent is only for places that will not open.
+
+▶ Fill in: your page-fetch and download tools; your browser-agent tool and its ask-which-mode step, if any.

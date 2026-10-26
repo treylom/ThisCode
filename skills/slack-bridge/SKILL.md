@@ -95,7 +95,8 @@ DM이 실제로 되려면 `messages_tab_enabled: true`가 필수다(과거 매�
         "im:history",
         "channels:history",
         "app_mentions:read",
-        "reactions:write"
+        "reactions:write",
+        "files:read"
       ]
     }
   },
@@ -230,5 +231,4 @@ Discord는 앱 생성·봇 토큰 발급 API가 없다. 자동화 가능한 건 
 | Slack 이벤트 구독에 `message.im` 없이 DM 기대 | DM을 보내도 Slack이 애초에 이벤트를 안 줌(브리지 코드는 정상) | 앱 설정에서 `message.im` 이벤트 구독 추가(위 매니페스트 예시 참고) |
 | Linux/WSL에서 이 브리지를 씀 | (2026-08-06 이전엔 모든 IPC 연결이 조용히 거부됐다) 지금은 `SO_PEERCRED` 경로로 정상 지원 대상이다 — 단 실제 워크스페이스 왕복은 **미검증**(코드 정합성까지만 확인, 런타임 미실행, README.md "Platform support") | 그래도 안 되면 `libc.so.6`(glibc) 로드가 되는지부터 확인 — 로드 자체가 실패하면 여전히 fail closed로 거부된다 |
 | `--dangerously-load-development-channels`의 1회 확인 다이얼로그를 놓침 | 세션이 채널을 안 받는 것처럼 보임 | 첫 기동 시 다이얼로그에서 승인 필요(관문 E) |
-
-> ⚠️ 위 함정 표는 소스 코드 실측(`server.ts`/`config.ts`/`singleton.ts`/README.md) 기반이며, 살아있는 Slack 워크스페이스에서의 왕복 재현은 이 문서 작성 시점까지 완료되지 않았다 — 실제 `npm start`→왕복까지는 이 스킬을 실행하는 환경에서 아래 검증 단계로 직접 확인한다.
+| 기동 뒤 세션이 **새 id 로 이어짐**(에이전트 선택창 진입·복귀 등 · 세션 jsonl 에 `continued-in`) | 브리지는 정상(server.log 「N active」)인데 그 세션만 Slack 알림을 못 받음 — MCP 로그 `mcp-logs-slack-channel/*.jsonl` 에 `Channel notifications skipped: server slack-channel not in --channels list for this session`. 플러그인 채널(`plugin:…`)은 살아남고 `--dangerously-load-development-channels` 로 붙인 개발 채널만 탈락(Claude Code 2.1.280 실측 2026-09-26) | 진단 순서 = ① 기동 배너 「Channels …」에 채널 2개인지 ② `~/Library/Caches/claude-cli-nodejs/<wd>/mcp-logs-slack-channel/` 최신 파일의 registered/skipped 줄 ③ 세션 jsonl `continued-in`. 처방 = 그 세션을 내리고 같은 인자로 재기동(브리지 재시작 불필요). `/model`·`/effort` 자체는 무해(같은 날 41 세션 중 이어짐 2건뿐) |

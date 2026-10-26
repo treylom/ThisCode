@@ -22,12 +22,17 @@
 // see `startIpcServer` below and src/peercred.ts.
 
 import { chmodSync, existsSync, unlinkSync } from 'node:fs';
+import { homedir } from 'node:os';
 import net from 'node:net';
 import { SocketModeClient } from '@slack/socket-mode';
 import { WebClient } from '@slack/web-api';
-import { ENV_PATH, SOCKET_PATH, ensureStateDir, loadEnv, log, parseChannelIds } from './config.js';
+import { basename, join } from 'node:path';
+import { ANY_MEMBER_CHANNEL, ENV_PATH, SOCKET_PATH, STATE_DIR, ensureStateDir, loadEnv, log, parseChannelIds } from './config.js';
+import { DropNotifier, logDrop, noticeText, shouldNotify } from './drop-notice.js';
+import { attachmentBlock, downloadFiles, humanSubtypeAllowed, type SlackFile } from './inbound-files.js';
 import { ClientToServer, encodeLine, type ClientToServerMsg, type ServerToClientMsg } from './ipc-protocol.js';
 import { LineReader } from './line-reader.js';
+import { pickInboundDoneKey } from './pending-key.js';
 import { verifyPeerIsSelf } from './peercred.js';
 import { acquireSingleton } from './singleton.js';
 
@@ -42,6 +47,7 @@ interface SlackMessageEvent {
   event_ts?: string;
   thread_ts?: string;
   bot_id?: string;
+  files?: SlackFile[];
 }
 
 // Reference implementation for the permission-relay reply pattern, verbatim
@@ -63,11 +69,30 @@ function main(): void {
   // against; `primaryChannelId` (the first id) is the outbound fallback for
   // messages that carry no channel of their own — permission asks. A
   // single-id .env therefore behaves identically to before this change.
-  const configuredChannelIds = parseChannelIds(env.SLACK_CHANNEL_ID);
+  const parsedChannelIds = parseChannelIds(env.SLACK_CHANNEL_ID);
+  // `*` (ANY_MEMBER_CHANNEL, config.ts): also forward from every channel the
+  // bot has been invited to — the invite is the allowlist.
+  const listenAnyMemberChannel = parsedChannelIds.includes(ANY_MEMBER_CHANNEL);
+  const configuredChannelIds = parsedChannelIds.filter((id) => id !== ANY_MEMBER_CHANNEL);
   const primaryChannelId = configuredChannelIds[0]!;
   const configuredChannels = new Set(configuredChannelIds);
+  function isListenedChannel(channel: string | undefined, channelType: string | undefined): boolean {
+    if (!channel) return false;
+    if (configuredChannels.has(channel)) return true;
+    // Slack delivers channel/group events only for conversations the bot is a
+    // member of, so with the wildcard "member" is already established.
+    return listenAnyMemberChannel && (channelType === 'channel' || channelType === 'group');
+  }
   // Per-bot receipt emoji (2026-09-23) — see SLACK_BOT_EMOJI in config.ts.
   const receiptEmoji = (env.SLACK_BOT_EMOJI ?? 'eyes').replace(/^:+|:+$/g, '') || 'eyes';
+
+  // Silent-drop record + notice (2026-09-26). botName = the last path segment of the state dir with a
+  // 'slack-' prefix stripped (per-bot state dirs are named e.g. 'slack-mybot').
+  const botName = basename(STATE_DIR).replace(/^slack-/, '');
+  const dropLogPath = join(homedir(), '.claude-state', `bridge-drops-${botName}.jsonl`);
+  const dropNoticeStatePath = join(homedir(), '.claude-state', `bridge-drop-notice-${botName}.json`);
+  const dropNotifier = new DropNotifier(dropNoticeStatePath);
+  const dropNoticeEnabled = (env.SLACK_DROP_NOTICE ?? process.env.CLAUDE_CHANNEL_DROP_NOTICE) === '1';
 
   const clients = new Set<net.Socket>();
   const seenTsOrder: string[] = [];
@@ -80,6 +105,27 @@ function main(): void {
   // until an inbound from it has been seen (three misdeliveries in one morning). DMs and
   // any other conversation still have to be seen first.
   const allowedChannels = new Set<string>(configuredChannelIds);
+  // The allowed user's open DM is a valid reply target from the moment the
+  // bridge starts, not only after their next message: the allowlist used to
+  // live in memory only, so every restart made the first DM reply after it
+  // fail (or, before 2026-09-23, silently land in the home channel).
+  // Best-effort — a failed lookup just leaves the old "seen first" behaviour.
+  async function seedAllowedDms(): Promise<void> {
+    try {
+      const res = await web.users.conversations({ types: 'im', limit: 200 });
+      let seeded = 0;
+      for (const conv of res.channels ?? []) {
+        if (conv.id && conv.user === env.ALLOWED_SLACK_USER_ID) {
+          allowedChannels.add(conv.id);
+          channelKindByChannel.set(conv.id, 'im');
+          seeded += 1;
+        }
+      }
+      log('server', `allowed DMs seeded — ${seeded}`);
+    } catch (err) {
+      log('server', `DM seeding skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
   // The most recent conversation an allowed inbound arrived from. Reply (when
   // chat_id is omitted) and permission-ask (which carries no channel at all)
   // fall back to this so DM-derived content lands in the active conversation
@@ -146,9 +192,11 @@ function main(): void {
   // 👀 for ✅ on that exact message. Keyed `${channel}:${thread root}`; bounded
   // at 200 FIFO like the other trackers — an evicted entry just means no ✅.
   const pendingInboundByThread = new Map<string, { channel: string; ts: string }>();
+  const newestPendingKeyByChannel = new Map<string, string>();
   function rememberPendingInbound(key: string, ref: { channel: string; ts: string }): void {
     pendingInboundByThread.delete(key);
     pendingInboundByThread.set(key, ref);
+    newestPendingKeyByChannel.set(ref.channel, key); // a top-level DM reply closes this one
     if (pendingInboundByThread.size > 200) {
       const oldest = pendingInboundByThread.keys().next().value;
       if (oldest !== undefined) pendingInboundByThread.delete(oldest);
@@ -156,6 +204,7 @@ function main(): void {
   }
   async function markInboundDone(key: string): Promise<void> {
     const ref = pendingInboundByThread.get(key);
+    if (ref && newestPendingKeyByChannel.get(ref.channel) === key) newestPendingKeyByChannel.delete(ref.channel);
     if (!ref) return;
     pendingInboundByThread.delete(key);
     // The per-bot receipt emoji stays (it is the "who read this" record); ✅ is added
@@ -219,10 +268,20 @@ function main(): void {
   const web = new WebClient(env.SLACK_BOT_TOKEN);
 
   async function handleReply(socket: net.Socket, msg: Extract<ClientToServerMsg, { type: 'reply' }>): Promise<void> {
-    // Route to the conversation the session named (DM↔DM, channel↔channel),
-    // but only if we've actually seen an allowed inbound from it; otherwise
-    // fall back to the configured channel. Never post to an unseen chat_id.
-    const target = msg.channel && allowedChannels.has(msg.channel) ? msg.channel : (lastInboundChannel ?? primaryChannelId);
+    // Route to the conversation the session named (DM↔DM, channel↔channel).
+    // A named chat_id must be one we may post to (configured, seen an allowed
+    // inbound from, or — with the `*` wildcard — any non-DM channel; Slack
+    // itself rejects a channel the bot is not in). A chat_id outside that set
+    // is an ERROR back to the session, not a silent fallback: a reply that
+    // lands in the home channel instead of the maintainer's DM looks like
+    // "sent" to the model and is found hours later (2026-09-23, four such
+    // misdeliveries). The fallback (last inbound, else primary) applies only
+    // when the session named no chat_id at all.
+    if (msg.channel && !allowedChannels.has(msg.channel) && !(listenAnyMemberChannel && !msg.channel.startsWith('D'))) {
+      sendAck(socket, msg.req_id, false, `chat_id ${msg.channel} is not a conversation this bridge may post to (not configured, and no allowed inbound seen from it) — reply NOT sent`);
+      return;
+    }
+    const target = msg.channel ?? lastInboundChannel ?? primaryChannelId;
     // 겹1: strip a model-supplied thread_ts on a DM target unless it is one a
     // real DM inbound actually carried (see the guard comment above). Never
     // touches non-DM targets — msg.thread_ts passes through unchanged there,
@@ -236,9 +295,11 @@ function main(): void {
         text: msg.text,
       });
       sendAck(socket, msg.req_id, true);
-      // receipt emoji + ✅ on the inbound this reply answers (thread root = threadTs; a
-      // top-level reply has no root and closes nothing). Fire-and-forget.
-      if (threadTs) void markInboundDone(`${target}:${threadTs}`);
+      // ✅ beside the receipt emoji on the inbound this reply answers: the thread
+      // root when threaded, the newest pending inbound of the DM when a DM reply
+      // is top-level (pending-key.ts). Fire-and-forget.
+      const doneKey = pickInboundDoneKey(target, threadTs, isImTarget, newestPendingKeyByChannel);
+      if (doneKey) void markInboundDone(doneKey);
     } catch (err) {
       sendAck(socket, msg.req_id, false, err instanceof Error ? err.message : String(err));
     }
@@ -354,6 +415,18 @@ function main(): void {
 
   // ---- Slack Socket Mode (inbound) ---------------------------------------
 
+  // Records every drop point of handleSlackEvent below (design doc §3): one
+  // JSONL line, no message body. Best-effort (logDrop itself never throws).
+  function recordDrop(reason: string, event: SlackMessageEvent): void {
+    logDrop(dropLogPath, {
+      ts: new Date().toISOString(),
+      reason,
+      sender: event.user,
+      channel: event.channel,
+      thread: event.thread_ts,
+    });
+  }
+
   async function handleSlackEvent(event: SlackMessageEvent): Promise<void> {
     // Hardening (a): the channel this event came from must be the one
     // configured channel, OR the event must be a DM (channel_type 'im') —
@@ -364,7 +437,10 @@ function main(): void {
     // §②): a DM is inherently 1:1 with whoever sent it, so once that sender
     // is verified as ALLOWED_SLACK_USER_ID there is no other channel this
     // event could have leaked from.
-    if (!(event.channel && configuredChannels.has(event.channel)) && event.channel_type !== 'im') return;
+    if (!isListenedChannel(event.channel, event.channel_type) && event.channel_type !== 'im') {
+      recordDrop('not-listened-channel', event);
+      return;
+    }
 
     const text = (event.text ?? '').trim();
 
@@ -378,20 +454,61 @@ function main(): void {
     if (!fromBot) {
       // Human path — same ALLOWED_SLACK_USER_ID check as always, for
       // messages, @mentions, and permission-verdict replies alike.
-      if (event.user !== env.ALLOWED_SLACK_USER_ID) return;
-      if (event.subtype) return; // edits, joins, etc.
+      if (event.user !== env.ALLOWED_SLACK_USER_ID) {
+        recordDrop('not-allowed-human', event);
+        return;
+      }
+      // edits, joins, etc. — but file_share / thread_broadcast carry a human-authored body (2026-09-24:
+      // a DM with a file attached was dropped here silently; see inbound-files.ts)
+      if (!humanSubtypeAllowed(event.subtype)) {
+        recordDrop('human-subtype-not-allowed', event);
+        return;
+      }
     } else {
       // DMs stay human-only: the DM path's whole security argument (spec 44
       // §②) is "1:1 with a verified human". Bot conversations belong in the
       // channel, where the mention discipline below applies.
-      if (event.channel_type === 'im') return;
-      if (!event.user || event.user === botUserId) return; // self echo / authorless variants
-      if (!allowedBotUserIds.has(event.user)) return; // not an allowed peer (empty set = pre-(B) behavior)
+      if (event.channel_type === 'im') {
+        recordDrop('bot-dm-not-allowed', event);
+        return;
+      }
+      if (!event.user || event.user === botUserId) {
+        recordDrop('bot-self-or-authorless', event);
+        return;
+      }
+      if (!allowedBotUserIds.has(event.user)) {
+        // The one drop reason worth a Slack notice (design doc §3): a peer
+        // bot not on our allowlist, mentioning us explicitly, in a channel
+        // we listen to. logDrop always fires; the notice is best-effort and
+        // gated behind CLAUDE_CHANNEL_DROP_NOTICE=1 plus DropNotifier's rate
+        // limit so a misconfigured peer cannot spam the channel.
+        recordDrop('bot-not-allowed', event);
+        if (
+          dropNoticeEnabled &&
+          shouldNotify(event, { allowedBotUserIds, selfUserId: botUserId, isListenedChannel })
+        ) {
+          const sender = event.user;
+          const channel = event.channel ?? '';
+          if (dropNotifier.allow(sender, channel)) {
+            void web.chat
+              .postMessage({
+                channel,
+                thread_ts: event.thread_ts ?? event.ts,
+                text: noticeText(sender, botName),
+              })
+              .catch((err) => log('drop-notice', `post failed: ${err instanceof Error ? err.message : String(err)}`));
+          }
+        }
+        return;
+      }
       // A bot must name THIS bot explicitly — no verdict shortcut and no
       // thread exemption for bot senders. Defense in depth: the anchored
       // VERDICT_PATTERN can never contain a mention, so an allowed bot also
       // cannot approve permission requests through this gate.
-      if (!text.includes(`<@${botUserId}>`)) return;
+      if (!text.includes(`<@${botUserId}>`)) {
+        recordDrop('bot-no-mention', event);
+        return;
+      }
     }
 
     // Hardening (c) — target gate (2026-08-06, defect 13): `message.channels`
@@ -420,7 +537,10 @@ function main(): void {
       !VERDICT_PATTERN.test(text) &&
       !text.includes(`<@${botUserId}>`) &&
       !(event.thread_ts && activeThreadsSet.has(event.thread_ts) && !hasAnyUserMention)
-    ) return;
+    ) {
+      recordDrop('no-target-mention', event);
+      return;
+    }
 
     const ts = event.event_ts ?? event.ts;
     if (!ts || alreadySeen(ts)) return; // 'message' and 'app_mention' can both fire for one post
@@ -431,17 +551,13 @@ function main(): void {
       channelKindByChannel.set(event.channel, event.channel_type === 'im' ? 'im' : 'other'); // 겹1: which reply-target-guard branch applies
     }
 
-    // 겹1: record a genuine DM thread_ts (the user actually opened a thread
-    // in this DM) so handleReply's guard above can tell that apart from a
-    // model-supplied one. Channels don't need this — the guard never strips
-    // their thread_ts.
-    // 2026-09-23 (user request, Slack DM 10:06): a DM is now threaded exactly
-    // like a channel — the reply lands under the message that summoned the
-    // bot. The inbound's own ts is therefore a legitimate anchor too, so it is
-    // registered here; handleReply's guard below is unchanged and still strips
-    // any thread_ts that no real DM inbound carried.
+    // Record the genuine DM thread root (the thread the user wrote in, else
+    // the inbound itself — DM replies are threaded under the message they
+    // answer, like channels) so handleReply's guard above can tell it apart
+    // from a model-supplied thread_ts. Channels don't need this — the guard
+    // never strips their thread_ts.
     if (event.channel_type === 'im') {
-      rememberImInboundThreadTs(event.thread_ts ?? ts);
+      rememberImInboundThreadTs(event.thread_ts ?? event.ts ?? ts);
     }
 
     // Defect 17: in a channel this conversation now lives in a thread rooted
@@ -474,9 +590,20 @@ function main(): void {
       rememberPendingInbound(`${inboundChannel}:${event.thread_ts ?? ts}`, { channel: inboundChannel, ts });
     }
 
+    // Attached files (2026-09-24): fetched with the bot token into <state dir>/inbox/<channel>-<ts>/ and
+    // listed under the text with local paths. The Socket Mode ack already went out before this handler
+    // ran, so a slow download cannot trigger Slack's 1-minute redelivery. Failures become per-file lines.
+    let content = text;
+    if (event.files?.length) {
+      const dir = join(STATE_DIR, 'inbox', `${event.channel ?? 'x'}-${ts}`);
+      const results = await downloadFiles(event.files, env.SLACK_BOT_TOKEN, dir);
+      content = (text + attachmentBlock(results)).trim();
+      log('files', `${event.channel}/${ts}: ${results.filter((r) => r.path).length}/${results.length} downloaded`);
+    }
+
     broadcast({
       type: 'inbound',
-      content: text,
+      content,
       meta: {
         // Must be the real event.channel/event.user, not the env values:
         // with DM support (spec 44 §③) a DM's channel is D… and a
@@ -520,6 +647,11 @@ function main(): void {
   });
 
   socketModeClient.on('error', (err) => log('slack', `socket mode error: ${err instanceof Error ? err.message : String(err)}`));
+  // Connection timeline only — no behavior change (2026-09-24: a +60s redelivery was seen on a Codex
+  // bridge; with these lines the next one can be matched against a drop/reconnect).
+  socketModeClient.on('connected', () => log('slack', 'socket connected'));
+  socketModeClient.on('disconnected', () => log('slack', 'socket disconnected'));
+  socketModeClient.on('reconnecting', () => log('slack', 'socket reconnecting'));
 
   // ---- lifecycle ----------------------------------------------------------
 
@@ -555,12 +687,13 @@ function main(): void {
       botUserId = String(auth.user_id ?? '');
       if (!botUserId) throw new Error('auth.test returned no user_id — cannot arm the mention target gate');
       log('server', `bot user resolved — ${botUserId}`);
-      return socketModeClient.start();
+      return seedAllowedDms();
     })
+    .then(() => socketModeClient.start())
     .then(() =>
       log(
         'server',
-        `bridge live — channels ${configuredChannelIds.join(', ')}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
+        `bridge live — channels ${configuredChannelIds.join(', ')}${listenAnyMemberChannel ? ' + any channel the bot is a member of (*)' : ''}, allowed user ${env.ALLOWED_SLACK_USER_ID}, bot ${botUserId} ` +
           `(channel posts require @-mention; DMs and permission verdicts exempt; auto-react on (receipt ${receiptEmoji}); bot interop ` +
           `${allowedBotUserIds.size > 0 ? `enabled — ${allowedBotUserIds.size} peer(s)` : 'disabled'})`,
       ),

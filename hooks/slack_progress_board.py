@@ -8,6 +8,7 @@ message; code rewrites that message at every step (no model tokens spent on the 
   attach --key K --thread TS        (--text-file F | --from STEPS)   board inside an existing thread
   update --key K                    (--text-file F | --from STEPS)   chat.update the same board (no new post)
   sync   --key K --from STEPS [--thread TS] [--title T]              update if the board exists, else attach/open
+  plan   --from STEPS --steps "S1" "S2" ...                         pre-register every step as ⬜ (idempotent)
   step   --from STEPS --name STEP --status ⬜|⏳|✅|❌ [--note ...]     append one step line (for pipelines)
 
 Common: --bot B (default: $SLACK_HEARTBEAT_ENV_FILE's directory name, or $DISCORD_STATE_DIR's
@@ -119,6 +120,22 @@ def run(a, slack, state_dir, default_channel):
     st = json.loads(sf.read_text()) if sf and sf.is_file() else None
     src = a.__dict__['from']
 
+    if a.mode == 'plan':
+        # Maintainer request (2026-09-26): post the whole plan as ⬜ first, then flip rows one by one.
+        # Render order = first appearance, so the plan order becomes the board order and a later
+        # `step` for the same name overwrites that row in place. Only unknown steps are appended.
+        path = pathlib.Path(src)
+        have = {r[2] for r in parse_steps(path, last=0)} if path.is_file() else set()
+        added = []
+        with open(path, 'a', encoding='utf-8') as f:
+            for name in a.steps or []:
+                name = name.strip()
+                if name and name not in have:
+                    f.write(f'[{time.strftime("%H:%M")}] {a.bot or "-"} | ⬜ | {name}\n')
+                    have.add(name); added.append(name)
+        print(f'plan +{len(added)} · total {len(have)} steps')
+        return 0
+
     if a.mode == 'step':
         line = f'[{time.strftime("%H:%M")}] {a.bot or "-"} | {a.status} | {a.name}' + (f' | {a.note}' if a.note else '')
         with open(src, 'a', encoding='utf-8') as f:
@@ -185,18 +202,34 @@ def selftest():
         seq = [m for m, _ in calls]
         assert seq == ['chat.postMessage', 'chat.postMessage', 'chat.update'], seq
         assert calls[1][1].startswith('📊 T'), calls[1]
-    print('selftest PASS', seq)
+        plan = d / 'p.steps'
+        pn = argparse.Namespace(mode='plan', bot='bot-c', steps=['STEP0 login', 'STEP1 export', 'STEP6 close'],
+                                key=None, title=None, text_file=None, thread=None, channel=None,
+                                filter=None, last=14, status=None, name=None, note=None)
+        pn.__dict__['from'] = str(plan)
+        assert run(pn, None, d / 'state', None) == 0
+        assert run(pn, None, d / 'state', None) == 0          # idempotent: nothing appended twice
+        assert plan.read_text().count('\n') == 3, plan.read_text()
+        sn = argparse.Namespace(mode='step', bot='bot-c', name='STEP1 export', status='✅', note='rc0',
+                                key=None, title=None, text_file=None, thread=None, channel=None,
+                                filter=None, last=14, steps=None)
+        sn.__dict__['from'] = str(plan)
+        assert run(sn, None, d / 'state', None) == 0
+        prow = parse_steps(plan)
+        assert [r[0] for r in prow] == ['⬜', '✅', '⬜'] and prow[1][3] == 'rc0', prow   # order kept, row overwritten in place
+    print('selftest PASS', seq, '· plan/step ok')
     return 0
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('mode', choices=['open', 'attach', 'update', 'sync', 'step'], nargs='?')
+    ap.add_argument('mode', choices=['open', 'attach', 'update', 'sync', 'plan', 'step'], nargs='?')
     ap.add_argument('--selftest', action='store_true')
     ap.add_argument('--bot'); ap.add_argument('--key'); ap.add_argument('--title')
     ap.add_argument('--text-file'); ap.add_argument('--from'); ap.add_argument('--filter'); ap.add_argument('--last', type=int, default=14)
     ap.add_argument('--thread'); ap.add_argument('--channel'); ap.add_argument('--state-dir')
     ap.add_argument('--name'); ap.add_argument('--status', choices=list(ICON)); ap.add_argument('--note')
+    ap.add_argument('--steps', nargs='+', help='plan: step names in board order')
     a = ap.parse_args()
     if a.selftest:
         return selftest()
@@ -206,6 +239,10 @@ def main():
     if not bot:
         print('--bot, SLACK_HEARTBEAT_ENV_FILE or DISCORD_STATE_DIR is required'); return 2
     a.bot = bot
+    if a.mode == 'plan':
+        if not a.__dict__['from'] or not a.steps:
+            ap.error('plan needs --from and --steps')
+        return run(a, None, pathlib.Path(a.state_dir or '/tmp'), None)
     if a.mode == 'step':
         if not a.__dict__['from'] or not a.name or not a.status:
             ap.error('step needs --from, --name and --status')

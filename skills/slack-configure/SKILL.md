@@ -257,7 +257,8 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
         "im:history",
         "channels:history",
         "app_mentions:read",
-        "reactions:write"
+        "reactions:write",
+        "files:read"
       ]
     }
   },
@@ -932,32 +933,4 @@ claude --dangerously-load-development-channels server:slack-channel
 | `channelsEnabled` 조직 정책이 꺼져 있음 | 조직 정책 | Console/API-key는 기본 켜짐. claude.ai Team/Enterprise는 Owner가 켜야 함 |
 | Linux/WSL에서 이 브리지를 씀 | (2026-08-06 이전엔 peer-UID 체크가 macOS 전용이라 모든 IPC 연결이 조용히 거부됐다) 지금은 `SO_PEERCRED` 경로로 정상 지원 대상 — 단 실제 워크스페이스 왕복은 **미검증**(코드 정합성까지만 확인) | 그래도 안 되면 `libc.so.6`(glibc) 로드가 되는지부터 확인 — 로드 자체가 실패하면 여전히 fail closed로 거부된다 |
 | `--dangerously-load-development-channels`의 1회 확인 다이얼로그를 놓침 | 관문 E 미확인 | 첫 기동 시 다이얼로그에서 승인 필요 |
-
----
-
-## ThisCodex 대응 차이 (요약 — 상세는 ThisCodex 쪽 문서 참조)
-
-Codex 판은 이 스킬을 그대로 이식할 수 없다:
-- **프로토콜**: 공식 `claude/channel` MCP(이쪽) vs 비공식 커스텀 — `codex app-server` WebSocket JSON-RPC 위의 별도 Slack Bolt 브리지(ThisCodex)
-- **"채널 등록" 대응 개념 부재**: `.mcp.json` + `--dangerously-load-development-channels` 같은 것이 없다 — 대신 상주 `codex app-server --listen ws://...`를 별도로 기동해야 하는데, 그 기동 스크립트 자체가 아직 없다
-- **토큰 전달 계약이 근본적으로 다르다**: 이쪽은 정적 `.env`를 브리지가 직접 로드하지만, Codex 쪽은 **실행 중인 `slack run` 프로세스의 env를 `ps eww`로 읽어** 그때그때 토큰을 회수한다 — 위 토큰 캡처·`.env` 검증 단계(Step 10~11)를 그대로 복붙할 수 없다
-- **매니페스트(Step 4)만은 구조가 거의 같아** 재사용 여지가 크다
-
-## 미결·리스크 (정직 표기 — 2026-08-06)
-
-1. **[해소 — 2026-08-06 루돌프 WSL round 3 실측] CLI 앱 생성 경로는 검증이 아니라 폐기로 닫혔다** — `slack create --template blank` 부재(`template_path_not_found`) · `manifest sync` 는 `--experiment manifest-sync` 요구 · sync↔install 순환(`installation_required`) · `app install` 은 TTY 프롬프트 2중(비대화형 진입점 없음). 그래서 Step 4~5 를 **웹 매니페스트 경로(관문 B)** 로 재설계했다. 잔여 미검증 = 웹 경로 관문 B 의 라이브 통과(앱 생성→설치→App ID→토큰 발급 연쇄).
-2. **[해소 — 같은 실측]** 구 "`manifest sync -f` 비대화형 보장 미검증" 항목: 실제 문제는 `-f` 가 아니라 experiment 플래그 의존이었고, 경로 폐기로 항목 자체가 소멸.
-3. **채널 자동 초대(Step 9)의 스코프 미확정** — `conversations.join`에 필요한 정확한 스코프명은 Slack 공식 문서 대조가 필요하다. 스코프를 추가하면 매니페스트가 다시 바뀌어 재설치(재승인) 관문이 한 번 더 발생할 수 있다. ~~이름→ID 변환의 `conversations.list` 대안 경로도 같은 이유로 스코프가 아직 없다~~ → **[부분 해소 — 2026-08-06 WSL 라이브 실측]** `conversations.list` 는 현 매니페스트로 `missing_scope`(needed: `channels:read,groups:read,mpim:read,im:read`) 확정 — 기본 경로(사용자에게 직접 확인)가 정답으로 확정(Step 9 항목 3). 자동 초대 스코프명만 미확정으로 남는다.
-4. **`ALLOWED_SLACK_USER_ID` 자동 제안의 전제** — `slack auth list`가 반환하는 로그인 계정을 "이 봇을 쓸 사람"으로 가정한다. 다른 사람이 이 머신에서 CLI 로그인을 해뒀다면 오탐 가능 — 입력 계약 #6에서 제안만 하고 사람 확인 1클릭을 반드시 거치게 설계했다.
-5. **마켓플레이스 플러그인 배포 경로 미구현** — README가 언급하는 `claude --channels plugin:slack-channel@your-marketplace` 경로는 실물이 없다. 이 스킬은 현재로선 `--dangerously-load-development-channels` 경로만 다룬다.
-6. **`messages_tab_read_only_enabled: false` 정정이 필요·충분한지 미검증** — 필드 이름에 대한 추론이며, 라이브 토글 재현으로 확정한 적은 없다.
-7. **(신설, ㉡ 인격·거버넌스) Step 7-A의 `@../AGENTS.md` import는 "봇 폴더가 워크스페이스 루트의 직속 하위"라는 가정에 의존한다** — 사용자가 봇 폴더를 더 깊은 경로(예: `bots/<name>/`)에 두면 상대경로가 어긋난다. 지금은 `$WORKSPACE_ROOT/${BOT_NAME}` 고정 1단계 깊이만 다룬다.
-8. **SessionStart 훅(`bot-session-init.sh`) 확장은 이번 패치 범위 밖이다(의도적)** — Slack 상태 디렉토리를 훅이 인식하도록 고치는 경로(D-2′)는 운영 결정 대기 항목이라, 이번 Step 7-A는 훅에 의존하지 않는 CLAUDE.md 직접 임베드로 우회했다. 훅 확장이 나중에 결정되면 이미 만들어 둔 `soul.md` 사본을 그 경로가 대신 읽도록 전환할 수 있다 — 지금 상태에서 재작업이 크지 않다.
-9. **`$BOT_NAME`(Step 0-A, 폴더·CLAUDE.md용)과 Step 8의 추가 봇 slug(상태 폴더용)가 강제로 같지 않다** — 같은 값을 쓰면 폴더 이름과 상태 폴더 이름이 맞아 추적이 쉽지만, 이 스킬은 둘의 일치를 강제하지 않는다(동작에는 지장 없음).
-10. **두 번째 이상 봇 생성 시 워크스페이스 루트에 이미 `<bot-name>` 폴더가 있으면 Step 7-A가 멈춘다** — 사람이 다른 이름을 고르는 것이 정상 경로다(Step 8이 상태 폴더 충돌에서 쓰는 것과 같은 원칙: 끄거나 덮지 않고 나눈다).
-
-## 관련 자원
-
-- 기술 참고서(프로토콜·아키텍처·보안 모델·함정 목록): [../slack-bridge/SKILL.md](../slack-bridge/SKILL.md)
-- Discord 판(공유 로직의 기준 문서): [../create-bot/SKILL.md](../create-bot/SKILL.md)
-- 근거: `claude-channel-server` 소스(`README.md`·`src/config.ts`·`src/server.ts`) · Slack CLI v4.6.0 실측 · 내부 설계 기록(비공개)
+| 기동 뒤 세션이 **새 id 로 이어짐**(에이전트 선택창 진입·복귀 등 · 세션 jsonl 에 `continued-in`) | 브리지는 정상(server.log 「N active」)인데 그 세션만 Slack 알림을 못 받음 — MCP 로그 `mcp-logs-slack-channel/*.jsonl` 에 `Channel notifications skipped: server slack-channel not in --channels list for this session`. 플러그인 채널(`plugin:…`)은 살아남고 `--dangerously-load-development-channels` 로 붙인 개발 채널만 탈락(Claude Code 2.1.280 실측 2026-09-26) | 진단 순서 = ① 기동 배너 「Channels …」에 채널 2개인지 ② `~/Library/Caches/claude-cli-nodejs/<wd>/mcp-logs-slack-channel/` 최신 파일의 registered/skipped 줄 ③ 세션 jsonl `continued-in`. 처방 = 그 세션을 내리고 같은 인자로 재기동(브리지 재시작 불필요). `/model`·`/effort` 자체는 무해(같은 날 41 세션 중 이어짐 2건뿐) |
