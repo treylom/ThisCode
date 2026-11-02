@@ -80,6 +80,16 @@ Before reporting a UI/feature implementation "done" (or cutting over), three axe
 - **Never merge/pull on a dirty tree in a shared repo — merge in an isolated worktree**: git's merge path on a dirty tree is not read-only. Once a merge strategy actually starts, git first snapshots your uncommitted changes (stash create); if the merge then fails or aborts mid-run (distinct from the read-only pre-flight refusal that touches nothing), it restores via `read-tree --reset -u HEAD` + `stash apply` — and that apply's failure is **silently ignored**, so your uncommitted work can be rolled back with no error shown. Do merges/pulls in an isolated worktree (`git worktree add --detach <dir>`), push from there, then remove it; afterwards re-measure the shared tree (`git status --short | wc -l`) instead of trusting a stale count. If work does go missing: `git fsck --dangling` → date-filter the "WIP on …" stash snapshots → recover from them.
 - **A worktree boundary is a path, not a repo (operator-approved 2026-09-16)**: worktrees of the shared vault repo are allowed — but never write knowledge-base notes (the vault's note folder) from inside a worktree: hooks resolve absolute paths against the main checkout, so the live vault never receives the write and nothing signals it. New worktree = `git worktree add --no-checkout` + sparse-checkout that excludes the vault note tree · worktrees idle 4+ weeks are reclaimed by a scheduled sweep · enforcement = a warn-first gate (log → warn; no one-step block).
 
+### §3 reinforcement (2026-10-26) — rendered line breaks in anything published (operator directive)
+- **Scope**: every agent, every outward-facing deliverable — decks, card news, HTML pages, videos and subtitles, text inside images, PDFs.
+- **When**: once, right before delivery, on the **rendered** output (screenshots, video frames, PDF pages). Reading the source text or the CSS and calling it done is not enough.
+- **What**: check the end and start of every line. Fail on any of: a word split mid-word · a short grammatical word cut off from the word it belongs to and pushed to the next line (e.g. a Korean postposition such as 은/는/을/를) · a break inside parentheses · a line that starts with a middle dot, a comma or such a cut-off word · a number separated from its unit. It passes only when none of these appear.
+- **Evidence**: one line-list table (page/frame · line text · verdict) kept next to the deliverable.
+- A CSS check (for example, that `word-break: keep-all` is present) does not replace this rendered-line check.
+- Background: a video subtitle whose second line began with a middle-dot fragment shipped unnoticed; the operator made the rendered-line check the default for all public work.
+
+▶ Fill in: your render/capture tool; an automated render → line-extract → verdict checker, if you build one.
+
 ### §4 reinforcement (2026-07-05)
 - **"The file never existed" only after `git log --all`**: don't conclude that a file absent from the working tree/HEAD "never existed" — it may have landed on another branch (real case: an auto-commit hook committed docs onto a feature branch that happened to be checked out). The git flavor of boundary expansion.
 
