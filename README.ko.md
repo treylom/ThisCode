@@ -4,7 +4,7 @@
 
 > Claude Code + Discord 봇 + codex 호출 통합 플러그인 — 개인 vault 자동화 + 멀티에이전트 운영
 >
-> **역할 경계**: ThisCode = 봇 하네스 운영 번들(운영 규칙·GraphRAG 운영 vendor·배포 계약). 범용 지식관리 제품은 [knowledge-manager](https://github.com/treylom/knowledge-manager), 플러그인 설치 창구는 [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins)입니다.
+> **역할 경계**: ThisCode = 봇 하네스 운영 번들(운영 규칙·GraphRAG 운영 vendor·배포 계약). 범용 지식관리 제품은 [knowledge-manager](https://github.com/treylom/knowledge-manager), 플러그인 설치 창구는 [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins)입니다. **규칙 원본**: 규칙 본문의 원본은 이제 [SlackMod](https://github.com/treylom/slackmod)(`rules/claude-code/`)에 있고, 여기 `rules/` 는 이 저장소만으로도 쓸 수 있게 둔 사본입니다. 최신 소식과 관련 저장소 안내도 그곳에서 먼저 갱신합니다.
 >
 > 지식관리와 vault 검색은 **km (knowledge-manager)** 플러그인이 제공합니다 — `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins` 로 설치한 뒤 `/km:search` 와 `/km:knowledge-manager` 를 사용하세요. ThisCode 1.4.0 부터는 이 스킬들의 자체 사본을 포함하지 않습니다.
 >
