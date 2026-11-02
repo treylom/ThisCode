@@ -2,7 +2,7 @@
 
 # ThisCode
 
-> **Role boundary**: ThisCode is the bot-harness operations bundle (operating rules, GraphRAG ops vendor, deployment contracts). The general-purpose knowledge product is [knowledge-manager](https://github.com/treylom/knowledge-manager); plugin installs go through [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins). **Rules source**: the rule text now lives in [SlackMod](https://github.com/treylom/slackmod) (`rules/claude-code/`); the `rules/` here is a copy kept so this repo works on its own. News and related repositories are listed there first.
+> **Role boundary**: ThisCode is the bot-harness operations bundle (operating rules, GraphRAG ops vendor, deployment contracts). The general-purpose knowledge product is [knowledge-manager](https://github.com/treylom/knowledge-manager); plugin installs go through [tofukyung-plugins](https://github.com/treylom/tofukyung-plugins). **Rules source**: the rule text now lives in [SlackMod](https://github.com/treylom/slackmod) (`rules/claude-code/`); the `rules/` here is a copy kept so this repo works on its own. News and related repositories are updated there first.
 
 > Knowledge management and vault search are provided by the **km (knowledge-manager)** plugin — install it with `claude plugin marketplace add treylom/tofukyung-plugins` + `claude plugin install km@tofukyung-plugins`, then use `/km:search` and `/km:knowledge-manager`. ThisCode 1.4.0 no longer bundles its own copies of these skills.
 
