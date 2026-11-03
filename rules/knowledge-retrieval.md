@@ -78,9 +78,10 @@ rule text, a fail-open miss reads as absence rather than violation — there is
 nothing to compare against, so the gap is undetectable. The written rule is
 what gives the check a target.
 
+- **Evidence goes into the knowledge base before you write (operator directive, 2026-11-01).** Pages and files the user hands you, and outside material you collect for a task (captures, documents, links), are saved into the KB *before* you write the deliverable; when you write, reopen the saved copies through KB search. Collecting them only in a task's scratch folder is not enough (a past task left 73 captures stranded in a work folder). No mechanical gate yet — a written discipline.
+
 ▶ Fill in: your memory/KB search command; your shared-vs-local memory split;
 the exact store names your marker's `targets=` should list.
-- **Evidence goes into the knowledge base before you write (operator directive, 2026-11-01).** Pages and files the user hands you, and outside material you collect for a task (captures, documents, links), are saved into the KB *before* you write the deliverable; when you write, reopen the saved copies through KB search. Collecting them only in a task's scratch folder is not enough (a past task left 73 captures stranded in a work folder). No mechanical gate yet — a written discipline.
 
 ## 2.5 Injection is not lookup — two different layers (added 2026-08-02)
 If the deployment auto-injects "relevant past decisions" into each prompt

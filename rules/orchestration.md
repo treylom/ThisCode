@@ -193,7 +193,7 @@ in-flight tracks; your maintainer-confirmation channel.
 
 - When you send a research question to several agents, the step that **uses** the results (applying them to a plan, locking a spec, sending them to the user, dispatching follow-up work) starts only after **every agent you asked has answered and one cross-check between their answers is done**.
 - Do not start on the first one or two replies, and do not tell yourself to "apply them as they arrive". Meanwhile, follow-up workers may only prepare (read the sources).
-- If one agent is late, tell the user in one line why you are waiting and until when.
+- If one agent is late, tell the user in one line why you are waiting and until when. Waiting is not idling: re-drive a silent agent as usual; only the step that uses the results waits.
 - Background: an orchestrator started applying the findings of two research agents before the third replied; the user called this wrong.
 
 ## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
