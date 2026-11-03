@@ -9,6 +9,7 @@ Trigger: receiving a bug report, about to modify a file, about to claim "fixed/d
 
 ## 2. Before modifying a file
 - List what currently works → analyze blast radius → modify → verify. Write down what could break *before* touching it.
+- **Regression attribution (2026-11-02)**: say "this was already in the baseline" only from running the **same original input** through both the baseline and the candidate. A result from a similar input with a changed tail does not count (thirteen attributions had to be corrected after this mistake).
 
 ## 3. Verification matched to the change's impact (2026-10-12 — replaces the fixed three-step check)
 - Wording changes and low-risk, reversible edits: compare the result directly against the intent (only the intended change went in).

@@ -80,6 +80,7 @@ what gives the check a target.
 
 ▶ Fill in: your memory/KB search command; your shared-vs-local memory split;
 the exact store names your marker's `targets=` should list.
+- **Evidence goes into the knowledge base before you write (operator directive, 2026-11-01).** Pages and files the user hands you, and outside material you collect for a task (captures, documents, links), are saved into the KB *before* you write the deliverable; when you write, reopen the saved copies through KB search. Collecting them only in a task's scratch folder is not enough (a past task left 73 captures stranded in a work folder). No mechanical gate yet — a written discipline.
 
 ## 2.5 Injection is not lookup — two different layers (added 2026-08-02)
 If the deployment auto-injects "relevant past decisions" into each prompt
@@ -129,8 +130,10 @@ peer-agent memory paths + the roster mapping domains to agents.
 
 When research or search needs a web page opened or a video downloaded, use the agent's own tools first (web search, URL fetch, the research skill's page-opening steps, a media download tool). Hand a page to the browser agent (a tool that drives a real, logged-in browser for you) only when those tools cannot open it (login wall, script-only render, blocked fetch).
 - In that fallback the browser agent may run the job on its own; if your setup normally asks the user which browser-control mode to use, research fallback skips that question.
-- Acting on a site is not research: logging in, signing up, account or console settings, OAuth, token reissue, filling a shared sheet or form — these keep going through the browser agent (and its ask-which-mode step) as before.
+- Acting on a site is not research: logging in, signing up, account or console settings, OAuth, token reissue, filling a shared sheet or form — these keep going through the browser agent as before (how to drive it: see the 2026-11-02 update below).
 - Write the condition by purpose (reading for research vs acting on a site), not by tool name, so swapping in a different fetch tool cannot sidestep it.
 - Background: a research agent asked how to use the browser agent for page opening and video downloads; the operator answered that the browser agent is only for places that will not open.
+- **Update (operator directive, 2026-11-02) — never ask which browser-control mode to use.** Whenever site work needs the browser agent (research fallback or acting on a site), do not ask the user how to drive it. Order: ① hand the job to the browser agent's autonomous mode; ② if that agent cannot run because it has no usage left (quota, limit or credit exhausted), tell the user in one line what you were trying to do and that usage ran out; ③ if it has usage but gets stuck (cannot find the screen, repeats the same step, gives a wrong result), drive the browser yourself through its interactive mode. Questions about *what* to do — account, payment, deletion — are still the user's decision and are still asked. The older "ask which mode" wording in this section is kept as history and is replaced by this order.
+- Background: the user found per-task "which mode?" questions too tiring and set this order for every agent.
 
-▶ Fill in: your page-fetch and download tools; your browser-agent tool and its ask-which-mode step, if any.
+▶ Fill in: your page-fetch and download tools; your browser-agent tool and its autonomous / interactive modes.

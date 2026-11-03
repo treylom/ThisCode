@@ -114,6 +114,10 @@ reached partial / blocked / awaiting-permission state.
   separate table.
 - Case-based; re-judge per situation; the maintainer's call wins.
 
+### §2.10 reinforcement (2026-11-02) — event release conditions need a check line
+- A release condition tied to an event ("at the next restart", "at the next round") is missed unless that event's own procedure has a line that checks for it. Put the check line into the restart procedure, or tie it to a recurring slot such as the weekly review's pre-input.
+- Background: a "propose only" step deferred to the next round was skipped because nothing in that round's procedure looked for it.
+
 ## 2.11 No re-asking the operator about finished projects (2026-09-09)
 
 - If a deferred ledger row's release condition is "wait for the operator to confirm," and that confirmation is tied to a project or delivery that has already finished, do not raise it to the operator again. Close the row as not applicable instead.

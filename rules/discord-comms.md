@@ -120,7 +120,7 @@ Trigger: any moment you respond/report/notify to an external channel
   channel **before** saying "done" to the requester. Repeating ops loops are
   exempt.
 
-## 5. Bot↔bot signaling = the channel only · no peer `tmux send-keys` (critical)
+## 5. Bot↔bot signaling = the channel only · no peer `tmux send-keys` (critical) — same-machine sessions: R6 (2026-11-02)
 - All bot-to-bot dispatch/wake/signal goes through the **channel**
   (mention/reply) **only**. Injecting input into a peer bot's `tmux` session via
   `send-keys` is an **internal prompt injection** — it lands as "user input"
@@ -152,6 +152,7 @@ Trigger: any moment you respond/report/notify to an external channel
     forbidden, R1 unchanged). A convenience helper that sends these is a
     human-operated tool (human subject) within R5; bots must not auto-invoke it
     (use a dry-run mode for any bot-side verification).
+  - **R6 (operator decision, 2026-11-02) — overrides R1's "channel only" for same-machine sessions of the same harness.** ① Between sessions of the same harness on the same machine that can message each other directly (e.g. Claude Code session messaging, orchestration §8), **direct messaging is the default, including content** — not only control signals. Every direct message that carries a decision or a task is **recorded** in the meeting's progress file or the task ledger, and **delivery is confirmed** (the send returns no error and the peer replies or logs it). If direct delivery fails or the peer is not listed, fall back to a channel mention. The chat channel is still used when the operator calls bots into a specific project — tag them there with a context document. Out of scope (keep the channel path): other harnesses, bots without direct messaging, other machines. ② **Liveness replies need no mention** — answer a liveness check with one `alive` line in the meeting progress file; the watchdog reads per-bot lines there.
 
 ▶ Fill in: your reply tool name; your bots' user_ids + roster source; your
 completion-report channel/thread id; which channels are meeting vs. main.

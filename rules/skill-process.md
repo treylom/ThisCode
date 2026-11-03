@@ -168,6 +168,8 @@ tool(s) and where the diversity check is recorded.
 - Owner of this entry: the bot starting the row is responsible for writing the receipt or note directly on that row; the script's own exclusion list for quoted sources is the reference to follow, not a copy kept in this document.
 
 
+- **Next round = move the release condition in the same turn (2026-11-02).** When you dispatch the next round of a task (round N → N+1), change that ledger row's release condition in the same turn so its first event points at the new round. A row left pointing at the old round's report looks like it is waiting for something that will never arrive.
+
 ## Experiments run to their verdict (operator directive, 2026-10-11)
 - An experiment, shadow observation or comparison you start keeps going until it reaches the verdict fixed at the start (a pass line, a comparison conclusion). Letting it drift and quietly carry over is not allowed.
 - A stopped experiment ends in exactly one of two ways: (a) **resume** — owner, resume date and a mechanism that will finish it (a scheduled job or a watcher) written into the ledger row's release field; (b) **closed by decision** — one line on why it stops (no change to the conclusion expected · the premise is gone · absorbed into another experiment) with its evidence, carried into the maintainer's next decision batch.
