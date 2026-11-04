@@ -130,6 +130,30 @@ test('a hanging ego probe times out instead of stalling', { skip }, () => {
   } finally { s.done(); }
 });
 
+test('Aside installed but not answering → fallback (negative pair)', { skip }, () => {
+  const s = sandbox();
+  try {
+    s.onPath('aside', EGO_BROKEN);
+    const d = s.detect();
+    assert.equal(d.provider, 'fallback');
+    assert.equal(d.detected.aside.found, true);
+    assert.equal(d.detected.aside.ready, false);
+  } finally { s.done(); }
+});
+
+test('both hanging → fallback within the time limit', { skip }, () => {
+  const s = sandbox();
+  try {
+    s.onPath('ego-browser', EGO_HANG);
+    s.onPath('aside', EGO_HANG);
+    const t0 = Date.now();
+    const d = s.detect({ timeoutMs: 1000 });
+    assert.ok(Date.now() - t0 < 15000);
+    assert.equal(d.provider, 'fallback');
+    assert.equal(d.detected.aside.why, 'probe timeout');
+  } finally { s.done(); }
+});
+
 test('prefer aside: used when present, ego when Aside is missing', { skip }, () => {
   const s = sandbox();
   try {
