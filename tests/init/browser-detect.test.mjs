@@ -141,6 +141,28 @@ test('Aside installed but not answering → fallback (negative pair)', { skip },
   } finally { s.done(); }
 });
 
+test('ego guide without its last line → not ready', { skip }, () => {
+  const s = sandbox();
+  try {
+    s.onPath('ego-browser', '#!/bin/sh\necho "[ego-browser:skill] guide (cut)"\nexit 0\n');
+    const d = s.detect();
+    assert.equal(d.provider, 'fallback');
+    assert.equal(d.detected.ego.why, 'guide incomplete');
+  } finally { s.done(); }
+});
+
+test('exit code alone decides: output looks fine but non-zero exit → not ready', { skip }, () => {
+  const s = sandbox();
+  try {
+    s.onPath('aside', '#!/bin/sh\necho 1.26.0\nexit 7\n');
+    s.onPath('ego-browser', '#!/bin/sh\necho "[ego-browser:skill] end of guide v2.2.0"\nexit 5\n');
+    const d = s.detect();
+    assert.equal(d.provider, 'fallback');
+    assert.equal(d.detected.aside.why, 'probe exit 7');
+    assert.equal(d.detected.ego.why, 'probe exit 5');
+  } finally { s.done(); }
+});
+
 test('both hanging → fallback within the time limit', { skip }, () => {
   const s = sandbox();
   try {
