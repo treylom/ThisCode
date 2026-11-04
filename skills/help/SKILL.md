@@ -51,6 +51,7 @@ disable-model-invocation: true
 말로 풀어도 안 되면 **직접 화면을 열어 같이 해결**한다. 순서:
 
 1. **가용성 탐지 먼저** — 지금 세션에서 실제로 쓸 수 있는 도구만 제안한다 (없는 도구 이름을 입에 올리지 마라):
+   - 먼저 `node "<플러그인루트>/scripts/browser-detect.mjs"` 를 한 번 실행한다 — `provider=ego`(ego lite) 또는 `provider=aside`(Aside)면 그 브라우저(출력된 `bin` 절대 경로)로 Discord 포털·Slack 웹 관문을 같이 열고 클릭 위치 안내 또는 대신 조작. `provider=fallback` 일 때만 아래 항목으로.
    - 브라우저 자동화 (claude-in-chrome / playwright 계열 MCP) → Discord 포털·Slack 웹 관문을 같이 열고 클릭 위치 안내 또는 대신 조작
    - 데스크톱 제어 (computer-use MCP) → 브라우저 밖 화면(파일 탐색기 등)이 필요할 때
 2. **아무 것도 없으면**: playwright MCP 설치를 제안한다 — "브라우저를 같이 볼 수 있는 도구를 1분 안에 붙일 수 있어요. 붙일까요?" → 승인 시 `claude mcp add playwright -- npx @playwright/mcp@latest` 안내·실행 → 재탐지.

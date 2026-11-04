@@ -92,6 +92,18 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 >
 > 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다 — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
 
+**0단계 — 브라우저 자동 탐색 (1.4.2 · 사용자 설정 없음)**: 포털을 열기 전에 먼저 한 번 실행한다. ego lite → Aside 가운데 «깔려 있고 대답하는» 첫 번째를 고른다. 사용자가 브라우저를 고르거나 설정할 일은 없다.
+
+```bash
+node "<플러그인루트>/scripts/browser-detect.mjs"
+# 출력 = JSON 한 줄: provider = ego | aside | fallback · bin = 실행 파일 절대 경로
+```
+- **`provider=ego`** → ego lite 로 포털을 연다. 명령 이름 자리에 출력된 `bin` 절대 경로를 그대로 쓴다(사용자 PATH 에 그 폴더가 없어도 돈다). ego lite 앱이 꺼져 있어도 이 명령이 앱 창을 띄운다. 먼저 `"<bin>" skill` 로 사용 안내를 읽고 거기 적힌 API 만 쓴다(Playwright 메서드를 짐작해 쓰지 않는다). 작업 공간(TaskSpace)은 이 봇 만들기 하나에 하나.
+- **`provider=aside`** → Aside 로 포털을 연다(`"<bin>" guide` 로 사용 안내를 먼저 읽는다).
+- **`provider=fallback`** → 아래 «전제 — 가용성 탐지»를 그대로 따른다(연결된 브라우저 자동화 → 없으면 설치 모드별 갈래).
+- ego lite·Aside 로 열어도 아래 «하드 인간 관문 3곳»과 «토큰을 보지 않고 저장하는 경로»는 똑같이 지킨다 — 토큰이 화면에 뜬 뒤로는 스크린샷·페이지 글 읽기를 하지 않고, 「복사」 버튼 클릭 → 클립보드 → 셸에서 파일로 직행.
+- 고른 브라우저가 실행 중 실패하면 실패 이유를 한 줄 남기고 다음 칸(ego → aside → fallback)으로 넘어간다.
+
 **전제 — 가용성 탐지** (도구 이름 특정 ❌ — 환경마다 다르다, `/thiscode:help` STEP 2.5 와 동일 원칙): 이 세션에 브라우저 자동화(claude-in-chrome·playwright 계열 MCP 등)가 실제로 연결돼 있는지 먼저 확인한다.
 - **있으면** → 아래 "기본 흐름"을 그대로 실행.
 - **없으면** (Fix C: 갓 설치한 세션엔 브라우저 자동화가 기본으로 없어, 이 분기가 B7 의 "기본값이 완주한다" 약속을 학생 기기에서 거짓으로 만들 수 있다) → 여기서 곧장 수동 안내로 떨어지지 않는다. **설치 모드에 따라 갈린다** (모드 = `~/.thiscode/install-state.yaml` 의 `mode`, 없으면 `configs/install.yaml` 의 `default_mode`):

@@ -27,6 +27,25 @@ auto-activate. The `/thiscode:setup` skill drives this step.
 
 ---
 
+## 2026-11-05 — ThisCode 1.4.2 browser auto-detect (ego lite → Aside → existing path)
+
+- Before opening a website (create-bot portal step, help STEP 2.5, Slack app
+  creation), the bot runs `node <plugin root>/scripts/browser-detect.mjs` once
+  and uses the first browser that is installed and answers: ego lite → Aside →
+  the existing path (a connected browser-automation tool, else the Playwright
+  MCP install step). The user does not choose or configure a browser.
+- The detector prints the CLI's absolute path, so it works on Macs where
+  `~/.local/bin` is not on PATH. Every check has a time limit (15 s default),
+  so a stuck CLI cannot stall setup.
+- When ego lite is closed, its browser command opens the app window (measured
+  on macOS).
+- Unchanged: the three human-only gates (login, hCaptcha, token-reset
+  confirmation) and the copy-to-file path that keeps the bot token out of the
+  model's view.
+- What an installed bot must do differently now: check the detector's output
+  before opening a site.
+- Windows: PATH lookup only (not yet measured on Windows).
+
 ## 2026-09-05 — ThisCode 1.4.1 documentation and ownership clarifications
 
 - Reconciled the Korean and English manuals: ThisCode's local installer scripts
