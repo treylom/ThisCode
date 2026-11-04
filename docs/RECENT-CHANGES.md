@@ -43,7 +43,7 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   chooser), the bot does not switch to the next browser: it tells the user
   what to click in the ego lite window (number button → the space marked
   "Need your action" → handle the prompt → "Return to agent") and resumes
-  the same task space. (Measured in the km student run: the old "on failure,
+  the same task space. (Measured on a macOS run: the old "on failure,
   next slot" line sent a permission-prompt stop to Aside.)
 - Unchanged: the three human-only gates (login, hCaptcha, token-reset
   confirmation) and the copy-to-file path that keeps the bot token out of the
