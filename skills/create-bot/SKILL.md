@@ -98,7 +98,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 node "<플러그인루트>/scripts/browser-detect.mjs"
 # 출력 = JSON 한 줄: provider = ego | aside | fallback · bin = 실행 파일 절대 경로
 ```
-- **`provider=ego`** → ego lite 로 포털을 연다. 명령 이름 자리에 출력된 `bin` 절대 경로를 그대로 쓴다(사용자 PATH 에 그 폴더가 없어도 돈다). ego lite 앱이 꺼져 있어도 이 명령이 앱 창을 띄운다. 먼저 `"<bin>" skill` 로 사용 안내를 읽고 거기 적힌 API 만 쓴다(Playwright 메서드를 짐작해 쓰지 않는다). 작업 공간(TaskSpace)은 이 봇 만들기 하나에 하나.
+- **`provider=ego`** → ego lite 로 포털을 연다. 명령 이름 자리에 출력된 `bin` 절대 경로를 그대로 쓴다(사용자 PATH 에 그 폴더가 없어도 돈다). ego lite 앱이 꺼져 있어도 이 명령이 앱 창을 띄운다(맥 실측 · 다른 OS 는 확인 전). 먼저 `"<bin>" skill` 로 사용 안내를 읽고 거기 적힌 API 만 쓴다(Playwright 메서드를 짐작해 쓰지 않는다). 작업 공간(TaskSpace)은 이 봇 만들기 하나에 하나.
 - **`provider=aside`** → Aside 로 포털을 연다(`"<bin>" guide` 로 사용 안내를 먼저 읽는다).
 - **`provider=fallback`** → 아래 «전제 — 가용성 탐지»를 그대로 따른다(연결된 브라우저 자동화 → 없으면 설치 모드별 갈래).
 - ego lite·Aside 로 열어도 아래 «하드 인간 관문 3곳»과 «토큰을 보지 않고 저장하는 경로»는 똑같이 지킨다 — 토큰이 화면에 뜬 뒤로는 스크린샷·페이지 글 읽기를 하지 않고, 「복사」 버튼 클릭 → 클립보드 → 셸에서 파일로 직행.
