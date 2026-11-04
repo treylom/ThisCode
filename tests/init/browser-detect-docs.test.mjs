@@ -27,6 +27,7 @@ test('create-bot: an ego lite user-control stop is not a fail-over', () => {
   const s = read('skills/create-bot/SKILL.md');
   for (const k of ['다음 칸으로 넘어가지 않는다', 'takeOverTaskSpace', 'Need your action', 'Return to agent']) assert.ok(s.includes(k), k);
   assert.ok(s.indexOf('다음 칸으로 넘어가지 않는다') > s.indexOf('실행 중 실패하면'), 'exception follows the fail-over line');
+  assert.ok(s.includes('권한 창을 대신 ‘허용’하지 않는다'), 'never allow on the user\'s behalf');
 });
 
 test('plugin.json and marketplace.json carry the same version', () => {
