@@ -69,6 +69,7 @@ bash <플러그인루트>/scripts/install-gate.sh --audit
 ### R5 — 브라우저 도구는 끝까지 쓴다
 
 `configs/install.yaml` 의 `browser_tools_required: true` 이면:
+- 브라우저는 먼저 자동 탐색한다: `node "<플러그인루트>/scripts/browser-detect.mjs"` → ego lite → Aside → (없으면) 연결된 브라우저 자동화 도구, 그것도 없으면 Playwright MCP 설치 단계. 순서는 create-bot Step 3 «0단계»가 정한다.
 - 브라우저 도구(playwright / claude-in-chrome)가 없다고 **수동으로 떨어지지 않는다.** 먼저 **설치를 시도**한다 (Slack CLI 자동 설치가 이미 같은 전례다).
 - 도구를 **시작만 하고 사용자에게 넘기지 않는다.** 중간에 그만두게 되면 **그 사유를 남긴다.** 사유 없는 이탈은 계약 위반이다.
 - 단, 계약 명단에 등재된 관문(캡차·자격증명 등) 앞에서 멈추는 것은 **완주 실패가 아니라 설계된 정지**다. 이 둘을 섞어 보고하지 않는다.
