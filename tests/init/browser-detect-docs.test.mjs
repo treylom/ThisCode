@@ -23,6 +23,12 @@ test('create-bot: auto-detect step comes before the availability-detection fallb
   for (const k of ['provider=ego', 'provider=aside', 'provider=fallback']) assert.ok(s.includes(k), k);
 });
 
+test('create-bot: an ego lite user-control stop is not a fail-over', () => {
+  const s = read('skills/create-bot/SKILL.md');
+  for (const k of ['다음 칸으로 넘어가지 않는다', 'takeOverTaskSpace', 'Need your action', 'Return to agent']) assert.ok(s.includes(k), k);
+  assert.ok(s.indexOf('다음 칸으로 넘어가지 않는다') > s.indexOf('실행 중 실패하면'), 'exception follows the fail-over line');
+});
+
 test('plugin.json and marketplace.json carry the same version', () => {
   const p = JSON.parse(read('.claude-plugin/plugin.json')).version;
   const m = JSON.parse(read('.claude-plugin/marketplace.json')).plugins.find((x) => x.name === 'thiscode').version;

@@ -103,6 +103,7 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
 - **`provider=fallback`** → 아래 «전제 — 가용성 탐지»를 그대로 따른다(연결된 브라우저 자동화 → 없으면 설치 모드별 갈래).
 - ego lite·Aside 로 열어도 아래 «하드 인간 관문 3곳»과 «토큰을 보지 않고 저장하는 경로»는 똑같이 지킨다 — 토큰이 화면에 뜬 뒤로는 스크린샷·페이지 글 읽기를 하지 않고, 「복사」 버튼 클릭 → 클립보드 → 셸에서 파일로 직행.
 - 고른 브라우저가 실행 중 실패하면 실패 이유를 한 줄 남기고 다음 칸(ego → aside → fallback)으로 넘어간다.
+- **단, ego lite 가 «사용자 차례»로 멈추면 다음 칸으로 넘어가지 않는다** — 오류에 `permission prompt`·`user now controls`·`takeOverTaskSpace` 가 보이면(사이트 권한 창·기기 선택 창 등) 실패가 아니다. 사용자에게 한 줄로 안내하고 기다린다: «ego lite 창 오른쪽 위 숫자 버튼을 누르고 → ‘Need your action’ 표시가 붙은 칸을 눌러 → 뜬 창을 처리한 뒤 → 아래 ‘Return to agent’ 를 누르고 말해 주세요.» 처리했다고 하면 같은 작업 공간을 `takeOverTaskSpace(<id>)` 로 다시 잡아 이어 간다. 권한 창을 대신 ‘허용’하지 않는다(하드 인간 관문 3곳도 그대로).
 
 **전제 — 가용성 탐지** (도구 이름 특정 ❌ — 환경마다 다르다, `/thiscode:help` STEP 2.5 와 동일 원칙): 이 세션에 브라우저 자동화(claude-in-chrome·playwright 계열 MCP 등)가 실제로 연결돼 있는지 먼저 확인한다.
 - **있으면** → 아래 "기본 흐름"을 그대로 실행.
