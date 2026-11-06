@@ -196,6 +196,33 @@ in-flight tracks; your maintainer-confirmation channel.
 - If one agent is late, tell the user in one line why you are waiting and until when. Waiting is not idling: re-drive a silent agent as usual; only the step that uses the results waits.
 - Background: an orchestrator started applying the findings of two research agents before the third replied; the user called this wrong.
 
+## Worker briefs — one template, the original instruction word for word (2026-11-06)
+
+- **Every child-session task, subagent prompt or follow-up order uses one fixed brief template (below).** Its first field quotes the original instruction word for word, with its source, and keeps the instruction's target words unchanged (for example "the whole harness", not "the hooks folder"). If you must narrow the target, write the reason in one line before you dispatch. A large brief may live in a file; it counts as using the template if that file has field ①. Write an empty field as "not applicable: reason" — an urgent dispatch still carries field ①.
+- **Reading the result: the first line decides.** The dispatcher reads the worker's result file from its first line. If the first line has no `Status:`, or says PASS with an empty `Evidence:`, ask the same worker once more; if it still has none, record it as "could not" — never as a pass. A summary for a person is written fresh by the dispatcher from the result file itself; do not paste the worker's one-line summary (it has no status field), and re-run the worker's done check (field ④) once yourself.
+- The template is one page of text, not a setting: stop using it and dispatches go back to their old shape.
+
+Template (adapted from pstack, MIT):
+
+```text
+① Original instruction (word for word): "…" — source: <channel and message, or note path>
+   Target words: <the instruction's target words, unchanged> — narrowing needs a one-line reason first.
+② This worker's share: <one paragraph>
+   Inputs: paths only (no pasted copies) · new worker, or continue <id> + why
+③ May write: <paths> · must not write: <paths> · must not do: <live settings · publishing · deleting · customer sends …>
+④ Done check (evidence): <one command> → expected output: <what passes>
+⑤ Report shape (first lines of the result file, fixed):
+   Status: PASS | ISSUES | BLOCKED
+   Evidence: <command + quoted output, or file:line>   (a PASS without evidence is not a pass)
+   Skipped: <step> — <reason>     (or "Skipped: none")
+   Could not: <task> — <reason>   (or "Could not: none")
+   Forks: one line each, only when a direction was chosen, something was reverted, or work is blocked
+⑥ Model and effort: <work type> → <model · effort> (one step up if stuck, and say so)
+⑦ Task list: the dispatcher keeps it — the worker reports step status only
+⑧ Before asking: run what can be run and answer with numbers · reversible = do it and show · irreversible (publishing · deleting · customer sends · live settings) = report BLOCKED first
+⑨ Second-model review: <model, read-only> for an important design · otherwise "not applicable (not an important design)" · "no second review: reason" if none is reachable
+```
+
 ## Spawn is the last resort — route through search and planning tools first (operator directive, 2026-09-13)
 
 Before spawning any subagent/worker, run this order: **① existing-project / knowledge-base exploration = the vault search entry point first** (e.g. the 4-tier search command; do not replace it with a scout/explore subagent) → **② planning or spec refinement = the interview/planning tools (e.g. ouroboros pm/interview, superpowers brainstorming)** — never hand planning to a spawned worker → **③ only what is left — reading 3+ files, an independent fan-out unit, or a mechanical run — may be spawned, and only after the delegation-shape judgment.** "Saving tokens" is not a reason to spawn: spawning saves main-context tokens only at the cost of a thinner grasp of the source material. Record the routing as the first line of the task log: `routing: search ○ / planning-tool ○ / spawn reason …`. Scope = every bot, including bots on remote machines.

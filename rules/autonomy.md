@@ -83,6 +83,13 @@ reached partial / blocked / awaiting-permission state.
 - Case-based (skip for trivial one-shot work); re-judge per situation; the
   maintainer's call wins.
 
+### §2.8 addition (2026-11-06) — a final report ends with "Skipped:" and "Could not:"
+
+- A final report to a person ends with two lines, `Skipped:` and `Could not:` (write "none" when there is nothing to list).
+- Which reports: one after which, for the same work, you will not post another "done" without the person's answer — including one that only waits for the person's reply or decision. Examples: "Deleted the two card posts — closing this item." · "Both HTML versions are out." · "I can't run that model; tell me which to use and I'll continue."
+- Not these: progress posts with work still in your hands, "handed it to X" notices, questions only. Examples: "One left — posting the card next." · "Installed; only switching it on remains." · "I'll report completion once it's confirmed."
+- Why: without a written definition, three counts of the same set of reports gave three different numbers; the definition makes the two lines checkable.
+
 ## 2.9 Feedback arriving after you declared convergence = explicit "applied" or "deferred (reason)" (2026-08-08)
 
 - Once you've declared a task converged/closed, any critique that arrives after
