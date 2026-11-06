@@ -377,6 +377,8 @@ idle" while the meeting was active in thread replies.
 
 ## Liveness: two rulers, two questions
 
+- **Answering a liveness check (operator decision, 2026-11-02)**: a participant answers with one `alive` line in the progress file — no bot mention needed. The watchdog and the bot-level ruler read exactly that row.
+
 The ledger's (02-progress) **mtime answers "is this meeting alive"**
 (file-level — cheap and sufficient for that question). **"Has this bot acted"
 (bot-level) = the timestamp of that bot's own last row**

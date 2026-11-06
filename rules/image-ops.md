@@ -32,6 +32,7 @@ Trigger: generating, editing, labeling, or dispatching image work.
 - User says "same image, only add/change X" → edit, not generation.
 - Worrying about text rendering while doing an edit is a red flag that the wrong tool was chosen; text-to-image breaks text, deterministic overlay/editing does not.
 - A blanket ban on image tools is wrong: the problem is unconstrained whole-image regeneration, not image-input editing.
+- **Text inside images is generated too — no overlay plans (operator directive, reinforced 2026-10-30).** For a new image, do not plan, dispatch or promise "we'll add the text separately / overlay it / composite it in layout" unless the user explicitly asks for that. The answer to accuracy worries is: generate, check the text letter by letter, regenerate if it is wrong. The deterministic overlay of §1 stays for edits that must keep pixels exact and for the user-requested case. Background: an overlay plan was proposed for the third time after the generate-by-default rule existed.
 
 ## 4. Prompt and verification
 - Edit prompt skeleton: "Edit this exact image. Keep frame/layout/elements 100% unchanged and inside frame. ONLY <change>. No redraw/recompose, no spill."
