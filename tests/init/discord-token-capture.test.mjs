@@ -7,7 +7,7 @@
 // Isolation: HOME is a temp folder. Token-shaped values are built from repeated letters.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import test from 'node:test';
@@ -551,4 +551,97 @@ test('arm repairs a folder that was open to others, and then throws away every r
   assert.equal(calm.arm('mybot').status, 0);
   assert.equal(calm.arm('otherbot').status, 0);
   assert.deepEqual(readdirSync(join(calm.armFile, '..')).sort(), ['mybot.arm', 'otherbot.arm']);
+});
+
+const ROOT = process.getuid && process.getuid() === 0 ? 'root can delete anything' : false;
+
+test('arm empties a folder that was open to others completely — files of any name, dot files, folders, links (the link, not what it points at)', { skip: SKIP }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  const outside = join(b.home, 'outside.txt');
+  writeFileSync(outside, 'keep me');
+  writeFileSync(join(armDir, 'notes.txt'), 'x');
+  writeFileSync(join(armDir, '.hidden.arm'), 'x');
+  mkdirSync(join(armDir, 'sub.arm'));
+  writeFileSync(join(armDir, 'sub.arm', 'inner'), 'x');
+  symlinkSync(outside, join(armDir, 'link.arm'));
+  symlinkSync(b.home, join(armDir, 'homelink'));
+  const armed = b.arm('otherbot');
+  assert.equal(armed.status, 0, everything(armed));
+  assert.deepEqual(readdirSync(armDir), ['otherbot.arm'], 'nothing that was there before is left');
+  assert.equal(mode(armDir), '700');
+  assert.equal(readFileSync(outside, 'utf8'), 'keep me', 'a link was removed, not followed');
+  assert.ok(existsSync(join(b.home, 'bin')), 'a link to a folder was removed, not followed');
+});
+
+test('arm stops when something in such a folder cannot be removed: the folder is left closed, the next arm starts with the clean-up again, capture refuses meanwhile', { skip: SKIP || ROOT }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  const stuck = join(armDir, 'aaa.arm');
+  mkdirSync(stuck);
+  writeFileSync(join(stuck, 'inner'), 'x');
+  chmodSync(stuck, 0o555);   // its content cannot be unlinked, so the folder cannot be removed
+  try {
+    const first = b.arm('otherbot');
+    assert.equal(first.status, 3, everything(first));
+    assert.match(first.stderr, /사유 코드: check-failed/);
+    assert.match(first.stderr, /token-arm\.removed/, 'says how to get going again');
+    assert.ok(!everything(first).includes('aaa'), 'names found in the folder are not echoed');
+    assert.equal(mode(armDir), '0', 'left in a mode the read path refuses');
+    assert.ok(!b.calls().includes('pbcopy'), 'nothing was put in the clipboard');
+
+    const second = b.arm('otherbot');
+    assert.equal(second.status, 3, 'the next arm does not take the folder for a private one');
+    assert.equal(mode(armDir), '0');
+
+    b.copy(SHAPED);
+    for (const name of ['mybot', 'otherbot']) {
+      const result = b.run('capture', name);
+      assert.equal(result.status, 1, name);
+      assert.match(result.stderr, /사유 코드: not-armed/, name);
+    }
+    assert.ok(!b.calls().includes('pbpaste'), 'the clipboard was not read');
+    assert.equal(b.clipboard(), SHAPED);
+    assert.ok(!existsSync(b.envFile), 'the planted record did not get a token saved');
+
+    // the user moves the folder away, as the message says — then everything works again
+    renameSync(armDir, `${armDir}.removed`);
+    assert.equal(b.arm().status, 0);
+    assert.deepEqual(readdirSync(armDir), ['mybot.arm']);
+    b.copy(SHAPED);
+    assert.equal(b.run('capture', 'mybot').status, 0);
+  } finally {
+    for (const dir of [armDir, `${armDir}.removed`]) {
+      if (existsSync(dir)) { chmodSync(dir, 0o700); if (existsSync(join(dir, 'aaa.arm'))) chmodSync(join(dir, 'aaa.arm'), 0o755); }
+    }
+  }
+});
+
+test('a clean-up that was cut short does not leave a trusted folder behind: while it runs the folder is not 0700', { skip: SKIP || ROOT }, () => {
+  // Stand-in rm that does nothing: the clean-up "runs" but removes nothing, as if it had been interrupted.
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  spawnSync('/bin/rm', [join(b.bin, 'rm')]);
+  b.put('rm', 'exit 0');
+  assert.equal(b.arm('otherbot').status, 3);
+  assert.notEqual(mode(armDir), '700');
+  b.copy(SHAPED);
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1, 'the planted record is not believed');
+  assert.match(result.stderr, /사유 코드: not-armed/);
+  assert.ok(!existsSync(b.envFile));
+  chmodSync(armDir, 0o700);   // only to look inside
+  assert.ok(existsSync(b.armFile), 'bait: the planted record really was still there');
+});
+
+test('arm killed in the middle of the clean-up: the folder is not 0700 at that moment, so the planted record is not believed afterwards', { skip: SKIP || ROOT }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  spawnSync('/bin/rm', [join(b.bin, 'rm')]);
+  b.put('rm', 'kill -9 $PPID');   // the script dies at its first removal
+  const killed = b.arm('otherbot');
+  assert.notEqual(killed.status, 0);
+  assert.notEqual(mode(armDir), '700', 'the clean-up runs before the folder becomes 0700');
+  assert.ok(existsSync(b.armFile), 'bait: the planted record is still there');
+  b.copy(SHAPED);
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /사유 코드: not-armed/);
+  assert.ok(!existsSync(b.envFile));
 });
