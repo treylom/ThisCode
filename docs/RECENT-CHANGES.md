@@ -68,9 +68,11 @@ auto-activate. The `/thiscode:setup` skill drives this step.
     is pressed, and `capture <bot>` — only if that bot was armed within the last
     10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
     the clipboard and prints the length and the file path, never the value.
-    `arm` writes its record under another name, puts the marker in the
-    clipboard, and only then gives the record the name `capture` reads, so an
-    `arm` that fails or is stopped part-way leaves no record. The
+    `arm` writes its record under another name, runs the clipboard command
+    that puts the marker there, and only after that command succeeds gives the
+    record the name `capture` reads. An `arm` that fails or is stopped before
+    that point leaves no record `capture` reads; it may leave an unfinished
+    file under the other name, which the next `arm` removes. The
     arm record is deleted once a copied value has been read; the result of that
     delete is not checked. Without a fresh arm for the same bot it refuses
     before reading the clipboard, so an old token left there is not saved
@@ -94,6 +96,22 @@ auto-activate. The `/thiscode:setup` skill drives this step.
     checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
     `uname` on PATH they are switched off, which takes someone who can already
     change the user's own environment.
+  - Clipboard commands: macOS, WSL, Linux (Wayland, then xclip). Without one
+    the script stops, and the user can run `paste <bot>`, a hidden prompt, in
+    their own terminal instead. Its terminal check only guards against an
+    accidental pipe; it is not a boundary against a program running as the same
+    user. Exit 5 means saved, but the clipboard could not be emptied.
+  - `commands/start.md` and `commands/add-bot.md` use the same script instead
+    of a heredoc. Reset Token is pressed once in its step,
+    and the browser is not switched while the token is on screen.
+  - The bot folder is 0700 and `.env` 0600. On macOS the script also removes
+    file ACLs from the folder, the temp file and `.env` and checks again — mode
+    600 alone does not remove an inherited ACL that lets others read the file. If an ACL cannot be
+    removed the script exits 3; a `.env` it has already written is then deleted,
+    other keys in it included, and that delete is not checked. Whether the
+    machine is macOS is taken from the shell's `OSTYPE`, and whether modes mean
+    anything from `uname`, so a changed `OSTYPE` or a different `uname` on PATH
+    switches this handling off. ACLs on Linux and Windows are not looked at.
   - The token protection above (the arm check, the folder checks and the ACL
     removal) covers the Discord token route
     (`scripts/discord-token-capture.sh`) only. The Slack token steps in
@@ -103,22 +121,6 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   plugin it finds — the marketplaces copy and each version under `cache/`.
   Before, it stopped at the first copy, which left the cache copy — the one a
   running bot loads — unpatched while reporting "patched".
-- Clipboard commands: macOS, WSL, Linux (Wayland, then xclip). Without one
-  the script stops, and the user can run `paste <bot>`, a hidden prompt, in
-  their own terminal instead. Its terminal check only guards against an
-  accidental pipe; it is not a boundary against a program running as the same
-  user. Exit 5 means saved, but the clipboard could not be emptied.
-- `commands/start.md` and `commands/add-bot.md` use the same script instead
-  of a heredoc. Reset Token is pressed once in its step,
-  and the browser is not switched while the token is on screen.
-- The bot folder is 0700 and `.env` 0600. On macOS the script also removes
-  file ACLs from the folder, the temp file and `.env` and checks again — mode
-  600 alone does not remove an inherited ACL that lets others read the file. If an ACL cannot be
-  removed the script exits 3; a `.env` it has already written is then deleted,
-  other keys in it included, and that delete is not checked. Whether the
-  machine is macOS is taken from the shell's `OSTYPE`, and whether modes mean
-  anything from `uname`, so a changed `OSTYPE` or a different `uname` on PATH
-  switches this handling off. ACLs on Linux and Windows are not looked at.
 - A failed attempt is recorded with a code from a fixed list of 13, such as
   `click-no-effect` (`install-gate.sh --reason-codes` prints the list; the
   same list is in `configs/install.yaml`). Free text is refused with exit 2
