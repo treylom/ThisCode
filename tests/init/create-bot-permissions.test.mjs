@@ -105,3 +105,22 @@ test('the step table says the same: 11 by default, 14 only after a yes', () => {
   assert.match(row, /reason: "범위와 기본 권한 11종 고르기는 자동/);
   assert.doesNotMatch(table, /권한 14종 고르기는 자동/, 'the old "14 automatically" line is gone');
 });
+
+test('commands/start.md lists the same 11 default permissions and number as the skill', () => {
+  const start = readFileSync('commands/start.md', 'utf8');
+  const line = start.match(/^\s*- Bot Permissions \(기본 11종\): (.+) — `permissions=(\d+)`$/m);
+  assert.ok(line, 'the manual flow of start.md has the default list with its number');
+  assert.deepEqual(split(line[1]).sort(), Object.keys(BASE_BITS).sort());
+  assert.equal(BigInt(line[2]), BASE_VALUE);
+  assert.match(start, /원하면 3종을 더 고른다\(Mention Everyone \/ Pin Messages \/ Manage Webhooks/);
+  assert.doesNotMatch(start, /Read Messages,/, 'the old six-name summary is gone');
+  assert.match(start, /포털 로그인\(로그인이 안 돼 있을 때\) · hCaptcha · 비밀번호\/다단계 인증\(MFA\) 창 3곳에서만/, 'three human-only stops, as in the skill');
+});
+
+test('the folder-trust prompt is answered by its label, not by a line number', () => {
+  for (const path of ['skills/create-bot/SKILL.md', 'skills/create-bot/automation.yaml']) {
+    const body = readFileSync(path, 'utf8');
+    assert.match(body, /Yes, I trust this folder/, path);
+    assert.doesNotMatch(body, /1번 선택 후 Enter|1번을 고르고 Enter/, `${path}: the first line of that window can be "No, exit"`);
+  }
+});

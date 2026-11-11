@@ -230,6 +230,8 @@ fi
 #     그 밖 = 그 관문의 «실패 시도 기록»이 N 번(configs/install.yaml
 #     auto_attempts_before_handoff, 기본 3) 쌓인 뒤에만 exit 0.
 #     세는 범위 = 그 관문의 마지막 성공(attempt ok)·마지막 넘김 허용 뒤.
+#     이 기록은 봇이 스스로 적는 «절차 기록» 이다 — 브라우저에서 실제로 세 번 했는지를
+#     이 스크립트가 확인하지는 못한다(시도 없이 세 줄만 적어도 통과한다).
 if [ "${1:-}" = "--handoff" ]; then
   gate="${2:-}"
   if ! _gate_name_ok "$gate"; then
