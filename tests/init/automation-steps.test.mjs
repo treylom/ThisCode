@@ -318,6 +318,29 @@ test('skill text: the three-attempt rule and the table are part of the flow', ()
   }
 });
 
+test('token steps: Reset Token is pressed once, the browser is not switched while the token is on screen, and attempt reasons carry no values', () => {
+  const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
+  const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));
+  assert.match(flow, /Reset Token 은 이 걸음에서 한 번만 누른다\*\* — 다시 시도할 때 다시 누르지 않는다/, 'default flow: one press');
+  assert.match(flow, /토큰 화면이 떠 있는 동안에는 브라우저를 바꾸지 않는다/, 'default flow: stay in the browser that shows the token');
+  assert.match(flow, /저장이 세 번 안 되면 그때만 사람에게 넘기고, 다시 발급이 필요하다고 한 줄로 말한다/);
+
+  const { table } = load('create-bot');
+  const reset = table.steps.find(item => item.id === '3/3');
+  assert.match(reset.once || '', /한 번만 누른다 — 다시 시도할 때 다시 누르지 않는다/, 'the table says it for step 3/3');
+  const save = table.steps.find(item => item.id === '4');
+  assert.match(save.keep_browser || '', /브라우저를 바꾸지 않는다/, 'the table says it for step 4');
+  assert.match(save.keep_browser || '', /다시 발급이 필요하다고 한 줄로 말한다/);
+
+  const never = /화면에서 읽은 값\(토큰 · 비밀번호 · 인증 코드 · 주소 전체\)을 쓰지 않는다 — 무엇이 막았는지만/;
+  for (const skill of ['create-bot', 'slack-configure']) {
+    assert.match(readFileSync(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf8'), never, `${skill}: the text says what never goes into a reason`);
+  }
+  for (const skill of skillsWithSteps()) {
+    assert.match(load(skill).table.policy.record_never || '', never, `${skill}: policy.record_never`);
+  }
+});
+
 test('create-bot: the consent box of the new-app window is ticked by the bot after a one-line notice, not handed to the user', () => {
   const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
   const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));

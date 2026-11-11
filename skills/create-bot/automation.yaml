@@ -28,6 +28,7 @@ policy:
   attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
   attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
   record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
+  record_never: "사유에는 화면에서 읽은 값(토큰 · 비밀번호 · 인증 코드 · 주소 전체)을 쓰지 않는다 — 무엇이 막았는지만"
   before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
   handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
 
@@ -97,6 +98,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_reset_token"
     human_stops: "discord_reset_token_modal"
+    once: "Reset Token 은 이 걸음에서 한 번만 누른다 — 다시 시도할 때 다시 누르지 않는다"
     reason: "Bot 탭 · Reset Token 누르기 · 토큰 저장(값은 보지 않음)은 자동 · 비밀번호 창은 사람만"
     handoff: "비밀번호(필요하면 인증 코드)만 입력해 주세요 — 그 다음은 제가 이어갑니다."
 
@@ -137,6 +139,7 @@ steps:
     title: "봇 토큰 저장"
     mode: "auto_then_human"
     gate: "discord_token_save"
+    keep_browser: "토큰 화면이 떠 있는 동안에는 브라우저를 바꾸지 않는다 · 저장이 세 번 안 되면 그때만 사람에게 넘기고 다시 발급이 필요하다고 한 줄로 말한다"
     reason: "복사 버튼 → 클립보드 → 파일 저장은 자동(값은 화면·대화에 남기지 않는다)"
     handoff: "토큰을 자동으로 저장하려고 세 번 시도했는데 <사유>로 안 됐습니다. 포털에서 토큰을 복사해 제가 여는 입력 칸에 붙여 넣어 주세요(대화 창에는 붙이지 마세요)."
 
