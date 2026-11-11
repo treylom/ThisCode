@@ -20,7 +20,7 @@
 #     사유 없는 낙하는 계약 위반이라 기록 자체를 거부한다.
 #
 #   bash scripts/install-gate.sh --handoff <관문이름>
-#     막힌 걸음을 사람에게 넘기기 «직전»에 부른다.
+#     막힌 단계를 사람에게 넘기기 «직전»에 부른다.
 #     exit 0 — 넘겨도 된다 (사람만 하는 자리 · manual 모드 · 자동 시도 N회 실패 기록됨)
 #     exit 1 — 아직 아니다. 다음 자동 시도가 무엇인지 알려 준다 (N = install.yaml, 기본 3)
 #
@@ -91,7 +91,7 @@ if [ "${1:-}" = "--attempted" ]; then
   exit 0
 fi
 
-# ── --handoff: 막힌 걸음을 사람에게 넘겨도 되는가 ───────────────────
+# ── --handoff: 막힌 단계를 사람에게 넘겨도 되는가 ───────────────────
 # 답: 사람만 하는 자리(명단 등재)·manual 모드 = 바로 넘김(exit 0, 횟수에 안 넣음).
 #     그 밖 = 그 관문의 «실패 시도 기록»이 N 번(configs/install.yaml
 #     auto_attempts_before_handoff, 기본 3) 쌓인 뒤에만 exit 0.
@@ -135,7 +135,7 @@ if [ "${1:-}" = "--handoff" ]; then
   next=$((fails + 1))
   echo "아직 넘기지 않는다 — 자동 시도 $fails/$need ($gate)" >&2
   case "$next" in
-    1) echo "  시도 1: 고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다" >&2 ;;
+    1) echo "  시도 1: 고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다" >&2 ;;
     2) echo "  시도 2: 같은 브라우저에서 다른 길로(다른 버튼 이름·키보드·주소로 바로 가기)" >&2 ;;
     *) echo "  시도 $next: 다음 브라우저로 바꿔서(ego lite → Aside → 그 밖 — scripts/browser-detect.mjs)" >&2 ;;
   esac

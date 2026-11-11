@@ -1,6 +1,6 @@
-# install-hooks — 걸음마다 어디까지 자동인가
+# install-hooks — 단계마다 어디까지 자동인가
 #
-# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 걸음(id)이 하나라도
+# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 단계(id)가 하나라도
 # 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
 # (Step 3 은 원래 없다 — 머리줄이 1 · 2 · 4 · 5 · 6 이다.)
 #
@@ -11,7 +11,7 @@
 #                    시도 횟수에 넣지 않고 바로 넘긴다.
 # gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
 #                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
-# asks             그 걸음에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
+# asks             그 단계에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
 # handoff          사람에게 넘길 때 그대로 쓰는 안내 문구.
 #
 # 값은 전부 한 줄 · 큰따옴표 문자열(시험이 줄 단위로 읽는다).
@@ -22,7 +22,7 @@ skill: "install-hooks"
 policy:
   attempts_before_handoff: "3"
   browser_order: "ego aside fallback"
-  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
   attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
   attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
   record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"

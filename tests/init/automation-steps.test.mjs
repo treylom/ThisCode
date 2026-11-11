@@ -321,7 +321,7 @@ test('skill text: the three-attempt rule and the table are part of the flow', ()
 test('token steps: Reset Token is pressed once, the browser is not switched while the token is on screen, and attempt reasons carry no values', () => {
   const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
   const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));
-  assert.match(flow, /Reset Token 은 이 걸음에서 한 번만 누른다\*\* — 다시 시도할 때 다시 누르지 않는다/, 'default flow: one press');
+  assert.match(flow, /Reset Token 은 이 단계에서 한 번만 누른다\*\* — 다시 시도할 때 다시 누르지 않는다/, 'default flow: one press');
   assert.match(flow, /토큰 화면이 떠 있는 동안에는 브라우저를 바꾸지 않는다/, 'default flow: stay in the browser that shows the token');
   assert.match(flow, /저장이 세 번 안 되면 그때만 사람에게 넘기고, 다시 발급이 필요하다고 한 줄로 말한다/);
 

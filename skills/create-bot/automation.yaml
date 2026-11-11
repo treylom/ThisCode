@@ -1,6 +1,6 @@
-# create-bot — 걸음마다 어디까지 자동인가
+# create-bot — 단계마다 어디까지 자동인가
 #
-# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 걸음(id)이 하나라도
+# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 단계(id)가 하나라도
 # 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
 #
 # mode
@@ -10,8 +10,8 @@
 #                    시도 횟수에 넣지 않고 바로 넘긴다.
 # gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
 #                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
-# human_stops      그 걸음 안에서 사람만 하는 자리(관문 이름 · configs/install.yaml 명단과 1:1).
-# asks             그 걸음에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
+# human_stops      그 단계 안에서 사람만 하는 자리(관문 이름 · configs/install.yaml 명단과 1:1).
+# asks             그 단계에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
 # notice           대신 하기 «전에» 사용자에게 알리는 한 줄(묻고 멈추는 것이 아니라 알림 — 알리고 바로 한다).
 # handoff          사람에게 넘길 때 그대로 쓰는 안내 문구. 화면 이름은 한국어 화면에서
 #                  확인된 것만 한국어로 적고, 영어 화면 이름을 괄호로 붙인다.
@@ -27,7 +27,7 @@ skill: "create-bot"
 policy:
   attempts_before_handoff: "3"
   browser_order: "ego aside fallback"
-  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
   attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
   attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
   record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
@@ -73,7 +73,7 @@ steps:
     anchor: "0단계 — 브라우저 자동 탐색"
     mode: "auto"
     gate: "browser_tool_install"
-    reason: "ego lite → Aside → 그 밖 순서로 대본이 고른다 · 없으면 도구 설치를 시도한다"
+    reason: "ego lite → Aside → 그 밖 순서로 스크립트(scripts/browser-detect.mjs)가 고른다 · 없으면 도구 설치를 시도한다"
 
   - id: "3/1"
     title: "개발자 포털 열기"
@@ -91,7 +91,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_new_application"
     human_stops: "discord_hcaptcha"
-    notice: "이 걸음에서 Discord 개발자 이용약관·개발자 정책 동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요."
+    notice: "이 단계에서 Discord 개발자 이용약관·개발자 정책 동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요."
     if_declined: "사용자가 ‘하지 마’라고 하면 동의 칸과 ‘만들기’는 사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라 사용자가 고른 것이라 --handoff 를 부르지 않는다"
     reason: "«신규 애플리케이션» 누르기 · 이름 넣기 · 약관 동의 칸 체크 · «만들기» 누르기는 자동(먼저 알린다) · 사람 확인만 사람"
     handoff: "사람 확인(hCaptcha) 창이 떴습니다 — 한국어 화면이면 제목이 ‘잠깐! 로봇 아니고 사람 맞죠?’ 입니다. 그것만 풀어 주세요. 그 다음은 제가 이어갑니다."
@@ -103,7 +103,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_reset_token"
     human_stops: "discord_reset_token_modal"
-    once: "Reset Token 은 이 걸음에서 한 번만 누른다 — 다시 시도할 때 다시 누르지 않는다"
+    once: "Reset Token 은 이 단계에서 한 번만 누른다 — 다시 시도할 때 다시 누르지 않는다"
     reason: "Bot 탭 · Reset Token 누르기 · 토큰 저장(값은 보지 않음)은 자동 · 비밀번호 창은 사람만"
     handoff: "비밀번호(필요하면 인증 코드)만 입력해 주세요 — 그 다음은 제가 이어갑니다."
     handoff_after_attempts: "토큰 발급 화면을 열려고 세 번 시도했는데 <사유>로 안 됐습니다. 왼쪽 ‘Bot’ 탭에서 ‘Reset Token’ 을 한 번만 눌러 주세요 — 그 다음은 제가 이어갑니다."
@@ -210,4 +210,4 @@ steps:
     title: "한 단어 봇 런처 설치"
     mode: "auto"
     asks: "런처 설치 동의(Y/n · 기본 Y)"
-    reason: "미리보기와 설치는 대본이 한다"
+    reason: "미리보기와 설치는 스크립트가 한다"

@@ -1,4 +1,4 @@
-# meetings — 걸음마다 어디까지 자동인가
+# meetings — 단계마다 어디까지 자동인가
 #
 # 뜻풀이와 꼴은 skills/create-bot/automation.yaml 머리 주석과 같다.
 # SKILL.md 의 «### Step» 머리줄과 이 표가 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
@@ -9,7 +9,7 @@ skill: "meetings"
 policy:
   attempts_before_handoff: "3"
   browser_order: "ego aside fallback"
-  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
   attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
   attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
   record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
