@@ -258,7 +258,7 @@ test('handoff gate: the hint walks retry → another way → the next browser', 
 
 test('handoff gate: a human-only stop is handed over at once and never counted', () => {
   const gate = gateBox();
-  for (const name of ['discord_portal_login', 'discord_developer_terms', 'discord_hcaptcha', 'discord_reset_token_modal']) {
+  for (const name of ['discord_portal_login', 'discord_hcaptcha', 'discord_reset_token_modal']) {
     const verdict = gate('--handoff', name);
     assert.equal(verdict.status, 0, name);
     assert.match(verdict.stdout, /사람만/);
@@ -282,6 +282,7 @@ test('handoff gate: a success or an allowed handoff starts the count again, and 
 
 test('handoff gate: no name or a strange name is a usage error', () => {
   const gate = gateBox();
+  assert.equal(gate('--handoff', 'discord_developer_terms').status, 1, 'the consent box goes through the three attempts like any other step');
   assert.equal(gate('--handoff').status, 2);
   assert.equal(gate('--handoff', 'a b').status, 2);
   assert.equal(gate('--handoff', '.*').status, 2);
@@ -301,15 +302,38 @@ test('skill text: the three-attempt rule and the table are part of the flow', ()
   }
 });
 
-test('create-bot text: the consent box of the new-app window is a stop of its own, with the screen wording', () => {
+test('create-bot: the consent box of the new-app window is ticked by the bot after a one-line notice, not handed to the user', () => {
   const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
-  assert.match(text, /discord_developer_terms/);
   const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));
-  assert.match(flow, /동의 칸/, 'default flow');
-  assert.match(flow, /대신 체크하지 않는다/, 'the bot does not tick it for the user');
+  assert.match(flow, /약관 동의 칸은 봇이 체크한다 — 먼저 한 줄로 알린다/, 'default flow: the bot ticks it');
+  assert.match(flow, /동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요/, 'the notice sentence');
+  assert.match(flow, /알림이지 묻고 기다리는 관문이 아니다/, 'a notice, not a question');
+  assert.match(flow, /입력 칸\(input\)을 직접 세어 체크 칸\(checkbox\)을 찾아/, 'how to find the box the page text does not show');
+  assert.doesNotMatch(text, /대신 체크하지 않는다/, 'the old "the bot does not tick it" line is gone');
   const manual = text.slice(text.indexOf('**수동 안내 (도구 없음'), text.indexOf('### Step 4. '));
-  assert.match(manual, /동의 칸/, 'manual flow');
+  assert.match(manual, /동의 칸/, 'manual flow still tells the user about the box');
   assert.match(text, /신규 앱 만들기/);
+
+  assert.ok(!manualNames().includes('discord_developer_terms'), 'the consent box is not on the hand-over-at-once list');
+  const { table } = load('create-bot');
+  const step = table.steps.find(item => item.id === '3/2');
+  assert.equal(step.mode, 'auto_then_human');
+  assert.equal(step.human_stops, 'discord_hcaptcha', 'only the human check is a human-only stop in this step');
+  assert.match(step.notice || '', /동의 칸을 대신 체크/, 'the table carries the notice');
+  assert.doesNotMatch(step.handoff, /동의 칸/, 'the hand-over text no longer asks the user to tick the box');
+});
+
+test('human-only means answers, login, the human check, a password or a permission prompt — never a terms box', () => {
+  for (const skill of skillsWithSteps()) {
+    const { table } = load(skill);
+    for (const step of table.steps) {
+      assert.doesNotMatch(step.human_stops || '', /terms/, `${skill} step ${step.id}`);
+    }
+  }
+  for (const skill of skillsWithSteps()) {
+    const head = readFileSync(join(SKILLS_DIR, skill, 'automation.yaml'), 'utf8').split('\n').find(line => line.includes('human_only       '));
+    if (head) assert.doesNotMatch(head, /동의/, `${skill}: the header comment does not list consent under human_only`);
+  }
 });
 
 test('guidance text: "New Application" is never shown without its Korean screen name', () => {

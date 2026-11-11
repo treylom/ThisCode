@@ -7,7 +7,7 @@
 # mode
 #   auto             ThisCode 가 끝까지 한다. 막히면 아래 «막혔을 때» 규칙을 따른다.
 #   auto_then_human  ThisCode 가 먼저 한다. 자동 시도 3회가 다 실패한 뒤에만 사람에게 넘긴다.
-#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 동의 · 비밀번호).
+#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 비밀번호).
 #                    시도 횟수에 넣지 않고 바로 넘긴다.
 # gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
 #                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.

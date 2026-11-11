@@ -36,8 +36,6 @@ install:
       reason: 계정 자격증명 + 다단계 인증 — 대리 입력 금지 영역
     - name: discord_hcaptcha
       reason: 봇 감지 캡차 — 우회 금지
-    - name: discord_developer_terms
-      reason: 개발자 이용약관·개발자 정책 동의 칸 — 동의는 사람 몫(대신 체크하지 않는다)
     - name: discord_reset_token_modal
       reason: 계정 비밀번호 + 다단계 인증 — 대리 입력 금지 영역
     - name: slack_login

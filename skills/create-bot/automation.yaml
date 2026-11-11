@@ -6,12 +6,13 @@
 # mode
 #   auto             ThisCode 가 끝까지 한다. 막히면 아래 «막혔을 때» 규칙을 따른다.
 #   auto_then_human  ThisCode 가 먼저 한다. 자동 시도 3회가 다 실패한 뒤에만 사람에게 넘긴다.
-#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 동의 · 비밀번호).
+#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 비밀번호).
 #                    시도 횟수에 넣지 않고 바로 넘긴다.
 # gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
 #                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
 # human_stops      그 걸음 안에서 사람만 하는 자리(관문 이름 · configs/install.yaml 명단과 1:1).
 # asks             그 걸음에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
+# notice           대신 하기 «전에» 사용자에게 알리는 한 줄(묻고 멈추는 것이 아니라 알림 — 알리고 바로 한다).
 # handoff          사람에게 넘길 때 그대로 쓰는 안내 문구. 화면 이름은 한국어 화면에서
 #                  확인된 것만 한국어로 적고, 영어 화면 이름을 괄호로 붙인다.
 #
@@ -84,9 +85,10 @@ steps:
     anchor: "새 애플리케이션을 만듭니다."
     mode: "auto_then_human"
     gate: "discord_new_application"
-    human_stops: "discord_developer_terms discord_hcaptcha"
-    reason: "«신규 애플리케이션» 누르기와 이름 넣기는 자동 · 약관 동의 칸과 사람 확인은 사람만"
-    handoff: "‘신규 앱 만들기’ 창에 이름은 넣어 두었습니다. ① ‘만들기를 클릭하면 Discord 개발자 이용약관과 개발자 정책에 동의하는 거예요’ 옆 동의 칸에 체크 ② ‘만들기’(Create) 누르기 ③ ‘잠깐! 로봇 아니고 사람 맞죠?’ 창이 뜨면 풀기 — 여기까지만 해 주세요. 그 다음은 제가 이어갑니다."
+    human_stops: "discord_hcaptcha"
+    notice: "이 걸음에서 Discord 개발자 이용약관·개발자 정책 동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요."
+    reason: "«신규 애플리케이션» 누르기 · 이름 넣기 · 약관 동의 칸 체크 · «만들기» 누르기는 자동(먼저 알린다) · 사람 확인만 사람"
+    handoff: "‘잠깐! 로봇 아니고 사람 맞죠?’ 창이 떴습니다 — 그것만 풀어 주세요. 그 다음은 제가 이어갑니다."
 
   - id: "3/3"
     title: "봇 토큰 발급"
