@@ -27,20 +27,22 @@ auto-activate. The `/thiscode:setup` skill drives this step.
 
 ---
 
-## 2026-11-11 — ThisCode 1.5.0 three automatic attempts before a hand-off, per-step automation tables, Korean screen names, developer-terms question, bot permissions on request, token saved outside the chat
+## 2026-11-11 — ThisCode 1.5.0 three automatic attempts before a hand-off, per-step automation tables, Korean screen names, developer-terms question, three wider bot permissions only on a yes, token saved outside the chat
 
 - When a step gets stuck, the bot no longer hands it to the user right away.
   It tries three times on its own with the automation browser (read the screen
   again and retry → another way in the same browser → the next browser),
   records each attempt, and asks `scripts/install-gate.sh --handoff <gate>`
-  before handing over. Steps only a person can do (login, the human check, a
-  password, a permission prompt) are handed over at once and are not counted.
+  before handing over. Human-only stops (login, the human check, a password, a
+  permission prompt) are handed over at once and are not counted.
   The attempt lines are a procedure record the bot writes itself; the script
   cannot check that the browser was really driven three times.
 - Every skill with `### Step` headings ships an `automation.yaml`: for each step, `auto`,
   `auto_then_human` or `human_only`, the gate name, and the text shown when a
   step is handed over. A test fails when the table and the SKILL.md step
-  headings differ.
+  headings differ. In create-bot, the portal, new-application and token steps
+  also have `handoff_after_attempts`, the text used after three failed
+  attempts.
 - New-application window of the Discord developer portal: the bot asks a
   yes/no question before the developer-terms box. Only after a yes does it tick
   the box and click Create. After a no it clicks nothing and waits for the user
@@ -57,54 +59,58 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   lets the bot do, and asks once. Only a yes adds them
   (`permissions=2252195487804480`), and the 14 chosen permissions are shown
   before the link is made. No answer, a no, or anything else keeps the 11.
-- The bot token is never taken through the conversation. One script,
-  `scripts/discord-token-capture.sh`, saves it: `arm <bot>` puts a fresh
-  one-time marker in the clipboard and notes it for that bot, the Copy button
-  is pressed, and `capture <bot>` — only if that bot was armed within the last
-  10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
-  the clipboard and prints the length and the file path, never the value. The
-  arm record is deleted once a copied value has been read; the result of that
-  delete is not checked. Without a fresh arm for the same bot it refuses
-  before reading the clipboard, so an old token left there is not saved
-  without `arm`. Arm one bot at a time: while two bots are armed together, a
-  token copied for one can be captured under the other's name.
-- Before it reads an arm record, `capture` checks that `~/.thiscode` and the
-  arm folder in it are real folders of the user whose permission bits are
-  owner-only (rwx------; the sticky and set-id bits are not looked at) and, on
-  macOS, carry no ACL, and that the record is 0600. It only checks; it repairs
-  nothing and refuses with `not-armed` before reading the clipboard. `arm` is
-  what repairs the folders. When `~/.thiscode` or the arm folder was open
-  before, `arm` locks the one that was open without making it 0700 yet (a
-  `~/.thiscode` that already is 0700 is not touched), removes everything in
-  the arm folder and checks that it is empty, and only then sets the arm
-  folder and, last, `~/.thiscode` to 0700. If something cannot be removed it does not arm,
-  tries to close the arm folder (mode 000), says whether that worked, and
-  prints one line on how to move the folder away; until a later `arm` has
-  emptied it, `capture` refuses. `install-gate.sh` repairs `~/.thiscode` as
-  well; when it does so for a folder that was open, it closes the arm folder
-  first, so the next `arm` empties it. Like the mode and ACL handling below, these
-  checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
-  `uname` on PATH they are switched off, which takes someone who can already
-  change the user's own environment.
+- The bot token is never taken through the conversation: the bot presses the
+  portal's Copy button, and one script, `scripts/discord-token-capture.sh`,
+  moves the token from the clipboard into the bot's `.env` without showing
+  it. How it does that:
+  - `arm <bot>` puts a fresh
+    one-time marker in the clipboard and notes it for that bot, the Copy button
+    is pressed, and `capture <bot>` — only if that bot was armed within the last
+    10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
+    the clipboard and prints the length and the file path, never the value. The
+    arm record is deleted once a copied value has been read; the result of that
+    delete is not checked. Without a fresh arm for the same bot it refuses
+    before reading the clipboard, so an old token left there is not saved
+    without `arm`. Arm one bot at a time: while two bots are armed together, a
+    token copied for one can be captured under the other's name.
+  - Before it reads an arm record, `capture` checks that `~/.thiscode` and the
+    arm folder in it are real folders owned by the user, with owner-only
+    permission bits (rwx------; the sticky and set-id bits are not looked at) and, on
+    macOS, carry no ACL, and that the record is 0600. It only checks; it repairs
+    nothing and refuses with `not-armed` before reading the clipboard. `arm` is
+    what repairs the folders. When `~/.thiscode` or the arm folder was open
+    before, `arm` locks the one that was open without making it 0700 yet (a
+    `~/.thiscode` that already is 0700 is not touched), removes everything in
+    the arm folder and checks that it is empty, and only then sets the arm
+    folder and, last, `~/.thiscode` to 0700. If something cannot be removed it does not arm,
+    tries to close the arm folder (mode 000), says whether that worked, and
+    prints one line on how to move the folder away; until a later `arm` has
+    emptied it, `capture` refuses. `install-gate.sh` repairs `~/.thiscode` as
+    well; when it does so for a folder that was open, it closes the arm folder
+    first, so the next `arm` empties it. Like the mode and ACL handling below, these
+    checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
+    `uname` on PATH they are switched off, which takes someone who can already
+    change the user's own environment.
+  - The token protection above (the arm check, the folder checks and the ACL
+    removal) covers the Discord token route
+    (`scripts/discord-token-capture.sh`) only. The Slack token steps in
+    `skills/slack-configure` do not have the arm check or the ACL removal yet.
 - `scripts/patch-discord-bot-drop.sh` (the patch that lets one bot read
   another bot's messages in a server) now patches every copy of the Discord
   plugin it finds — the marketplaces copy and each version under `cache/`.
   Before, it stopped at the first copy, which left the cache copy — the one a
   running bot loads — unpatched while reporting "patched".
-- This protection covers the Discord token route
-  (`scripts/discord-token-capture.sh`) only. The Slack token steps in
-  `skills/slack-configure` do not have the arm check or the ACL removal yet.
-- Clipboard commands:
-  macOS, WSL, Linux (Wayland, then xclip). Without one it stops; `paste <bot>`
-  is a hidden prompt the user runs in their own terminal. Its terminal check
-  only guards against an accidental pipe; it is not a boundary against a
-  program running as the same user. Exit 5 means saved, but the clipboard
-  could not be emptied. `commands/start.md` and `commands/add-bot.md` use the
-  same script instead of a heredoc. Reset Token is pressed once in its step,
+- Clipboard commands: macOS, WSL, Linux (Wayland, then xclip). Without one
+  the script stops, and the user can run `paste <bot>`, a hidden prompt, in
+  their own terminal instead. Its terminal check only guards against an
+  accidental pipe; it is not a boundary against a program running as the same
+  user. Exit 5 means saved, but the clipboard could not be emptied.
+- `commands/start.md` and `commands/add-bot.md` use the same script instead
+  of a heredoc. Reset Token is pressed once in its step,
   and the browser is not switched while the token is on screen.
 - The bot folder is 0700 and `.env` 0600. On macOS the script also removes
   file ACLs from the folder, the temp file and `.env` and checks again — mode
-  600 alone leaves an inherited ACL readable by others. If an ACL cannot be
+  600 alone does not remove an inherited ACL that lets others read the file. If an ACL cannot be
   removed the script exits 3; a `.env` it has already written is then deleted,
   other keys in it included, and that delete is not checked. Whether the
   machine is macOS is taken from the shell's `OSTYPE`, and whether modes mean
@@ -121,9 +127,9 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   `THISCODE_INSTALL_LOG` keeps its mode and is refused when group or others can
   write there. On macOS file ACLs on `~/.thiscode` and the log are removed as
   well. A hand-over at a human-only stop (or in manual mode) is still allowed
-  when it cannot be recorded, so a person is not blocked by a log problem;
-  "not recorded, not handed over" applies to the hand-over after three
-  attempts.
+  when it cannot be recorded, so a person is not blocked by a log problem.
+  A hand-over after three attempts, by contrast, is refused when the attempts
+  cannot be recorded.
 - `install-gate.sh` checks a gate name as a whole for `--handoff` and
   `--attempted`: letters, digits and underscores only, else exit 2.
 - Four more places are handed over at once: the automation browser's permission

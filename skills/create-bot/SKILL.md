@@ -101,7 +101,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 >
 > **사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `not-armed` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
 >
-> **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
+> **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 단 `human_stops` 가 있는데 `handoff_after_attempts` 가 없는 단계(지금은 7)에서는 `handoff` 가 사람 관문에서 쓰는 문구이므로, 3회 실패로 넘길 때는 그 문구를 쓰지 않고 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다» 를 한 번에 말한다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 
 **화면 이름 표 (영어 화면 ↔ 한국어 화면)** — Discord 를 한국어로 쓰면 개발자 포털도 한국어로 보인다. 사용자에게 화면 이름을 말할 때는 **한국어 이름을 먼저, 영어 이름을 괄호로** 말하고, 버튼을 찾을 때는 두 이름을 다 찾는다. 아래에 없는 이름은 한국어 화면에서 확인하지 못한 것이라 영어 이름만 적는다 — 그 이름으로 못 찾으면 화면을 다시 읽어 같은 자리의 버튼을 찾는다(없는 한국어 이름을 지어내 말하지 않는다).
 
@@ -114,6 +114,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 | (동의 칸 옆 글) | 만들기를 클릭하면 Discord 개발자 이용약관과 개발자 정책에 동의하는 거예요 | 위와 같음 |
 | Create · Cancel (창 버튼) | 만들기 · 취소 | 위와 같음 |
 | (hCaptcha 창) | 잠깐! 로봇 아니고 사람 맞죠? | 한국어 포털 실측 2026-11-04 |
+| Copy (토큰 옆 버튼) | 복사 | 한국어 포털 실측 2026-11-11 |
 | Bot · Reset Token · Privileged Gateway Intents · Message Content Intent · Server Members Intent · Presence Intent · Save Changes · OAuth2 · URL Generator · Scopes · Bot Permissions | (미확인 — 영어 이름만 쓴다) | 미확인 |
 
 **0단계 — 브라우저 자동 탐색 (1.4.2 · 사용자 설정 없음)**: 포털을 열기 전에 먼저 한 번 실행한다. ego lite → Aside 가운데 «깔려 있고 대답하는» 첫 번째를 고른다. 사용자가 브라우저를 고르거나 설정할 일은 없다.
@@ -239,16 +240,16 @@ bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   
 ```
 
 - 화면에 토큰이 뜬 뒤로는 **스크린샷 · 페이지 글 읽기를 하지 않는다** — 버튼 좌표만 구한다.
-- `capture` 가 말해 주는 것은 «저장됨 / 복사 안 됨 / 꼴 아님» 과 길이뿐이다. 실패하면 마지막 줄 `사유 코드:` 뒤에 나온 코드를 그대로 `install-gate.sh --attempted discord_token_save fail <사유 코드>` 에 쓴다.
+- `capture` 는 값을 찍지 않는다 — 저장됐는지 · 왜 안 됐는지 · 길이와 저장한 파일 경로만 말한다. 실패하면 마지막 줄 `사유 코드:` 뒤에 나온 코드를 그대로 `install-gate.sh --attempted discord_token_save fail <사유 코드>` 에 쓴다.
 - **`arm` 과 `capture` 는 한 묶음이다.** `arm <bot-name>` 이 매번 새 일회용 표식을 만들고, `capture <bot-name>` 은 **같은 봇으로 10분 안에** `arm` 한 기록이 있을 때만 클립보드를 읽는다. 그 기록은 복사된 값을 한 번 읽으면 지운다. `arm` 없이, 다른 봇 이름으로, 10분이 지나서, 두 번째로 `capture` 를 부르면 클립보드를 읽지도 않고 거부한다(`사유 코드: not-armed`) — 클립보드에 남아 있던 옛 토큰이 `arm` 없이 저장되는 것을 막는다. **`arm` 은 한 번에 한 봇만 걸어 둔다**: 두 봇을 함께 `arm` 해 둔 동안에는 한 봇의 토큰을 복사한 뒤 다른 봇 이름으로 `capture` 해도 저장된다. 봇을 여럿 만들 때는 한 봇의 `arm → 복사 → capture` 를 끝낸 뒤 다음 봇으로 간다. 이 보호는 디스코드 토큰을 저장하는 이 스크립트에 한한 것이다(슬랙 토큰 저장 절차에는 아직 없다). 거부되면 `arm <bot-name>` 부터 다시 한다(비밀번호 창에서 오래 걸렸을 때도 같다 — 토큰 화면이 아직 떠 있으면 Reset Token 은 다시 누르지 않는다).
 - `capture` 가 `exit 5` 로 끝나면 토큰은 저장됐지만 클립보드를 비우지 못한 것이다 — 사용자에게 "토큰은 저장됐습니다. 클립보드에 토큰이 남아 있으니 지금 다른 글자를 한 번 복사해 덮어 주세요." 라고 말하고, 그 답을 받기 전에는 이 단계를 끝난 것으로 보지 않는다.
 - `.env` 와 봇 폴더는 본인만 읽게 맞춘다(0600 · 0700). macOS 에서는 파일 ACL 도 지운다 — 못 지우면 저장하지 않고 `exit 3` 으로 끝난다.
-- `arm` 이 `exit 3` 으로 «arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다» 라고 하면: `~/.thiscode` 나 그 안의 기록 폴더(`token-arm`)가 본인만 쓰는 폴더가 아니었고, 그 기록 폴더를 비우다가 지울 수 없는 것을 만난 것이다(비우는 것은 기록 폴더뿐이다). 스크립트는 `arm` 하지 않고 그 기록 폴더를 닫으려 하며, 닫았는지 못 닫았는지를 출력에 적는다(어느 쪽이든 그동안 `capture` 는 어느 봇으로도 거부된다). 출력에 나온 `mv` 한 줄을 사용자에게 그대로 보여 주고, 사용자가 실행한 뒤 `arm <bot-name>` 부터 다시 한다.
+- `arm` 이 `exit 3` 으로 «arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다» 라고 하면: `~/.thiscode` 나 그 안의 기록 폴더(`token-arm`)가 본인만 쓰는 폴더가 아니었고, 그 기록 폴더를 비우다가 지울 수 없는 것을 만난 것이다(비우는 것은 기록 폴더뿐이다). 스크립트는 `arm` 하지 않고 그 기록 폴더를 닫으려 하며, 닫았는지 못 닫았는지를 출력에 적는다(어느 쪽이든 그동안 `capture` 는 어느 봇으로도 거부된다). 사용자에게 이렇게 말하고 출력에 나온 `mv` 한 줄을 그대로 붙인다: "토큰을 저장할 준비 폴더에 지울 수 없는 파일이 있어 멈췄습니다. 터미널 새 창에서 아래 한 줄을 그대로 실행해 그 폴더를 옆으로 옮겨 주세요 — 하시면 제가 처음부터 다시 이어갑니다." 사용자가 실행했다고 하면 `arm <bot-name>` 부터 다시 한다.
 - 클립보드 도구는 스크립트가 고른다: macOS = `pbcopy`/`pbpaste` · WSL = `clip.exe` / `powershell.exe Get-Clipboard` · Linux = `wl-copy`/`wl-paste`(Wayland) → `xclip`.
 
 **«복사» 버튼 누르기를 세 번 시도해도 안 될 때 — 사용자에게 버튼만 부탁한다**(`--handoff discord_token_save` 가 `exit 0` 일 때만):
 
-> "토큰을 자동으로 저장하려고 세 번 시도했는데 `<사유>`로 안 됐습니다. 포털의 토큰 옆 ‘복사’(Copy) 버튼만 눌러 주시고, 여기에는 ‘복사했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요. 토큰 화면이 이미 닫혔다면 알려 주세요(다시 발급이 필요합니다)."
+> "토큰을 자동으로 저장하려고 세 번 시도했는데 `<사유>`로 안 됐습니다. 포털의 토큰 옆 ‘복사’(Copy) 버튼만 눌러 주시고, 여기에는 ‘복사했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요. 토큰 화면이 이미 닫혔다면 알려 주세요(다시 발급이 필요합니다). 그 다음은 제가 이어갑니다."
 
 사용자가 ‘복사했어요’ 라고 하면 `capture <bot-name>` 을 실행한다. 버튼을 부탁하기 **직전에** `arm <bot-name>` 을 다시 실행해 둔다(앞선 `arm` 은 10분이 지났거나 이미 쓰였을 수 있다).
 
@@ -256,7 +257,7 @@ bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   
 
 `arm` · `capture` 가 `exit 4`(클립보드 도구 없음)로 멈추면 도구 설치를 안내하거나 이 길로 간다. **토큰을 대화로 받는 쪽으로는 가지 않는다.**
 
-> "터미널 새 창에서 아래 한 줄을 직접 실행하고, 물음에 토큰을 붙여 넣어 주세요(화면에 안 보입니다). 끝나면 ‘저장했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요."
+> "터미널 새 창에서 아래 한 줄을 직접 실행하고, 물음이 나오면 토큰을 붙여 넣고 Enter 를 눌러 주세요(붙여 넣어도 화면에는 아무것도 안 보이는 게 정상입니다). 끝나면 ‘저장했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요."
 >
 > ```bash
 > bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>

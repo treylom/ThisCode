@@ -242,7 +242,7 @@ test('원장이 없어도 --audit 은 깨지지 않는다', () => {
   withSandbox((box) => {
     const r = run(box, ['--audit'], { mode: 'auto' });
     assert.equal(r.code, 0);
-    assert.match(r.out, /원장 없음/);
+    assert.match(r.out, /설치 기록 없음/);
   });
 });
 

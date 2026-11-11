@@ -234,12 +234,12 @@ _reason_says() {   # 코드 → 정해진 문장. 표에 없으면 1
     permission-prompt)  echo "브라우저 권한 창이 가로막는 문제" ;;
     login-required)     echo "로그인이 필요한 문제" ;;
     clipboard-empty)    echo "복사한 값이 클립보드에 들어오지 않는 문제" ;;
-    not-armed)          echo "복사 준비를 먼저 하지 않았거나 준비한 지 너무 오래된 문제" ;;
+    not-armed)          echo "복사 준비가 안 돼 있거나, 이미 쓰였거나, 준비한 지 10분이 지난 문제" ;;
     format-mismatch)    echo "받은 값의 형식이 맞지 않는 문제" ;;
-    tool-error)         echo "브라우저 도구가 오류를 내는 문제" ;;
+    tool-error)         echo "브라우저나 클립보드 도구가 없거나 오류를 내는 문제" ;;
     install-failed)     echo "설치 명령이 실패하는 문제" ;;
     network-error)      echo "네트워크 연결 문제" ;;
-    check-failed)       echo "설치 뒤 확인이 통과하지 않는 문제" ;;
+    check-failed)       echo "설치 뒤 확인이나 안전 확인이 통과하지 않는 문제" ;;
     other)              echo "알 수 없는 문제" ;;
     *) return 1 ;;
   esac
@@ -349,7 +349,7 @@ if [ "${1:-}" = "--audit" ]; then
     exit 2
   fi
   if [ ! -f "$LEDGER" ]; then
-    echo "원장 없음 — $LEDGER (아직 게이트가 한 번도 안 불렸다)"
+    echo "설치 기록 없음 — $LEDGER (아직 게이트가 한 번도 안 불렸다)"
     exit 0
   fi
   viol=0
@@ -361,12 +361,12 @@ if [ "${1:-}" = "--audit" ]; then
     [ -z "$last_req" ] && continue
     last_try="$(command grep -n "\"gate\":\"$g\"" "$LEDGER" | command grep '"kind":"attempt"' | tail -1 | cut -d: -f1)"
     if [ -z "$last_try" ] || [ "$last_try" -lt "$last_req" ]; then
-      echo "위반 — $g: 「먼저 시도하라」 판정(원장 $last_req 행) 뒤에 시도 기록이 없다"
+      echo "위반 — $g: 「먼저 시도하라」 판정(설치 기록 $last_req 행) 뒤에 시도 기록이 없다"
       viol=$((viol + 1))
     fi
   done
   echo "감사 질문: exit 1 을 받고도 시도 기록이 없는 관문. (수동 안내가 실제로 떴는지는 이 감사로 알 수 없다)"
-  echo "위반 $viol 건 / 원장 $(command wc -l < "$LEDGER" | tr -d ' ') 행"
+  echo "위반 $viol 건 / 설치 기록 $(command wc -l < "$LEDGER" | tr -d ' ') 행"
   [ "$viol" -eq 0 ] || exit 1
   exit 0
 fi
