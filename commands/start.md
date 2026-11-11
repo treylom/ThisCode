@@ -118,7 +118,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
 
 브라우저로 https://discord.com/developers/applications 접속:
 
-1. "New Application"(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 (예: `<your-bot-name>`) → **약관 동의 칸 체크(사람)** → «만들기»(Create) → **캡차 1회(사람)**
+1. "New Application"(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 (예: `<your-bot-name>`) → 약관 동의 칸 체크 → «만들기»(Create) → **캡차 1회(사람)**
 2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 복사
 3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save
    - ⚠️ Message Content 미설정 시 토큰·초대가 정상이어도 봇이 서버 채널 메시지 내용을 못 읽어 무반응 (DM 은 예외). "토큰 valid 인데 채널 답 없음" 1순위 원인.
