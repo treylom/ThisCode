@@ -45,13 +45,16 @@ os_kind() {
 }
 
 record_attempt() {
-  local gate="$1" result="$2" reason="${3:-}"
+  local gate="$1" result="$2" reason="${3:-}" rc=0
   [ -x "$INSTALL_GATE" ] || return 0
   if [ "$result" = ok ]; then
-    bash "$INSTALL_GATE" --attempted "$gate" ok >/dev/null 2>&1 || true
+    bash "$INSTALL_GATE" --attempted "$gate" ok >/dev/null 2>&1 || rc=$?
   else
-    bash "$INSTALL_GATE" --attempted "$gate" fail "${reason:-other}" >/dev/null 2>&1 || true
+    bash "$INSTALL_GATE" --attempted "$gate" fail "${reason:-other}" >/dev/null 2>&1 || rc=$?
   fi
+  # 기록을 못 남겼으면 조용히 넘어가지 않는다 — 설치는 계속하되 한 줄로 알린다.
+  [ "$rc" -eq 0 ] || echo "install-browser-gate: 시도 기록을 남기지 못했다 ($gate · install-gate.sh exit $rc) — 이번 시도는 세 번 시도 횟수에 들어가지 않는다" >&2
+  return 0
 }
 
 step0_check() {
