@@ -90,7 +90,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 >
 > **계약상 이름** (`configs/install.yaml` 의 `manual_allowed_without_attempt` 에 등재된 이름과 1:1): 1 = `discord_portal_login` · 2 = `discord_hcaptcha` · 3 = `discord_reset_token_modal`. 이 세 이름은 **등재돼 있어** `install-gate.sh` 가 `exit 0` 을 준다 = 시도 없이 사람에게 부탁해도 되는 Discord 쪽 지점들이다(명단에는 자동화 브라우저의 권한 창 `browser_permission_prompt` 도 있다 — 아래 0단계의 «사용자 차례» 안내). 여기 없는 이름으로 사람에게 넘기려 하면 게이트가 `exit 1` 로 막는다.
 >
-> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다(예외: 약관 동의 칸은 예/아니오를 묻는다 — 동의는 사용자만 할 수 있다) — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
+> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다(예외 둘: 약관 동의 칸과 더할 권한 3종은 예/아니오를 묻는다 — 동의와 권한 넓히기는 사용자만 정할 수 있다) — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
 
 > 🔴 **막혔을 때 — 자동 시도 3회, 그 뒤에만 사람**: 사람만 하는 자리가 아닌 곳에서 단계가 막히면(버튼을 못 찾음 · 눌러도 화면이 안 바뀜 · 도구 오류) 곧바로 사용자에게 넘기지 않는다. 자동화 브라우저로 **자동 시도 3회**를 먼저 한다 — ① 고른 브라우저에서 화면을 다시 읽고 그 단계를 다시 한다 ② 같은 브라우저에서 다른 길로 한다(화면 이름이 한국어로 보이면 한국어 이름으로 · 키보드 · 주소로 바로 가기) ③ 다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 — `scripts/browser-detect.mjs` 가 고른다). 시도마다 결과를 남기고, 넘기기 직전에 게이트를 부른다:
 > ```bash
@@ -168,9 +168,15 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 5. OAuth2 → URL Generator — "초대 URL을 만듭니다":
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads** / **Mention Everyone** / **Pin Messages** / **Manage Webhooks**
+   - Bot Permissions (기본 11종): View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 14종 = `permissions=2252195487804480` (URL 에 그대로 붙여도 된다 — 비트 14개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1)
+   - **더할 권한 3종은 묻는다 — 초대 주소를 만들기 «전에» 한 번**: "봇에 권한 세 가지를 더 줄 수 있습니다. ① Mention Everyone — 봇이 @everyone · @here 로 서버 전체를 부를 수 있습니다 ② Pin Messages — 봇이 메시지를 고정하거나 고정을 풀 수 있습니다 ③ Manage Webhooks — 봇이 웹후크를 만들고 고치고 지울 수 있습니다(웹후크는 다른 이름으로 글을 올릴 수 있습니다). 세 가지를 더할까요? (예 / 아니오 — 답이 없으면 더하지 않습니다 · 나중에 서버 설정의 봇 역할에서 더하거나 뺄 수 있습니다)"
+     - 더할 권한 3종(‘예’ 일 때만): Mention Everyone / Pin Messages / Manage Webhooks
+     - **‘예’** → 이번 초대 주소에만 3종을 더한다. 주소를 만들기 직전에 한 번 보여 준다: "선택된 권한 14개: View Channels · Send Messages · Read Message History · Add Reactions · Attach Files · Embed Links · Manage Messages · Create Public Threads · Create Private Threads · Send Messages in Threads · Manage Threads · Mention Everyone · Pin Messages · Manage Webhooks"
+     - ‘예’ 일 때 값: 14종 = `permissions=2252195487804480` (비트 14개가 기본 11종 + 더할 3종과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+     - **‘아니오’ · 답이 없음 · 다른 말** → 기본 11종 그대로 만든다(다른 말이면 같은 물음을 한 번 더 해도 된다 — 그래도 ‘예’ 가 아니면 11종).
+     - 봇 이름 · 수업용이라는 사정 · 지난번 답으로 ‘예’ 를 짐작하지 않는다 — ‘예’ 는 그 답을 받은 이번 초대 주소에만 쓴다.
 6. 생성된 URL 로 이동 → 서버 선택 → "승인" 클릭 — "봇을 서버에 초대합니다." (2026-08-05·09 실측: 이 클릭까지 자동화가 닿는다 — 이미 로그인된 세션의 동의 화면이라 재인증을 요구하지 않는다)
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 대신 처리한다 — 안 되면(브라우저만으로 강제할 방법은 실측에서 못 찾았다, 3회 시도) 그 창만 예외적으로 사용자에게 넘긴다: "데스크톱 앱 승인 창이 떴습니다 — 눌러 주세요."
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
@@ -205,9 +211,12 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 4. OAuth2 → URL Generator:
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads** / **Mention Everyone** / **Pin Messages** / **Manage Webhooks**
+   - Bot Permissions (기본 11종): View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 14종 = `permissions=2252195487804480` (URL 에 그대로 붙여도 된다 — 비트 14개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1)
+   - 더할 권한 3종(‘예’ 일 때만): Mention Everyone / Pin Messages / Manage Webhooks
+     - 원하면 직접 더 고른다. Mention Everyone = 봇이 @everyone · @here 로 서버 전체를 부를 수 있다 · Pin Messages = 봇이 메시지를 고정하거나 고정을 풀 수 있다 · Manage Webhooks = 봇이 웹후크를 만들고 고치고 지울 수 있다(웹후크는 다른 이름으로 글을 올릴 수 있다). 고르지 않아도 봇은 돈다 — 나중에 서버 설정의 봇 역할에서 더하거나 뺄 수 있다.
+     - ‘예’ 일 때 값: 14종 = `permissions=2252195487804480` (비트 14개가 기본 11종 + 더할 3종과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
 5. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대 → **승인(사람)**
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 처리한다. 브라우저만으로 강제할 방법은 실측에서 못 찾았다(3회 시도).
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
