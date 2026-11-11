@@ -65,10 +65,20 @@ _mode() {
   printf '%s' "$m"
 }
 
+# 관문 이름은 값 «전체»가 영문·숫자·밑줄이어야 한다.
+# 줄바꿈·빈칸·기호가 하나라도 있으면 거부한다(줄 단위로 보면 두 줄 이름이 새어 들어온다).
+_gate_name_ok() {
+  local LC_ALL=C
+  case "$1" in
+    ''|*[!A-Za-z0-9_]*) return 1 ;;
+  esac
+  return 0
+}
+
 # ── --attempted: 시도 사실을 남긴다 ─────────────────────────────────
 if [ "${1:-}" = "--attempted" ]; then
   gate="${2:-}"; outcome="${3:-}"; reason="${4:-}"
-  if [ -z "$gate" ] || { [ "$outcome" != "ok" ] && [ "$outcome" != "fail" ]; }; then
+  if ! _gate_name_ok "$gate" || { [ "$outcome" != "ok" ] && [ "$outcome" != "fail" ]; }; then
     echo "usage: install-gate.sh --attempted <관문이름> <ok|fail> [사유]" >&2
     exit 2
   fi
@@ -88,7 +98,7 @@ fi
 #     세는 범위 = 그 관문의 마지막 성공(attempt ok)·마지막 넘김 허용 뒤.
 if [ "${1:-}" = "--handoff" ]; then
   gate="${2:-}"
-  if [ -z "$gate" ] || ! printf '%s' "$gate" | command grep -qE '^[A-Za-z0-9_]+$'; then
+  if ! _gate_name_ok "$gate"; then
     echo "usage: install-gate.sh --handoff <관문이름>" >&2
     exit 2
   fi

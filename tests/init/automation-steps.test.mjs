@@ -229,7 +229,9 @@ test('create-bot: the portal flow has one sub-step per numbered item, each tied 
 function gateBox() {
   const dir = mkdtempSync(join(tmpdir(), 'handoff-gate-'));
   const env = { ...process.env, HOME: dir, THISCODE_INSTALL_STATE: join(dir, 'state.yaml'), THISCODE_INSTALL_LOG: join(dir, 'log.jsonl') };
-  return (...args) => spawnSync('bash', ['scripts/install-gate.sh', ...args], { encoding: 'utf8', env });
+  const run = (...args) => spawnSync('bash', ['scripts/install-gate.sh', ...args], { encoding: 'utf8', env });
+  run.log = env.THISCODE_INSTALL_LOG;
+  return run;
 }
 
 test('handoff gate: not before three failed attempts are recorded, then yes', () => {
@@ -286,6 +288,20 @@ test('handoff gate: no name or a strange name is a usage error', () => {
   assert.equal(gate('--handoff').status, 2);
   assert.equal(gate('--handoff', 'a b').status, 2);
   assert.equal(gate('--handoff', '.*').status, 2);
+});
+
+test('handoff gate: a name is checked as a whole — a second line cannot smuggle a human-only name in', () => {
+  const gate = gateBox();
+  const twoLines = 'discord_intents\ndiscord_hcaptcha';
+  assert.equal(gate('--handoff', 'discord_intents').status, 1, 'control: the plain name still has to be attempted');
+  assert.equal(gate('--handoff', twoLines).status, 2, 'a two-line name is a usage error, not a human-only stop');
+  assert.equal(gate('--handoff', 'discord_hcaptcha\n').status, 2, 'a trailing line break is refused too');
+  assert.equal(gate('--attempted', twoLines, 'fail', 'x').status, 2, 'the same check guards --attempted');
+  assert.equal(gate('--attempted', 'a b', 'ok').status, 2);
+  assert.equal(gate('--attempted', 'discord_intents', 'ok').status, 0, 'control: a plain name is still recorded');
+  const ledger = existsSync(gate.log) ? readFileSync(gate.log, 'utf8') : '';
+  assert.doesNotMatch(ledger, /handoff-allowed/, 'nothing was allowed along the way');
+  assert.doesNotMatch(ledger, /discord_intentsdiscord_hcaptcha/, 'the smuggled name never reached the ledger');
 });
 
 // ---- the text the user is shown ----------------------------------------------
