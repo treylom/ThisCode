@@ -55,7 +55,7 @@ disable-model-invocation: true
    - 브라우저 자동화 (claude-in-chrome / playwright 계열 MCP) → Discord 포털·Slack 웹 관문을 같이 열고 클릭 위치 안내 또는 대신 조작
    - 데스크톱 제어 (computer-use MCP) → 브라우저 밖 화면(파일 탐색기 등)이 필요할 때
 2. **아무 것도 없으면**: playwright MCP 설치를 제안한다 — "브라우저를 같이 볼 수 있는 도구를 1분 안에 붙일 수 있어요. 붙일까요?" → 승인 시 `claude mcp add playwright -- npx @playwright/mcp@latest` 안내·실행 → 재탐지.
-3. **그래도 불가**: 폴백 = 화면 단계별 텍스트 안내 ("지금 화면 왼쪽 위에 New Application 파란 버튼이 보이면 눌러주세요" 수준의 좌표 서술).
+3. **그래도 불가**: 폴백 = 화면 단계별 텍스트 안내 ("지금 화면 오른쪽 위에 «신규 애플리케이션»(영어 화면이면 New Application) 파란 버튼이 보이면 눌러주세요" 수준의 좌표 서술).
 
 **개입 중 안전 경계 (hard)**:
 - 토큰·비밀번호·시크릿이 나오는 단계는 **조작을 멈추고 사용자에게 넘긴다** — AI 는 그 값을 읽지도, 저장하지도, 채팅에 옮기지도 않는다.

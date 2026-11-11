@@ -7,7 +7,7 @@ Full walkthrough for a fresh Discord + Antigravity bot setup.
 ## §1. Create the Discord bot (Developer Portal)
 
 1. Open https://discord.com/developers/applications
-2. **"New Application"** → name (example: `<your-bot-name>`)
+2. **"New Application"** (Korean UI: «신규 애플리케이션») → name (example: `<your-bot-name>`) → tick the Developer Terms of Service / Developer Policy consent box yourself (Korean UI: the box next to «만들기를 클릭하면 … 동의하는 거예요») → **Create** (Korean UI: «만들기»)
 3. Left sidebar → **Bot** tab:
    - **Reset Token** → copy and save securely (you'll paste into `.env`)
    - Scroll to **Privileged Gateway Intents**:

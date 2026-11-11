@@ -1,0 +1,57 @@
+# meetings — 걸음마다 어디까지 자동인가
+#
+# 뜻풀이와 꼴은 skills/create-bot/automation.yaml 머리 주석과 같다.
+# SKILL.md 의 «### Step» 머리줄과 이 표가 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
+
+schema: "thiscode-automation-v1"
+skill: "meetings"
+
+policy:
+  attempts_before_handoff: "3"
+  browser_order: "ego aside fallback"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다"
+  attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
+  attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
+  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
+  before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
+  handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
+
+steps:
+  - id: "1"
+    title: "회의 메타 입력"
+    mode: "human_only"
+    kind: "answer"
+    reason: "주제 · 참석 봇 · 기한은 사용자가 정한다"
+    handoff: "회의 주제와 참석할 봇, 끝낼 때를 알려 주세요."
+
+  - id: "2"
+    title: "출처 기반 cross-check"
+    mode: "auto"
+    reason: "로컬 파일 검색"
+
+  - id: "3"
+    title: "폴더 신설 + 4 파일 skeleton"
+    mode: "auto"
+    reason: "로컬 파일 만들기"
+
+  - id: "4"
+    title: "Discord 스레드 신설"
+    mode: "auto_then_human"
+    gate: "meeting_thread_create"
+    reason: "봇 토큰으로 스레드를 만든다 · 권한이 없으면 실패할 수 있다"
+    handoff: "회의 스레드를 만들려고 세 번 시도했는데 <사유>로 안 됐습니다. 그 채널에서 스레드를 하나 만들어 링크를 알려 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "5"
+    title: "audience 봇 mention"
+    mode: "auto"
+    reason: "스레드에 글 쓰기"
+
+  - id: "6"
+    title: "회의 진행"
+    mode: "auto"
+    reason: "봇들이 스레드와 진행 파일로 진행한다"
+
+  - id: "7"
+    title: "마감"
+    mode: "auto"
+    reason: "결과 파일 · 스레드 · 공유 메모리에 남긴다"

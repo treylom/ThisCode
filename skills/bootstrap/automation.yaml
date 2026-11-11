@@ -1,0 +1,56 @@
+# bootstrap — 걸음마다 어디까지 자동인가
+#
+# 이 표가 정본이다. SKILL.md 의 «### Step» 머리줄과 이 표의 걸음(id)이 하나라도
+# 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
+#
+# mode
+#   auto             ThisCode 가 끝까지 한다. 막히면 아래 «막혔을 때» 규칙을 따른다.
+#   auto_then_human  ThisCode 가 먼저 한다. 자동 시도 3회가 다 실패한 뒤에만 사람에게 넘긴다.
+#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 동의 · 비밀번호).
+#                    시도 횟수에 넣지 않고 바로 넘긴다.
+# gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
+#                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
+# handoff          사람에게 넘길 때 그대로 쓰는 안내 문구.
+#
+# 값은 전부 한 줄 · 큰따옴표 문자열(시험이 줄 단위로 읽는다).
+
+schema: "thiscode-automation-v1"
+skill: "bootstrap"
+
+policy:
+  attempts_before_handoff: "3"
+  browser_order: "ego aside fallback"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다"
+  attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
+  attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
+  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
+  before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
+  handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
+
+steps:
+  - id: "A"
+    title: "환경 점검"
+    mode: "auto"
+    reason: "OS · WSL · 기본 도구를 읽기만 한다(사용자 입력 0회)"
+
+  - id: "B"
+    title: "install.sh 실행"
+    mode: "auto_then_human"
+    gate: "install_script_run"
+    reason: "install.sh 한 줄 실행은 자동으로 시도 · 네트워크나 권한 문제로 실패하면 사람이 터미널에서 직접 실행한다"
+    handoff: "install.sh 를 세 번 시도했는데 <사유>로 안 됐습니다. 터미널에서 curl -fsSL https://raw.githubusercontent.com/treylom/ThisCode/main/install.sh | bash 를 직접 실행해 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "C"
+    title: "Claude Code 인증"
+    mode: "auto_then_human"
+    gate: "claude_auth_check"
+    human_stops: "claude_auth_login"
+    reason: "이미 로그인돼 있는지 claude --version 과 인증 상태 확인은 자동 · 계정 로그인 브라우저 인증은 사람만 할 수 있다"
+    handoff: "Claude Code 인증이 안 돼 있습니다. 터미널에서 claude auth login 을 실행해 브라우저에서 로그인해 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "D"
+    title: "첫 봇 wizard 진입"
+    mode: "auto_then_human"
+    gate: "first_bot_wizard_enter"
+    reason: "tmux 세션과 claude 를 띄워 wizard 로 들어가는 일은 자동으로 시도 · 새 터미널에서 직접 열어야 하면 사람"
+    handoff: "첫 봇 wizard 를 열려고 세 번 시도했는데 <사유>로 안 됐습니다. 터미널에서 tmux new-session -s claude 로 들어가 프로젝트 폴더에서 claude 를 켜고 /thiscode:start 를 입력해 주세요 — 그 다음은 제가 이어갑니다."

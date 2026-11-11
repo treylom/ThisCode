@@ -30,7 +30,7 @@ $ARGUMENTS
 ### Step 2. Discord Developer Portal — 새 Application + Bot
 
 `/thiscode:start` Step 2 와 동일:
-1. New Application → 이름 = 봇 이름
+1. New Application(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 = 봇 이름 → 약관 동의 칸 체크 → «만들기»(Create)
 2. Bot 탭 → Reset Token → 토큰 복사
 3. OAuth2 URL Generator → 같은 권한
 4. 본인 Discord 서버 / DM 채널 초대

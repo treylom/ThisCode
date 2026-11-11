@@ -17,6 +17,12 @@ install:
   #   true 이면 브라우저 도구 부재는 "그러니 수동"이 아니라 "설치를 먼저 시도"로 간다.
   browser_tools_required: true
 
+  # 막힌 걸음을 사람에게 넘기기 전에 자동화 브라우저로 스스로 시도하는 횟수.
+  #   `install-gate.sh --handoff <관문이름>` 이 이 수만큼의 실패 기록을 확인한 뒤에만 exit 0 을 준다.
+  #   아래 명단(사람만 하는 자리)은 이 횟수에 넣지 않고 바로 넘긴다.
+  #   걸음마다 어디까지 자동인지는 각 스킬 폴더의 automation.yaml 에 있다.
+  auto_attempts_before_handoff: 3
+
   # 🔴 R2 예외 명단 — «여기 이름이 있는 관문만» 시도 없이 수동 안내를 띄울 수 있다.
   #    등재되지 않은 관문의 기본값은 «시도»다. 그래야 새로 생긴 관문이
   #    조용히 수동으로 새지 않는다(기본값이 이기고, 기본값은 흔한 쪽이다).
@@ -30,6 +36,8 @@ install:
       reason: 계정 자격증명 + 다단계 인증 — 대리 입력 금지 영역
     - name: discord_hcaptcha
       reason: 봇 감지 캡차 — 우회 금지
+    - name: discord_developer_terms
+      reason: 개발자 이용약관·개발자 정책 동의 칸 — 동의는 사람 몫(대신 체크하지 않는다)
     - name: discord_reset_token_modal
       reason: 계정 비밀번호 + 다단계 인증 — 대리 입력 금지 영역
     - name: slack_login
@@ -44,3 +52,11 @@ install:
       reason: 앱 설정 UI 토글 — 소유자 계정 세션에서만
     - name: slack_dev_channels_confirm
       reason: 권한 승인 다이얼로그 — 대신 눌러선 안 된다(동의는 사람 몫)
+    - name: browser_permission_prompt
+      reason: 자동화 브라우저의 사이트 권한 창·기기 선택 창 — 허용은 사람 몫(대신 누르지 않는다)
+    - name: claude_workspace_trust_confirm
+      reason: 새 작업 폴더의 첫 신뢰 확인 창 — 동의는 사람 몫
+    - name: claude_auth_login
+      reason: Claude 계정 로그인 — 계정 자격증명 · 대리 입력 금지 영역
+    - name: claude_session_restart
+      reason: 지금 세션을 끝내고 다시 켜는 일 — 세션 안에서는 대신 할 수 없다

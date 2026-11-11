@@ -19,6 +19,11 @@
 #     시도했다는 «사실»을 원장에 남긴다. fail 인데 사유가 비면 exit 2 —
 #     사유 없는 낙하는 계약 위반이라 기록 자체를 거부한다.
 #
+#   bash scripts/install-gate.sh --handoff <관문이름>
+#     막힌 걸음을 사람에게 넘기기 «직전»에 부른다.
+#     exit 0 — 넘겨도 된다 (사람만 하는 자리 · manual 모드 · 자동 시도 N회 실패 기록됨)
+#     exit 1 — 아직 아니다. 다음 자동 시도가 무엇인지 알려 준다 (N = install.yaml, 기본 3)
+#
 #   bash scripts/install-gate.sh --audit
 #     원장을 되감아 「시도하라(exit 1)는 판정을 받고도 시도 기록이 없는 관문」을 나열.
 #     exit 0 = 위반 0 / exit 1 = 위반 있음.
@@ -74,6 +79,59 @@ if [ "${1:-}" = "--attempted" ]; then
   _ledger_append "attempt" "$gate" "$outcome" "$reason"
   echo "시도 기록됨 — $gate = $outcome${reason:+ ($reason)}"
   exit 0
+fi
+
+# ── --handoff: 막힌 걸음을 사람에게 넘겨도 되는가 ───────────────────
+# 답: 사람만 하는 자리(명단 등재)·manual 모드 = 바로 넘김(exit 0, 횟수에 안 넣음).
+#     그 밖 = 그 관문의 «실패 시도 기록»이 N 번(configs/install.yaml
+#     auto_attempts_before_handoff, 기본 3) 쌓인 뒤에만 exit 0.
+#     세는 범위 = 그 관문의 마지막 성공(attempt ok)·마지막 넘김 허용 뒤.
+if [ "${1:-}" = "--handoff" ]; then
+  gate="${2:-}"
+  if [ -z "$gate" ] || ! printf '%s' "$gate" | command grep -qE '^[A-Za-z0-9_]+$'; then
+    echo "usage: install-gate.sh --handoff <관문이름>" >&2
+    exit 2
+  fi
+  if [ ! -f "$CONFIG" ]; then
+    echo "install-gate: 계약 파일 없음 — $CONFIG" >&2
+    _ledger_append "handoff" "$gate" "no-config" "$CONFIG"
+    exit 2
+  fi
+  need="$(command sed -n 's/^[[:space:]]*auto_attempts_before_handoff:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$CONFIG" | head -1)"
+  [ -z "$need" ] && need=3
+  if [ "$(_mode)" = "manual" ]; then
+    echo "manual 모드 — 넘김 허용 ($gate)"
+    _ledger_append "handoff" "$gate" "handoff-allowed" "manual-mode"
+    exit 0
+  fi
+  if command sed -n 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*\([A-Za-z0-9_]*\).*/\1/p' "$CONFIG" \
+     | command grep -qx -- "$gate"; then
+    echo "사람만 하는 자리 — 바로 넘김 ($gate · 시도 횟수에 넣지 않는다)"
+    _ledger_append "handoff" "$gate" "handoff-allowed" "human-only"
+    exit 0
+  fi
+  fails=0
+  if [ -f "$LEDGER" ]; then
+    fails="$(command grep -F "\"gate\":\"$gate\"" "$LEDGER" | command awk '
+      /"kind":"attempt"/ && /"result":"fail"/ { n++ }
+      (/"kind":"attempt"/ && /"result":"ok"/) || /"result":"handoff-allowed"/ { n = 0 }
+      END { print n + 0 }')"
+  fi
+  if [ "$fails" -ge "$need" ]; then
+    echo "자동 시도 $fails/$need 회 모두 실패 — 넘김 허용 ($gate). 넘길 때 무엇을 시도했는지 함께 말한다."
+    _ledger_append "handoff" "$gate" "handoff-allowed" "after $fails failed attempts"
+    exit 0
+  fi
+  next=$((fails + 1))
+  echo "아직 넘기지 않는다 — 자동 시도 $fails/$need ($gate)" >&2
+  case "$next" in
+    1) echo "  시도 1: 고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 걸음을 다시 한다" >&2 ;;
+    2) echo "  시도 2: 같은 브라우저에서 다른 길로(다른 버튼 이름·키보드·주소로 바로 가기)" >&2 ;;
+    *) echo "  시도 $next: 다음 브라우저로 바꿔서(ego lite → Aside → 그 밖 — scripts/browser-detect.mjs)" >&2 ;;
+  esac
+  echo "  시도마다: bash scripts/install-gate.sh --attempted $gate <ok|fail> \"<사유>\"" >&2
+  _ledger_append "handoff" "$gate" "handoff-denied" "$fails/$need"
+  exit 1
 fi
 
 # ── --audit: 계약이 지켜졌는지 되감아 본다 ──────────────────────────
