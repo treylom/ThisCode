@@ -1,6 +1,6 @@
 # bootstrap — 걸음마다 어디까지 자동인가
 #
-# 이 표가 정본이다. SKILL.md 의 «### Step» 머리줄과 이 표의 걸음(id)이 하나라도
+# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 걸음(id)이 하나라도
 # 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
 #
 # mode
