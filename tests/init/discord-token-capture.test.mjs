@@ -681,3 +681,147 @@ test('arm never empties through a link: with ~/.thiscode open to others and the 
   assert.equal(mode(mine), '700', 'and its mode was not changed');
   assert.ok(!b.calls().includes('pbcopy'));
 });
+
+// Only ~/.thiscode was open; the arm folder inside it was already 0700 and holds a planted record.
+const openTop = at => { dirs(at); chmodSync(at.top, 0o777); };
+const realChmod = spawnSync('/bin/sh', ['-c', 'command -v chmod'], { encoding: 'utf8' }).stdout.trim();
+const chmodStandIn = (b, body) => { spawnSync('/bin/rm', [join(b.bin, 'chmod')]); b.put('chmod', `${body}\nexec ${realChmod} "$@"`); };
+const chmodBack = b => { spawnSync('/bin/rm', [join(b.bin, 'chmod')]); symlinkSync(realChmod, join(b.bin, 'chmod')); };
+
+for (const [how, body] of [
+  ['the mode change of the arm folder fails', 'case "$1:$2" in 710:*/token-arm) exit 1 ;; esac'],
+  ['arm is killed right after ~/.thiscode was locked', 'case "$1:$2" in 710:*/token-arm) kill -9 $PPID ;; esac'],
+]) {
+  test(`only ~/.thiscode was open and ${how}: the planted record is not believed, and the next arm cleans up`, { skip: SKIP || ROOT }, () => {
+    const { b, top, armDir } = planted(openTop);
+    chmodStandIn(b, body);
+    assert.notEqual(b.arm('otherbot').status, 0);
+    assert.notEqual(mode(top), '700', '~/.thiscode is locked but not yet in the mode the read path accepts');
+    assert.equal(mode(top), '710');
+    assert.ok(existsSync(b.armFile), 'bait: the planted record is still there');
+    chmodBack(b);
+    b.copy(SHAPED);
+    const result = b.run('capture', 'mybot');
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /사유 코드: not-armed/);
+    assert.ok(!b.calls().includes('pbpaste'), 'the clipboard was not read');
+    assert.ok(!existsSync(b.envFile), 'nothing saved');
+
+    assert.equal(b.arm('otherbot').status, 0, 'the next arm starts with the clean-up');
+    assert.deepEqual(readdirSync(armDir), ['otherbot.arm']);
+    assert.equal(mode(top), '700');
+    assert.equal(mode(armDir), '700');
+    assert.equal(b.run('capture', 'mybot').status, 1, 'and the planted record is gone for good');
+  });
+}
+
+test('install-gate.sh repairing an open ~/.thiscode closes the arm folder, so a record planted there is not believed; the next arm reopens it empty', { skip: SKIP }, () => {
+  const gate = (b, ...args) => spawnSync('/bin/bash', [resolve('scripts/install-gate.sh'), ...args], { encoding: 'utf8', env: { HOME: b.home, PATH: process.env.PATH } });
+  const { b, top, armDir } = planted(openTop);
+  gate(b, '--audit');
+  assert.equal(mode(top), '700', 'the gate repaired ~/.thiscode');
+  assert.equal(mode(armDir), '0', '…and closed the arm folder');
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /사유 코드: not-armed/);
+  assert.ok(!b.calls().includes('pbpaste'), 'the clipboard was not read');
+  assert.ok(!existsSync(b.envFile));
+  // normal flow after that: arm empties and reopens the folder, capture works
+  assert.equal(b.arm().status, 0);
+  assert.deepEqual(readdirSync(armDir), ['mybot.arm'], 'a fresh record only');
+  b.copy(SHAPED);
+  assert.equal(b.run('capture', 'mybot').status, 0);
+
+  // control: ~/.thiscode private all along — the gate leaves the arm folder and an armed record alone
+  const calm = box('darwin');
+  assert.equal(calm.arm().status, 0);
+  gate(calm, '--audit');
+  gate(calm, '--attempted', 'discord_token_save', 'ok');
+  assert.equal(mode(join(calm.armFile, '..')), '700');
+  calm.copy(SHAPED);
+  assert.equal(calm.run('capture', 'mybot').status, 0, 'arm → gate → capture still works');
+
+  // control: an arm folder that is a link is not touched by the gate
+  const linked = box('darwin');
+  const other = join(linked.home, 'elsewhere');
+  mkdirSync(other); chmodSync(other, 0o755);
+  mkdirSync(join(linked.home, '.thiscode')); chmodSync(join(linked.home, '.thiscode'), 0o777);
+  symlinkSync(other, join(linked.home, '.thiscode', 'token-arm'));
+  gate(linked, '--audit');
+  assert.equal(mode(other), '755', 'the link target keeps its mode');
+});
+
+test('the message when arm is blocked: a new folder name each time, and "closed" only when the folder really was closed', { skip: SKIP || ROOT }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  const stuck = join(armDir, 'aaa.arm');
+  mkdirSync(stuck); writeFileSync(join(stuck, 'inner'), 'x'); chmodSync(stuck, 0o555);
+  try {
+    const closed = b.arm('otherbot');
+    assert.equal(closed.status, 3);
+    assert.match(closed.stderr, /닫아 두었습니다/);
+    assert.match(closed.stderr, /token-arm\.removed-\d{14}/, 'the name to move to carries the time');
+
+    chmodSync(armDir, 0o777);
+    chmodStandIn(b, 'case "$1" in 000) exit 1 ;; esac');
+    const open = b.arm('otherbot');
+    assert.equal(open.status, 3);
+    assert.doesNotMatch(open.stderr, /닫아 두었습니다/, 'does not claim what did not happen');
+    assert.match(open.stderr, /닫지는 못했습니다/);
+    assert.notEqual(mode(armDir), '700');
+    chmodBack(b);
+    b.copy(SHAPED);
+    assert.equal(b.run('capture', 'mybot').status, 1, 'capture still refuses');
+    assert.ok(!existsSync(b.envFile));
+  } finally {
+    chmodSync(armDir, 0o700); chmodSync(stuck, 0o755);
+  }
+});
+
+// Line-by-line sweep: the Nth mode change fails, or the script is killed just before it, for every N
+// until the run gets through untouched. Whatever the N, the planted record must never get a token saved.
+const GATE = resolve('scripts/install-gate.sh');
+function sweep(label, act) {
+  for (const kind of ['fails', 'killed']) {
+    test(`sweep (${label}): with the Nth mode change ${kind === 'fails' ? 'failing' : 'preceded by a kill'}, for every N, the planted record is never believed`, { skip: SKIP || ROOT }, () => {
+      let reachedEnd = false;
+      for (let n = 1; n <= 20 && !reachedEnd; n += 1) {
+        const { b } = planted(openTop);
+        const count = join(b.home, 'chmod-count');
+        const hit = kind === 'fails' ? 'exit 1' : 'kill -9 $PPID';
+        chmodStandIn(b, `n=$(( $(cat "${count}" 2>/dev/null || echo 0) + 1 )); echo "$n" > "${count}"; [ "$n" -eq ${n} ] && ${hit}`);
+        act(b);
+        const calls = existsSync(count) ? Number(readFileSync(count, 'utf8')) : 0;
+        reachedEnd = calls < n;   // the run needed fewer mode changes than N: nothing was disturbed
+        chmodBack(b);
+        b.copy(SHAPED);
+        const result = b.run('capture', 'mybot');
+        assert.equal(result.status, 1, `${label} ${kind} N=${n}: ${everything(result)}`);
+        assert.ok(!existsSync(b.envFile), `${label} ${kind} N=${n}: nothing saved`);
+        assert.ok(!b.calls().includes('pbpaste'), `${label} ${kind} N=${n}: the clipboard was not read`);
+      }
+      assert.ok(reachedEnd, 'the sweep covered every mode change of the run');
+    });
+  }
+}
+sweep('arm with only ~/.thiscode open', b => b.arm('otherbot'));
+sweep('install-gate.sh read path with only ~/.thiscode open', b =>
+  spawnSync('/bin/bash', [GATE, '--audit'], { encoding: 'utf8', env: { HOME: b.home, PATH: `${b.bin}:${process.env.PATH}` } }));
+
+test('a first-time user whose ~/.thiscode was 0755: arm → install-gate.sh --handoff → capture goes through', { skip: SKIP }, () => {
+  const b = box('darwin');
+  mkdirSync(join(b.home, '.thiscode')); chmodSync(join(b.home, '.thiscode'), 0o755);
+  assert.equal(b.arm().status, 0);
+  spawnSync('/bin/bash', [GATE, '--handoff', 'discord_token_save'], { encoding: 'utf8', env: { HOME: b.home, PATH: process.env.PATH } });
+  b.copy(SHAPED);
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 0, everything(result));
+});
+
+test('arm exit 0 means capture is accepted next: when the last step on ~/.thiscode fails, arm does not report success', { skip: SKIP || ROOT }, () => {
+  const { b, top } = planted(openTop);
+  chmodStandIn(b, 'case "$1:$2" in 700:*/.thiscode) exit 1 ;; esac');
+  const armed = b.arm('otherbot');
+  assert.notEqual(armed.status, 0);
+  assert.notEqual(mode(top), '700');
+  assert.ok(!b.calls().includes('pbcopy'), 'no marker was put in the clipboard');
+});

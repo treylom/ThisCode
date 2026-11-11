@@ -78,6 +78,28 @@ _stat_mode_links() {   # "<8진 권한> <하드 링크 수>" — GNU stat 먼저
   command stat -c '%a %h' "$1" 2>/dev/null || command stat -f '%Lp %l' "$1" 2>/dev/null
 }
 
+# ~/.thiscode 안에는 토큰 스크립트(discord-token-capture.sh)의 arm 기록 폴더 token-arm 도 있다.
+# 그 스크립트는 «~/.thiscode 와 token-arm 이 둘 다 본인만 쓰는 폴더(정확히 0700 · ACL 없음)» 일 때만
+# 그 안의 기록을 믿는다. 여기서 ~/.thiscode 를 0700 으로 고치면, 열려 있던 동안 남이 넣어 둔 arm 기록이
+# 믿어지게 된다. 그래서 «본인만 쓰는 꼴이 아니던» ~/.thiscode 를 고칠 때는 token-arm 을 닫아 둔다
+# (안을 지우지는 않는다 — 다음 arm 이 비운 뒤에만 다시 열린다).
+_dir_was_private() {   # $1 = 폴더 — 정확히 0700 · (macOS) ACL 없음 인가. 확인만 한다
+  local info
+  info="$(_stat_mode_links "$1")" || return 1
+  [ "${info%% *}" = "700" ] || return 1
+  case "${OSTYPE:-}" in darwin*) : ;; *) return 0 ;; esac
+  [ "$(LC_ALL=C ls -lde "$1" 2>/dev/null | wc -l | tr -d ' ')" = "1" ]
+}
+
+_arm_dir_close() {   # $1 = ~/.thiscode — 그 안의 token-arm 이 링크가 아닌 진짜 폴더이고 내 것일 때만 닫는다
+  local arm="$1/token-arm" info
+  [ -L "$arm" ] && return 0
+  [ -d "$arm" ] && [ -O "$arm" ] || return 0
+  chmod 000 "$arm" 2>/dev/null || return 1
+  info="$(_stat_mode_links "$arm")" || return 1
+  [ "${info%% *}" = "0" ]
+}
+
 _ledger_dir_ready() {   # $1=make → 없으면 만든다
   local dir created=0 info mode
   dir="$(dirname "$LEDGER")"
@@ -92,6 +114,13 @@ _ledger_dir_ready() {   # $1=make → 없으면 만든다
   _modes_meaningful || return 0
   if [ "$created" = 1 ] || [ "$(basename "$dir")" = ".thiscode" ]; then
     # 우리 폴더(~/.thiscode 또는 방금 만든 폴더)는 0700 으로 맞춘다
+    if [ "$created" != 1 ] && ! _dir_was_private "$dir"; then
+      # 본인만 쓰는 꼴이 아니었다: 먼저 남이 못 쓰게 잠그되 0700 은 아직 아니게 두고(0710),
+      # token-arm 을 닫은 «뒤» 에 0700 으로 만든다 — 도중에 끊겨도 다음에 다시 여기로 온다.
+      chmod 710 "$dir" 2>/dev/null || return 1
+      _acl_clear "$dir" || return 1
+      _arm_dir_close "$dir" || return 1
+    fi
     chmod 700 "$dir" 2>/dev/null || return 1
     _acl_clear "$dir" || return 1
     info="$(_stat_mode_links "$dir")" || return 1

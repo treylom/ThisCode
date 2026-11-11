@@ -188,18 +188,28 @@ not_armed() {   # $1 = 까닭 한 줄 — 클립보드는 읽지 않았다
 }
 
 arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파일에 적는다
-  local LC_ALL=C old left stale=0 purge=0
-  # 쓰는 길: 폴더를 본인만 쓰게 고친다. 다만 고치기 «전» 에 본인만 쓰는 폴더가 아니었다면 그 안에
-  # 있던 것은 누가 넣었는지 알 수 없다 — 전부 지우고, 비었는지 확인한 뒤에만 0700 으로 만든다.
-  # 순서가 중요하다: arm 폴더가 «정확히 0700» 이 되는 것은 비운 «뒤» 다. 그 전에는 읽는 길이 받지
-  # 않는 권한(0710 · 못 비웠으면 0000)으로 둔다 — 지우기가 실패하든 도중에 끊기든, 다음 arm 은
-  # 이 폴더를 다시 «본인만 쓰던 폴더가 아님» 으로 보고 지우기부터 하고, 그 사이 capture 는 거부한다.
-  if [ -e "$HOME/.thiscode" ] || [ -L "$HOME/.thiscode" ]; then dir_is_private "$HOME/.thiscode" || stale=1; fi
+  local LC_ALL=C old left info top="$HOME/.thiscode" stale=0 purge=0
+  # 쓰는 길: 폴더를 본인만 쓰게 고친다. 다만 고치기 «전» 에 ~/.thiscode 나 arm 폴더가 본인만 쓰는
+  # 폴더가 아니었다면 arm 폴더 안에 있던 것은 누가 넣었는지 알 수 없다 — 전부 지우고, 비었는지
+  # 확인한 뒤에만 믿는 꼴(둘 다 정확히 0700)로 만든다.
+  # 순서가 중요하다. 읽는 길은 «두 폴더가 다 0700» 일 때만 기록을 받는다. 그래서 열려 있던 폴더는
+  # 곧바로 0700 으로 만들지 않고 0710 으로 잠가 둔다(남은 못 쓰지만 읽는 길은 받지 않는다 — «열려
+  # 있었다» 는 표지가 남는다). arm 폴더는 비운 뒤에, ~/.thiscode 는 맨 끝에 0700 이 된다.
+  # 어느 줄에서 실패하거나 끊겨도 둘 가운데 하나는 0700 이 아니므로, 다음 arm 은 지우기부터 다시
+  # 하고 그 사이 capture 는 거부한다.
+  if [ -e "$top" ] || [ -L "$top" ]; then dir_is_private "$top" || stale=1; fi
   if [ -e "$ARM_DIR" ] || [ -L "$ARM_DIR" ]; then dir_is_private "$ARM_DIR" || stale=1; fi
-  # 윗폴더(~/.thiscode)부터 잠근다. 그 «뒤» 에 arm 폴더가 무엇인지 본다 — 윗폴더가 남이 쓸 수 있는
-  # 동안에는 arm 폴더 자리를 «내 다른 폴더로 가는 링크» 로 바꿔 놓을 수 있고, 그러면 아래 지우기가
-  # 그 폴더 안을 지우게 된다. 잠근 뒤에는 그 자리를 남이 바꿀 수 없다.
-  private_dir "$HOME/.thiscode" || return 1
+  if [ "$stale" = 1 ]; then
+    # 윗폴더부터 잠근다(0700 은 아직 아니다). 잠근 뒤에는 남이 arm 폴더 자리를 링크로 바꿔 놓을 수 없다.
+    [ -L "$top" ] && return 1
+    [ -d "$top" ] && [ -O "$top" ] || return 1
+    if ! dir_is_private "$top"; then
+      chmod 710 "$top" 2>/dev/null || return 1
+      acl_clear "$top" || return 1
+    fi
+  else
+    private_dir "$top" || return 1
+  fi
   if [ "$stale" = 1 ] && { [ -e "$ARM_DIR" ] || [ -L "$ARM_DIR" ]; }; then
     # 링크거나 · 폴더가 아니거나 · 내 것이 아니면 아무것도 지우지 않고 끝낸다
     [ -L "$ARM_DIR" ] && return 1
@@ -224,11 +234,15 @@ arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파
     if [ -n "$left" ]; then
       left=''
       chmod 000 "$ARM_DIR" 2>/dev/null
-      ARM_WHY='blocked'
+      info="$(stat_mode_links "$ARM_DIR")" || info=''
+      if [ "${info%% *}" = "0" ]; then ARM_WHY='blocked'; else ARM_WHY='blocked-open'; fi
       return 1
     fi
   fi
   private_dir "$ARM_DIR" || return 1
+  if [ "$stale" = 1 ]; then
+    private_dir "$top" || return 1   # 맨 끝에 — 여기까지 와야 읽는 길이 이 폴더들을 받는다
+  fi
   if [ -L "$ARM_FILE" ] || [ -e "$ARM_FILE" ]; then
     rm -f "$ARM_FILE" 2>/dev/null || return 1   # 링크면 링크만 지운다(따라가지 않는다)
   fi
@@ -345,9 +359,15 @@ case "$MODE" in
     bot_dir
     pick_clipboard
     if ! arm_write; then
-      if [ "$ARM_WHY" = blocked ]; then
-        # 안 지워진 것의 이름은 찍지 않는다(남이 넣은 이름을 화면에 옮기지 않는다)
-        unsafe "arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다(폴더는 못 쓰게 닫아 두었습니다) — 폴더를 옮긴 뒤 다시: mv ~/.thiscode/token-arm ~/.thiscode/token-arm.removed"
+      if [ "$ARM_WHY" = blocked ] || [ "$ARM_WHY" = blocked-open ]; then
+        # 안 지워진 것의 이름은 찍지 않는다(남이 넣은 이름을 화면에 옮기지 않는다).
+        # 옮길 이름에는 지금 시각을 넣는다 — 앞서 옮겨 둔 폴더가 있어도 겹치지 않게.
+        if [ "$ARM_WHY" = blocked ]; then
+          ARM_WHY='폴더는 못 쓰게 닫아 두었습니다'
+        else
+          ARM_WHY='폴더를 닫지는 못했습니다 — 그래도 비워지기 전에는 capture 가 이 폴더의 기록을 받지 않습니다'
+        fi
+        unsafe "arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다($ARM_WHY) — 폴더를 옮긴 뒤 다시: mv ~/.thiscode/token-arm ~/.thiscode/token-arm.removed-$(date +%Y%m%d%H%M%S)"
         exit 3
       fi
       # 쓰다 만 기록을 남기지 않는다 — 다만 두 폴더가 본인만 쓰는 진짜 폴더일 때만 지운다.
