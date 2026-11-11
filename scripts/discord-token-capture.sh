@@ -196,13 +196,21 @@ arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파
   # 이 폴더를 다시 «본인만 쓰던 폴더가 아님» 으로 보고 지우기부터 하고, 그 사이 capture 는 거부한다.
   if [ -e "$HOME/.thiscode" ] || [ -L "$HOME/.thiscode" ]; then dir_is_private "$HOME/.thiscode" || stale=1; fi
   if [ -e "$ARM_DIR" ] || [ -L "$ARM_DIR" ]; then dir_is_private "$ARM_DIR" || stale=1; fi
-  # 링크를 거쳐서는 지우지 않는다(~/.thiscode 나 arm 폴더가 링크면 아래 private_dir 이 거부한다)
-  if [ "$stale" = 1 ] && [ ! -L "$HOME/.thiscode" ] && [ ! -L "$ARM_DIR" ] && [ -d "$ARM_DIR" ] && [ -O "$ARM_DIR" ]; then
-    purge=1
-    chmod 710 "$ARM_DIR" 2>/dev/null || return 1
-  fi
+  # 윗폴더(~/.thiscode)부터 잠근다. 그 «뒤» 에 arm 폴더가 무엇인지 본다 — 윗폴더가 남이 쓸 수 있는
+  # 동안에는 arm 폴더 자리를 «내 다른 폴더로 가는 링크» 로 바꿔 놓을 수 있고, 그러면 아래 지우기가
+  # 그 폴더 안을 지우게 된다. 잠근 뒤에는 그 자리를 남이 바꿀 수 없다.
   private_dir "$HOME/.thiscode" || return 1
+  if [ "$stale" = 1 ] && { [ -e "$ARM_DIR" ] || [ -L "$ARM_DIR" ]; }; then
+    # 링크거나 · 폴더가 아니거나 · 내 것이 아니면 아무것도 지우지 않고 끝낸다
+    [ -L "$ARM_DIR" ] && return 1
+    [ -d "$ARM_DIR" ] && [ -O "$ARM_DIR" ] || return 1
+    purge=1
+    # 지우기를 시작할 때는 권한으로도 ACL 로도 남이 이 폴더에 쓸 수 없게 한다
+    chmod 710 "$ARM_DIR" 2>/dev/null || return 1
+    acl_clear "$ARM_DIR" || return 1
+  fi
   if [ "$purge" = 1 ]; then
+    [ -L "$ARM_DIR" ] && return 1   # 지우기 직전에 한 번 더
     for old in "$ARM_DIR"/* "$ARM_DIR"/.[!.]* "$ARM_DIR"/..?*; do
       [ -e "$old" ] || [ -L "$old" ] || continue
       if [ -L "$old" ]; then

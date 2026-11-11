@@ -645,3 +645,38 @@ test('arm killed in the middle of the clean-up: the folder is not 0700 at that m
   assert.match(result.stderr, /사유 코드: not-armed/);
   assert.ok(!existsSync(b.envFile));
 });
+
+test('macOS: an arm folder with an ACL that lets others add files is emptied and left with no ACL; the planted record is gone', { skip: process.platform !== 'darwin' ? 'file ACLs are handled on macOS only' : false }, () => {
+  const acl = path => spawnSync('/bin/ls', ['-lde', path], { encoding: 'utf8' }).stdout.trim().split('\n').slice(1);
+  const { b, armDir } = planted(at => {
+    dirs(at);
+    assert.equal(spawnSync('/bin/chmod', ['+a', 'everyone allow add_file,delete_child,list,search,file_inherit', at.armDir]).status, 0);
+  });
+  assert.equal(acl(armDir).length, 1, 'bait: the ACL is there');
+  const armed = b.arm('otherbot');
+  assert.equal(armed.status, 0, everything(armed));
+  assert.deepEqual(acl(armDir), [], 'no ACL left on the folder');
+  assert.equal(mode(armDir), '700');
+  assert.deepEqual(readdirSync(armDir), ['otherbot.arm']);
+  b.copy(SHAPED);
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /사유 코드: not-armed/);
+});
+
+test('arm never empties through a link: with ~/.thiscode open to others and the arm folder replaced by a link to another folder, nothing there is removed', { skip: SKIP }, () => {
+  const b = box('darwin');
+  const top = join(b.home, '.thiscode');
+  const mine = join(b.home, 'my-other-folder');
+  mkdirSync(top); chmodSync(top, 0o777);
+  mkdirSync(mine); chmodSync(mine, 0o700);
+  writeFileSync(join(mine, 'precious.txt'), 'keep me');
+  writeFileSync(join(mine, 'otherbot.arm'), 'not a record');   // a name the clean-up would have matched
+  symlinkSync(mine, join(top, 'token-arm'));
+  const armed = b.arm();
+  assert.notEqual(armed.status, 0);
+  assert.deepEqual(readdirSync(mine).sort(), ['otherbot.arm', 'precious.txt'], 'nothing in the linked folder was removed');
+  assert.equal(readFileSync(join(mine, 'precious.txt'), 'utf8'), 'keep me');
+  assert.equal(mode(mine), '700', 'and its mode was not changed');
+  assert.ok(!b.calls().includes('pbcopy'));
+});
