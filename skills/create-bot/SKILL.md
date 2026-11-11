@@ -161,9 +161,9 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 5. OAuth2 → URL Generator — "초대 URL을 만듭니다":
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
+   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads** / **Mention Everyone** / **Pin Messages** / **Manage Webhooks**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 14종 = `permissions=2252195487804480` (URL 에 그대로 붙여도 된다 — 비트 14개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
 6. 생성된 URL 로 이동 → 서버 선택 → "승인" 클릭 — "봇을 서버에 초대합니다." (2026-08-05·09 실측: 이 클릭까지 자동화가 닿는다 — 이미 로그인된 세션의 동의 화면이라 재인증을 요구하지 않는다)
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 대신 처리한다 — 안 되면(브라우저만으로 강제할 방법은 실측에서 못 찾았다, 3회 시도) 그 창만 예외적으로 사용자에게 넘긴다: "데스크톱 앱 승인 창이 떴습니다 — 눌러 주세요."
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
@@ -198,9 +198,9 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 4. OAuth2 → URL Generator:
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
+   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads** / **Mention Everyone** / **Pin Messages** / **Manage Webhooks**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 14종 = `permissions=2252195487804480` (URL 에 그대로 붙여도 된다 — 비트 14개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
 5. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대 → **승인(사람)**
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 처리한다. 브라우저만으로 강제할 방법은 실측에서 못 찾았다(3회 시도).
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
