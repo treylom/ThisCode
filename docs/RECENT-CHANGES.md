@@ -27,6 +27,106 @@ auto-activate. The `/thiscode:setup` skill drives this step.
 
 ---
 
+## 2026-11-11 — ThisCode 1.5.0 three automatic attempts before a hand-off, per-step automation tables, Korean screen names, developer-terms question, bot permissions on request, token saved outside the chat
+
+- When a step gets stuck, the bot no longer hands it to the user right away.
+  It tries three times on its own with the automation browser (read the screen
+  again and retry → another way in the same browser → the next browser),
+  records each attempt, and asks `scripts/install-gate.sh --handoff <gate>`
+  before handing over. Steps only a person can do (login, the human check, a
+  password, a permission prompt) are handed over at once and are not counted.
+  The attempt lines are a procedure record the bot writes itself; the script
+  cannot check that the browser was really driven three times.
+- Every skill with `### Step` headings ships an `automation.yaml`: for each step, `auto`,
+  `auto_then_human` or `human_only`, the gate name, and the text shown when a
+  step is handed over. A test fails when the table and the SKILL.md step
+  headings differ.
+- New-application window of the Discord developer portal: the bot asks a
+  yes/no question before the developer-terms box. Only after a yes does it tick
+  the box and click Create. After a no it clicks nothing and waits for the user
+  to do both; with no answer it clicks nothing. The box does not show up in the
+  page text, so when Create stays disabled the bot counts the input elements in
+  the window to find it.
+- Discord developer-portal buttons and windows are also named in Korean where
+  the Korean label was seen on a real Korean-language screen ("New
+  Application" = «신규 애플리케이션»); labels not yet seen in Korean stay in
+  English and are marked unconfirmed.
+- The bot invite link keeps the 11 default permissions
+  (`permissions=395137117248`). Before the link is made the bot names three
+  wider ones — Mention Everyone, Pin Messages, Manage Webhooks — says what each
+  lets the bot do, and asks once. Only a yes adds them
+  (`permissions=2252195487804480`), and the 14 chosen permissions are shown
+  before the link is made. No answer, a no, or anything else keeps the 11.
+- The bot token is never taken through the conversation. One script,
+  `scripts/discord-token-capture.sh`, saves it: `arm <bot>` puts a fresh
+  one-time marker in the clipboard and notes it for that bot, the Copy button
+  is pressed, and `capture <bot>` — only if that bot was armed within the last
+  10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
+  the clipboard and prints the length and the file path, never the value. The
+  arm record is deleted once a copied value has been read; the result of that
+  delete is not checked. Without a fresh arm for the same bot it refuses
+  before reading the clipboard, so an old token left there is not saved
+  without `arm`. Arm one bot at a time: while two bots are armed together, a
+  token copied for one can be captured under the other's name.
+- Before it reads an arm record, `capture` checks that `~/.thiscode` and the
+  arm folder in it are real folders of the user with mode 0700 and, on macOS,
+  no ACL, and that the record is 0600. It only checks; it repairs nothing and
+  refuses with `not-armed` before reading the clipboard. `arm` is what repairs
+  the folders, and when they were open before, it removes the records that
+  were already there.
+- This protection covers the Discord token route
+  (`scripts/discord-token-capture.sh`) only. The Slack token steps in
+  `skills/slack-configure` do not have the arm check or the ACL removal yet.
+- Clipboard commands:
+  macOS, WSL, Linux (Wayland, then xclip). Without one it stops; `paste <bot>`
+  is a hidden prompt the user runs in their own terminal. Its terminal check
+  only guards against an accidental pipe; it is not a boundary against a
+  program running as the same user. Exit 5 means saved, but the clipboard
+  could not be emptied. `commands/start.md` and `commands/add-bot.md` use the
+  same script instead of a heredoc. Reset Token is pressed once in its step,
+  and the browser is not switched while the token is on screen.
+- The bot folder is 0700 and `.env` 0600. On macOS the script also removes
+  file ACLs from the folder, the temp file and `.env` and checks again — mode
+  600 alone leaves an inherited ACL readable by others. If an ACL cannot be
+  removed the script exits 3; a `.env` it has already written is then deleted,
+  other keys in it included, and that delete is not checked. Whether the
+  machine is macOS is taken from the shell's `OSTYPE`, and whether modes mean
+  anything from `uname`, so a changed `OSTYPE` or a different `uname` on PATH
+  switches this handling off. ACLs on Linux and Windows are not looked at.
+- A failed attempt is recorded with a code from a fixed list of 13, such as
+  `click-no-effect` (`install-gate.sh --reason-codes` prints the list; the
+  same list is in `configs/install.yaml`). Free text is refused with exit 2
+  and is not written.
+- The install log `~/.thiscode/install-log.jsonl` is kept 0600 and its folder
+  `~/.thiscode` 0700, whatever the umask. A symlink, a non-regular file,
+  another owner or a second hard link is refused: `--attempted` exits 3, and
+  `--handoff` and `--audit` do not read it. A folder set through
+  `THISCODE_INSTALL_LOG` keeps its mode and is refused when group or others can
+  write there. On macOS file ACLs on `~/.thiscode` and the log are removed as
+  well. A hand-over at a human-only stop (or in manual mode) is still allowed
+  when it cannot be recorded, so a person is not blocked by a log problem;
+  "not recorded, not handed over" applies to the hand-over after three
+  attempts.
+- `install-gate.sh` checks a gate name as a whole for `--handoff` and
+  `--attempted`: letters, digits and underscores only, else exit 2.
+- Four more places are handed over at once: the automation browser's permission
+  window (`browser_permission_prompt`), the first trust prompt of a new work
+  folder (`claude_workspace_trust_confirm`), Claude login (`claude_auth_login`)
+  and restarting the session (`claude_session_restart`). bootstrap,
+  install-hooks, meetings and self-update get `automation.yaml` tables too.
+- The first trust prompt of a new work folder is answered by its label
+  ("Yes, I trust this folder"), not by a line number.
+- Unchanged: login, the human check (hCaptcha) and the token-reset
+  confirmation stay human-only.
+- What an installed bot must do differently now: try three times before
+  handing a step over and say what was tried; ask before the terms box and
+  before the three wider permissions; record a failure with a code, not a
+  sentence; never ask for the token in chat.
+- Not measured: the WSL clipboard branch on a real WSL machine (tests use
+  stand-in commands).
+
+---
+
 ## 2026-11-05 — ThisCode 1.4.2 browser auto-detect (ego lite → Aside → existing path)
 
 - Before opening a website (create-bot portal step, help STEP 2.5, Slack app
