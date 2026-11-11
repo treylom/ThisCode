@@ -73,10 +73,15 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   owner-only (rwx------; the sticky and set-id bits are not looked at) and, on
   macOS, carry no ACL, and that the record is 0600. It only checks; it repairs
   nothing and refuses with `not-armed` before reading the clipboard. `arm` is
-  what repairs the folders. When they were open before, `arm` first removes
-  everything in the arm folder and checks that it is empty; if something
-  cannot be removed it does not arm, closes the folder (mode 000) and prints
-  one line on how to move it away. Like the mode and ACL handling below, these
+  what repairs the folders. When `~/.thiscode` or the arm folder was open
+  before, `arm` locks them without making them 0700 yet, removes everything
+  in the arm folder and checks that it is empty, and only then sets both to
+  0700 (`~/.thiscode` last). If something cannot be removed it does not arm,
+  tries to close the arm folder (mode 000), says whether that worked, and
+  prints one line on how to move the folder away; until a later `arm` has
+  emptied it, `capture` refuses. `install-gate.sh` repairs `~/.thiscode` as
+  well; when it does so for a folder that was open, it closes the arm folder
+  first, so the next `arm` empties it. Like the mode and ACL handling below, these
   checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
   `uname` on PATH they are switched off, which takes someone who can already
   change the user's own environment.
