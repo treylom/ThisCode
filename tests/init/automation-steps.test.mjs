@@ -294,7 +294,9 @@ test('skill text: the three-attempt rule and the table are part of the flow', ()
     const text = readFileSync(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf8');
     assert.match(text, /automation\.yaml/, `${skill}: points at its table`);
     assert.match(text, /install-gate\.sh --handoff/, `${skill}: calls the handoff gate before handing over`);
-    assert.match(text, /자동 시도 3회/, `${skill}: states the three attempts`);
+    assert.match(text, /막혔을 때 — 자동 시도 3회, 그 뒤에만 사람/, `${skill}: states the rule`);
+    assert.match(text, /① [^\n]*다시[^\n]*② [^\n]*다른 길[^\n]*③ [^\n]*다음 브라우저/, `${skill}: says what each of the three attempts is`);
+    assert.match(text, /곧바로 사용자에게 넘기지 않는다/, `${skill}: a blocked step is not handed over right away`);
     assert.match(text, /시도 횟수에 넣지 않/, `${skill}: human-only stops are not counted`);
   }
 });
