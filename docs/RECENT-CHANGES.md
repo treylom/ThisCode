@@ -67,7 +67,10 @@ auto-activate. The `/thiscode:setup` skill drives this step.
     one-time marker in the clipboard and notes it for that bot, the Copy button
     is pressed, and `capture <bot>` — only if that bot was armed within the last
     10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
-    the clipboard and prints the length and the file path, never the value. The
+    the clipboard and prints the length and the file path, never the value.
+    `arm` writes its record under another name, puts the marker in the
+    clipboard, and only then gives the record the name `capture` reads, so an
+    `arm` that fails or is stopped part-way leaves no record. The
     arm record is deleted once a copied value has been read; the result of that
     delete is not checked. Without a fresh arm for the same bot it refuses
     before reading the clipboard, so an old token left there is not saved

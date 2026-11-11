@@ -57,6 +57,8 @@ bot_dir() {   # 봇 이름은 값 전체가 영문 · 숫자 · - · _ 여야 �
   ENV_FILE="$BOT_DIR/.env"
   ARM_DIR="$HOME/.thiscode/token-arm"
   ARM_FILE="$ARM_DIR/$BOT.arm"
+  # 쓰는 중인 기록의 이름. 봇 이름에는 점이 못 들어오므로 어떤 봇의 최종 이름(<봇>.arm)과도 겹치지 않는다.
+  ARM_PENDING="$ARM_FILE.pending"
 }
 
 is_wsl() {
@@ -187,7 +189,7 @@ not_armed() {   # $1 = 까닭 한 줄 — 클립보드는 읽지 않았다
   exit 1
 }
 
-arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파일에 적는다
+arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 «쓰는 중» 이름의 파일에 적는다(최종 이름은 arm 갈래가 붙인다)
   local LC_ALL=C old left info top="$HOME/.thiscode" stale=0 purge=0
   # 쓰는 길: 폴더를 본인만 쓰게 고친다. 다만 고치기 «전» 에 ~/.thiscode 나 arm 폴더가 본인만 쓰는
   # 폴더가 아니었다면 arm 폴더 안에 있던 것은 누가 넣었는지 알 수 없다 — 전부 지우고, 비었는지
@@ -246,11 +248,25 @@ arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파
   if [ -L "$ARM_FILE" ] || [ -e "$ARM_FILE" ]; then
     rm -f "$ARM_FILE" 2>/dev/null || return 1   # 링크면 링크만 지운다(따라가지 않는다)
   fi
+  # 앞선 arm 이 쓰다 끊겨 남긴 것을 먼저 지운다 — 남아 있으면 아래 쓰기가 막혀 다음 arm 이 전부 실패한다.
+  # 두 폴더가 본인만 쓰는 진짜 폴더일 때만 지우고, 지워졌는지 본다.
+  if [ -L "$ARM_PENDING" ] || [ -e "$ARM_PENDING" ]; then
+    dir_is_private "$top" && dir_is_private "$ARM_DIR" || return 1
+    rm -rf -- "$ARM_PENDING" 2>/dev/null   # 링크면 링크만 지운다(따라가지 않는다)
+    if [ -L "$ARM_PENDING" ] || [ -e "$ARM_PENDING" ]; then return 1; fi
+  fi
   ARM_NONCE="$(od -An -N16 -tx1 /dev/urandom 2>/dev/null | tr -d ' \n')"
   [[ "$ARM_NONCE" =~ ^[0-9a-f]{32}$ ]] || return 1
+  # 기록은 «쓰는 중» 이름으로만 만든다. capture 가 읽는 최종 이름은 표식이 클립보드에 들어간 뒤에
+  # arm 갈래가 이름 바꾸기 한 번으로 붙인다 — 그 전에 실패하거나 끊기면 최종 이름의 기록은 없다.
   ( umask 077; set -o noclobber
-    printf 'nonce=%s\nbot=%s\narmed_at=%s\n' "$ARM_NONCE" "$BOT" "$(date +%s)" > "$ARM_FILE" ) 2>/dev/null || return 1
-  private_file "$ARM_FILE"
+    printf 'nonce=%s\nbot=%s\narmed_at=%s\n' "$ARM_NONCE" "$BOT" "$(date +%s)" > "$ARM_PENDING" ) 2>/dev/null || return 1
+  private_file "$ARM_PENDING"
+}
+
+arm_drop_pending() {   # 쓰다 만 기록을 지운다 — 두 폴더가 본인만 쓰는 진짜 폴더일 때만
+  # (~/.thiscode 나 arm 폴더가 링크면 이 경로는 폴더 밖의 파일을 가리킨다 — 그것은 지우지 않는다)
+  dir_is_private "$HOME/.thiscode" && dir_is_private "$ARM_DIR" && rm -rf -- "$ARM_PENDING" 2>/dev/null
 }
 
 arm_read() {   # 믿을 수 있는 기록이면 ARM_NONCE 를 채운다. 아니면 not_armed 로 끝낸다
@@ -373,14 +389,22 @@ case "$MODE" in
       # 쓰다 만 기록을 남기지 않는다 — 다만 두 폴더가 본인만 쓰는 진짜 폴더일 때만 지운다.
       # (~/.thiscode 나 arm 폴더가 링크면 이 경로는 폴더 밖의 파일을 가리킨다 — 그것은 지우지 않는다)
       dir_is_private "$HOME/.thiscode" && dir_is_private "$ARM_DIR" && rm -f -- "$ARM_FILE" 2>/dev/null
+      arm_drop_pending
       unsafe "arm 기록을 본인만 읽게 남길 수 없습니다 — $ARM_DIR"
       exit 3
     fi
+    # 순서: 표식을 클립보드에 쓴다 → 성공한 뒤에만 기록에 최종 이름을 붙인다.
+    # 표식 전에 끊기면 최종 이름의 기록이 없어 capture 가 거부하고, 표식 뒤에 끊기면 클립보드에는 표식이 있다.
     if ! printf '%s:%s' "$MARKER" "$ARM_NONCE" | clip_write; then
-      rm -f "$ARM_FILE" 2>/dev/null
+      arm_drop_pending
       echo "❌ 클립보드에 쓰지 못했습니다" >&2; echo "사유 코드: tool-error" >&2; exit 4
     fi
     ARM_NONCE=''
+    if ! mv -f -- "$ARM_PENDING" "$ARM_FILE" 2>/dev/null; then   # 같은 폴더 안의 이름 바꾸기
+      arm_drop_pending
+      unsafe "arm 기록을 남기지 못했습니다 — $ARM_DIR"
+      exit 3
+    fi
     echo "🔒 준비됨($BOT) — 이제 포털의 «복사» 버튼을 누릅니다. ${ARM_TTL_MIN}분 안에 capture 를 부르세요(이 준비는 한 번만 쓰입니다)."
     ;;
   capture)

@@ -825,3 +825,141 @@ test('arm exit 0 means capture is accepted next: when the last step on ~/.thisco
   assert.notEqual(mode(top), '700');
   assert.ok(!b.calls().includes('pbcopy'), 'no marker was put in the clipboard');
 });
+
+// ── The arm record exists only after the marker reached the clipboard ─────────────────────────────
+// arm writes its record under a name capture never reads (<bot>.arm.pending), puts the marker in the
+// clipboard, and only then renames the record to <bot>.arm. So an arm that fails or is killed part-way
+// never leaves a record that capture would pair with a value that was in the clipboard before.
+const pendingFile = b => `${b.armFile}.pending`;
+const oldValueNotSaved = (b, why) => {
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1, `${why}: ${everything(result)}`);
+  assert.match(result.stderr, /사유 코드: not-armed/, why);
+  assert.ok(!b.calls().includes('pbpaste'), `${why}: the clipboard was not read`);
+  assert.ok(!existsSync(b.envFile), `${why}: nothing saved`);
+};
+const nextArmWorks = (b, why) => {
+  assert.equal(b.arm().status, 0, `${why}: the next arm is not blocked by what the stopped one left`);
+  assert.deepEqual(readdirSync(join(b.armFile, '..')), ['mybot.arm'], `${why}: one record, nothing left over`);
+  b.copy(SHAPED);
+  const saved = b.run('capture', 'mybot');
+  assert.equal(saved.status, 0, `${why}: ${everything(saved)}`);
+  assert.equal(readFileSync(b.envFile, 'utf8'), `DISCORD_BOT_TOKEN=${SHAPED}\n`);
+};
+
+test('arm killed while its record is being made private, before the marker: no record, and a token-shaped value that was already in the clipboard is not saved', { skip: SKIP || ROOT }, () => {
+  const b = box('darwin');
+  b.copy(SHAPED);   // an old value, there before arm
+  chmodStandIn(b, 'case "$1:$2" in 600:*/token-arm/*) kill -9 $PPID ;; esac');
+  assert.notEqual(b.arm().status, 0);
+  chmodBack(b);
+  assert.ok(!existsSync(b.armFile), 'no record under the name capture reads');
+  assert.equal(b.clipboard(), SHAPED, 'bait: the marker was never written, the old value is still there');
+  oldValueNotSaved(b, 'killed before the marker');
+  nextArmWorks(b, 'killed before the marker');
+});
+
+test('arm killed while the marker is being written: no record, and the old clipboard value is not saved', { skip: SKIP || ROOT }, () => {
+  const b = box('darwin');
+  b.copy(SHAPED);
+  const realPbcopy = readFileSync(join(b.bin, 'pbcopy'), 'utf8');
+  // The clipboard command runs in a pipeline, so its parent may be a subshell of the script: stop the script itself.
+  const ps = spawnSync('/bin/sh', ['-c', 'command -v ps'], { encoding: 'utf8' }).stdout.trim();
+  b.put('pbcopy', [
+    `pp=$(${ps} -o ppid= -p $PPID | tr -d " ")`,
+    `case "$(${ps} -o args= -p "$pp")" in *discord-token-capture.sh*) kill -9 "$pp" ;; esac`,
+    'kill -9 $PPID',
+  ].join('\n'));
+  assert.notEqual(b.arm().status, 0);
+  writeFileSync(join(b.bin, 'pbcopy'), realPbcopy);
+  assert.ok(!existsSync(b.armFile), 'no record under the name capture reads');
+  assert.equal(b.clipboard(), SHAPED, 'bait: the old value is still in the clipboard');
+  oldValueNotSaved(b, 'killed at the marker');
+  nextArmWorks(b, 'killed at the marker');
+});
+
+test('the clipboard command fails: arm exits 4, leaves no record of either name, and the old clipboard value is not saved', { skip: SKIP }, () => {
+  const b = box('darwin');
+  b.copy(SHAPED);
+  const realPbcopy = readFileSync(join(b.bin, 'pbcopy'), 'utf8');
+  b.put('pbcopy', 'exit 1');
+  const armed = b.arm();
+  assert.equal(armed.status, 4, everything(armed));
+  assert.match(armed.stderr, /사유 코드: tool-error/);
+  writeFileSync(join(b.bin, 'pbcopy'), realPbcopy);
+  assert.deepEqual(readdirSync(join(b.armFile, '..')), [], 'neither the record nor the pending file is left');
+  oldValueNotSaved(b, 'marker not written');
+  nextArmWorks(b, 'marker not written');
+});
+
+const realMv = spawnSync('/bin/sh', ['-c', 'command -v mv'], { encoding: 'utf8' }).stdout.trim();
+const mvStandIn = (b, body) => { spawnSync('/bin/rm', [join(b.bin, 'mv')]); b.put('mv', body); };
+const mvBack = b => { spawnSync('/bin/rm', [join(b.bin, 'mv')]); symlinkSync(realMv, join(b.bin, 'mv')); };
+
+test('arm killed after the marker, before the record gets its name: no record, capture refuses, the next arm goes through', { skip: SKIP || ROOT }, () => {
+  const b = box('darwin');
+  b.copy(SHAPED);
+  mvStandIn(b, 'kill -9 $PPID');
+  assert.notEqual(b.arm().status, 0);
+  mvBack(b);
+  assert.match(b.clipboard(), ARMED, 'bait: the marker did reach the clipboard');
+  assert.ok(!existsSync(b.armFile), 'no record under the name capture reads');
+  assert.ok(existsSync(pendingFile(b)), 'bait: the unfinished record is there under the other name');
+  b.copy(SHAPED);   // whatever is copied now, there is no record to pair it with
+  oldValueNotSaved(b, 'killed before the rename');
+  nextArmWorks(b, 'killed before the rename');
+});
+
+test('the rename fails: arm does not report success, leaves no record of either name, capture refuses', { skip: SKIP }, () => {
+  const b = box('darwin');
+  mvStandIn(b, 'exit 1');
+  const armed = b.arm();
+  assert.equal(armed.status, 3, everything(armed));
+  assert.doesNotMatch(armed.stdout, /준비됨/);
+  mvBack(b);
+  assert.deepEqual(readdirSync(join(b.armFile, '..')), []);
+  b.copy(SHAPED);
+  oldValueNotSaved(b, 'rename failed');
+  nextArmWorks(b, 'rename failed');
+});
+
+test('an unfinished record is never read: a complete, fresh record under the pending name does not arm the bot', { skip: SKIP }, () => {
+  const { b } = planted(dirs);
+  renameSync(b.armFile, pendingFile(b));
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /사유 코드: not-armed/);
+  assert.ok(!b.calls().includes('pbpaste'));
+  assert.ok(!existsSync(b.envFile));
+  // and no bot name can make the pending name the one capture reads
+  for (const name of ['mybot.arm.pending', 'mybot.arm', 'mybot.pending']) {
+    const odd = b.run('capture', name);
+    assert.equal(odd.status, 2, `${name} is not a bot name`);
+  }
+  assert.ok(!existsSync(b.envFile));
+});
+
+for (const kind of ['fails', 'killed']) {
+  test(`sweep (arm of a first-time user, old value in the clipboard): with the Nth mode change ${kind === 'fails' ? 'failing' : 'preceded by a kill'}, for every N, the old value is never saved`, { skip: SKIP || ROOT }, () => {
+    let reachedEnd = false;
+    for (let n = 1; n <= 20 && !reachedEnd; n += 1) {
+      const b = box('darwin');
+      b.copy(SHAPED);
+      const count = join(b.home, 'chmod-count');
+      const hit = kind === 'fails' ? 'exit 1' : 'kill -9 $PPID';
+      chmodStandIn(b, `n=$(( $(cat "${count}" 2>/dev/null || echo 0) + 1 )); echo "$n" > "${count}"; [ "$n" -eq ${n} ] && ${hit}`);
+      const armed = b.arm();
+      const calls = existsSync(count) ? Number(readFileSync(count, 'utf8')) : 0;
+      reachedEnd = calls < n;
+      chmodBack(b);
+      if (!reachedEnd) {
+        assert.notEqual(armed.status, 0, `${kind} N=${n}: arm does not report success`);
+        assert.ok(!existsSync(b.armFile), `${kind} N=${n}: no record under the name capture reads`);
+      }
+      const result = b.run('capture', 'mybot');
+      assert.notEqual(result.status, 0, `${kind} N=${n}: ${everything(result)}`);
+      assert.ok(!existsSync(b.envFile), `${kind} N=${n}: nothing saved`);
+    }
+    assert.ok(reachedEnd, 'the sweep covered every mode change of the run');
+  });
+}
