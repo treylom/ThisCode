@@ -34,7 +34,7 @@ always_human:
   - gate: "browser_permission_prompt"
     when: "자동화 브라우저가 사이트 권한 창 · 기기 선택 창에서 «사용자 차례»로 멈출 때"
     reason: "권한을 허용하는 것은 사람 몫 — 대신 누르지 않는다"
-    handoff: "ego lite 창 오른쪽 위 숫자 버튼을 누르고 → ‘Need your action’ 표시가 붙은 칸을 눌러 → 뜬 창을 처리한 뒤 → 아래 ‘Return to agent’ 를 누르고 말해 주세요."
+    handoff: "브라우저가 사용자 차례로 멈췄습니다. ego lite 라면 창 오른쪽 위 숫자 버튼 → ‘Need your action’ 표시가 붙은 칸 → 뜬 창 처리 → 아래 ‘Return to agent’ 순서로 누르고, 다른 브라우저라면 화면에 뜬 권한 창을 처리한 뒤 말해 주세요."
 
 steps:
   - id: "0"
@@ -56,7 +56,7 @@ steps:
     mode: "auto_then_human"
     gate: "slack_cli_install"
     reason: "node 확인과 Slack CLI 설치(sudo 없이 홈 디렉토리)는 자동 · 네트워크나 PATH 등록이 안 되면 사람이 고친다"
-    handoff: "Slack CLI 를 설치하려고 세 번 시도했는데 <사유>로 안 됐습니다. downloads.slack-edge.com 접속을 확인하고 홈 아래 .local/bin 을 셸 프로필 PATH 에 넣어 주세요 — 그 다음은 제가 이어갑니다."
+    handoff: "Slack CLI 를 설치하려고 세 번 시도했는데 <사유>로 안 됐습니다. 접속 문제면 downloads.slack-edge.com 에 접속되는지, 명령을 못 찾는 문제면 홈 폴더의 .local/bin 이 PATH 에 들어 있는지 확인해 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "2"
     title: "기존 인증 확인"
@@ -68,7 +68,7 @@ steps:
     mode: "human_only"
     human_stops: "slack_login"
     reason: "계정 자격증명이라 대신 입력하지 않는다"
-    handoff: "Slack CLI 인증이 필요합니다. 제가 드린 /slackauthticket 코드를 Slack 앱의 아무 채널에 붙여넣고 Enter, ‘Confirm’ 을 누르면 나오는 확인 코드를 여기 붙여넣어 주세요."
+    handoff: "Slack CLI 인증이 필요합니다. 제가 드린 /slackauthticket 코드를 Slack 앱의 아무 채널에 붙여 넣고 Enter 를 누르세요. ‘Confirm’ 을 누르면 나오는 확인 코드를 여기에 붙여 넣어 주세요."
 
   - id: "4"
     title: "매니페스트 파일 생성"
@@ -119,7 +119,7 @@ steps:
     mode: "human_only"
     human_stops: "slack_token_paste"
     reason: "시크릿 값이라 사용자가 직접 복사한다 — 저는 값을 보지 않는다"
-    handoff: "Slack 앱 토큰 2개(Bot User OAuth Token 과 App-Level Token)를 각각 복사한 뒤 대화창에 ‘복사했어요’ 라고 알려 주세요. 제가 값을 화면에 출력하거나 저장하지 않습니다."
+    handoff: "Slack 앱 토큰 2개(Bot User OAuth Token 과 App-Level Token)를 각각 복사한 뒤 대화창에 ‘복사했어요’ 라고 알려 주세요. 값은 화면에 띄우지 않고, 제가 보지 않은 채 파일에만 저장합니다."
 
   - id: "10-c"
     title: "부여 scope 관문"

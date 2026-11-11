@@ -52,7 +52,7 @@ steps:
     gate: "hooks_new_session_check"
     human_stops: "claude_session_restart"
     reason: "새 세션을 띄워 SessionStart 주입을 보는 일 — 기존 세션을 끝내고 다시 켜는 것은 사람 손이 필요할 수 있다"
-    handoff: "훅은 새 세션부터 듣습니다. 지금 세션을 exit 로 끝내고 claude 를 다시 켜서 첫 응답에 페르소나 어휘와 시그니처가 나오는지 봐 주세요 — 그 다음은 제가 이어갑니다."
+    handoff: "훅은 새 세션부터 적용됩니다. 지금 세션을 exit 로 끝내고 claude 를 다시 켜서 첫 응답에 페르소나 어휘와 시그니처가 나오는지 봐 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "6"
     title: "회의실 게이트 구성 + 연결 probe"

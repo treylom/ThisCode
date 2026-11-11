@@ -54,4 +54,4 @@ steps:
     mode: "auto_then_human"
     gate: "first_bot_wizard_enter"
     reason: "tmux 세션과 claude 를 띄워 wizard 로 들어가는 일은 자동으로 시도 · 새 터미널에서 직접 열어야 하면 사람"
-    handoff: "첫 봇 wizard 를 열려고 세 번 시도했는데 <사유>로 안 됐습니다. 터미널에서 tmux new-session -s claude 로 들어가 프로젝트 폴더에서 claude 를 켜고 /thiscode:start 를 입력해 주세요 — 그 다음은 제가 이어갑니다."
+    handoff: "첫 봇 설정 화면(wizard)을 열려고 세 번 시도했는데 <사유>로 안 됐습니다. 터미널에서 tmux new-session -s claude 로 들어가 프로젝트 폴더에서 claude 를 켜고 /thiscode:start 를 입력해 주세요 — 그 다음은 제가 이어갑니다."

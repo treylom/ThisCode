@@ -39,7 +39,7 @@ always_human:
   - gate: "browser_permission_prompt"
     when: "자동화 브라우저가 사이트 권한 창 · 기기 선택 창에서 «사용자 차례»로 멈출 때"
     reason: "권한을 허용하는 것은 사람 몫 — 대신 누르지 않는다"
-    handoff: "ego lite 창 오른쪽 위 숫자 버튼을 누르고 → ‘Need your action’ 표시가 붙은 칸을 눌러 → 뜬 창을 처리한 뒤 → 아래 ‘Return to agent’ 를 누르고 말해 주세요."
+    handoff: "브라우저가 사용자 차례로 멈췄습니다. ego lite 라면 창 오른쪽 위 숫자 버튼 → ‘Need your action’ 표시가 붙은 칸 → 뜬 창 처리 → 아래 ‘Return to agent’ 순서로 누르고, 다른 브라우저라면 화면에 뜬 권한 창을 처리한 뒤 말해 주세요."
 
 steps:
   - id: "0"
@@ -94,7 +94,7 @@ steps:
     notice: "이 걸음에서 Discord 개발자 이용약관·개발자 정책 동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요."
     if_declined: "사용자가 ‘하지 마’라고 하면 동의 칸과 ‘만들기’는 사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라 사용자가 고른 것이라 --handoff 를 부르지 않는다"
     reason: "«신규 애플리케이션» 누르기 · 이름 넣기 · 약관 동의 칸 체크 · «만들기» 누르기는 자동(먼저 알린다) · 사람 확인만 사람"
-    handoff: "‘잠깐! 로봇 아니고 사람 맞죠?’ 창이 떴습니다 — 그것만 풀어 주세요. 그 다음은 제가 이어갑니다."
+    handoff: "사람 확인(hCaptcha) 창이 떴습니다 — 한국어 화면이면 제목이 ‘잠깐! 로봇 아니고 사람 맞죠?’ 입니다. 그것만 풀어 주세요. 그 다음은 제가 이어갑니다."
     handoff_after_attempts: "새 애플리케이션을 만들려고 세 번 시도했는데 <사유>로 안 됐습니다. «신규 앱 만들기» 창을 직접 마쳐 주세요 — 이름을 넣고 아래 동의 칸을 체크한 뒤 «만들기»(Create)를 누르면 됩니다. 그 다음은 제가 이어갑니다."
 
   - id: "3/3"
@@ -114,7 +114,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_intents"
     reason: "토글 두 개와 저장은 자동"
-    handoff: "인텐트 두 개를 켜려고 세 번 시도했는데 <사유>로 안 됐습니다. Bot 탭 아래 ‘Privileged Gateway Intents’ 에서 ‘Message Content Intent’ 와 ‘Server Members Intent’ 를 켜고 저장(Save)해 주세요 — 그 다음은 제가 이어갑니다."
+    handoff: "봇이 메시지를 읽는 데 필요한 설정(인텐트) 두 개를 켜려고 세 번 시도했는데 <사유>로 안 됐습니다. Bot 탭 아래 ‘Privileged Gateway Intents’ 에서 ‘Message Content Intent’ 와 ‘Server Members Intent’ 를 켜고 ‘Save Changes’ 를 눌러 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "3/5"
     title: "초대 주소 만들기"
@@ -130,7 +130,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_invite_authorize"
     reason: "서버 고르기와 승인 누르기는 자동 · 데스크톱 앱 승인 창으로 넘어가면 세 번 시도 뒤 사람"
-    handoff: "데스크톱 앱 승인 창이 떴습니다 — 눌러 주세요."
+    handoff: "브라우저에서 승인하려고 세 번 시도했는데 승인 창이 데스크톱 Discord 앱으로 넘어가 안 됐습니다. 데스크톱 앱에 뜬 승인 창에서 ‘승인’을 눌러 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "3/7"
     title: "채널에 봇 추가"
@@ -154,7 +154,7 @@ steps:
     mode: "auto_then_human"
     gate: "discord_user_id"
     reason: "사용자 ID 는 포털 응답 → 화면 순서로 자동으로 얻는다"
-    handoff: "사용자 ID 를 자동으로 얻으려고 세 번 시도했는데 <사유>로 안 됐습니다. Discord 앱 → 설정 → 고급 → 개발자 모드 ON → 본인 프로필 우클릭 → ‘사용자 ID 복사’ 로 복사해 알려 주세요."
+    handoff: "사용자 ID 를 자동으로 얻으려고 세 번 시도했는데 <사유>로 안 됐습니다. Discord 앱 → 설정 → 고급에서 개발자 모드를 켜고, 본인 프로필을 우클릭해 ‘사용자 ID 복사’ 로 복사한 뒤 알려 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "4.5"
     title: "페르소나·직무 프롬프트 고도화"
@@ -203,7 +203,7 @@ steps:
     mode: "auto_then_human"
     gate: "bot_first_start"
     human_stops: "claude_workspace_trust_confirm"
-    reason: "시동 명령 만들기와 안내는 자동 · 새 작업 폴더의 첫 «신뢰하나요?» 확인 창은 사람만"
+    reason: "시동 명령 만들기와 안내는 자동 · 새 작업 폴더의 첫 확인 창(‘Quick safety check’)은 사람만"
     handoff: "새 작업 폴더라 ‘Quick safety check’ 확인 창이 떴습니다 — 1번을 고르고 Enter 를 눌러 주세요. 그 다음은 제가 이어갑니다."
 
   - id: "7.5"
