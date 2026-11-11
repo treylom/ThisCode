@@ -165,7 +165,7 @@ client.on('messageCreate', msg => {
 
 **⚠️ 재적용 노트 (J-1 의 실현 사례)**: 이 파일은 `~/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/server.ts` = **ThisCode 레포 밖 공식 플러그인**. plugin update / `/plugin marketplace update` 시 **덮어쓰임** → 끊기면 J-2 패치 재적용 필요.
 
-**영구 재적용 layer (구현됨, 2026-05-19)**: `scripts/patch-discord-bot-drop.sh` 가 위 3-가드를 **idempotent** 하게 재적용한다. 안전속성: 편집 전 `.thiscode-j2.bak-<ts>` 백업 / marker `thiscode-j2-guard` 로 재실행 시 no-op / **정확 취약라인만** 치환(upstream shape 바뀌면 맹목 편집 없이 stderr 경고) / **fail-open**(항상 exit 0 — self-update 체인 안 깸).
+**영구 재적용 layer (구현됨, 2026-05-19)**: `scripts/patch-discord-bot-drop.sh` 가 위 3-가드를 **idempotent** 하게 재적용한다. 인자 없이 돌리면 **있는 사본 전부**를 고친다 — 위 `marketplaces/…` 사본과 `~/.claude/plugins/cache/claude-plugins-official/discord/<버전>/server.ts`(봇이 실제로 돌리는 쪽 · 버전마다). 안전속성: 편집 전 `.thiscode-j2.bak-<ts>` 백업 / marker `thiscode-j2-guard` 로 재실행 시 no-op / **정확 취약라인만** 치환(upstream shape 바뀌면 맹목 편집 없이 stderr 경고) / **fail-open**(항상 exit 0 — self-update 체인 안 깸).
 - 자동: `/thiscode:self-update pull` Step 4 가 update 직후 자동 호출.
 - opt-in 상시: 플러그인이 자주 갱신되는 다봇 환경은 SessionStart hook 에 등록 권장 —
   `~/.claude/settings.json` 의 `hooks.SessionStart[].hooks[]` 에

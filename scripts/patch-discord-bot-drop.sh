@@ -14,8 +14,10 @@
 #   - idempotent: a marker comment makes re-runs a no-op
 #   - upstream changed shape (no vuln line, no marker) → WARN, never blind-edit
 #
-# Usage: bash patch-discord-bot-drop.sh        (auto-locates the plugin)
-#        PATCH_TARGET=<file> bash …            (explicit target — tests)
+# Usage: bash patch-discord-bot-drop.sh        (patches every copy of the plugin it finds:
+#                                               the marketplaces copy and each version under
+#                                               cache/ — a running bot loads the cache copy)
+#        PATCH_TARGET=<file> bash …            (explicit target — that one file only; tests)
 # Recipe / context: ThisCode docs/08-debug-노하우.md J-2.
 set -uo pipefail
 # fail-open contract: an unset HOME under `set -u` must NOT abort. Default it
@@ -23,33 +25,24 @@ set -uo pipefail
 HOME="${HOME:-}"
 MARKER="thiscode-j2-guard"
 
-TARGET="${PATCH_TARGET:-}"
-if [ -z "$TARGET" ]; then
-  for c in \
-    "$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/server.ts" \
-    "$HOME"/.claude/plugins/cache/claude-plugins-official/discord/*/server.ts; do
-    if [ -f "$c" ]; then TARGET="$c"; break; fi
-  done
-fi
-
-if [ -z "${TARGET:-}" ] || [ ! -f "$TARGET" ]; then
-  echo "[j2-patch] discord plugin server.ts not found — skip (nothing to patch)"
-  exit 0
-fi
+# One copy: marker check → exact-line check → backup → edit. Never exits; a copy that
+# cannot be handled is reported and left as it is, and the caller goes on to the next.
+patch_one() {   # $1 = a server.ts that exists
+  local TARGET="$1" rc
 
 if grep -q "$MARKER" "$TARGET" 2>/dev/null; then
   echo "[j2-patch] already patched ($MARKER present) — no-op: $TARGET"
-  exit 0
+  return 0
 fi
 
 if ! grep -Eq '^[[:space:]]*if \(msg\.author\.bot\) return;?[[:space:]]*$' "$TARGET"; then
   echo "[j2-patch] WARN: blanket-drop line not found and no marker — upstream discord plugin may have changed shape. NO edit made; manual review: ThisCode docs/08-debug-노하우.md J-2." >&2
-  exit 0
+  return 0
 fi
 
 cp "$TARGET" "$TARGET.thiscode-j2.bak-$(date -u +%Y%m%d-%H%M%S)" 2>/dev/null || {
   echo "[j2-patch] WARN: could not write backup; aborting without edit ($TARGET)" >&2
-  exit 0
+  return 0
 }
 
 MARKER="$MARKER" python3 - "$TARGET" <<'PY'
@@ -91,7 +84,33 @@ PY
 rc=$?
 if [ "$rc" -ne 0 ]; then
   echo "[j2-patch] ERROR: patch failed (rc=$rc) — .bak retained, file left as-is" >&2
-  exit 0   # fail-open
+  return 0   # fail-open
 fi
 echo "[j2-patch] patched (3-guard applied, .bak saved): $TARGET"
+return 0
+}
+
+if [ -n "${PATCH_TARGET:-}" ]; then
+  # explicit target: that one file only
+  if [ ! -f "$PATCH_TARGET" ]; then
+    echo "[j2-patch] discord plugin server.ts not found — skip (nothing to patch)"
+    exit 0
+  fi
+  patch_one "$PATCH_TARGET"
+  exit 0
+fi
+
+# No explicit target: every copy that exists. The marketplaces copy is what a plugin update
+# rewrites; the copies under cache/ (one per installed version) are what a bot actually runs.
+found=0
+for c in \
+  "$HOME/.claude/plugins/marketplaces/claude-plugins-official/external_plugins/discord/server.ts" \
+  "$HOME"/.claude/plugins/cache/claude-plugins-official/discord/*/server.ts; do
+  [ -f "$c" ] || continue
+  found=1
+  patch_one "$c"
+done
+if [ "$found" -eq 0 ]; then
+  echo "[j2-patch] discord plugin server.ts not found — skip (nothing to patch)"
+fi
 exit 0

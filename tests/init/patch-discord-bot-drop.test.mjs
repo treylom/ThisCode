@@ -6,7 +6,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, rmSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -118,4 +118,104 @@ test('PATCH_TARGET unset + HOME unset → fail-open exit 0, no set -u crash', ()
     'must not abort on unbound HOME',
   );
   assert.match((r.stdout ?? '') + (r.stderr ?? ''), /not found|skip/i);
+});
+
+// Without PATCH_TARGET the script must patch EVERY copy of the plugin: the marketplaces copy
+// and each version under cache/. A running bot loads the cache copy, so patching only the
+// first copy found reports "patched" and changes nothing for the bot.
+function home() {
+  const h = mkdtempSync(join(tmpdir(), 'j2-home-'));
+  const plugins = join(h, '.claude', 'plugins');
+  const market = join(plugins, 'marketplaces', 'claude-plugins-official', 'external_plugins', 'discord');
+  const cache = v => join(plugins, 'cache', 'claude-plugins-official', 'discord', v);
+  const put = (dir, text) => { mkdirSync(dir, { recursive: true }); writeFileSync(join(dir, 'server.ts'), text); return join(dir, 'server.ts'); };
+  const auto = () => {
+    const r = spawnSync('bash', [SCRIPT], { env: { PATH: process.env.PATH, HOME: h }, encoding: 'utf8' });
+    return { code: r.status ?? 1, stdout: r.stdout ?? '', stderr: r.stderr ?? '' };
+  };
+  return { h, market, cache, put, auto };
+}
+const marked = f => /thiscode-j2-guard/.test(readFileSync(f, 'utf8'));
+const backups = f => readdirSync(join(f, '..')).filter(n => n.includes('thiscode-j2.bak')).length;
+
+test('no PATCH_TARGET: every copy is patched — marketplaces and each cache version — and a second run is a no-op for all', () => {
+  const t = home();
+  const m = t.put(t.market, VULN);
+  const c1 = t.put(t.cache('0.0.4'), VULN);
+  const c2 = t.put(t.cache('0.0.5'), VULN);
+
+  const first = t.auto();
+  assert.equal(first.code, 0);
+  for (const f of [m, c1, c2]) {
+    assert.ok(marked(f), `patched: ${f}`);
+    assert.equal(backups(f), 1, `one backup next to ${f}`);
+  }
+  assert.equal(first.stdout.split('\n').filter(l => /patched \(3-guard applied/.test(l)).length, 3, 'one line per copy');
+
+  const second = t.auto();
+  assert.equal(second.code, 0);
+  assert.equal(second.stdout.split('\n').filter(l => /no-op/.test(l)).length, 3, 'all three are no-ops now');
+  for (const f of [m, c1, c2]) assert.equal(backups(f), 1, 'no second backup');
+  rmSync(t.h, { recursive: true, force: true });
+});
+
+test('no PATCH_TARGET: only a cache copy exists → it is patched; no copy at all → skip, exit 0', () => {
+  const t = home();
+  const c = t.put(t.cache('0.0.4'), VULN);
+  assert.equal(t.auto().code, 0);
+  assert.ok(marked(c));
+  rmSync(t.h, { recursive: true, force: true });
+
+  const empty = home();
+  const r = empty.auto();
+  assert.equal(r.code, 0);
+  assert.match(r.stdout + r.stderr, /not found|skip/i);
+  rmSync(empty.h, { recursive: true, force: true });
+});
+
+test('no PATCH_TARGET: a copy that cannot be handled is skipped with a warning and the next copy is still patched', () => {
+  const t = home();
+  const changed = t.put(t.market, VULN.replace('  if (msg.author.bot) return\n', '  if (isBot(msg)) return\n'));
+  const before = readFileSync(changed, 'utf8');
+  const already = t.put(t.cache('0.0.3'), VULN.replace('  if (msg.author.bot) return', '  // thiscode-j2-guard: done earlier\n  if (msg.webhookId) return'));
+  const c = t.put(t.cache('0.0.4'), VULN);
+  const r = t.auto();
+  assert.equal(r.code, 0);
+  assert.equal(readFileSync(changed, 'utf8'), before, 'a copy with another shape is not edited');
+  assert.match(r.stderr, /WARN/);
+  assert.equal(backups(already), 0, 'an already patched copy gets no backup');
+  assert.ok(marked(c), 'the copy after them is patched');
+  rmSync(t.h, { recursive: true, force: true });
+});
+
+test('no PATCH_TARGET: when the backup of one copy cannot be written, that copy is left alone and the others are patched', { skip: process.getuid && process.getuid() === 0 ? 'root can write anywhere' : false }, () => {
+  const t = home();
+  const m = t.put(t.market, VULN);
+  const c = t.put(t.cache('0.0.4'), VULN);
+  chmodSync(t.market, 0o555);   // no backup can be written next to this copy
+  try {
+    const r = t.auto();
+    assert.equal(r.code, 0);
+    assert.ok(!marked(m), 'not edited without a backup');
+    assert.match(r.stderr, /could not write backup/);
+    assert.ok(marked(c), 'the other copy is patched');
+  } finally {
+    chmodSync(t.market, 0o755);
+    rmSync(t.h, { recursive: true, force: true });
+  }
+});
+
+test('PATCH_TARGET set: only that file is touched, even when other copies exist under HOME', () => {
+  const t = home();
+  const m = t.put(t.market, VULN);
+  const c = t.put(t.cache('0.0.4'), VULN);
+  const dir = mkdtempSync(join(tmpdir(), 'j2-'));
+  const f = join(dir, 'server.ts');
+  writeFileSync(f, VULN);
+  const r = spawnSync('bash', [SCRIPT], { env: { PATH: process.env.PATH, HOME: t.h, PATCH_TARGET: f }, encoding: 'utf8' });
+  assert.equal(r.status, 0);
+  assert.ok(marked(f));
+  assert.ok(!marked(m) && !marked(c), 'the copies under HOME are not touched');
+  rmSync(t.h, { recursive: true, force: true });
+  rmSync(dir, { recursive: true, force: true });
 });

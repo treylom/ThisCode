@@ -85,6 +85,11 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
   `uname` on PATH they are switched off, which takes someone who can already
   change the user's own environment.
+- `scripts/patch-discord-bot-drop.sh` (the patch that lets one bot read
+  another bot's messages in a server) now patches every copy of the Discord
+  plugin it finds — the marketplaces copy and each version under `cache/`.
+  Before, it stopped at the first copy, which left the cache copy — the one a
+  running bot loads — unpatched while reporting "patched".
 - This protection covers the Discord token route
   (`scripts/discord-token-capture.sh`) only. The Slack token steps in
   `skills/slack-configure` do not have the arm check or the ACL removal yet.
