@@ -30,9 +30,9 @@ $ARGUMENTS
 ### Step 2. Discord Developer Portal — 새 Application + Bot
 
 `/thiscode:start` Step 2 와 동일:
-1. New Application(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 = 봇 이름 → 약관 동의 칸 체크 → «만들기»(Create)
+1. New Application(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 = 봇 이름 → 약관 동의 칸과 «만들기»(Create)는 사용자가 직접 누르거나, 봇이 대신 하려면 먼저 예/아니오를 묻고 ‘예’ 를 받은 뒤에만 누른다(create-bot Step 3 의 2번 — 답이 없으면 누르지 않는다)
 2. Bot 탭 → Reset Token → 토큰 옆 ‘복사’(Copy) 누르기 — 값은 대화 창에 붙여 넣지 않는다(저장 = Step 3)
-3. OAuth2 URL Generator → 같은 권한
+3. OAuth2 URL Generator → 기본 권한 11종(`permissions=395137117248`). 더할 3종(Mention Everyone / Pin Messages / Manage Webhooks)은 무엇을 할 수 있게 되는지 보이고 물어서 ‘예’ 를 받은 때만 더한다(create-bot Step 3 의 5번)
 4. 본인 Discord 서버 / DM 채널 초대
 
 ### Step 3. 토큰 + soul.md 생성

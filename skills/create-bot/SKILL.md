@@ -646,7 +646,7 @@ if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
     [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
   done
   if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
-    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok   # 원장이 마지막 상태를 말하게
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok   # 설치 기록이 마지막 상태를 말하게
   else
     echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 스킬을 한 번 실행해 주세요."
     bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail check-failed

@@ -206,3 +206,46 @@ test('install log: a folder someone pointed the log at is not re-moded, and a fo
   chmodSync(mine, 0o777);
   assert.equal(run('--attempted', 'discord_intents', 'fail', 'click-no-effect').status, 3, 'others could swap the file there');
 });
+
+test('install log: reading is as strict as writing — audit and hand-over refuse what a write would refuse', { skip: WINDOWS ? 'symlinks need privileges on Windows' : false }, () => {
+  const three = '{"ts":"t","kind":"attempt","gate":"discord_intents","result":"fail","detail":"other"}\n'.repeat(3);
+  // a log behind a symlink: --audit does not read it
+  const link = box();
+  mkdirSync(link.logDir);
+  const elsewhere = join(link.dir, 'elsewhere');
+  writeFileSync(elsewhere, three);
+  symlinkSync(elsewhere, link.log);
+  const audit = link.run('--audit');
+  assert.equal(audit.status, 2);
+  assert.match(audit.stderr, /설치 기록 파일을 믿을 수 없어 읽지 않는다/);
+  assert.doesNotMatch(audit.stdout, /위반 0 건/);
+
+  // a log in a folder others can write: three failures there open nothing
+  const open = mkdtempSync(join(tmpdir(), 'gate-open-'));
+  chmodSync(open, 0o775);
+  const openLog = join(open, 'log.jsonl');
+  writeFileSync(openLog, three);
+  chmodSync(openLog, 0o600);
+  const env = { ...process.env, HOME: open, THISCODE_INSTALL_STATE: join(open, 'state.yaml'), THISCODE_INSTALL_LOG: openLog };
+  const run = (...args) => spawnSync('bash', ['scripts/install-gate.sh', ...args], { encoding: 'utf8', env });
+  assert.equal(run('--handoff', 'discord_intents').status, 1, 'not handed over on the word of that log');
+  assert.equal(run('--audit').status, 2);
+  // control: the same three lines in a private folder do open the hand-over
+  const ok = box();
+  mkdirSync(ok.logDir, { mode: 0o700 });
+  writeFileSync(ok.log, three);
+  assert.equal(ok.run('--handoff', 'discord_intents').status, 0, 'control');
+  assert.equal(ok.run('--audit').status, 0, 'control: audit reads a log it can trust');
+});
+
+test('install log: a file that is not an install log is neither re-moded nor appended to', { skip: NO_MODE }, () => {
+  const b = box();
+  const script = join(b.dir, 'my-script.sh');
+  writeFileSync(script, '#!/bin/sh\necho hi\n');
+  chmodSync(script, 0o755);
+  const env = { ...process.env, HOME: b.dir, THISCODE_INSTALL_STATE: join(b.dir, 'state.yaml'), THISCODE_INSTALL_LOG: script };
+  const result = spawnSync('bash', ['scripts/install-gate.sh', '--attempted', 'discord_intents', 'fail', 'other'], { encoding: 'utf8', env });
+  assert.equal(result.status, 3);
+  assert.equal(readFileSync(script, 'utf8'), '#!/bin/sh\necho hi\n');
+  assert.equal(mode(script), '755');
+});

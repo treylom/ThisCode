@@ -129,7 +129,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
    - 원하면 3종을 더 고른다(Mention Everyone / Pin Messages / Manage Webhooks — 무엇을 할 수 있게 되는지는 create-bot Step 3). 고르지 않아도 봇은 돈다.
 5. 생성된 URL 로 봇을 본인 Discord 서버 또는 DM 가능 채널에 초대 → **승인(사람)**
 
-권한 설명(더할 3종 포함)·비공개 채널 멤버 추가·데스크톱 앱 가로채기 대응 등 상세는 `skills/create-bot/SKILL.md` Step 3 이 정본이다 — 사본 drift 방지를 위해 본 파일엔 요약만 둔다.
+권한 설명(더할 3종 포함)·비공개 채널 멤버 추가·데스크톱 앱 가로채기 대응 등 상세는 `skills/create-bot/SKILL.md` Step 3 이 기준이다 — 사본 drift 방지를 위해 본 파일엔 요약만 둔다.
 
 > ⚠️ **다봇 셋업 시 — 봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 애플리케이션이라
 > OAuth 초대도 **봇 앱마다 따로** 해야 합니다. 신규 봇 초대를 빠뜨리면 그 봇만 무반응

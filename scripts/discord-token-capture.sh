@@ -25,6 +25,7 @@ set -u
 MARKER='THISCODE_NOT_COPIED_YET'
 MODE="${1:-}"
 BOT="${2:-}"
+BOT_SHOWN=''
 
 usage() {
   echo "쓰는 법: discord-token-capture.sh arm | capture <봇이름> | paste <봇이름>" >&2
@@ -36,6 +37,7 @@ bot_dir() {   # 봇 이름은 값 전체가 영문 · 숫자 · - · _ 여야 �
   case "$BOT" in
     ''|*[!A-Za-z0-9_-]*) usage ;;
   esac
+  BOT_SHOWN="$BOT"   # 꼴 검사를 지난 이름만 안내 글에 찍는다
   BOT_DIR="$HOME/.claude/channels/discord-$BOT"
   ENV_FILE="$BOT_DIR/.env"
 }
@@ -51,7 +53,7 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 no_tool() {   # $1 = 설치 안내 한 줄
   echo "❌ 클립보드 도구가 없어 여기서 멈춥니다 — $1" >&2
-  echo "   또는 터미널 새 창에서 직접: bash $0 paste ${BOT:-<봇이름>}   (물음에 토큰을 붙여 넣습니다 · 화면에 안 보입니다)" >&2
+  echo "   또는 터미널 새 창에서 직접: bash $0 paste ${BOT_SHOWN:-<봇이름>}   (물음에 토큰을 붙여 넣습니다 · 화면에 안 보입니다)" >&2
   echo "   토큰을 대화 창에 붙여 넣지 마세요." >&2
   echo "사유 코드: tool-error" >&2
   exit 4
@@ -146,7 +148,12 @@ case "$MODE" in
     bot_dir
     pick_clipboard
     V="$(clip_read 2>/dev/null)" || { echo "❌ 클립보드를 읽지 못했습니다" >&2; echo "사유 코드: tool-error" >&2; exit 4; }
-    check_value || exit 1
+    if ! check_value; then
+      # 표식이 아닌 무언가가 복사돼 있었다면(토큰이 섞였을 수 있다) 클립보드에 남기지 않는다.
+      if [ -n "$V" ] && [ "$V" != "$MARKER" ]; then clip_clear >/dev/null 2>&1 || true; fi
+      V=''
+      exit 1
+    fi
     save_value; rc=$?
     V=''
     [ "$rc" -eq 0 ] || exit "$rc"

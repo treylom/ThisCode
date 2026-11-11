@@ -188,7 +188,7 @@ test('실패를 «사유 없이» 기록하려 하면 거부한다 — 사유 �
   });
 });
 
-test('사유 코드가 있으면 실패도 기록된다 (그리고 그 코드가 원장에 실린다)', () => {
+test('사유 코드가 있으면 실패도 기록된다 (그리고 그 코드가 설치 기록에 실린다)', () => {
   withSandbox((box) => {
     const r = run(box, ['--attempted', 'brand_new_gate', 'fail', 'network-error'], { mode: 'auto' });
     assert.equal(r.code, 0);

@@ -108,6 +108,19 @@ test('refused without saving: a wrong shape, two lines, an empty clipboard', { s
   }
   assert.ok(!existsSync(b.envFile));
   assert.ok(!existsSync(join(b.home, 'ran')), 'nothing in the clipboard was run');
+  // a refused value does not stay in the clipboard (it may hold the token among other text)
+  b.copy(`${SHAPED}\n${SHAPED}`);
+  assert.equal(b.run('capture', 'mybot').status, 1);
+  assert.equal(b.clipboard(), '', 'cleared after a refusal');
+  // …but the marker stays when nothing was copied, so the next capture still knows
+  assert.equal(b.run('arm').status, 0);
+  assert.equal(b.run('capture', 'mybot').status, 1);
+  assert.equal(b.clipboard(), MARKER);
+  // an unchecked second argument is not printed back by the no-tool message
+  const bare = box('xclip', { tools: false });
+  const armed = bare.run('arm', '$(echo injected)');
+  assert.equal(armed.status, 4);
+  assert.ok(!armed.stderr.includes('injected'));
 });
 
 test('the reason codes this script names are codes install-gate.sh accepts', () => {
@@ -255,4 +268,13 @@ test('no skill or command shows a token placeholder inside a command or asks for
     assert.match(text, /discord-token-capture\.sh paste <bot-name>/, `${path}: and at the terminal route`);
     assert.match(text, /대화 창에 붙여 넣지 않는다/, path);
   }
+});
+
+test('commands/add-bot.md follows the same two questions as the skill: the terms box and the three wider permissions', () => {
+  const text = readFileSync('commands/add-bot.md', 'utf8');
+  assert.doesNotMatch(text, /약관 동의 칸 체크 → «만들기»/, 'no unasked tick');
+  assert.match(text, /먼저 예\/아니오를 묻고 ‘예’ 를 받은 뒤에만 누른다/);
+  assert.match(text, /기본 권한 11종\(`permissions=395137117248`\)/);
+  assert.match(text, /‘예’ 를 받은 때만 더한다/);
+  assert.doesNotMatch(text, /→ 같은 권한/);
 });

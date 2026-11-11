@@ -150,7 +150,7 @@ test('🟡C-a: the playwright-attach offer text and command stay byte-identical 
 test('B7: commands/start.md points Step 2 at create-bot Step 3 as canonical instead of holding its own full copy', () => {
   const text = readFileSync('commands/start.md', 'utf8');
   assert.match(text, /### Step 2\. Discord 봇 생성 \(기본 = 자동 완주, B7\)/);
-  assert.match(text, /`skills\/create-bot\/SKILL\.md` Step 3 이 정본이다/);
+  assert.match(text, /`skills\/create-bot\/SKILL\.md` Step 3 이 기준이다/);
 });
 
 test('B7: skills/help/SKILL.md no longer asserts that app creation/token issuance must always be done by a human', () => {

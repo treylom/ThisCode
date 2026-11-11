@@ -57,6 +57,7 @@ _json_escape() {
 # 남는 틈: bash 만으로는 «한 번 연 파일을 확인하고 그 손잡이에 쓰기»(O_NOFOLLOW + fstat)를 못 한다.
 #   확인과 덧붙이기 사이에 «같은 사용자»의 다른 프로세스가 파일을 바꿔치면 막지 못한다.
 #   다른 사용자는 0700 폴더에 들어올 수 없어 바꿔칠 수 없다. 덧붙인 뒤 링크 여부를 한 번 더 본다.
+#   또 하나: 권한 비트(0700 · 0600)만 본다. macOS 의 파일 ACL(상속 ACL 포함)은 보지도 지우지도 않는다.
 _modes_meaningful() {   # 윈도우 git-bash 는 권한 비트가 뜻이 없다(거긴 파일 ACL 이 따로 있다)
   case "$(uname -s 2>/dev/null)" in
     MINGW*|MSYS*|CYGWIN*) return 1 ;;
@@ -85,9 +86,9 @@ _ledger_dir_ready() {   # $1=make → 없으면 만든다
     chmod 700 "$dir" 2>/dev/null || return 1
     info="$(_stat_mode_links "$dir")" || return 1
     [ "${info%% *}" = "700" ] || return 1
-  elif [ "${1:-}" = "make" ]; then
-    # THISCODE_INSTALL_LOG 로 남의 폴더를 가리킨 경우: 그 폴더 권한은 바꾸지 않는다.
-    # 대신 남이 쓸 수 있는 폴더면(그룹·기타 쓰기) 거기에는 쓰지 않는다.
+  else
+    # THISCODE_INSTALL_LOG 로 다른 폴더를 가리킨 경우: 그 폴더 권한은 바꾸지 않는다.
+    # 대신 남이 쓸 수 있는 폴더면(그룹·기타 쓰기) 거기에는 쓰지도, 거기 것을 읽지도 않는다.
     info="$(_stat_mode_links "$dir")" || return 1
     mode="${info%% *}"
     case "$mode" in
@@ -103,6 +104,15 @@ _ledger_file_ok() {   # 지금 있는 파일이 믿을 만한가 — 심볼릭 �
   [ -f "$LEDGER" ] && [ -O "$LEDGER" ] || return 1
   info="$(_stat_mode_links "$LEDGER")" || return 1
   [ "${info##* }" = "1" ] || return 1
+  # 비어 있지 않다면 우리 기록 꼴이어야 한다 — THISCODE_INSTALL_LOG 가 다른 파일(스크립트 · 설정)을
+  # 가리킬 때 그 파일의 권한을 바꾸거나 거기에 덧붙이지 않게.
+  if [ -s "$LEDGER" ]; then
+    IFS= read -r first < "$LEDGER" 2>/dev/null || [ -n "${first:-}" ] || return 1
+    case "$first" in
+      '{"ts":"'*) : ;;
+      *) return 1 ;;
+    esac
+  fi
   return 0
 }
 
@@ -267,7 +277,8 @@ if [ "${1:-}" = "--handoff" ]; then
   fi
   if [ "$fails" -ge "$need" ]; then
     echo "자동 시도 $fails/$need 회 모두 실패 — 넘김 허용 ($gate). 넘길 때 무엇을 시도했는지 함께 말한다."
-    _ledger_append "handoff" "$gate" "handoff-allowed" "after $fails failed attempts"
+    # 넘김을 기록하지 못하면 횟수가 0 으로 돌아가지 않는다 — 그럴 때는 허용하지 않는다.
+    _ledger_append "handoff" "$gate" "handoff-allowed" "after $fails failed attempts" || exit 3
     exit 0
   fi
   next=$((fails + 1))
@@ -289,6 +300,10 @@ fi
 #   답하지 «않는» 것: 수동 안내가 화면에 실제로 떴는지. 게이트는 그걸 볼 수 없다.
 #   그러므로 위반 0 은 「계약 준수」가 아니라 「미이행 흔적 없음」이다.
 if [ "${1:-}" = "--audit" ]; then
+  if ! _ledger_trusted; then
+    echo "install-gate: 설치 기록 파일을 믿을 수 없어 읽지 않는다 — $LEDGER (심볼릭 링크 · 일반 파일 아님 · 소유자 다름 · 남이 쓸 수 있는 폴더 · 우리 기록 꼴이 아님)" >&2
+    exit 2
+  fi
   if [ ! -f "$LEDGER" ]; then
     echo "원장 없음 — $LEDGER (아직 게이트가 한 번도 안 불렸다)"
     exit 0
