@@ -448,3 +448,107 @@ test('create-bot text: arm names the bot everywhere, the wait is the script\'s n
     });
   }
 });
+
+// A record that arm never wrote, sitting where capture looks. It is valid in every line; what is
+// wrong is the folder it lies in. capture must refuse before reading the clipboard, and must not
+// repair the folder and then believe what was already in it.
+function planted(setup) {
+  const b = box('darwin');
+  const top = join(b.home, '.thiscode');
+  const armDir = join(top, 'token-arm');
+  setup({ b, top, armDir });
+  writeFileSync(b.armFile, `nonce=${'0123456789abcdef'.repeat(2)}\nbot=mybot\narmed_at=${Math.floor(Date.now() / 1000)}\n`);
+  chmodSync(b.armFile, 0o600);
+  b.copy(SHAPED);
+  return { b, top, armDir };
+}
+function refusedUnread(b, why) {
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1, `${why}: ${everything(result)}`);
+  assert.match(result.stderr, /사유 코드: not-armed/, why);
+  assert.ok(!b.calls().includes('pbpaste'), `${why}: the clipboard was not read`);
+  assert.equal(b.clipboard(), SHAPED, `${why}: and not touched`);
+  assert.ok(!existsSync(b.envFile), `${why}: nothing saved`);
+  assert.ok(existsSync(b.armFile), `${why}: the record is left where it was`);
+}
+const dirs = ({ top, armDir }) => { mkdirSync(armDir, { recursive: true }); chmodSync(top, 0o700); chmodSync(armDir, 0o700); };
+
+test('capture checks the folders a record lies in before reading it: an arm folder others can write to', { skip: SKIP }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  refusedUnread(b, 'arm folder 0777');
+  assert.equal(mode(armDir), '777', 'the read path repairs nothing');
+});
+
+test('capture checks the folders a record lies in before reading it: ~/.thiscode others can write to', { skip: SKIP }, () => {
+  const { b, top } = planted(at => { dirs(at); chmodSync(at.top, 0o777); });
+  refusedUnread(b, '~/.thiscode 0777');
+  assert.equal(mode(top), '777', 'the read path repairs nothing');
+});
+
+test('capture checks the folders a record lies in before reading it: ~/.thiscode is a link to another folder', { skip: SKIP }, () => {
+  const { b } = planted(({ b, top }) => {
+    const elsewhere = join(b.home, 'elsewhere');
+    mkdirSync(join(elsewhere, 'token-arm'), { recursive: true });
+    chmodSync(elsewhere, 0o700); chmodSync(join(elsewhere, 'token-arm'), 0o700);
+    symlinkSync(elsewhere, top);
+  });
+  refusedUnread(b, 'linked ~/.thiscode');
+});
+
+test('capture checks the record file without repairing it: a record with wider modes is not narrowed and then believed', { skip: SKIP }, () => {
+  const { b } = planted(dirs);
+  chmodSync(b.armFile, 0o644);
+  refusedUnread(b, 'record 0644');
+  assert.equal(mode(b.armFile), '644', 'the read path repairs nothing');
+});
+
+test('macOS: capture refuses a record in an arm folder whose ACL lets others add files', { skip: process.platform !== 'darwin' ? 'file ACLs are handled on macOS only' : false }, () => {
+  const acl = path => spawnSync('/bin/ls', ['-lde', path], { encoding: 'utf8' }).stdout.trim().split('\n').slice(1);
+  const { b, armDir } = planted(at => {
+    dirs(at);
+    assert.equal(spawnSync('/bin/chmod', ['+a', 'everyone allow add_file,delete_child,list,search,file_inherit', at.armDir]).status, 0);
+  });
+  assert.equal(acl(armDir).length, 1, 'bait: the ACL is there');
+  spawnSync('/bin/chmod', ['-N', b.armFile]);   // the record itself is clean; only its folder is not
+  refusedUnread(b, 'arm folder with a write ACL');
+  assert.equal(acl(armDir).length, 1, 'the read path repairs nothing');
+});
+
+test('control: a record in private folders is read, and a first-time user or one whose ~/.thiscode was 0755 goes through arm → capture', { skip: SKIP }, () => {
+  // the same planted record, folders 0700: this is the same user writing the file, outside what the check is for
+  const { b } = planted(dirs);
+  assert.equal(b.run('capture', 'mybot').status, 0, 'positive control for the four refusals above');
+
+  const first = box('darwin');
+  assert.equal(first.arm().status, 0);
+  first.copy(SHAPED);
+  assert.equal(first.run('capture', 'mybot').status, 0, 'no ~/.thiscode before');
+
+  const older = box('darwin');
+  mkdirSync(join(older.home, '.thiscode'));
+  chmodSync(join(older.home, '.thiscode'), 0o755);
+  writeFileSync(join(older.home, '.thiscode', 'install-state.yaml'), 'mode: auto\n');
+  assert.equal(older.arm().status, 0);
+  assert.equal(mode(join(older.home, '.thiscode')), '700', 'arm (the write path) is where folders are repaired');
+  older.copy(SHAPED);
+  assert.equal(older.run('capture', 'mybot').status, 0, '~/.thiscode was 0755');
+  assert.ok(existsSync(join(older.home, '.thiscode', 'install-state.yaml')), 'other files there are left alone');
+});
+
+test('arm repairs a folder that was open to others, and then throws away every record that was already in it', { skip: SKIP }, () => {
+  const { b, armDir } = planted(at => { dirs(at); chmodSync(at.armDir, 0o777); });
+  assert.equal(b.arm('otherbot').status, 0, 'arming a different bot repairs the folder');
+  assert.equal(mode(armDir), '700');
+  assert.deepEqual(readdirSync(armDir), ['otherbot.arm'], 'the record planted for mybot did not survive the repair');
+  b.copy(SHAPED);
+  const result = b.run('capture', 'mybot');
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /사유 코드: not-armed/);
+  assert.ok(!existsSync(b.envFile));
+
+  // control: in folders that were private all along, arming one bot leaves another bot's record alone
+  const calm = box('darwin');
+  assert.equal(calm.arm('mybot').status, 0);
+  assert.equal(calm.arm('otherbot').status, 0);
+  assert.deepEqual(readdirSync(join(calm.armFile, '..')).sort(), ['mybot.arm', 'otherbot.arm']);
+});

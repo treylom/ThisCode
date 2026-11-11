@@ -116,6 +116,34 @@ private_file() {   # $1 = 이미 있는 파일
   [ "$info" = "600 1" ]
 }
 
+# ── 읽는 길용: «확인만» 한다(아무것도 고치지 않는다) ──────────────────
+# 위의 private_dir · private_file 은 권한과 ACL 을 «고친 뒤» 참을 돌려준다 — 새로 쓰는 길에만 쓴다.
+# 이미 있는 것을 읽어서 믿을 때 그것을 쓰면, 고치기 전에 남이 넣어 둔 것을 받아들이게 된다.
+acl_none() {   # $1 = 파일이나 폴더 — macOS 에서 ACL 줄이 없는가(다른 OS 는 보지 않는다)
+  is_darwin || return 0
+  [ "$(LC_ALL=C ls -lde "$1" 2>/dev/null | wc -l | tr -d ' ')" = "1" ]
+}
+
+dir_is_private() {   # $1 = 폴더 — 링크가 아닌 진짜 폴더 · 내 것 · 정확히 0700 · (macOS) ACL 없음
+  local info
+  [ -L "$1" ] && return 1
+  [ -d "$1" ] && [ -O "$1" ] || return 1
+  modes_meaningful || return 0
+  info="$(stat_mode_links "$1")" || return 1
+  [ "${info%% *}" = "700" ] || return 1
+  acl_none "$1"
+}
+
+file_is_private() {   # $1 = 파일 — 링크 아님 · 일반 파일 · 내 것 · 정확히 0600 · 하드 링크 1 · (macOS) ACL 없음
+  local info
+  [ -L "$1" ] && return 1
+  [ -f "$1" ] && [ -O "$1" ] || return 1
+  modes_meaningful || return 0
+  info="$(stat_mode_links "$1")" || return 1
+  [ "$info" = "600 1" ] || return 1
+  acl_none "$1"
+}
+
 no_tool() {   # $1 = 설치 안내 한 줄
   echo "❌ 클립보드 도구가 없어 여기서 멈춥니다 — $1" >&2
   echo "   또는 터미널 새 창에서 직접: bash $0 paste ${BOT_SHOWN:-<봇이름>}   (물음에 토큰을 붙여 넣습니다 · 화면에 안 보입니다)" >&2
@@ -159,9 +187,19 @@ not_armed() {   # $1 = 까닭 한 줄 — 클립보드는 읽지 않았다
 }
 
 arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파일에 적는다
-  local LC_ALL=C
+  local LC_ALL=C old stale=0
+  # 쓰는 길: 폴더를 본인만 쓰게 고친다. 다만 고치기 «전» 에 본인만 쓰는 폴더가 아니었다면 그 안에
+  # 있던 기록은 누가 넣었는지 알 수 없다 — 어느 봇 것이든 전부 지운다(고친 뒤 믿지 않는다).
+  if [ -e "$HOME/.thiscode" ] || [ -L "$HOME/.thiscode" ]; then dir_is_private "$HOME/.thiscode" || stale=1; fi
+  if [ -e "$ARM_DIR" ] || [ -L "$ARM_DIR" ]; then dir_is_private "$ARM_DIR" || stale=1; fi
   private_dir "$HOME/.thiscode" || return 1
   private_dir "$ARM_DIR" || return 1
+  if [ "$stale" = 1 ]; then
+    for old in "$ARM_DIR"/*.arm; do
+      [ -e "$old" ] || [ -L "$old" ] || continue
+      rm -f "$old" 2>/dev/null || return 1   # 링크면 링크만 지운다 · 못 지우면 arm 하지 않는다
+    done
+  fi
   if [ -L "$ARM_FILE" ] || [ -e "$ARM_FILE" ]; then
     rm -f "$ARM_FILE" 2>/dev/null || return 1   # 링크면 링크만 지운다(따라가지 않는다)
   fi
@@ -174,11 +212,21 @@ arm_write() {   # 새 일회용 값을 만들어 ARM_NONCE 에 두고 상태 파
 
 arm_read() {   # 믿을 수 있는 기록이면 ARM_NONCE 를 채운다. 아니면 not_armed 로 끝낸다
   local LC_ALL=C key value nonce='' bot='' at='' now age
-  [ -L "$ARM_DIR" ] && not_armed "arm 기록 폴더를 믿을 수 없습니다"
+  # 읽는 길: 기록을 읽기 «전» 에 그것이 놓인 폴더(~/.thiscode 와 그 안의 arm 폴더)와 파일을 «확인만» 한다.
+  # 여기서는 권한을 고치지 않는다 — 고친 뒤 믿으면, 고치기 전에 남이 넣어 둔 기록을 받아들이게 된다.
+  # 고치는 것은 arm(쓰는 길)뿐이다. 거부할 때 폴더 안의 것은 건드리지 않는다.
+  if [ ! -e "$HOME/.thiscode" ] && [ ! -L "$HOME/.thiscode" ]; then
+    not_armed "이 봇으로 arm 한 기록이 없습니다"
+  fi
+  if [ ! -e "$ARM_DIR" ] && [ ! -L "$ARM_DIR" ]; then
+    not_armed "이 봇으로 arm 한 기록이 없습니다"
+  fi
+  dir_is_private "$HOME/.thiscode" && dir_is_private "$ARM_DIR" \
+    || not_armed "arm 기록 폴더가 본인만 쓰는 폴더가 아니라 그 안의 기록을 믿지 않습니다"
   if [ -L "$ARM_FILE" ] || [ ! -e "$ARM_FILE" ]; then
     not_armed "이 봇으로 arm 한 기록이 없습니다"
   fi
-  [ -d "$ARM_DIR" ] && [ -O "$ARM_DIR" ] && private_file "$ARM_FILE" || not_armed "arm 기록을 믿을 수 없습니다"
+  file_is_private "$ARM_FILE" || not_armed "arm 기록을 믿을 수 없습니다"
   while IFS='=' read -r key value; do
     case "$key" in
       nonce) nonce="$value" ;;
