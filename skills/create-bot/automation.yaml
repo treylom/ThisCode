@@ -112,7 +112,7 @@ steps:
     anchor: "초대 URL을 만듭니다"
     mode: "auto_then_human"
     gate: "discord_invite_url"
-    reason: "범위와 권한 11종 고르기는 자동"
+    reason: "범위와 권한 14종 고르기는 자동"
     handoff: "초대 주소를 만들려고 세 번 시도했는데 <사유>로 안 됐습니다. 제가 드리는 주소를 브라우저 주소 칸에 붙여 넣어 주세요 — 그 다음은 제가 이어갑니다."
 
   - id: "3/6"
