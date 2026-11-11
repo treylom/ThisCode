@@ -74,9 +74,10 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   macOS, carry no ACL, and that the record is 0600. It only checks; it repairs
   nothing and refuses with `not-armed` before reading the clipboard. `arm` is
   what repairs the folders. When `~/.thiscode` or the arm folder was open
-  before, `arm` locks them without making them 0700 yet, removes everything
-  in the arm folder and checks that it is empty, and only then sets both to
-  0700 (`~/.thiscode` last). If something cannot be removed it does not arm,
+  before, `arm` locks the one that was open without making it 0700 yet (a
+  `~/.thiscode` that already is 0700 is not touched), removes everything in
+  the arm folder and checks that it is empty, and only then sets the arm
+  folder and, last, `~/.thiscode` to 0700. If something cannot be removed it does not arm,
   tries to close the arm folder (mode 000), says whether that worked, and
   prints one line on how to move the folder away; until a later `arm` has
   emptied it, `capture` refuses. `install-gate.sh` repairs `~/.thiscode` as
