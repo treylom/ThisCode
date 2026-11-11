@@ -365,14 +365,24 @@ test('create-bot: a portal step with a human-only stop inside has its own text f
   assert.match(skillText, /사람만 하는 자리\(`human_stops`\)에서 넘길 때는 `handoff` 를 쓴다/);
 });
 
-test('create-bot: the consent box of the new-app window is ticked by the bot after a one-line notice, not handed to the user', () => {
+test('create-bot: the consent box of the new-app window is ticked only after the user answers yes — no answer, no click', () => {
   const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
   const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));
-  assert.match(flow, /약관 동의 칸은 봇이 체크한다 — 먼저 한 줄로 알린다/, 'default flow: the bot ticks it');
-  assert.match(flow, /동의 칸을 대신 체크하고 ‘만들기’를 누릅니다 — 원치 않으면 지금 말해 주세요/, 'the notice sentence');
-  assert.match(flow, /알림이지 묻고 기다리는 관문이 아니다/, 'a notice, not a question');
+  const question = /제가 동의 칸을 체크하고 ‘만들기’ 를 눌러도 될까요\? \(예 \/ 아니오 — 아니오면 직접 체크해 주세요\)/;
+  assert.match(flow, /약관 동의 칸은 묻고, ‘예’ 를 받은 뒤에만 체크한다/, 'default flow: ask first');
+  assert.match(flow, question, 'the question, with both answers named');
+  assert.match(flow, /체크하기 \*\*전에\*\* 묻고 답을 기다린다/, 'it waits for the answer');
+  assert.match(flow, /\*\*‘예’\*\* → 동의 칸을 체크하고 «만들기»를 누른다/, 'yes: the bot ticks and creates');
+  assert.match(flow, /\*\*‘아니오’\*\* → 동의 칸도 «만들기»도 누르지 않는다/, 'no: zero clicks');
+  assert.match(flow, /사용자가 직접 체크하고 만들기 전에는 다음 단계로 가지 않는다/, 'no: the flow stops at the user');
+  assert.match(flow, /\*\*답이 없거나 다른 말\*\* → 누르지 않고 기다린다/, 'no answer or anything else: zero clicks');
+  assert.match(flow, /지난번 답으로 ‘예’ 를 짐작하지 않는다/, 'a yes is never inferred');
+  // the old "tell and tick right away" wording must not come back anywhere
+  for (const gone of [/알림이지 묻고 기다리는 관문이 아니다/, /알리고 바로 체크/, /원치 않으면 지금 말해 주세요/, /약관 동의 칸은 봇이 체크한다/, /먼저 한 줄로 알린다/]) {
+    assert.doesNotMatch(text, gone, `gone from the skill: ${gone}`);
+    assert.doesNotMatch(readFileSync('skills/create-bot/automation.yaml', 'utf8'), gone, `gone from the table: ${gone}`);
+  }
   assert.match(flow, /입력 칸\(input\)을 직접 세어 체크 칸\(checkbox\)을 찾아/, 'how to find the box the page text does not show');
-  assert.doesNotMatch(text, /대신 체크하지 않는다/, 'the old "the bot does not tick it" line is gone');
   const manual = text.slice(text.indexOf('**수동 안내 (도구 없음'), text.indexOf('### Step 4. '));
   assert.match(manual, /동의 칸/, 'manual flow still tells the user about the box');
   assert.match(text, /신규 앱 만들기/);
@@ -382,10 +392,12 @@ test('create-bot: the consent box of the new-app window is ticked by the bot aft
   const step = table.steps.find(item => item.id === '3/2');
   assert.equal(step.mode, 'auto_then_human');
   assert.equal(step.human_stops, 'discord_hcaptcha', 'only the human check is a human-only stop in this step');
-  assert.match(step.notice || '', /동의 칸을 대신 체크/, 'the table carries the notice');
-  assert.match(step.if_declined || '', /사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라/, 'a refusal is the user\'s choice, not a hand-over');
-  assert.match(flow, /사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라 사용자가 고른 것이라 `--handoff` 를 부르지 않고/, 'the text says the same');
-  assert.doesNotMatch(step.handoff, /동의 칸/, 'the hand-over text no longer asks the user to tick the box');
+  assert.equal(step.notice, undefined, 'a notice is not consent');
+  assert.match(step.asks_consent || '', question, 'the table carries the same question');
+  assert.match(step.consent_required || '', /‘예’ 를 받은 뒤에만 동의 칸을 체크하고 ‘만들기’ 를 누른다 — 답이 없거나 다른 말이면 누르지 않고 기다린다/);
+  assert.match(step.if_declined || '', /동의 칸도 ‘만들기’ 도 누르지 않고 사용자 차례에서 멈춘다/, 'a refusal stops at the user');
+  assert.match(step.if_declined || '', /--handoff 를 부르지 않는다/, 'a refusal is the user\'s choice, not a hand-over');
+  assert.doesNotMatch(step.handoff, /동의 칸/, 'the hand-over text of the human check does not mention the box');
 });
 
 test('human-only means answers, login, the human check, a password or a permission prompt — never a terms box', () => {
