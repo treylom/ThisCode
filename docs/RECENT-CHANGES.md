@@ -68,16 +68,21 @@ auto-activate. The `/thiscode:setup` skill drives this step.
     is pressed, and `capture <bot>` — only if that bot was armed within the last
     10 minutes — checks the marker and the shape, writes a 0600 `.env`, empties
     the clipboard and prints the length and the file path, never the value.
-    `arm` writes its record under another name, runs the clipboard command
-    that puts the marker there, and only after that command succeeds gives the
-    record the name `capture` reads. An `arm` that fails or is stopped before
-    that point leaves no record `capture` reads; it may leave an unfinished
-    file under the other name, which the next `arm` removes. The
+    `arm` writes its new record under another name, runs the command that puts
+    the marker in the clipboard, and only after that command succeeds gives the
+    new record the name that `capture` reads. An `arm` that fails or is stopped
+    before that point does not give its new record that name; it may leave an
+    unfinished file under the other name, which the next `arm` removes. A
+    record from an earlier `arm` that succeeded can remain if the new `arm`
+    stops before removing it. The
     arm record is deleted once a copied value has been read; the result of that
     delete is not checked. Without a fresh arm for the same bot it refuses
     before reading the clipboard, so an old token left there is not saved
     without `arm`. Arm one bot at a time: while two bots are armed together, a
     token copied for one can be captured under the other's name.
+    Two `arm` runs for the same bot at the same time are not supported. A
+    clipboard command that reports success without writing anything is not
+    detected.
   - Before it reads an arm record, `capture` checks that `~/.thiscode` and the
     arm folder in it are real folders owned by the user, with owner-only
     permission bits (rwx------; the sticky and set-id bits are not looked at) and, on
