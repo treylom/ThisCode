@@ -50,7 +50,7 @@ record_attempt() {
   if [ "$result" = ok ]; then
     bash "$INSTALL_GATE" --attempted "$gate" ok >/dev/null 2>&1 || true
   else
-    bash "$INSTALL_GATE" --attempted "$gate" fail "${reason:-unknown failure}" >/dev/null 2>&1 || true
+    bash "$INSTALL_GATE" --attempted "$gate" fail "${reason:-other}" >/dev/null 2>&1 || true
   fi
 }
 
@@ -235,7 +235,7 @@ step2() {
       (cd "$PROJECT_DIR" && run_claude_configured mcp remove -s project "$MCP_NAME") || rc=$?
       if [ "$rc" -ne 0 ]; then
         rm -f "$backup"
-        record_attempt browser_mcp_registration fail "claude mcp remove exit $rc"
+        record_attempt browser_mcp_registration fail install-failed
         fail 2 C "기존 프로젝트 MCP 등록 제거 명령이 exit ${rc}로 끝났습니다"
         return 1
       fi
@@ -245,13 +245,13 @@ step2() {
     if [ "$rc" -ne 0 ]; then
       if [ -n "$backup" ]; then
         if ! cp "$backup" "$PROJECT_DIR/.mcp.json"; then
-          record_attempt browser_mcp_registration fail "claude mcp add exit $rc; restore failed; backup=$backup"
+          record_attempt browser_mcp_registration fail install-failed
           fail 2 C "새 프로젝트 MCP 등록이 exit ${rc}로 끝났고 기존 설정 복원도 실패했습니다. 백업을 보존했습니다: $backup"
           return 1
         fi
         rm -f "$backup"
       fi
-      record_attempt browser_mcp_registration fail "claude mcp add exit $rc"
+      record_attempt browser_mcp_registration fail install-failed
       fail 2 C "프로젝트 MCP 등록 명령이 exit ${rc}로 끝났습니다"
       return 1
     fi
@@ -324,7 +324,7 @@ step3() {
   if [ -x "$INSTALL_GATE" ]; then bash "$INSTALL_GATE" browser_binary_install >/dev/null 2>&1 || true; fi
   playwright_cli install chromium || rc=$?
   if [ "$rc" -ne 0 ]; then
-    record_attempt browser_binary_install fail "playwright install exit $rc"
+    record_attempt browser_binary_install fail install-failed
     fail 3 D "브라우저 설치 명령이 exit ${rc}로 끝났습니다"
     return 1
   fi

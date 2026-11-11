@@ -30,8 +30,9 @@ policy:
   attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
   attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
   attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
-  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> '<사유>'"
-  record_never: "사유에는 화면에서 읽은 값(토큰 · 비밀번호 · 인증 코드 · 주소 전체)을 쓰지 않는다 — 무엇이 막았는지만"
+  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> <사유 코드>"
+  record_never: "사유는 정해진 코드만(configs/install.yaml 의 attempt_reason_codes) — 화면에서 본 글 · 오류 원문 · 값을 명령에 넣지 않는다"
+  handoff_reason: "넘김 글의 <사유> 자리에는 그 코드의 says 문장을 넣는다(configs/install.yaml)"
   before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
   handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
 

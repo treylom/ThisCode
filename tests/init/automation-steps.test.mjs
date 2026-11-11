@@ -238,12 +238,12 @@ test('handoff gate: not before three failed attempts are recorded, then yes', ()
   const gate = gateBox();
   assert.equal(gate('--handoff', 'discord_intents').status, 1, 'no attempt yet');
   for (const round of [1, 2]) {
-    assert.equal(gate('--attempted', 'discord_intents', 'fail', `시도 ${round} 실패`).status, 0);
+    assert.equal(gate('--attempted', 'discord_intents', 'fail', 'click-no-effect').status, 0);
     const verdict = gate('--handoff', 'discord_intents');
     assert.equal(verdict.status, 1, `after ${round} failed attempt(s) it is still not time`);
     assert.match(verdict.stderr, new RegExp(`${round}/3`));
   }
-  assert.equal(gate('--attempted', 'discord_intents', 'fail', '시도 3 실패').status, 0);
+  assert.equal(gate('--attempted', 'discord_intents', 'fail', 'click-no-effect').status, 0);
   const verdict = gate('--handoff', 'discord_intents');
   assert.equal(verdict.status, 0, 'three failed attempts → hand over');
   assert.match(verdict.stdout, /3\/3/);
@@ -252,9 +252,9 @@ test('handoff gate: not before three failed attempts are recorded, then yes', ()
 test('handoff gate: the hint walks retry → another way → the next browser', () => {
   const gate = gateBox();
   assert.match(gate('--handoff', 'discord_intents').stderr, /시도 1: .*다시/);
-  gate('--attempted', 'discord_intents', 'fail', 'a');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
   assert.match(gate('--handoff', 'discord_intents').stderr, /시도 2: .*다른 길/);
-  gate('--attempted', 'discord_intents', 'fail', 'b');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
   assert.match(gate('--handoff', 'discord_intents').stderr, /시도 3: .*다음 브라우저/);
 });
 
@@ -269,15 +269,15 @@ test('handoff gate: a human-only stop is handed over at once and never counted',
 
 test('handoff gate: a success or an allowed handoff starts the count again, and other gates do not count', () => {
   const gate = gateBox();
-  gate('--attempted', 'discord_intents', 'fail', 'a');
-  gate('--attempted', 'discord_intents', 'fail', 'b');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
   gate('--attempted', 'discord_intents', 'ok');
-  gate('--attempted', 'discord_intents', 'fail', 'c');
-  gate('--attempted', 'discord_invite_url', 'fail', 'x');
-  gate('--attempted', 'discord_invite_url', 'fail', 'y');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
+  gate('--attempted', 'discord_invite_url', 'fail', 'click-no-effect');
+  gate('--attempted', 'discord_invite_url', 'fail', 'click-no-effect');
   assert.equal(gate('--handoff', 'discord_intents').status, 1, 'only one failure since the success');
-  gate('--attempted', 'discord_intents', 'fail', 'd');
-  gate('--attempted', 'discord_intents', 'fail', 'e');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
+  gate('--attempted', 'discord_intents', 'fail', 'click-no-effect');
   assert.equal(gate('--handoff', 'discord_intents').status, 0);
   assert.equal(gate('--handoff', 'discord_intents').status, 1, 'the count starts again after an allowed handoff');
 });
@@ -296,7 +296,7 @@ test('handoff gate: a name is checked as a whole — a second line cannot smuggl
   assert.equal(gate('--handoff', 'discord_intents').status, 1, 'control: the plain name still has to be attempted');
   assert.equal(gate('--handoff', twoLines).status, 2, 'a two-line name is a usage error, not a human-only stop');
   assert.equal(gate('--handoff', 'discord_hcaptcha\n').status, 2, 'a trailing line break is refused too');
-  assert.equal(gate('--attempted', twoLines, 'fail', 'x').status, 2, 'the same check guards --attempted');
+  assert.equal(gate('--attempted', twoLines, 'fail', 'click-no-effect').status, 2, 'the same check guards --attempted');
   assert.equal(gate('--attempted', 'a b', 'ok').status, 2);
   assert.equal(gate('--attempted', 'discord_intents', 'ok').status, 0, 'control: a plain name is still recorded');
   const ledger = existsSync(gate.log) ? readFileSync(gate.log, 'utf8') : '';
@@ -332,7 +332,7 @@ test('token steps: Reset Token is pressed once, the browser is not switched whil
   assert.match(save.keep_browser || '', /브라우저를 바꾸지 않는다/, 'the table says it for step 4');
   assert.match(save.keep_browser || '', /다시 발급이 필요하다고 한 줄로 말한다/);
 
-  const never = /화면에서 읽은 값\(토큰 · 비밀번호 · 인증 코드 · 주소 전체\)을 쓰지 않는다 — 무엇이 막았는지만/;
+  const never = /화면에서 본 글 · 오류 원문 · 값(?:\(토큰 · 비밀번호 · 인증 코드 · 주소\))?을 명령에 넣지 않는다/;
   for (const skill of ['create-bot', 'slack-configure']) {
     assert.match(readFileSync(join(SKILLS_DIR, skill, 'SKILL.md'), 'utf8'), never, `${skill}: the text says what never goes into a reason`);
   }

@@ -94,12 +94,12 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 
 > 🔴 **막혔을 때 — 자동 시도 3회, 그 뒤에만 사람**: 사람만 하는 자리가 아닌 곳에서 단계가 막히면(버튼을 못 찾음 · 눌러도 화면이 안 바뀜 · 도구 오류) 곧바로 사용자에게 넘기지 않는다. 자동화 브라우저로 **자동 시도 3회**를 먼저 한다 — ① 고른 브라우저에서 화면을 다시 읽고 그 단계를 다시 한다 ② 같은 브라우저에서 다른 길로 한다(화면 이름이 한국어로 보이면 한국어 이름으로 · 키보드 · 주소로 바로 가기) ③ 다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 — `scripts/browser-detect.mjs` 가 고른다). 시도마다 결과를 남기고, 넘기기 직전에 게이트를 부른다:
 > ```bash
-> bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail "<무엇이 막았는지>"
+> bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail <사유 코드>
 > bash <플러그인루트>/scripts/install-gate.sh --handoff <관문이름>   # exit 0 일 때만 넘긴다 · exit 1 = 다음 시도가 무엇인지 알려 준다
 > ```
 > 3회가 다 실패해 넘길 때는 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다»를 한 번에 말한다. 사람만 하는 자리(로그인 · 사람 확인 · 비밀번호 · 권한 창)는 **시도 횟수에 넣지 않고** 바로 넘긴다.
 >
-> **사유에는 값을 쓰지 않는다**: `--attempted` 의 사유에는 화면에서 읽은 값(토큰 · 비밀번호 · 인증 코드 · 주소 전체)을 쓰지 않는다 — 무엇이 막았는지만 적는다(사유는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 그대로 남는다).
+> **사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
 >
 > **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 
@@ -137,7 +137,7 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
     - 그리고 시도 결과를 **남긴다** — 성공이든 실패든:
       ```bash
       bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install ok
-      bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install fail "<무엇이 막았는지>"
+      bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install fail <사유 코드>
       ```
       사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없고, 확인할 수 없는 계약은 지켜지지 않아도 표가 안 난다.
   - **`manual` 모드** → 사용자가 스스로 하겠다고 골랐으므로 기존대로 **묻는다**. `/thiscode:help` STEP 2.5 point 2 의 제안을 그대로 재사용한다(새 자동화 발명 ❌, 제품에 이미 있는 능력 재사용): "브라우저를 같이 볼 수 있는 도구를 1분 안에 붙일 수 있어요. 붙일까요?"
@@ -264,7 +264,7 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allo
 
    ```bash
    bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch ok
-   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail "<무엇이 막았는지>"
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail <사유 코드>
    ```
 
    사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없다.
@@ -307,7 +307,7 @@ node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.erro
 > bash <플러그인루트>/scripts/install-gate.sh discord_user_id_autofetch
 > ```
 >
-> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail "<사유>"` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
+> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail <사유 코드>` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
 
 자동 취득이 모두 실패했을 때만 사용자에게 부탁한다: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
 
@@ -578,7 +578,7 @@ bash <플러그인루트>/scripts/install-gate.sh hooks_installed     # exit 1 =
 if bash <플러그인루트>/scripts/install-hooks.sh; then
   bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok
 else
-  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "<무엇이 막았는지>"
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail <사유 코드>
 fi
 ```
 
@@ -598,7 +598,7 @@ done
 if [ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ]; then
   bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded ok
 else
-  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail "규칙 파일을 복사하지 못함"
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail install-failed
 fi
 ```
 
@@ -626,10 +626,10 @@ if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
     [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
   done
   if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
-    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok "자동 재시도 성공"   # 원장이 마지막 상태를 말하게
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok   # 원장이 마지막 상태를 말하게
   else
     echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 스킬을 한 번 실행해 주세요."
-    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail check-failed
   fi
 fi
 ```

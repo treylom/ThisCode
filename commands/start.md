@@ -51,7 +51,7 @@ bash <플러그인루트>/scripts/install-gate.sh <관문이름>
 
 ```bash
 bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> ok
-bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail "무엇이 막았는지"
+bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail <사유 코드>
 ```
 
 실패인데 사유를 비우면 게이트가 **기록을 거부한다**(exit 2). 사유 없는 수동 낙하는 계약 위반이기 때문이다.

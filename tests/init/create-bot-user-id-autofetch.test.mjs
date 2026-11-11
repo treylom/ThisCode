@@ -138,7 +138,7 @@ test('(e) 시도 기록 전 = 감사 위반 1, 기록 후 = 위반 0', () => {
     assert.equal(run(box, ['--attempted', GATE_NAME, 'fail']).code, 2);
 
     // 사유를 붙여 기록
-    const rec = run(box, ['--attempted', GATE_NAME, 'fail', '브라우저 도구가 응답 본문을 안 보여줌']);
+    const rec = run(box, ['--attempted', GATE_NAME, 'fail', 'tool-error']);
     assert.equal(rec.code, 0, '사유가 있으면 실패도 기록된다');
 
     // 기록 «후»: 위반이 사라진다

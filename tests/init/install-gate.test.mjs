@@ -188,13 +188,13 @@ test('실패를 «사유 없이» 기록하려 하면 거부한다 — 사유 �
   });
 });
 
-test('사유가 있으면 실패도 기록된다 (그리고 사유가 원장에 실린다)', () => {
+test('사유 코드가 있으면 실패도 기록된다 (그리고 그 코드가 원장에 실린다)', () => {
   withSandbox((box) => {
-    const r = run(box, ['--attempted', 'brand_new_gate', 'fail', '브라우저 도구 설치가 네트워크에서 실패'], { mode: 'auto' });
+    const r = run(box, ['--attempted', 'brand_new_gate', 'fail', 'network-error'], { mode: 'auto' });
     assert.equal(r.code, 0);
     const row = ledger(box).find((x) => x.kind === 'attempt');
     assert.equal(row.result, 'fail');
-    assert.match(row.detail, /네트워크/);
+    assert.equal(row.detail, 'network-error');
   });
 });
 
@@ -211,7 +211,7 @@ test('--audit: 「시도하라」 판정만 있고 시도 기록이 없으면 �
 test('--audit: 시도를 기록하면 위반이 사라진다', () => {
   withSandbox((box) => {
     run(box, ['brand_new_gate'], { mode: 'auto' });
-    run(box, ['--attempted', 'brand_new_gate', 'fail', '자격증명 없이는 진행 불가'], { mode: 'auto' });
+    run(box, ['--attempted', 'brand_new_gate', 'fail', 'login-required'], { mode: 'auto' });
     const r = run(box, ['--audit'], { mode: 'auto' });
     assert.equal(r.code, 0);
     assert.match(r.out, /위반 0 건/);
