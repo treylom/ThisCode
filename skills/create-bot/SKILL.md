@@ -99,7 +99,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 > ```
 > 3회가 다 실패해 넘길 때는 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다»를 한 번에 말한다. 사람만 하는 자리(로그인 · 사람 확인 · 비밀번호 · 권한 창)는 **시도 횟수에 넣지 않고** 바로 넘긴다.
 >
-> **사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
+> **사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `not-armed` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
 >
 > **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 
@@ -233,21 +233,23 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
 **① 클립보드 길 (기본 — 에이전트가 실행)**
 
 ```bash
-bash <플러그인루트>/scripts/discord-token-capture.sh arm                  # 클립보드에 표식을 심는다
+bash <플러그인루트>/scripts/discord-token-capture.sh arm <bot-name>       # 이 봇 이름으로 일회용 표식을 클립보드에 심는다
 # 포털의 «복사»(Copy) 버튼을 누른다 — 실제 마우스 클릭으로(JS .click() 은 클립보드 권한에서 거부될 수 있다)
 bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # 표식 대조 → 꼴 검사 → 0600 .env → 클립보드 비움
 ```
 
 - 화면에 토큰이 뜬 뒤로는 **스크린샷 · 페이지 글 읽기를 하지 않는다** — 버튼 좌표만 구한다.
 - `capture` 가 말해 주는 것은 «저장됨 / 복사 안 됨 / 꼴 아님» 과 길이뿐이다. 실패하면 마지막 줄 `사유 코드:` 뒤에 나온 코드를 그대로 `install-gate.sh --attempted discord_token_save fail <사유 코드>` 에 쓴다.
-- **표식이 핵심이다.** 표식이 없으면 «복사 버튼이 안 눌렸는데 클립보드에 남아 있던 옛 내용을 토큰으로 착각» 하는 것을 잡지 못한다.
+- **`arm` 과 `capture` 는 한 묶음이다.** `arm <bot-name>` 이 매번 새 일회용 표식을 만들고, `capture <bot-name>` 은 **같은 봇으로 10분 안에** `arm` 한 기록이 있을 때만 클립보드를 읽는다. 그 기록은 한 번 쓰면 없어진다. `arm` 없이, 다른 봇 이름으로, 10분이 지나서, 두 번째로 `capture` 를 부르면 클립보드를 읽지도 않고 거부한다(`사유 코드: not-armed`) — 클립보드에 남아 있던 옛 토큰이나 다른 봇의 토큰이 이 봇에 저장되는 것을 막는다. 거부되면 `arm <bot-name>` 부터 다시 한다(비밀번호 창에서 오래 걸렸을 때도 같다 — 토큰 화면이 아직 떠 있으면 Reset Token 은 다시 누르지 않는다).
+- `capture` 가 `exit 5` 로 끝나면 토큰은 저장됐지만 클립보드를 비우지 못한 것이다 — 사용자에게 "토큰은 저장됐습니다. 클립보드에 토큰이 남아 있으니 지금 다른 글자를 한 번 복사해 덮어 주세요." 라고 말하고, 그 답을 받기 전에는 이 단계를 끝난 것으로 보지 않는다.
+- `.env` 와 봇 폴더는 본인만 읽게 맞춘다(0600 · 0700). macOS 에서는 파일 ACL 도 지운다 — 못 지우면 저장하지 않고 `exit 3` 으로 끝난다.
 - 클립보드 도구는 스크립트가 고른다: macOS = `pbcopy`/`pbpaste` · WSL = `clip.exe` / `powershell.exe Get-Clipboard` · Linux = `wl-copy`/`wl-paste`(Wayland) → `xclip`.
 
 **«복사» 버튼 누르기를 세 번 시도해도 안 될 때 — 사용자에게 버튼만 부탁한다**(`--handoff discord_token_save` 가 `exit 0` 일 때만):
 
 > "토큰을 자동으로 저장하려고 세 번 시도했는데 `<사유>`로 안 됐습니다. 포털의 토큰 옆 ‘복사’(Copy) 버튼만 눌러 주시고, 여기에는 ‘복사했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요. 토큰 화면이 이미 닫혔다면 알려 주세요(다시 발급이 필요합니다)."
 
-사용자가 ‘복사했어요’ 라고 하면 `capture <bot-name>` 을 실행한다(그 전에 `arm` 을 다시 실행해 두었어야 한다).
+사용자가 ‘복사했어요’ 라고 하면 `capture <bot-name>` 을 실행한다. 버튼을 부탁하기 **직전에** `arm <bot-name>` 을 다시 실행해 둔다(앞선 `arm` 은 10분이 지났거나 이미 쓰였을 수 있다).
 
 **② 사람 길 (클립보드 도구가 없거나 ①이 끝내 안 될 때 — 사용자가 자기 터미널에서 직접)**
 
@@ -260,9 +262,9 @@ bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   
 > ```
 
 - 안내할 때 `<플러그인루트>` 와 `<bot-name>` 은 실제 값으로 바꿔서 한 줄로 준다.
-- 이 명령은 터미널에서만 돈다 — 에이전트가 대신 실행하면 거부한다(에이전트의 셸에는 터미널이 없다).
+- 이 명령은 표준입력이 터미널일 때만 돈다. 이것은 실수로 파이프로 부르는 것을 막는 검사이지 **에이전트를 막는 권한 경계가 아니다**(같은 사용자 권한으로 도는 프로그램은 가짜 터미널을 만들 수 있다). 에이전트는 이 명령을 대신 실행하지 않는다 — 토큰을 사용자의 터미널에만 넣게 하려는 절차다.
 
-**저장 뒤 확인도 값이 아니라 사실로 한다**: `.env` 가 있고 권한이 600 인지, 그리고 Step 6.8 의 `users/@me` 확인(`username` · `bot:true`). 정상 Discord 봇 토큰은 72자 안팎이고 `.` 이 2개다.
+**저장 뒤 확인도 값이 아니라 사실로 한다**: `.env` 가 있고 권한이 600 인지, 그리고 맨 아래 «검증» 절의 `users/@me` 확인 — `username` 이 **지금 만드는 이 봇의 이름**이고 `bot:true` 인지 본다(다른 봇의 이름이 나오면 토큰이 섞인 것이다 — `.env` 를 지우고 Step 3 의 토큰 발급부터 다시 한다). 정상 Discord 봇 토큰은 72자 안팎이고 `.` 이 2개다.
 
 ⚠️ 토큰을 Discord 본문 · git · 스크린샷에 남기지 않는다.
 

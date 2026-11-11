@@ -154,6 +154,8 @@ steps:
     reason: "복사 버튼 → 클립보드 → 파일 저장은 자동(값은 화면 · 대화 · 명령 글자에 남기지 않는다)"
     never_in_chat: "토큰을 대화로 받지 않는다 — 토큰을 묻는 질문을 열지 않고, 값을 명령 글자에 넣지 않는다. 저장은 scripts/discord-token-capture.sh 만 한다"
     handoff: "토큰을 자동으로 저장하려고 세 번 시도했는데 <사유>로 안 됐습니다. 포털의 토큰 옆 ‘복사’(Copy) 버튼만 눌러 주시고, 여기에는 ‘복사했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요. 토큰 화면이 이미 닫혔다면 알려 주세요(다시 발급이 필요합니다)."
+    arm_before_capture: "capture 는 같은 봇으로 10분 안에 arm 한 기록이 있을 때만 클립보드를 읽는다(한 번 쓰면 끝) — not-armed 로 거부되면 arm <bot-name> 부터 다시 한다"
+    clipboard_not_cleared: "capture 가 exit 5 면 토큰은 저장됐지만 클립보드를 못 비운 것이다 — ‘토큰은 저장됐습니다. 클립보드에 토큰이 남아 있으니 지금 다른 글자를 한 번 복사해 덮어 주세요.’ 라고 말한다"
     handoff_no_clipboard: "터미널 새 창에서 아래 한 줄을 직접 실행하고, 물음에 토큰을 붙여 넣어 주세요(화면에 안 보입니다). 끝나면 ‘저장했어요’ 라고만 알려 주세요 — bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>"
 
   - id: "4.7"

@@ -249,3 +249,29 @@ test('install log: a file that is not an install log is neither re-moded nor app
   assert.equal(readFileSync(script, 'utf8'), '#!/bin/sh\necho hi\n');
   assert.equal(mode(script), '755');
 });
+
+test('macOS: an inherited ACL on ~/.thiscode does not survive on the install log or its folder', { skip: process.platform !== 'darwin' ? 'file ACLs are handled on macOS only' : false }, () => {
+  const acl = path => spawnSync('/bin/ls', ['-lde', path], { encoding: 'utf8' }).stdout.trim().split('\n').slice(1);
+  const b = box();
+  mkdirSync(b.logDir);
+  assert.equal(spawnSync('/bin/chmod', ['+a', 'everyone allow read,file_inherit', b.logDir]).status, 0);
+  assert.equal(acl(b.logDir).length, 1, 'bait: the ACL is there before the run');
+  assert.equal(b.run('--attempted', 'discord_intents', 'fail', 'click-no-effect').status, 0);
+  assert.deepEqual(acl(b.log), []);
+  assert.deepEqual(acl(b.logDir), []);
+  assert.equal(mode(b.log), '600');
+});
+
+test('hand-over at a human-only stop is still allowed when the log cannot be written; after three attempts it is not', { skip: WINDOWS ? 'symlinks need privileges on Windows' : false }, () => {
+  const b = box();
+  mkdirSync(b.logDir);
+  const elsewhere = join(b.dir, 'elsewhere');
+  writeFileSync(elsewhere, '');
+  symlinkSync(elsewhere, b.log);
+  const human = b.run('--handoff', 'discord_hcaptcha');
+  assert.equal(human.status, 0, 'a person is not blocked at the human check by a log problem');
+  assert.match(human.stderr, /기록하지 않았다/, 'but the failure is said');
+  assert.equal(readFileSync(elsewhere, 'utf8'), '');
+  const script = readFileSync('scripts/install-gate.sh', 'utf8');
+  assert.match(script, /«기록을 못 남기면 넘기지 않는다» 는 세 번 시도 뒤의 넘김에만 해당한다/, 'the exception is written where it lives');
+});

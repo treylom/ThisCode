@@ -57,12 +57,21 @@ _json_escape() {
 # 남는 틈: bash 만으로는 «한 번 연 파일을 확인하고 그 손잡이에 쓰기»(O_NOFOLLOW + fstat)를 못 한다.
 #   확인과 덧붙이기 사이에 «같은 사용자»의 다른 프로세스가 파일을 바꿔치면 막지 못한다.
 #   다른 사용자는 0700 폴더에 들어올 수 없어 바꿔칠 수 없다. 덧붙인 뒤 링크 여부를 한 번 더 본다.
-#   또 하나: 권한 비트(0700 · 0600)만 본다. macOS 의 파일 ACL(상속 ACL 포함)은 보지도 지우지도 않는다.
+#   파일 ACL: macOS 에서는 쓰기 전에 폴더(~/.thiscode)와 파일의 ACL 을 지우고 다시 확인한다(못 지우면 쓰지 않는다).
+#   Linux · Windows 의 ACL 은 보지 않는다. THISCODE_INSTALL_LOG 로 가리킨 다른 폴더의 ACL 은 건드리지 않는다.
 _modes_meaningful() {   # 윈도우 git-bash 는 권한 비트가 뜻이 없다(거긴 파일 ACL 이 따로 있다)
   case "$(uname -s 2>/dev/null)" in
     MINGW*|MSYS*|CYGWIN*) return 1 ;;
   esac
   return 0
+}
+
+# macOS: 파일 ACL(상속 ACL 포함)을 지우고, 지워졌는지 다시 본다. 다른 OS 에서는 아무것도 하지 않는다.
+# OSTYPE 은 bash 가 아는 값이다(PATH 의 uname 이 아님).
+_acl_clear() {   # $1 = 파일이나 폴더
+  case "${OSTYPE:-}" in darwin*) : ;; *) return 0 ;; esac
+  chmod -N "$1" 2>/dev/null || return 1
+  [ "$(LC_ALL=C ls -lde "$1" 2>/dev/null | wc -l | tr -d ' ')" = "1" ]
 }
 
 _stat_mode_links() {   # "<8진 권한> <하드 링크 수>" — GNU stat 먼저, 아니면 BSD stat
@@ -84,6 +93,7 @@ _ledger_dir_ready() {   # $1=make → 없으면 만든다
   if [ "$created" = 1 ] || [ "$(basename "$dir")" = ".thiscode" ]; then
     # 우리 폴더(~/.thiscode 또는 방금 만든 폴더)는 0700 으로 맞춘다
     chmod 700 "$dir" 2>/dev/null || return 1
+    _acl_clear "$dir" || return 1
     info="$(_stat_mode_links "$dir")" || return 1
     [ "${info%% *}" = "700" ] || return 1
   else
@@ -134,6 +144,7 @@ _ledger_ready() {   # 써도 되는가 — 폴더·파일을 만들고 권한을
   _ledger_file_ok || return 1
   _modes_meaningful || return 0
   chmod 600 "$LEDGER" 2>/dev/null || return 1
+  _acl_clear "$LEDGER" || return 1
   info="$(_stat_mode_links "$LEDGER")" || return 1
   [ "${info%% *}" = "600" ] || return 1
   return 0
@@ -184,7 +195,7 @@ _gate_name_ok() {
 # 받는 값은 아래 표의 코드뿐이다(글자 꼴이 맞아도 표에 없으면 거부). 코드마다 사용자에게 보일 문장이
 # 하나씩 붙어 있고, 그 문장에 화면 글 · 오류 원문 · 값을 이어 붙이지 않는다.
 # 같은 목록을 configs/install.yaml 의 attempt_reason_codes 에도 적어 두고, 시험이 둘이 같은지 본다.
-REASON_CODES="element-not-found click-no-effect navigation-timeout permission-prompt login-required clipboard-empty format-mismatch tool-error install-failed network-error check-failed other"
+REASON_CODES="element-not-found click-no-effect navigation-timeout permission-prompt login-required clipboard-empty not-armed format-mismatch tool-error install-failed network-error check-failed other"
 
 _reason_says() {   # 코드 → 정해진 문장. 표에 없으면 1
   case "$1" in
@@ -194,6 +205,7 @@ _reason_says() {   # 코드 → 정해진 문장. 표에 없으면 1
     permission-prompt)  echo "브라우저 권한 창이 가로막는 문제" ;;
     login-required)     echo "로그인이 필요한 문제" ;;
     clipboard-empty)    echo "복사한 값이 클립보드에 들어오지 않는 문제" ;;
+    not-armed)          echo "복사 준비를 먼저 하지 않았거나 준비한 지 너무 오래된 문제" ;;
     format-mismatch)    echo "받은 값의 형식이 맞지 않는 문제" ;;
     tool-error)         echo "브라우저 도구가 오류를 내는 문제" ;;
     install-failed)     echo "설치 명령이 실패하는 문제" ;;
@@ -255,6 +267,9 @@ if [ "${1:-}" = "--handoff" ]; then
   fi
   need="$(command sed -n 's/^[[:space:]]*auto_attempts_before_handoff:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$CONFIG" | head -1)"
   [ -z "$need" ] && need=3
+  # 아래 두 갈래(manual 모드 · 사람만 하는 자리)는 넘김 기록을 못 남겨도 넘김을 허용한다(exit 0).
+  # 사람이 로그인 · 사람 확인 · 비밀번호 앞에서 기록 파일 문제로 막히지 않게 하려는 것이다 —
+  # «기록을 못 남기면 넘기지 않는다» 는 세 번 시도 뒤의 넘김에만 해당한다.
   if [ "$(_mode)" = "manual" ]; then
     echo "manual 모드 — 넘김 허용 ($gate)"
     _ledger_append "handoff" "$gate" "handoff-allowed" "manual-mode"

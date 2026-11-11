@@ -85,7 +85,7 @@ bash <플러그인루트>/scripts/install-gate.sh --handoff <관문이름>   # e
 
 3회가 다 실패해 넘길 때는 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다»를 한 번에 말한다. «관문 계약» 표의 관문(로그인 · 앱 생성·설치 승인 · 메시지 탭 · 토큰 · 확인 창)과 자동화 브라우저의 권한 창은 **시도 횟수에 넣지 않고** 바로 넘긴다.
 
-**사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
+**사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `not-armed` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
 
 **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto` / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 

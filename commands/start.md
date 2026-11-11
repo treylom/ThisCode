@@ -160,7 +160,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
 토큰은 대화 창에 붙여 넣지 않는다. 저장은 `/thiscode:create-bot` Step 4 의 고정 스크립트가 한다(봇 폴더 만들기 · `.env` 권한 600 까지 — 값은 화면에 나오지 않는다):
 
 ```bash
-bash <플러그인루트>/scripts/discord-token-capture.sh arm                  # ① 포털에서 토큰 옆 ‘복사’(Copy) 를 누르기 «전에»
+bash <플러그인루트>/scripts/discord-token-capture.sh arm <bot-name>       # ① 포털에서 토큰 옆 ‘복사’(Copy) 를 누르기 «전에»(10분 안에 ②까지)
 bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # ② ‘복사’ 를 누른 «뒤에»
 ```
 
