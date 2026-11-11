@@ -350,7 +350,9 @@ case "$MODE" in
         unsafe "arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다(폴더는 못 쓰게 닫아 두었습니다) — 폴더를 옮긴 뒤 다시: mv ~/.thiscode/token-arm ~/.thiscode/token-arm.removed"
         exit 3
       fi
-      rm -f "$ARM_FILE" 2>/dev/null
+      # 쓰다 만 기록을 남기지 않는다 — 다만 두 폴더가 본인만 쓰는 진짜 폴더일 때만 지운다.
+      # (~/.thiscode 나 arm 폴더가 링크면 이 경로는 폴더 밖의 파일을 가리킨다 — 그것은 지우지 않는다)
+      dir_is_private "$HOME/.thiscode" && dir_is_private "$ARM_DIR" && rm -f -- "$ARM_FILE" 2>/dev/null
       unsafe "arm 기록을 본인만 읽게 남길 수 없습니다 — $ARM_DIR"
       exit 3
     fi

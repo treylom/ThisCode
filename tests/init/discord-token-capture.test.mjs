@@ -672,10 +672,11 @@ test('arm never empties through a link: with ~/.thiscode open to others and the 
   mkdirSync(mine); chmodSync(mine, 0o700);
   writeFileSync(join(mine, 'precious.txt'), 'keep me');
   writeFileSync(join(mine, 'otherbot.arm'), 'not a record');   // a name the clean-up would have matched
+  writeFileSync(join(mine, 'mybot.arm'), 'named like the record of the bot being armed');
   symlinkSync(mine, join(top, 'token-arm'));
   const armed = b.arm();
   assert.notEqual(armed.status, 0);
-  assert.deepEqual(readdirSync(mine).sort(), ['otherbot.arm', 'precious.txt'], 'nothing in the linked folder was removed');
+  assert.deepEqual(readdirSync(mine).sort(), ['mybot.arm', 'otherbot.arm', 'precious.txt'], 'nothing in the linked folder was removed — not even a file named like this bot\'s record');
   assert.equal(readFileSync(join(mine, 'precious.txt'), 'utf8'), 'keep me');
   assert.equal(mode(mine), '700', 'and its mode was not changed');
   assert.ok(!b.calls().includes('pbcopy'));
