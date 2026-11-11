@@ -31,19 +31,23 @@ $ARGUMENTS
 
 `/thiscode:start` Step 2 와 동일:
 1. New Application(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 = 봇 이름 → 약관 동의 칸 체크 → «만들기»(Create)
-2. Bot 탭 → Reset Token → 토큰 복사
+2. Bot 탭 → Reset Token → 토큰 옆 ‘복사’(Copy) 누르기 — 값은 대화 창에 붙여 넣지 않는다(저장 = Step 3)
 3. OAuth2 URL Generator → 같은 권한
 4. 본인 Discord 서버 / DM 채널 초대
 
 ### Step 3. 토큰 + soul.md 생성
 
+토큰은 대화 창에 붙여 넣지 않는다. 저장은 `/thiscode:create-bot` Step 4 의 고정 스크립트가 한다(봇 폴더 만들기 · `.env` 권한 600 까지 — 값은 화면에 나오지 않는다):
+
 ```bash
-mkdir -p ~/.claude/channels/discord-<bot-name>
-chmod 700 ~/.claude/channels/discord-<bot-name>
-cat > ~/.claude/channels/discord-<bot-name>/.env <<EOF
-DISCORD_BOT_TOKEN=<토큰>
-EOF
-chmod 600 ~/.claude/channels/discord-<bot-name>/.env
+bash <플러그인루트>/scripts/discord-token-capture.sh arm                  # ① 포털에서 토큰 옆 ‘복사’(Copy) 를 누르기 «전에»
+bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # ② ‘복사’ 를 누른 «뒤에»
+```
+
+클립보드 길이 안 되면(도구 없음 = exit 4) 사용자가 **자기 터미널에서** 직접 실행한다 — 물음에 토큰을 붙여 넣는다(화면에 안 보인다):
+
+```bash
+bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>
 ```
 
 soul.md template 작성 (Step 1 입력 기반):

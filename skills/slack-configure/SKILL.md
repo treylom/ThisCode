@@ -57,7 +57,7 @@ Step 0(USER-PROFILE 인터뷰)·페르소나 템플릿 선택 UX(Step 5)·시그
 
 🔴 **WD/CLAUDE.md 생성은 재사용하지 않는다(2026-08-06 정정 — ㉡ 인격·거버넌스 이식)**: create-bot Step 6의 CLAUDE.md 생성은 2026-08-12 부로 Discord 판도 **필수 승격**됐지만(bot.yaml `wd_docs` 기록 — 구 «선택» 라벨은 폐기), 여기서의 논점은 생성 여부가 아니라 **주입 경로**다: Discord 판의 페르소나 주입은 `DISCORD_STATE_DIR` 기반 SessionStart 훅(`bot-session-init.sh`)에 의존한다. 그 훅은 Slack 상태 디렉토리(`CLAUDE_CHANNEL_SLACK_DIR`)를 인식하는 조건이 없어 — 인자도 `DISCORD_STATE_DIR`도 없으면 **무음 종료**(`exit 0`)한다 — Slack 세션에서는 파일만 있고 페르소나가 한 줄도 안 들어간다. 그래서 Slack 판은 WD를 **필수**로 만들고(D-2 확정 — 2026-08-06 결정, `04-handoff.md` §2), 페르소나를 훅이 아니라 **CLAUDE.md 본문에 직접** 박아 넣는 **Step 7-A**를 아래에 새로 정의한다 — cwd 체인로드는 훅 등록 여부와 무관하게 항상 동작하기 때문이다.
 
-본 스킬은 그 외에 create-bot Step 3(앱 생성)·Step 4(토큰 입력)·Step 6.7(연결 게이트)·Step 7(시동)에 대응하는 **Slack 판**만 새로 정의한다.
+본 스킬은 그 외에 create-bot Step 3(앱 생성)·Step 4(토큰 저장)·Step 6.7(연결 게이트)·Step 7(시동)에 대응하는 **Slack 판**만 새로 정의한다.
 
 구조적 차이 1가지: Discord는 "봇 1개 = 앱 1개 = 프로세스 1개"지만, Slack 신아키텍처는 **"Slack 앱(워크스페이스 연결) 1개를 상주 `server.ts`가 쥐고, 그 위에 Claude Code 세션(=역할·봇) 여러 개가 `mcp.ts` 프록시로 붙는"** 구조다(`claude-channel-server/README.md:14`). "새 봇을 하나 더 만든다"가 Slack에선 "새 Slack 앱을 하나 더 만든다" 또는 "기존 앱에 세션을 하나 더 붙인다" 두 갈래로 갈린다 — 아래 입력 계약 1번에서 분기.
 

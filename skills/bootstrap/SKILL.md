@@ -87,7 +87,7 @@ Claude Code 안에서:
 
 wizard 가 단계별 안내:
 - Discord 봇 생성 (Developer Portal 이동)
-- 봇 토큰 입력
+- 봇 토큰 저장
 - 첫 봇 페르소나 결정 (soul.md template)
 - 페어링 + 첫 대화 검증
 

@@ -225,3 +225,34 @@ test('create-bot text: the token is never asked for in the conversation, and bot
   assert.match(row, /복사했어요/);
   assert.match(row, /handoff_no_clipboard: "[^"]*paste/);
 });
+
+test('no skill or command shows a token placeholder inside a command or asks for the token in chat', () => {
+  const nets = [/<입력 토큰>/, /DISCORD_BOT_TOKEN=<[^>]*>/, /토큰을 (알려|입력해) ?주/, /토큰 입력 요청/, /제가 여는 입력 칸/];
+  // bait: each net catches the wording it is for
+  const bait = ['DISCORD_BOT_TOKEN=<입력 토큰>', 'DISCORD_BOT_TOKEN=<토큰>', '토큰을 알려 주세요', 'agent 가 사용자에게 토큰 입력 요청', '제가 여는 입력 칸에 붙여 넣어 주세요'];
+  assert.equal(bait.filter(line => nets.some(net => net.test(line))).length, bait.length, 'bait');
+  const files = [];
+  const walk = dir => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (/\.(md|yaml)$/.test(entry.name)) files.push(path);
+    }
+  };
+  walk('skills');
+  walk('commands');
+  assert.ok(files.length > 20);
+  // skills/thiscode_agy tells the user to edit the .env file in an editor (a comment line and a
+  // template), not to put the token into a command or the chat — outside this net.
+  for (const path of files.filter(path => !path.startsWith(join('skills', 'thiscode_agy')))) {
+    readFileSync(path, 'utf8').split('\n').forEach((line, index) => {
+      for (const net of nets) assert.doesNotMatch(line, net, `${path}:${index + 1}`);
+    });
+  }
+  for (const path of ['commands/start.md', 'commands/add-bot.md']) {
+    const text = readFileSync(path, 'utf8');
+    assert.match(text, /discord-token-capture\.sh capture <bot-name>/, `${path}: points at the fixed script`);
+    assert.match(text, /discord-token-capture\.sh paste <bot-name>/, `${path}: and at the terminal route`);
+    assert.match(text, /대화 창에 붙여 넣지 않는다/, path);
+  }
+});

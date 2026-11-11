@@ -154,15 +154,19 @@ command -v tmux git curl node claude     # 의존 도구 확인
 - `.env` 작성 (chmod 600) — `DISCORD_BOT_TOKEN`
 - `soul.md` 작성 — 선택 template 안 placeholder 자동 치환
 
-#### (manual) Step 3. 봇 토큰 입력
+#### (manual) Step 3. 봇 토큰 저장
+
+토큰은 대화 창에 붙여 넣지 않는다. 저장은 `/thiscode:create-bot` Step 4 의 고정 스크립트가 한다(봇 폴더 만들기 · `.env` 권한 600 까지 — 값은 화면에 나오지 않는다):
 
 ```bash
-mkdir -p ~/.claude/channels/discord-<bot-name>
-chmod 700 ~/.claude/channels/discord-<bot-name>
-cat > ~/.claude/channels/discord-<bot-name>/.env <<EOF
-DISCORD_BOT_TOKEN=<입력 토큰>
-EOF
-chmod 600 ~/.claude/channels/discord-<bot-name>/.env
+bash <플러그인루트>/scripts/discord-token-capture.sh arm                  # ① 포털에서 토큰 옆 ‘복사’(Copy) 를 누르기 «전에»
+bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # ② ‘복사’ 를 누른 «뒤에»
+```
+
+클립보드 길이 안 되면(도구 없음 = exit 4) 사용자가 **자기 터미널에서** 직접 실행한다 — 물음에 토큰을 붙여 넣는다(화면에 안 보인다):
+
+```bash
+bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>
 ```
 
 ⚠️ 토큰을 Discord 본문이나 git 에 노출 금지.
