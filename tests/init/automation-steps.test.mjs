@@ -336,6 +336,8 @@ test('create-bot: the consent box of the new-app window is ticked by the bot aft
   assert.equal(step.mode, 'auto_then_human');
   assert.equal(step.human_stops, 'discord_hcaptcha', 'only the human check is a human-only stop in this step');
   assert.match(step.notice || '', /동의 칸을 대신 체크/, 'the table carries the notice');
+  assert.match(step.if_declined || '', /사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라/, 'a refusal is the user\'s choice, not a hand-over');
+  assert.match(flow, /사용자가 직접 누른다 — 막혀서 넘기는 것이 아니라 사용자가 고른 것이라 `--handoff` 를 부르지 않고/, 'the text says the same');
   assert.doesNotMatch(step.handoff, /동의 칸/, 'the hand-over text no longer asks the user to tick the box');
 });
 
