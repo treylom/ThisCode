@@ -341,6 +341,28 @@ test('token steps: Reset Token is pressed once, the browser is not switched whil
   }
 });
 
+// Portal sub-steps that are automatic but hold a human-only stop need two texts:
+// `handoff` for the stop itself, `handoff_after_attempts` for a hand-over after three failed attempts.
+const TWO_TEXT_STEPS = ['3/1', '3/2'];
+
+test('create-bot: a portal step with a human-only stop inside has its own text for a hand-over after three attempts', () => {
+  const { table, skillText } = load('create-bot');
+  for (const id of TWO_TEXT_STEPS) {
+    const step = table.steps.find(item => item.id === id);
+    assert.equal(step.mode, 'auto_then_human', id);
+    assert.ok(names(step.human_stops).length > 0, `${id}: has a human-only stop`);
+    const text = step.handoff_after_attempts || '';
+    assert.match(text, /세 번 시도했는데 <사유>로 안 됐습니다\./, `${id}: says what was tried and why it failed`);
+    assert.match(text, /그 다음은 제가 이어갑니다\.$/, `${id}: says the bot carries on`);
+    assert.notEqual(text, step.handoff, `${id}: not the text of the human-only stop`);
+  }
+  const newApp = table.steps.find(item => item.id === '3/2');
+  assert.doesNotMatch(newApp.handoff_after_attempts, /로봇 아니고 사람/, 'a failed consent box is not announced as the human check');
+  assert.match(newApp.handoff_after_attempts, /동의 칸을 체크한 뒤 «만들기»\(Create\)를 누르면 됩니다/);
+  assert.match(skillText, /자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고/, 'the text says which one to use');
+  assert.match(skillText, /사람만 하는 자리\(`human_stops`\)에서 넘길 때는 `handoff` 를 쓴다/);
+});
+
 test('create-bot: the consent box of the new-app window is ticked by the bot after a one-line notice, not handed to the user', () => {
   const text = readFileSync('skills/create-bot/SKILL.md', 'utf8');
   const flow = text.slice(text.indexOf('**기본 흐름 (도구 있음, 기본값)'), text.indexOf('완료 후 **한 게 뭔지**'));

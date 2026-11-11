@@ -101,7 +101,7 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 >
 > **사유에는 값을 쓰지 않는다**: `--attempted` 의 사유에는 화면에서 읽은 값(토큰 · 비밀번호 · 인증 코드 · 주소 전체)을 쓰지 않는다 — 무엇이 막았는지만 적는다(사유는 원장 파일에 그대로 남는다).
 >
-> **걸음마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 걸음별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 `handoff` 문구를 쓴다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
+> **걸음마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 걸음별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 
 **화면 이름 표 (영어 화면 ↔ 한국어 화면)** — Discord 를 한국어로 쓰는 사용자는 개발자 포털도 한국어로 보인다. 사용자에게 화면 이름을 말할 때는 **한국어 이름을 먼저, 영어 이름을 괄호로** 말하고, 버튼을 찾을 때는 두 이름을 다 찾는다. 아래에 없는 이름은 한국어 화면에서 확인하지 못한 것이라 영어 이름만 적는다 — 그 이름으로 못 찾으면 화면을 다시 읽어 같은 자리의 버튼을 찾는다(없는 한국어 이름을 지어내 말하지 않는다).
 
