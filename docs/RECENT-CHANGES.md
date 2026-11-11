@@ -69,11 +69,17 @@ auto-activate. The `/thiscode:setup` skill drives this step.
   without `arm`. Arm one bot at a time: while two bots are armed together, a
   token copied for one can be captured under the other's name.
 - Before it reads an arm record, `capture` checks that `~/.thiscode` and the
-  arm folder in it are real folders of the user with mode 0700 and, on macOS,
-  no ACL, and that the record is 0600. It only checks; it repairs nothing and
-  refuses with `not-armed` before reading the clipboard. `arm` is what repairs
-  the folders, and when they were open before, it removes the records that
-  were already there.
+  arm folder in it are real folders of the user whose permission bits are
+  owner-only (rwx------; the sticky and set-id bits are not looked at) and, on
+  macOS, carry no ACL, and that the record is 0600. It only checks; it repairs
+  nothing and refuses with `not-armed` before reading the clipboard. `arm` is
+  what repairs the folders. When they were open before, `arm` first removes
+  everything in the arm folder and checks that it is empty; if something
+  cannot be removed it does not arm, closes the folder (mode 000) and prints
+  one line on how to move it away. Like the mode and ACL handling below, these
+  checks go by `OSTYPE` and `uname`: with a changed `OSTYPE` or a different
+  `uname` on PATH they are switched off, which takes someone who can already
+  change the user's own environment.
 - This protection covers the Discord token route
   (`scripts/discord-token-capture.sh`) only. The Slack token steps in
   `skills/slack-configure` do not have the arm check or the ACL removal yet.
