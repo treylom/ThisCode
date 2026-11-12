@@ -44,7 +44,7 @@ bash <플러그인루트>/scripts/install-gate.sh <관문이름>
 
 ```bash
 bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> ok
-bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail "<무엇이 막았는지>"
+bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail <사유 코드>
 ```
 
 실패에 사유를 비우면 게이트가 **기록을 거부**한다(exit 2). 확인할 수 없는 계약은 지켜지지 않아도 표가 안 나기 때문이다. 되감아 보려면 `install-gate.sh --audit`.
@@ -57,7 +57,7 @@ Step 0(USER-PROFILE 인터뷰)·페르소나 템플릿 선택 UX(Step 5)·시그
 
 🔴 **WD/CLAUDE.md 생성은 재사용하지 않는다(2026-08-06 정정 — ㉡ 인격·거버넌스 이식)**: create-bot Step 6의 CLAUDE.md 생성은 2026-08-12 부로 Discord 판도 **필수 승격**됐지만(bot.yaml `wd_docs` 기록 — 구 «선택» 라벨은 폐기), 여기서의 논점은 생성 여부가 아니라 **주입 경로**다: Discord 판의 페르소나 주입은 `DISCORD_STATE_DIR` 기반 SessionStart 훅(`bot-session-init.sh`)에 의존한다. 그 훅은 Slack 상태 디렉토리(`CLAUDE_CHANNEL_SLACK_DIR`)를 인식하는 조건이 없어 — 인자도 `DISCORD_STATE_DIR`도 없으면 **무음 종료**(`exit 0`)한다 — Slack 세션에서는 파일만 있고 페르소나가 한 줄도 안 들어간다. 그래서 Slack 판은 WD를 **필수**로 만들고(D-2 확정 — 2026-08-06 결정, `04-handoff.md` §2), 페르소나를 훅이 아니라 **CLAUDE.md 본문에 직접** 박아 넣는 **Step 7-A**를 아래에 새로 정의한다 — cwd 체인로드는 훅 등록 여부와 무관하게 항상 동작하기 때문이다.
 
-본 스킬은 그 외에 create-bot Step 3(앱 생성)·Step 4(토큰 입력)·Step 6.7(연결 게이트)·Step 7(시동)에 대응하는 **Slack 판**만 새로 정의한다.
+본 스킬은 그 외에 create-bot Step 3(앱 생성)·Step 4(토큰 저장)·Step 6.7(연결 게이트)·Step 7(시동)에 대응하는 **Slack 판**만 새로 정의한다.
 
 구조적 차이 1가지: Discord는 "봇 1개 = 앱 1개 = 프로세스 1개"지만, Slack 신아키텍처는 **"Slack 앱(워크스페이스 연결) 1개를 상주 `server.ts`가 쥐고, 그 위에 Claude Code 세션(=역할·봇) 여러 개가 `mcp.ts` 프록시로 붙는"** 구조다(`claude-channel-server/README.md:14`). "새 봇을 하나 더 만든다"가 Slack에선 "새 Slack 앱을 하나 더 만든다" 또는 "기존 앱에 세션을 하나 더 붙인다" 두 갈래로 갈린다 — 아래 입력 계약 1번에서 분기.
 
@@ -75,6 +75,19 @@ Step 0(USER-PROFILE 인터뷰)·페르소나 템플릿 선택 UX(Step 5)·시그
 ---
 
 ## 진행 흐름
+
+
+**막혔을 때 — 자동 시도 3회, 그 뒤에만 사람**: 앞의 «관문 계약» 표에 없는 자리에서 단계가 막히면 곧바로 사용자에게 넘기지 않는다. 자동화 브라우저로 **자동 시도 3회**를 먼저 한다 — ① 고른 브라우저에서 화면을 다시 읽고 그 단계를 다시 한다 ② 같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기) ③ 다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 — `scripts/browser-detect.mjs` 가 고른다). 시도마다 `--attempted` 로 남기고, 넘기기 직전에 묻는다:
+
+```bash
+bash <플러그인루트>/scripts/install-gate.sh --handoff <관문이름>   # exit 0 일 때만 넘긴다 · exit 1 = 다음 시도가 무엇인지 알려 준다
+```
+
+3회가 다 실패해 넘길 때는 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다»를 한 번에 말한다. «관문 계약» 표의 관문(로그인 · 앱 생성·설치 승인 · 메시지 탭 · 토큰 · 확인 창)과 자동화 브라우저의 권한 창은 **시도 횟수에 넣지 않고** 바로 넘긴다.
+
+**사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `not-armed` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
+
+**단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto` / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
 
 ### Step 0. 전제 확인 — 브리지 소스 위치 확정 + 자동 빌드 [자동 확인 + 자동 빌드 + 조건부 폴백]
 

@@ -218,7 +218,7 @@ react 도 reply 와 같은 outbound allowlist 를 탄다 — 인바운드를 받
 
 Discord는 앱 생성·봇 토큰 발급 API가 없다. 자동화 가능한 건 초대(OAuth2 URL)뿐:
 
-1. https://discord.com/developers/applications → New Application → Bot 탭 → 토큰 발급 (수동)
+1. https://discord.com/developers/applications → New Application(한국어 화면 = «신규 애플리케이션») → 약관 동의 칸 체크 → «만들기» → Bot 탭 → 토큰 발급 (수동)
 2. 이후 봇 구동·페르소나·상태 관리는 `/thiscode:create-bot` 온보딩(`skills/create-bot/SKILL.md`)이 담당.
 
 ## 함정 목록 (재작성판 — DM 오기재 제거 + 신아키텍처 실측 반영)

@@ -17,6 +17,44 @@ install:
   #   true 이면 브라우저 도구 부재는 "그러니 수동"이 아니라 "설치를 먼저 시도"로 간다.
   browser_tools_required: true
 
+  # 막힌 단계를 사람에게 넘기기 전에 자동화 브라우저로 스스로 시도하는 횟수.
+  #   `install-gate.sh --handoff <관문이름>` 이 이 수만큼의 실패 기록을 확인한 뒤에만 exit 0 을 준다.
+  #   아래 명단(사람만 하는 자리)은 이 횟수에 넣지 않고 바로 넘긴다.
+  #   단계마다 어디까지 자동인지는 각 스킬 폴더의 automation.yaml 에 있다.
+  auto_attempts_before_handoff: 3
+
+  # 실패 사유 코드 — `install-gate.sh --attempted <관문이름> fail <코드>` 가 받는 값은 이 목록뿐이다.
+  #   화면에서 본 글 · 오류 원문 · 값을 사유로 넘기지 않는다. 명령 글자에 바깥 글이 들어가면
+  #   스크립트가 받기 전에 셸이 먼저 풀어 버리기 때문이다. 목록에 없는 값은 exit 2 로 거부한다.
+  #   says = 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에 넣는 정해진 말.
+  attempt_reason_codes:
+    - code: element-not-found
+      says: "버튼이나 입력 칸을 찾지 못하는 문제"
+    - code: click-no-effect
+      says: "눌러도 화면이 바뀌지 않는 문제"
+    - code: navigation-timeout
+      says: "화면이 제때 열리지 않는 문제"
+    - code: permission-prompt
+      says: "브라우저 권한 창이 가로막는 문제"
+    - code: login-required
+      says: "로그인이 필요한 문제"
+    - code: clipboard-empty
+      says: "복사한 값이 클립보드에 들어오지 않는 문제"
+    - code: not-armed
+      says: "복사 준비가 안 돼 있거나, 이미 쓰였거나, 준비한 지 10분이 지난 문제"
+    - code: format-mismatch
+      says: "받은 값의 형식이 맞지 않는 문제"
+    - code: tool-error
+      says: "브라우저나 클립보드 도구가 없거나 오류를 내는 문제"
+    - code: install-failed
+      says: "설치 명령이 실패하는 문제"
+    - code: network-error
+      says: "네트워크 연결 문제"
+    - code: check-failed
+      says: "설치 뒤 확인이나 안전 확인이 통과하지 않는 문제"
+    - code: other
+      says: "알 수 없는 문제"
+
   # 🔴 R2 예외 명단 — «여기 이름이 있는 관문만» 시도 없이 수동 안내를 띄울 수 있다.
   #    등재되지 않은 관문의 기본값은 «시도»다. 그래야 새로 생긴 관문이
   #    조용히 수동으로 새지 않는다(기본값이 이기고, 기본값은 흔한 쪽이다).
@@ -44,3 +82,11 @@ install:
       reason: 앱 설정 UI 토글 — 소유자 계정 세션에서만
     - name: slack_dev_channels_confirm
       reason: 권한 승인 다이얼로그 — 대신 눌러선 안 된다(동의는 사람 몫)
+    - name: browser_permission_prompt
+      reason: 자동화 브라우저의 사이트 권한 창·기기 선택 창 — 허용은 사람 몫(대신 누르지 않는다)
+    - name: claude_workspace_trust_confirm
+      reason: 새 작업 폴더의 첫 신뢰 확인 창 — 동의는 사람 몫
+    - name: claude_auth_login
+      reason: Claude 계정 로그인 — 계정 자격증명 · 대리 입력 금지 영역
+    - name: claude_session_restart
+      reason: 지금 세션을 끝내고 다시 켜는 일 — 세션 안에서는 대신 할 수 없다

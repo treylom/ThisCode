@@ -51,7 +51,7 @@ bash <플러그인루트>/scripts/install-gate.sh <관문이름>
 
 ```bash
 bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> ok
-bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail "무엇이 막았는지"
+bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail <사유 코드>
 ```
 
 실패인데 사유를 비우면 게이트가 **기록을 거부한다**(exit 2). 사유 없는 수동 낙하는 계약 위반이기 때문이다.
@@ -107,7 +107,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
 
 ### Step 2. Discord 봇 생성 (기본 = 자동 완주, B7)
 
-본 step 은 `/thiscode:create-bot` Step 3 이 담당합니다(자동화 권장, Steps 3-4 와 동일 위임 패턴) — 브라우저 자동화 도구가 이 세션에 있으면 **묻지 않고 기본으로** 앱 생성부터 승인까지 완주하고, hCaptcha·비밀번호/다단계 인증(MFA) 모달 2곳에서만 "여기만 눌러(입력해) 주세요" 하고 멈춥니다.
+본 step 은 `/thiscode:create-bot` Step 3 이 담당합니다(자동화 권장, Steps 3-4 와 동일 위임 패턴) — 브라우저 자동화 도구가 이 세션에 있으면 **묻지 않고 기본으로**(약관 동의 칸과 더할 권한 3종만 예/아니오를 묻는다) 앱 생성부터 승인까지 완주하고, 포털 로그인(로그인이 안 돼 있을 때) · hCaptcha · 비밀번호/다단계 인증(MFA) 창 3곳에서만 "여기만 눌러(입력해) 주세요" 하고 멈춥니다(자동화 브라우저가 사이트 권한 창에서 멈추면 그것도 사용자 차례입니다).
 
 ```bash
 # 자동화 — 권장 (Step 3-4 와 통합 실행됨)
@@ -118,17 +118,18 @@ command -v tmux git curl node claude     # 의존 도구 확인
 
 브라우저로 https://discord.com/developers/applications 접속:
 
-1. "New Application" → 이름 (예: `<your-bot-name>`) → **캡차 1회(사람)**
-2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 복사
+1. "New Application"(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 (예: `<your-bot-name>`) → 약관 동의 칸 체크 → «만들기»(Create) → **캡차 1회(사람)**
+2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 옆 ‘복사’(Copy) 누르기 — 값은 대화 창에 붙여 넣지 않는다(저장 = 아래 Step 3)
 3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save
    - ⚠️ Message Content 미설정 시 토큰·초대가 정상이어도 봇이 서버 채널 메시지 내용을 못 읽어 무반응 (DM 은 예외). "토큰 valid 인데 채널 답 없음" 1순위 원인.
    - ⚠️ Server Members 미설정 시 봇 템플릿이 `intents.members` 를 요청하므로 **기동 즉시 `PrivilegedIntentsRequired` 크래시** — 이 단계는 생략 불가.
 4. OAuth2 → URL Generator
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: Send Messages, Read Messages, Read Message History, Add Reactions, Attach Files, Embed Links
+   - Bot Permissions (기본 11종): View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / Manage Messages / Create Public Threads / Create Private Threads / Send Messages in Threads / Manage Threads — `permissions=395137117248`
+   - 원하면 3종을 더 고른다(Mention Everyone / Pin Messages / Manage Webhooks — 무엇을 할 수 있게 되는지는 create-bot Step 3). 고르지 않아도 봇은 돈다.
 5. 생성된 URL 로 봇을 본인 Discord 서버 또는 DM 가능 채널에 초대 → **승인(사람)**
 
-전체 권한 목록(스레드 4종 포함)·비공개 채널 멤버 추가·데스크톱 앱 가로채기 대응 등 상세는 `skills/create-bot/SKILL.md` Step 3 이 정본이다 — 사본 drift 방지를 위해 본 파일엔 요약만 둔다.
+권한 설명(더할 3종 포함)·비공개 채널 멤버 추가·데스크톱 앱 가로채기 대응 등 상세는 `skills/create-bot/SKILL.md` Step 3 이 기준이다 — 사본 drift 방지를 위해 본 파일엔 요약만 둔다.
 
 > ⚠️ **다봇 셋업 시 — 봇마다 별도 초대 필수**: 봇은 각자 독립 Discord 애플리케이션이라
 > OAuth 초대도 **봇 앱마다 따로** 해야 합니다. 신규 봇 초대를 빠뜨리면 그 봇만 무반응
@@ -154,15 +155,19 @@ command -v tmux git curl node claude     # 의존 도구 확인
 - `.env` 작성 (chmod 600) — `DISCORD_BOT_TOKEN`
 - `soul.md` 작성 — 선택 template 안 placeholder 자동 치환
 
-#### (manual) Step 3. 봇 토큰 입력
+#### (manual) Step 3. 봇 토큰 저장
+
+토큰은 대화 창에 붙여 넣지 않는다. 저장은 `/thiscode:create-bot` Step 4 의 고정 스크립트가 한다(봇 폴더 만들기 · `.env` 권한 600 까지 — 값은 화면에 나오지 않는다):
 
 ```bash
-mkdir -p ~/.claude/channels/discord-<bot-name>
-chmod 700 ~/.claude/channels/discord-<bot-name>
-cat > ~/.claude/channels/discord-<bot-name>/.env <<EOF
-DISCORD_BOT_TOKEN=<입력 토큰>
-EOF
-chmod 600 ~/.claude/channels/discord-<bot-name>/.env
+bash <플러그인루트>/scripts/discord-token-capture.sh arm <bot-name>       # ① 포털에서 토큰 옆 ‘복사’(Copy) 를 누르기 «전에»(10분 안에 ②까지)
+bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # ② ‘복사’ 를 누른 «뒤에»
+```
+
+클립보드 길이 안 되면(도구 없음 = exit 4) 사용자가 **자기 터미널에서** 직접 실행한다 — 물음에 토큰을 붙여 넣는다(화면에 안 보인다):
+
+```bash
+bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>
 ```
 
 ⚠️ 토큰을 Discord 본문이나 git 에 노출 금지.

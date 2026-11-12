@@ -1,0 +1,169 @@
+# slack-configure — 단계마다 어디까지 자동인가
+#
+# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 단계(id)가 하나라도
+# 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
+#
+# mode
+#   auto             ThisCode 가 끝까지 한다. 막히면 아래 «막혔을 때» 규칙을 따른다.
+#   auto_then_human  ThisCode 가 먼저 한다. 자동 시도 3회가 다 실패한 뒤에만 사람에게 넘긴다.
+#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 비밀번호).
+#                    시도 횟수에 넣지 않고 바로 넘긴다.
+# gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
+#                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
+# human_stops      그 단계 안에서 사람만 하는 자리(관문 이름 · configs/install.yaml 명단과 1:1).
+# asks             그 단계에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
+# handoff          사람에게 넘길 때 그대로 쓰는 안내 문구. 화면 이름은 SKILL.md 에 적힌 대로 둔다.
+#
+# 값은 전부 한 줄 · 큰따옴표 문자열(시험이 줄 단위로 읽는다).
+
+schema: "thiscode-automation-v1"
+skill: "slack-configure"
+
+policy:
+  attempts_before_handoff: "3"
+  browser_order: "ego aside fallback"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
+  attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
+  attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
+  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> <사유 코드>"
+  record_never: "사유는 정해진 코드만(configs/install.yaml 의 attempt_reason_codes) — 화면에서 본 글 · 오류 원문 · 값을 명령에 넣지 않는다"
+  handoff_reason: "넘김 글의 <사유> 자리에는 그 코드의 says 문장을 넣는다(configs/install.yaml)"
+  before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
+  handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
+
+always_human:
+  - gate: "browser_permission_prompt"
+    when: "자동화 브라우저가 사이트 권한 창 · 기기 선택 창에서 «사용자 차례»로 멈출 때"
+    reason: "권한을 허용하는 것은 사람 몫 — 대신 누르지 않는다"
+    handoff: "브라우저가 사용자 차례로 멈췄습니다. ego lite 라면 창 오른쪽 위 숫자 버튼 → ‘Need your action’ 표시가 붙은 칸 → 뜬 창 처리 → 아래 ‘Return to agent’ 순서로 누르고, 다른 브라우저라면 화면에 뜬 권한 창을 처리한 뒤 말해 주세요 — 그 다음은 제가 이어갑니다."
+
+steps:
+  - id: "0"
+    title: "전제 확인 + 브리지 자동 빌드"
+    mode: "auto_then_human"
+    gate: "slack_bridge_build"
+    reason: "경로 확인과 npm install · npm run build 는 자동 · 네트워크나 Node 버전 문제로 실패하면 사람이 고친다"
+    handoff: "브리지 빌드를 세 번 시도했는데 <사유>로 안 됐습니다. Node 버전(node -v 가 20 이상)과 npm 레지스트리 접근을 확인해 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "0-A"
+    title: "봇 이름 · 페르소나 선택"
+    mode: "human_only"
+    kind: "answer"
+    reason: "이름 · 역할 · 페르소나 템플릿은 사용자가 정한다"
+    handoff: "봇 이름(영문 소문자와 하이픈), 하는 일 한 줄, 페르소나 템플릿을 알려 주세요."
+
+  - id: "1"
+    title: "사전 점검 + Slack CLI 설치"
+    mode: "auto_then_human"
+    gate: "slack_cli_install"
+    reason: "node 확인과 Slack CLI 설치(sudo 없이 홈 디렉토리)는 자동 · 네트워크나 PATH 등록이 안 되면 사람이 고친다"
+    handoff: "Slack CLI 를 설치하려고 세 번 시도했는데 <사유>로 안 됐습니다. 접속 문제면 downloads.slack-edge.com 에 접속되는지, 명령을 못 찾는 문제면 홈 폴더의 .local/bin 이 PATH 에 들어 있는지 확인해 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "2"
+    title: "기존 인증 확인"
+    mode: "auto"
+    reason: "slack auth list 로 로그인된 팀이 있는지 읽기만 한다"
+
+  - id: "3"
+    title: "Slack CLI 로그인 (관문 A)"
+    mode: "human_only"
+    human_stops: "slack_login"
+    reason: "계정 자격증명이라 대신 입력하지 않는다"
+    handoff: "Slack CLI 인증이 필요합니다. 제가 드린 /slackauthticket 코드를 Slack 앱의 아무 채널에 붙여 넣고 Enter 를 누르세요. ‘Confirm’ 을 누르면 나오는 확인 코드를 여기에 붙여 넣어 주세요."
+
+  - id: "4"
+    title: "매니페스트 파일 생성"
+    mode: "auto"
+    reason: "봇 이름만 바꿔 로컬 파일로 쓴다(비밀 값 없음)"
+
+  - id: "5"
+    title: "앱 생성 + 워크스페이스 설치 (관문 B)"
+    mode: "auto_then_human"
+    gate: "slack_app_browser_flow"
+    human_stops: "slack_app_create slack_manifest_approve"
+    asks: "브라우저 작업을 제가 할지 직접 할지"
+    reason: "① 제가 진행을 고르면 브라우저로 Create New App 화면까지는 자동 · 앱 만들기와 설치 승인(허용)은 사람만 · 로그인 화면이 뜨면 사람"
+    handoff: "앱 만들기(Create)를 눌러 주세요. 그다음 Install to Workspace 승인 화면에서 권한 5줄(chat:write · im:history · channels:history · app_mentions:read · reactions:write)이 보이는지 확인하고 허용(Allow)을 누른 뒤 App ID 를 알려 주세요. 화면이 이 안내와 다르면 그 자리에서 알려 주세요."
+
+  - id: "6′"
+    title: "메시지 탭 켜기 (관문 C · 조건부)"
+    mode: "human_only"
+    human_stops: "slack_messages_tab_toggle"
+    reason: "앱 설정 화면의 토글이라 소유자 계정 세션에서만 — 매니페스트가 반영되지 않았을 때만 나온다"
+    handoff: "DM이 아직 막혀 있는 것 같습니다. api.slack.com/apps 에서 방금 만든 앱 → 왼쪽 메뉴 ‘App Home’ → 아래로 스크롤해 ‘Show Tabs → Messages Tab’ 토글을 켜고 Slack 앱을 새로고침해 주세요."
+
+  - id: "7"
+    title: "브리지 설치"
+    mode: "auto_then_human"
+    gate: "slack_bridge_install"
+    reason: "npm install 과 npm run build 는 자동 · 네트워크 문제로 실패하면 사람이 고친다"
+    handoff: "브리지 설치를 세 번 시도했는데 <사유>로 안 됐습니다. npm 레지스트리 접근과 Node 버전을 확인해 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "7-A"
+    title: "봇 루트 폴더 생성"
+    mode: "auto"
+    reason: "폴더와 CLAUDE.md 를 로컬 파일로 만든다(Step 0-A 값 사용)"
+
+  - id: "8"
+    title: "상태 디렉토리 준비"
+    mode: "auto"
+    reason: "상태 폴더 만들기와 기존 봇 충돌 검사는 로컬 일"
+
+  - id: "9"
+    title: "채널 확보 (이름에서 ID 로)"
+    mode: "auto"
+    asks: "채널 링크 복사해 알려 주기(또는 새로 만들기)"
+    reason: "ID 뽑기와 채널 참여 시도는 자동 · 사용자는 링크만 건넨다"
+
+  - id: "10"
+    title: "토큰 값 입력 (관문 D)"
+    mode: "human_only"
+    human_stops: "slack_token_paste"
+    reason: "시크릿 값이라 사용자가 직접 복사한다 — 저는 값을 보지 않는다"
+    handoff: "Slack 앱 토큰 2개(Bot User OAuth Token 과 App-Level Token)를 각각 복사한 뒤 대화 창에 ‘복사했어요’ 라고 알려 주세요. 값은 화면에 띄우지 않고, 제가 보지 않은 채 파일에만 저장합니다."
+
+  - id: "10-c"
+    title: "부여 scope 관문"
+    mode: "auto_then_human"
+    gate: "slack_scope_check"
+    human_stops: "slack_manifest_approve"
+    reason: "auth.test 응답으로 부여 목록 대조는 자동 · 부족하면 재설치 승인이 필요하고 그 클릭은 사람만"
+    handoff: "토큰에 부여되지 않은 권한이 있습니다. api.slack.com/apps/<APP_ID>/install-on-team 을 새 탭으로 열어 동의 목록에 빠진 권한이 보이는지 확인한 뒤 다시 설치(Reinstall)를 허용하고 알려 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "11"
+    title: ".env 검증"
+    mode: "auto"
+    reason: "파일 권한과 필수 키 확인"
+
+  - id: "12"
+    title: ".mcp.json 등록"
+    mode: "auto"
+    reason: "로컬 파일 쓰기"
+
+  - id: "13"
+    title: "resident server 기동"
+    mode: "auto"
+    reason: "로컬 프로세스 기동"
+
+  - id: "13-A"
+    title: "응답 세션 기동"
+    mode: "auto"
+    reason: "봇 루트 폴더에서 세션을 띄운다"
+
+  - id: "14"
+    title: "세션 최초 확인 창 (관문 E)"
+    mode: "human_only"
+    human_stops: "slack_dev_channels_confirm"
+    reason: "권한 승인 창이라 대신 누르지 않는다(동의는 사람 몫)"
+    handoff: "Claude Code 를 처음 켜면 확인 창이 최대 3개 연달아 뜹니다. ‘Use this MCP server’ · ‘Yes, allow external imports’ · ‘I am using this for local development’ 모두 1번을 고르세요. 화면이 이 안내와 다르면 그 자리에서 알려 주세요."
+
+  - id: "15"
+    title: "검증"
+    mode: "auto"
+    asks: "봇에게 DM 을 보내 답이 오는지 확인"
+    reason: "소켓 · 로그 · .env · auth.test 확인은 자동 · 마지막 DM 왕복만 사용자에게 부탁한다"
+
+  - id: "15-A"
+    title: "인격 · 거버넌스 주입 검증"
+    mode: "auto"
+    reason: "로컬 검사"

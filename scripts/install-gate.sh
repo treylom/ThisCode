@@ -15,9 +15,18 @@
 #     exit 1 — 먼저 자동으로 «한 번 시도»할 것. 실패했을 때만 안내한다
 #     exit 2 — 모르는 관문 이름 / 계약 파일 없음 → 기본값은 시도(호출자는 1 과 같게 취급)
 #
-#   bash scripts/install-gate.sh --attempted <관문이름> <ok|fail> [사유]
+#   bash scripts/install-gate.sh --attempted <관문이름> <ok|fail> [사유 코드]
 #     시도했다는 «사실»을 원장에 남긴다. fail 인데 사유가 비면 exit 2 —
 #     사유 없는 낙하는 계약 위반이라 기록 자체를 거부한다.
+#     사유는 정해진 코드만 받는다(그 밖 = exit 2). 목록 = configs/install.yaml 의 attempt_reason_codes.
+#     기록 파일을 안전하게 쓸 수 없으면(심볼릭 링크 · 일반 파일 아님 · 소유자 다름) exit 3.
+#   bash scripts/install-gate.sh --reason-codes
+#     받는 사유 코드와, 사용자에게 넘길 때 쓰는 정해진 문장을 한 줄씩 보여 준다.
+#
+#   bash scripts/install-gate.sh --handoff <관문이름>
+#     막힌 단계를 사람에게 넘기기 «직전»에 부른다.
+#     exit 0 — 넘겨도 된다 (사람만 하는 자리 · manual 모드 · 자동 시도 N회 실패 기록됨)
+#     exit 1 — 아직 아니다. 다음 자동 시도가 무엇인지 알려 준다 (N = install.yaml, 기본 3)
 #
 #   bash scripts/install-gate.sh --audit
 #     원장을 되감아 「시도하라(exit 1)는 판정을 받고도 시도 기록이 없는 관문」을 나열.
@@ -40,14 +49,155 @@ _json_escape() {
   printf '%s' "$1" | LC_ALL=C tr -d '\000-\037' | command sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
 }
 
-_ledger_append() {   # $1=kind $2=gate $3=verdict/outcome $4=detail
-  local dir ts
+# ── 설치 기록 파일을 지키는 법 ──────────────────────────────────────
+# 본인만 읽고 쓴다: 폴더 0700 · 파일 0600 을 호출자의 umask 와 상관없이 매번 맞추고 다시 확인한다.
+# 쓰기 전에 보는 것(순서대로): 폴더가 심볼릭 링크가 아닌 진짜 폴더이고 지금 사용자 것인가 →
+#   파일 자리가 심볼릭 링크가 아닌가(권한을 낮추기 «전»에 본다) → 일반 파일 · 지금 사용자 것 · 하드 링크 1 인가.
+# 하나라도 아니면 쓰지도 읽지도 않고 1 을 돌려준다(성공인 척하지 않는다).
+# 남는 틈: bash 만으로는 «한 번 연 파일을 확인하고 그 손잡이에 쓰기»(O_NOFOLLOW + fstat)를 못 한다.
+#   확인과 덧붙이기 사이에 «같은 사용자»의 다른 프로세스가 파일을 바꿔치면 막지 못한다.
+#   다른 사용자는 0700 폴더에 들어올 수 없어 바꿔칠 수 없다. 덧붙인 뒤 링크 여부를 한 번 더 본다.
+#   파일 ACL: macOS 에서는 쓰기 전에 폴더(~/.thiscode)와 파일의 ACL 을 지우고 다시 확인한다(못 지우면 쓰지 않는다).
+#   Linux · Windows 의 ACL 은 보지 않는다. THISCODE_INSTALL_LOG 로 가리킨 다른 폴더의 ACL 은 건드리지 않는다.
+_modes_meaningful() {   # 윈도우 git-bash 는 권한 비트가 뜻이 없다(거긴 파일 ACL 이 따로 있다)
+  case "$(uname -s 2>/dev/null)" in
+    MINGW*|MSYS*|CYGWIN*) return 1 ;;
+  esac
+  return 0
+}
+
+# macOS: 파일 ACL(상속 ACL 포함)을 지우고, 지워졌는지 다시 본다. 다른 OS 에서는 아무것도 하지 않는다.
+# OSTYPE 은 bash 가 아는 값이다(PATH 의 uname 이 아님).
+_acl_clear() {   # $1 = 파일이나 폴더
+  case "${OSTYPE:-}" in darwin*) : ;; *) return 0 ;; esac
+  chmod -N "$1" 2>/dev/null || return 1
+  [ "$(LC_ALL=C ls -lde "$1" 2>/dev/null | wc -l | tr -d ' ')" = "1" ]
+}
+
+_stat_mode_links() {   # "<8진 권한> <하드 링크 수>" — GNU stat 먼저, 아니면 BSD stat
+  command stat -c '%a %h' "$1" 2>/dev/null || command stat -f '%Lp %l' "$1" 2>/dev/null
+}
+
+# ~/.thiscode 안에는 토큰 스크립트(discord-token-capture.sh)의 arm 기록 폴더 token-arm 도 있다.
+# 그 스크립트는 «~/.thiscode 와 token-arm 이 둘 다 본인만 쓰는 폴더(정확히 0700 · ACL 없음)» 일 때만
+# 그 안의 기록을 믿는다. 여기서 ~/.thiscode 를 0700 으로 고치면, 열려 있던 동안 남이 넣어 둔 arm 기록이
+# 믿어지게 된다. 그래서 «본인만 쓰는 꼴이 아니던» ~/.thiscode 를 고칠 때는 token-arm 을 닫아 둔다
+# (안을 지우지는 않는다 — 다음 arm 이 비운 뒤에만 다시 열린다).
+_dir_was_private() {   # $1 = 폴더 — 정확히 0700 · (macOS) ACL 없음 인가. 확인만 한다
+  local info
+  info="$(_stat_mode_links "$1")" || return 1
+  [ "${info%% *}" = "700" ] || return 1
+  case "${OSTYPE:-}" in darwin*) : ;; *) return 0 ;; esac
+  [ "$(LC_ALL=C ls -lde "$1" 2>/dev/null | wc -l | tr -d ' ')" = "1" ]
+}
+
+_arm_dir_close() {   # $1 = ~/.thiscode — 그 안의 token-arm 이 링크가 아닌 진짜 폴더이고 내 것일 때만 닫는다
+  local arm="$1/token-arm" info
+  [ -L "$arm" ] && return 0
+  [ -d "$arm" ] && [ -O "$arm" ] || return 0
+  chmod 000 "$arm" 2>/dev/null || return 1
+  info="$(_stat_mode_links "$arm")" || return 1
+  [ "${info%% *}" = "0" ]
+}
+
+_ledger_dir_ready() {   # $1=make → 없으면 만든다
+  local dir created=0 info mode
   dir="$(dirname "$LEDGER")"
-  mkdir -p "$dir" 2>/dev/null || return 0     # 기록 실패가 설치를 막지는 않는다
+  [ -L "$dir" ] && return 1
+  if [ ! -e "$dir" ]; then
+    [ "${1:-}" = "make" ] || return 0
+    ( umask 077; mkdir -p "$dir" ) 2>/dev/null || return 1
+    created=1
+  fi
+  [ -L "$dir" ] && return 1
+  [ -d "$dir" ] && [ -O "$dir" ] || return 1
+  _modes_meaningful || return 0
+  if [ "$created" = 1 ] || [ "$(basename "$dir")" = ".thiscode" ]; then
+    # 우리 폴더(~/.thiscode 또는 방금 만든 폴더)는 0700 으로 맞춘다
+    if [ "$created" != 1 ] && ! _dir_was_private "$dir"; then
+      # 본인만 쓰는 꼴이 아니었다: 먼저 남이 못 쓰게 잠그되 0700 은 아직 아니게 두고(0710),
+      # token-arm 을 닫은 «뒤» 에 0700 으로 만든다 — 도중에 끊겨도 다음에 다시 여기로 온다.
+      chmod 710 "$dir" 2>/dev/null || return 1
+      _acl_clear "$dir" || return 1
+      _arm_dir_close "$dir" || return 1
+    fi
+    chmod 700 "$dir" 2>/dev/null || return 1
+    _acl_clear "$dir" || return 1
+    info="$(_stat_mode_links "$dir")" || return 1
+    [ "${info%% *}" = "700" ] || return 1
+  else
+    # THISCODE_INSTALL_LOG 로 다른 폴더를 가리킨 경우: 그 폴더 권한은 바꾸지 않는다.
+    # 대신 남이 쓸 수 있는 폴더면(그룹·기타 쓰기) 거기에는 쓰지도, 거기 것을 읽지도 않는다.
+    info="$(_stat_mode_links "$dir")" || return 1
+    mode="${info%% *}"
+    case "$mode" in
+      *[2367]?|*[2367]) return 1 ;;
+    esac
+  fi
+  return 0
+}
+
+_ledger_file_ok() {   # 지금 있는 파일이 믿을 만한가 — 심볼릭 링크를 가장 먼저 본다
+  local info
+  [ -L "$LEDGER" ] && return 1
+  [ -f "$LEDGER" ] && [ -O "$LEDGER" ] || return 1
+  info="$(_stat_mode_links "$LEDGER")" || return 1
+  [ "${info##* }" = "1" ] || return 1
+  # 비어 있지 않다면 우리 기록 꼴이어야 한다 — THISCODE_INSTALL_LOG 가 다른 파일(스크립트 · 설정)을
+  # 가리킬 때 그 파일의 권한을 바꾸거나 거기에 덧붙이지 않게.
+  if [ -s "$LEDGER" ]; then
+    IFS= read -r first < "$LEDGER" 2>/dev/null || [ -n "${first:-}" ] || return 1
+    case "$first" in
+      '{"ts":"'*) : ;;
+      *) return 1 ;;
+    esac
+  fi
+  return 0
+}
+
+_ledger_trusted() {   # 읽어도 되는가 (파일이 없으면 믿을 것도 없으니 참)
+  _ledger_dir_ready || return 1
+  [ -L "$LEDGER" ] && return 1
+  [ -e "$LEDGER" ] || return 0
+  _ledger_file_ok
+}
+
+_ledger_ready() {   # 써도 되는가 — 폴더·파일을 만들고 권한을 맞춘 뒤 다시 확인
+  local info
+  _ledger_dir_ready make || return 1
+  [ -L "$LEDGER" ] && return 1
+  if [ ! -e "$LEDGER" ]; then
+    # noclobber = «없을 때만 새로 만든다»(그 사이 끼워 넣은 링크를 따라가지 않는다)
+    ( umask 077; set -o noclobber; : > "$LEDGER" ) 2>/dev/null || return 1
+  fi
+  _ledger_file_ok || return 1
+  _modes_meaningful || return 0
+  chmod 600 "$LEDGER" 2>/dev/null || return 1
+  _acl_clear "$LEDGER" || return 1
+  info="$(_stat_mode_links "$LEDGER")" || return 1
+  [ "${info%% *}" = "600" ] || return 1
+  return 0
+}
+
+_ledger_append() {   # $1=kind $2=gate $3=verdict/outcome $4=detail — 못 쓰면 1 (성공으로 바꾸지 않는다)
+  local ts
+  if ! _ledger_ready; then
+    echo "install-gate: 설치 기록 파일을 안전하게 쓸 수 없어 기록하지 않았다 — $LEDGER (폴더나 파일이 심볼릭 링크 · 일반 파일 아님 · 소유자 다름 · 하드 링크 여럿 · 권한을 못 낮춤 가운데 하나)" >&2
+    return 1
+  fi
   ts="$(date +%Y-%m-%dT%H:%M:%S%z)"
-  printf '{"ts":"%s","kind":"%s","gate":"%s","result":"%s","detail":"%s"}\n' \
-    "$ts" "$(_json_escape "$1")" "$(_json_escape "$2")" \
-    "$(_json_escape "$3")" "$(_json_escape "${4:-}")" >> "$LEDGER" 2>/dev/null || true
+  ( umask 077
+    printf '{"ts":"%s","kind":"%s","gate":"%s","result":"%s","detail":"%s"}\n' \
+      "$ts" "$(_json_escape "$1")" "$(_json_escape "$2")" \
+      "$(_json_escape "$3")" "$(_json_escape "${4:-}")" >> "$LEDGER" ) 2>/dev/null || {
+    echo "install-gate: 설치 기록 파일에 덧붙이지 못했다 — $LEDGER" >&2
+    return 1
+  }
+  if ! _ledger_file_ok; then
+    echo "install-gate: 설치 기록 파일이 쓰는 사이 바뀌었다 — $LEDGER (이번 기록은 믿지 않는다)" >&2
+    return 1
+  fi
+  return 0
 }
 
 _mode() {
@@ -60,20 +210,131 @@ _mode() {
   printf '%s' "$m"
 }
 
+# 관문 이름은 값 «전체»가 영문·숫자·밑줄이어야 한다.
+# 줄바꿈·빈칸·기호가 하나라도 있으면 거부한다(줄 단위로 보면 두 줄 이름이 새어 들어온다).
+_gate_name_ok() {
+  local LC_ALL=C
+  case "$1" in
+    ''|*[!A-Za-z0-9_]*) return 1 ;;
+  esac
+  return 0
+}
+
+# ── 실패 사유 = 닫힌 코드 표 ─────────────────────────────────────────
+# 받는 값은 아래 표의 코드뿐이다(글자 꼴이 맞아도 표에 없으면 거부). 코드마다 사용자에게 보일 문장이
+# 하나씩 붙어 있고, 그 문장에 화면 글 · 오류 원문 · 값을 이어 붙이지 않는다.
+# 같은 목록을 configs/install.yaml 의 attempt_reason_codes 에도 적어 두고, 시험이 둘이 같은지 본다.
+REASON_CODES="element-not-found click-no-effect navigation-timeout permission-prompt login-required clipboard-empty not-armed format-mismatch tool-error install-failed network-error check-failed other"
+
+_reason_says() {   # 코드 → 정해진 문장. 표에 없으면 1
+  case "$1" in
+    element-not-found)  echo "버튼이나 입력 칸을 찾지 못하는 문제" ;;
+    click-no-effect)    echo "눌러도 화면이 바뀌지 않는 문제" ;;
+    navigation-timeout) echo "화면이 제때 열리지 않는 문제" ;;
+    permission-prompt)  echo "브라우저 권한 창이 가로막는 문제" ;;
+    login-required)     echo "로그인이 필요한 문제" ;;
+    clipboard-empty)    echo "복사한 값이 클립보드에 들어오지 않는 문제" ;;
+    not-armed)          echo "복사 준비가 안 돼 있거나, 이미 쓰였거나, 준비한 지 10분이 지난 문제" ;;
+    format-mismatch)    echo "받은 값의 형식이 맞지 않는 문제" ;;
+    tool-error)         echo "브라우저나 클립보드 도구가 없거나 오류를 내는 문제" ;;
+    install-failed)     echo "설치 명령이 실패하는 문제" ;;
+    network-error)      echo "네트워크 연결 문제" ;;
+    check-failed)       echo "설치 뒤 확인이나 안전 확인이 통과하지 않는 문제" ;;
+    other)              echo "알 수 없는 문제" ;;
+    *) return 1 ;;
+  esac
+}
+
+_reason_code_ok() { _reason_says "$1" >/dev/null 2>&1; }
+
+# ── --reason-codes: 받는 코드와 그 문장을 보여 준다 ─────────────────
+if [ "${1:-}" = "--reason-codes" ]; then
+  for code in $REASON_CODES; do
+    printf '%s\t%s\n' "$code" "$(_reason_says "$code")"
+  done
+  exit 0
+fi
+
 # ── --attempted: 시도 사실을 남긴다 ─────────────────────────────────
 if [ "${1:-}" = "--attempted" ]; then
   gate="${2:-}"; outcome="${3:-}"; reason="${4:-}"
-  if [ -z "$gate" ] || { [ "$outcome" != "ok" ] && [ "$outcome" != "fail" ]; }; then
-    echo "usage: install-gate.sh --attempted <관문이름> <ok|fail> [사유]" >&2
+  if ! _gate_name_ok "$gate" || { [ "$outcome" != "ok" ] && [ "$outcome" != "fail" ]; }; then
+    echo "usage: install-gate.sh --attempted <관문이름> <ok|fail> [사유 코드]" >&2
     exit 2
   fi
   if [ "$outcome" = "fail" ] && [ -z "$reason" ]; then
     echo "install-gate: 실패를 사유 없이 기록할 수 없다 — 사유 없는 수동 낙하는 계약 위반 ($gate)" >&2
     exit 2
   fi
-  _ledger_append "attempt" "$gate" "$outcome" "$reason"
-  echo "시도 기록됨 — $gate = $outcome${reason:+ ($reason)}"
+  if [ -n "$reason" ] && ! _reason_code_ok "$reason"; then
+    # 받은 값은 다시 찍지 않는다 — 화면 글이나 값이 섞여 있을 수 있다.
+    echo "install-gate: 사유는 정해진 코드만 받는다 — 목록: configs/install.yaml 의 attempt_reason_codes (받은 값은 기록하지 않았다)" >&2
+    exit 2
+  fi
+  _ledger_append "attempt" "$gate" "$outcome" "$reason" || exit 3
+  echo "시도 기록됨 — $gate = $outcome${reason:+ ($reason — $(_reason_says "$reason"))}"
   exit 0
+fi
+
+# ── --handoff: 막힌 단계를 사람에게 넘겨도 되는가 ───────────────────
+# 답: 사람만 하는 자리(명단 등재)·manual 모드 = 바로 넘김(exit 0, 횟수에 안 넣음).
+#     그 밖 = 그 관문의 «실패 시도 기록»이 N 번(configs/install.yaml
+#     auto_attempts_before_handoff, 기본 3) 쌓인 뒤에만 exit 0.
+#     세는 범위 = 그 관문의 마지막 성공(attempt ok)·마지막 넘김 허용 뒤.
+#     이 기록은 봇이 스스로 적는 «절차 기록» 이다 — 브라우저에서 실제로 세 번 했는지를
+#     이 스크립트가 확인하지는 못한다(시도 없이 세 줄만 적어도 통과한다).
+if [ "${1:-}" = "--handoff" ]; then
+  gate="${2:-}"
+  if ! _gate_name_ok "$gate"; then
+    echo "usage: install-gate.sh --handoff <관문이름>" >&2
+    exit 2
+  fi
+  if [ ! -f "$CONFIG" ]; then
+    echo "install-gate: 계약 파일 없음 — $CONFIG" >&2
+    _ledger_append "handoff" "$gate" "no-config" "$CONFIG"
+    exit 2
+  fi
+  need="$(command sed -n 's/^[[:space:]]*auto_attempts_before_handoff:[[:space:]]*\([0-9][0-9]*\).*/\1/p' "$CONFIG" | head -1)"
+  [ -z "$need" ] && need=3
+  # 아래 두 갈래(manual 모드 · 사람만 하는 자리)는 넘김 기록을 못 남겨도 넘김을 허용한다(exit 0).
+  # 사람이 로그인 · 사람 확인 · 비밀번호 앞에서 기록 파일 문제로 막히지 않게 하려는 것이다 —
+  # «기록을 못 남기면 넘기지 않는다» 는 세 번 시도 뒤의 넘김에만 해당한다.
+  if [ "$(_mode)" = "manual" ]; then
+    echo "manual 모드 — 넘김 허용 ($gate)"
+    _ledger_append "handoff" "$gate" "handoff-allowed" "manual-mode"
+    exit 0
+  fi
+  if command sed -n 's/^[[:space:]]*-[[:space:]]*name:[[:space:]]*\([A-Za-z0-9_]*\).*/\1/p' "$CONFIG" \
+     | command grep -qx -- "$gate"; then
+    echo "사람만 하는 자리 — 바로 넘김 ($gate · 시도 횟수에 넣지 않는다)"
+    _ledger_append "handoff" "$gate" "handoff-allowed" "human-only"
+    exit 0
+  fi
+  fails=0
+  if ! _ledger_trusted; then
+    echo "install-gate: 설치 기록 파일을 믿을 수 없어 읽지 않는다 — $LEDGER (심볼릭 링크 · 일반 파일 아님 · 소유자 다름)" >&2
+  elif [ -f "$LEDGER" ]; then
+    fails="$(command grep -F "\"gate\":\"$gate\"" "$LEDGER" | command awk '
+      /"kind":"attempt"/ && /"result":"fail"/ { n++ }
+      (/"kind":"attempt"/ && /"result":"ok"/) || /"result":"handoff-allowed"/ { n = 0 }
+      END { print n + 0 }')"
+  fi
+  if [ "$fails" -ge "$need" ]; then
+    echo "자동 시도 $fails/$need 회 모두 실패 — 넘김 허용 ($gate). 넘길 때 무엇을 시도했는지 함께 말한다."
+    # 넘김을 기록하지 못하면 횟수가 0 으로 돌아가지 않는다 — 그럴 때는 허용하지 않는다.
+    _ledger_append "handoff" "$gate" "handoff-allowed" "after $fails failed attempts" || exit 3
+    exit 0
+  fi
+  next=$((fails + 1))
+  echo "아직 넘기지 않는다 — 자동 시도 $fails/$need ($gate)" >&2
+  case "$next" in
+    1) echo "  시도 1: 고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다" >&2 ;;
+    2) echo "  시도 2: 같은 브라우저에서 다른 길로(다른 버튼 이름·키보드·주소로 바로 가기)" >&2 ;;
+    *) echo "  시도 $next: 다음 브라우저로 바꿔서(ego lite → Aside → 그 밖 — scripts/browser-detect.mjs)" >&2 ;;
+  esac
+  echo "  시도마다: bash scripts/install-gate.sh --attempted $gate <ok|fail> <사유 코드>   (코드 목록 = configs/install.yaml 의 attempt_reason_codes)" >&2
+  _ledger_append "handoff" "$gate" "handoff-denied" "$fails/$need"
+  exit 1
 fi
 
 # ── --audit: 계약이 지켜졌는지 되감아 본다 ──────────────────────────
@@ -83,8 +344,12 @@ fi
 #   답하지 «않는» 것: 수동 안내가 화면에 실제로 떴는지. 게이트는 그걸 볼 수 없다.
 #   그러므로 위반 0 은 「계약 준수」가 아니라 「미이행 흔적 없음」이다.
 if [ "${1:-}" = "--audit" ]; then
+  if ! _ledger_trusted; then
+    echo "install-gate: 설치 기록 파일을 믿을 수 없어 읽지 않는다 — $LEDGER (심볼릭 링크 · 일반 파일 아님 · 소유자 다름 · 남이 쓸 수 있는 폴더 · 우리 기록 꼴이 아님)" >&2
+    exit 2
+  fi
   if [ ! -f "$LEDGER" ]; then
-    echo "원장 없음 — $LEDGER (아직 게이트가 한 번도 안 불렸다)"
+    echo "설치 기록 없음 — $LEDGER (아직 게이트가 한 번도 안 불렸다)"
     exit 0
   fi
   viol=0
@@ -96,12 +361,12 @@ if [ "${1:-}" = "--audit" ]; then
     [ -z "$last_req" ] && continue
     last_try="$(command grep -n "\"gate\":\"$g\"" "$LEDGER" | command grep '"kind":"attempt"' | tail -1 | cut -d: -f1)"
     if [ -z "$last_try" ] || [ "$last_try" -lt "$last_req" ]; then
-      echo "위반 — $g: 「먼저 시도하라」 판정(원장 $last_req 행) 뒤에 시도 기록이 없다"
+      echo "위반 — $g: 「먼저 시도하라」 판정(설치 기록 $last_req 행) 뒤에 시도 기록이 없다"
       viol=$((viol + 1))
     fi
   done
   echo "감사 질문: exit 1 을 받고도 시도 기록이 없는 관문. (수동 안내가 실제로 떴는지는 이 감사로 알 수 없다)"
-  echo "위반 $viol 건 / 원장 $(command wc -l < "$LEDGER" | tr -d ' ') 행"
+  echo "위반 $viol 건 / 설치 기록 $(command wc -l < "$LEDGER" | tr -d ' ') 행"
   [ "$viol" -eq 0 ] || exit 1
   exit 0
 fi
@@ -140,6 +405,6 @@ fi
 
 # 명단에 없다 = 아직 시도해보지 않아도 되는 이유가 «선언되지 않았다»
 echo "미등재 관문 — 먼저 자동으로 한 번 시도할 것 ($GATE, mode=$mode)" >&2
-echo "  시도한 뒤 반드시: bash scripts/install-gate.sh --attempted $GATE <ok|fail> [사유]" >&2
+echo "  시도한 뒤 반드시: bash scripts/install-gate.sh --attempted $GATE <ok|fail> [사유 코드]" >&2
 _ledger_append "gate" "$GATE" "attempt-required" "unlisted"
 exit 1

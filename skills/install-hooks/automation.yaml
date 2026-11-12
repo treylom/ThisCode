@@ -1,0 +1,62 @@
+# install-hooks — 단계마다 어디까지 자동인가
+#
+# 이 표가 기준이다. SKILL.md 의 «### Step» 머리줄과 이 표의 단계(id)가 하나라도
+# 어긋나면 tests/init/automation-steps.test.mjs 가 떨어진다.
+# (Step 3 은 원래 없다 — 머리줄이 1 · 2 · 4 · 5 · 6 이다.)
+#
+# mode
+#   auto             ThisCode 가 끝까지 한다. 막히면 아래 «막혔을 때» 규칙을 따른다.
+#   auto_then_human  ThisCode 가 먼저 한다. 자동 시도 3회가 다 실패한 뒤에만 사람에게 넘긴다.
+#   human_only       사람만 할 수 있다(답하기 · 로그인 · 사람 확인 · 비밀번호).
+#                    시도 횟수에 넣지 않고 바로 넘긴다.
+# gate             scripts/install-gate.sh 에 넘기는 이름. auto_then_human 은 넘기기 직전에
+#                  `install-gate.sh --handoff <gate>` 가 0 을 줘야 한다.
+# asks             그 단계에서 사용자에게 묻는 것(일을 넘기는 것이 아니라 답을 받는 것).
+# handoff          사람에게 넘길 때 그대로 쓰는 안내 문구.
+#
+# 값은 전부 한 줄 · 큰따옴표 문자열(시험이 줄 단위로 읽는다).
+
+schema: "thiscode-automation-v1"
+skill: "install-hooks"
+
+policy:
+  attempts_before_handoff: "3"
+  browser_order: "ego aside fallback"
+  attempt_1: "고른 브라우저에서 화면을 다시 읽고(스냅샷) 그 단계를 다시 한다"
+  attempt_2: "같은 브라우저에서 다른 길로 한다(다른 버튼 이름 · 키보드 · 주소로 바로 가기)"
+  attempt_3: "다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 · scripts/browser-detect.mjs)"
+  record: "시도마다 install-gate.sh --attempted <gate> <ok|fail> <사유 코드>"
+  record_never: "사유는 정해진 코드만(configs/install.yaml 의 attempt_reason_codes) — 화면에서 본 글 · 오류 원문 · 값을 명령에 넣지 않는다"
+  handoff_reason: "넘김 글의 <사유> 자리에는 그 코드의 says 문장을 넣는다(configs/install.yaml)"
+  before_handoff: "install-gate.sh --handoff <gate> 가 0 을 준 뒤에만 넘긴다"
+  handoff_must_say: "무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 ThisCode 가 잇는다"
+
+steps:
+  - id: "1"
+    title: "thiscode plugin 위치 찾기"
+    mode: "auto"
+    reason: "설치 후보 경로를 차례로 확인하는 로컬 검사"
+
+  - id: "2"
+    title: "스크립트 1회 호출"
+    mode: "auto"
+    reason: "install-hooks.sh 가 모드를 판단하고 설정을 병합하거나 정리한다(백업은 스크립트가 만든다)"
+
+  - id: "4"
+    title: "검증"
+    mode: "auto"
+    reason: "install-hooks.sh --verify 로 네 이벤트 등록과 파일 실재를 확인한다"
+
+  - id: "5"
+    title: "새 세션에서 효과 확인"
+    mode: "auto_then_human"
+    gate: "hooks_new_session_check"
+    human_stops: "claude_session_restart"
+    reason: "새 세션을 띄워 SessionStart 주입을 보는 일 — 기존 세션을 끝내고 다시 켜는 것은 사람 손이 필요할 수 있다"
+    handoff: "훅은 새 세션부터 적용됩니다. 지금 세션을 exit 로 끝내고 claude 를 다시 켜서 첫 응답에 페르소나 어휘와 시그니처가 나오는지 봐 주세요 — 그 다음은 제가 이어갑니다."
+
+  - id: "6"
+    title: "회의실 게이트 구성 + 연결 probe"
+    mode: "auto"
+    asks: "공용 채널 id · roster 경로 · 워크스페이스 경로(봇이 둘 이상일 때만)"
+    reason: "설정 파일 쓰기와 probe 5칸 실행은 자동 · 단일 봇 설치면 건너뛴다"

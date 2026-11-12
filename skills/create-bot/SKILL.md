@@ -85,12 +85,37 @@ chmod 700 "$BOT_DIR" 2>/dev/null || true   # Windows(NTFS)는 chmod 무의미 �
 > | # | 지점 | 요구 | 왜 |
 > |---|---|---|---|
 > | 1 | **포털 접속 직후 로그인 화면** | **계정 자격증명 + (설정돼 있으면) 다단계 인증(MFA)** | 로그인 세션 없이는 어떤 포털 조작도 못 한다 — 깨끗한(신규/미로그인) 계정의 실제 첫 화면이 이것이다. 구판은 이 분기가 없어 로그인 전제를 L109 OAuth 근거로만 1회 언급했다(막힘 재현) |
-> | 2 | "New Application" 생성 커밋 | **hCaptcha** | 봇 감지 — 계약 층의 `Bots cannot use this endpoint`(code 20001)를 UI 층에서 한 번 더 집행 |
+> | 2 | «신규 애플리케이션»("New Application") → «신규 앱 만들기» 창의 생성 커밋 | **hCaptcha** | 같은 창의 약관 동의 칸 체크와 «만들기» 누르기는 사용자가 ‘예’ 라고 답한 뒤에만 봇이 한다(아래 2번 — 묻고 답을 기다린다). 사람 확인(hCaptcha)은 봇을 걸러 내는 장치다 — 계약 층의 `Bots cannot use this endpoint`(code 20001)를 UI 층에서 한 번 더 집행한다 |
 > | 3 | **Reset Token 최종 확인 모달** | **계정 비밀번호 + (설정돼 있으면) 다단계 인증(MFA)** | 토큰 = 그 봇의 통제권 전부. `네, 할게요!` **뒤에** 뜬다(1번의 로그인과는 별개 — 토큰 노출 직전 재확인용 step-up 인증) |
 >
-> **계약상 이름** (`configs/install.yaml` 의 `manual_allowed_without_attempt` 에 등재된 이름과 1:1): 1 = `discord_portal_login` · 2 = `discord_hcaptcha` · 3 = `discord_reset_token_modal`. 이 세 이름은 **등재돼 있어** `install-gate.sh` 가 `exit 0` 을 준다 = 시도 없이 사람에게 부탁해도 되는 유일한 지점들이다. 여기 없는 이름으로 사람에게 넘기려 하면 게이트가 `exit 1` 로 막는다.
+> **계약상 이름** (`configs/install.yaml` 의 `manual_allowed_without_attempt` 에 등재된 이름과 1:1): 1 = `discord_portal_login` · 2 = `discord_hcaptcha` · 3 = `discord_reset_token_modal`. 이 세 이름은 **등재돼 있어** `install-gate.sh` 가 `exit 0` 을 준다 = 시도 없이 사람에게 부탁해도 되는 Discord 쪽 지점들이다(명단에는 자동화 브라우저의 권한 창 `browser_permission_prompt` 도 있다 — 아래 0단계의 «사용자 차례» 안내). 여기 없는 이름으로 사람에게 넘기려 하면 게이트가 `exit 1` 로 막는다.
 >
-> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다 — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
+> 이 3곳 **직전**에서만 멈추고 "여기만 눌러(입력해) 주세요 — 그 다음은 제가 이어갑니다" 1줄을 남긴 뒤 기다린다. 통과를 화면에서 확인하면 즉시 재개한다. **그 외 전 구간은 묻지 않고 기본으로 진행**한다(예외 둘: 약관 동의 칸과 더할 권한 3종은 예/아니오를 묻는다 — 동의와 권한 넓히기는 사용자만 정할 수 있다) — slack-configure 의 "대신할까요?" 패턴과 달리, B7 은 질문 없이 진행이 기본값이다(create-bot 은 slack-configure 를 참고만 하고 따르지 않는다).
+
+> 🔴 **막혔을 때 — 자동 시도 3회, 그 뒤에만 사람**: 사람만 하는 자리가 아닌 곳에서 단계가 막히면(버튼을 못 찾음 · 눌러도 화면이 안 바뀜 · 도구 오류) 곧바로 사용자에게 넘기지 않는다. 자동화 브라우저로 **자동 시도 3회**를 먼저 한다 — ① 고른 브라우저에서 화면을 다시 읽고 그 단계를 다시 한다 ② 같은 브라우저에서 다른 길로 한다(화면 이름이 한국어로 보이면 한국어 이름으로 · 키보드 · 주소로 바로 가기) ③ 다음 브라우저로 바꿔서 한다(ego lite → Aside → 그 밖 — `scripts/browser-detect.mjs` 가 고른다). 시도마다 결과를 남기고, 넘기기 직전에 게이트를 부른다:
+> ```bash
+> bash <플러그인루트>/scripts/install-gate.sh --attempted <관문이름> fail <사유 코드>
+> bash <플러그인루트>/scripts/install-gate.sh --handoff <관문이름>   # exit 0 일 때만 넘긴다 · exit 1 = 다음 시도가 무엇인지 알려 준다
+> ```
+> 3회가 다 실패해 넘길 때는 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다»를 한 번에 말한다. 사람만 하는 자리(로그인 · 사람 확인 · 비밀번호 · 권한 창)는 **시도 횟수에 넣지 않고** 바로 넘긴다.
+>
+> **사유는 정해진 코드에서 고른다**: `--attempted … fail` 뒤에는 `configs/install.yaml` 의 `attempt_reason_codes` 에 있는 코드 하나만 쓴다(`element-not-found` · `click-no-effect` · `navigation-timeout` · `permission-prompt` · `login-required` · `clipboard-empty` · `not-armed` · `format-mismatch` · `tool-error` · `install-failed` · `network-error` · `check-failed` · `other`). 화면에서 본 글 · 오류 원문 · 값(토큰 · 비밀번호 · 인증 코드 · 주소)을 명령에 넣지 않는다 — 목록에 없는 값은 스크립트가 거부한다(exit 2). 사용자에게 넘길 때 «<사유>로 안 됐습니다» 의 <사유> 자리에는 그 코드의 `says` 문장을 넣는다(예: `click-no-effect` → «눌러도 화면이 바뀌지 않는 문제로 안 됐습니다»). 코드는 설치 기록 파일 `~/.thiscode/install-log.jsonl` 에 남는다(본인만 읽을 수 있게 스크립트가 권한을 맞춘다).
+>
+> **단계마다 어디까지 자동인지** = 이 스킬 폴더의 [`automation.yaml`](automation.yaml) — 단계별 `auto`(끝까지 자동) / `auto_then_human`(자동 시도 3회 뒤 사람) / `human_only`(사람만) · 관문 이름 · 넘길 때 안내 문구. 넘길 때는 그 표의 문구를 쓴다 — 자동 시도 3회가 다 실패해 넘길 때는 `handoff_after_attempts` 가 있으면 그것을, 없으면 `handoff` 를 쓰고, 사람만 하는 자리(`human_stops`)에서 넘길 때는 `handoff` 를 쓴다. 단 `human_stops` 가 있는데 `handoff_after_attempts` 가 없는 단계(지금은 7)에서는 `handoff` 가 사람 관문에서 쓰는 문구이므로, 3회 실패로 넘길 때는 그 문구를 쓰지 않고 «무엇을 세 번 시도했고 왜 안 됐는지 · 사용자가 할 일 한 가지 · 그 다음은 제가 이어갑니다» 를 한 번에 말한다. 이 글의 `### Step` 머리줄과 그 표가 어긋나면 시험(`tests/init/automation-steps.test.mjs`)이 떨어진다.
+
+**화면 이름 표 (영어 화면 ↔ 한국어 화면)** — Discord 를 한국어로 쓰면 개발자 포털도 한국어로 보인다. 사용자에게 화면 이름을 말할 때는 **한국어 이름을 먼저, 영어 이름을 괄호로** 말하고, 버튼을 찾을 때는 두 이름을 다 찾는다. 아래에 없는 이름은 한국어 화면에서 확인하지 못한 것이라 영어 이름만 적는다 — 그 이름으로 못 찾으면 화면을 다시 읽어 같은 자리의 버튼을 찾는다(없는 한국어 이름을 지어내 말하지 않는다).
+
+| 영어 화면 | 한국어 화면 | 확인 |
+|---|---|---|
+| Applications (목록 머리) | 애플리케이션 | 한국어 포털 실측 2026-11-11 |
+| New Application (버튼) | 신규 애플리케이션 | 위와 같음 |
+| (새 앱 창 제목) | 신규 앱 만들기 | 위와 같음 |
+| Name (입력 칸) | 이름 | 위와 같음 |
+| (동의 칸 옆 글) | 만들기를 클릭하면 Discord 개발자 이용약관과 개발자 정책에 동의하는 거예요 | 위와 같음 |
+| Create · Cancel (창 버튼) | 만들기 · 취소 | 위와 같음 |
+| (hCaptcha 창) | 잠깐! 로봇 아니고 사람 맞죠? | 한국어 포털 실측 2026-11-04 |
+| Copy (토큰 옆 버튼) | 복사 | 한국어 포털 실측 2026-11-11 |
+| Bot · Reset Token · Privileged Gateway Intents · Message Content Intent · Server Members Intent · Presence Intent · Save Changes · OAuth2 · URL Generator · Scopes · Bot Permissions | (미확인 — 영어 이름만 쓴다) | 미확인 |
 
 **0단계 — 브라우저 자동 탐색 (1.4.2 · 사용자 설정 없음)**: 포털을 열기 전에 먼저 한 번 실행한다. ego lite → Aside 가운데 «깔려 있고 대답하는» 첫 번째를 고른다. 사용자가 브라우저를 고르거나 설정할 일은 없다.
 
@@ -113,23 +138,30 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
     - 그리고 시도 결과를 **남긴다** — 성공이든 실패든:
       ```bash
       bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install ok
-      bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install fail "<무엇이 막았는지>"
+      bash <플러그인루트>/scripts/install-gate.sh --attempted browser_tool_install fail <사유 코드>
       ```
       사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없고, 확인할 수 없는 계약은 지켜지지 않아도 표가 안 난다.
   - **`manual` 모드** → 사용자가 스스로 하겠다고 골랐으므로 기존대로 **묻는다**. `/thiscode:help` STEP 2.5 point 2 의 제안을 그대로 재사용한다(새 자동화 발명 ❌, 제품에 이미 있는 능력 재사용): "브라우저를 같이 볼 수 있는 도구를 1분 안에 붙일 수 있어요. 붙일까요?"
     - **승인하면** → `claude mcp add playwright -- npx @playwright/mcp@latest` 실행 → 재탐지 → 위 "있으면" 가지로 합류(= 기본 흐름을 그대로 실행, B7 완주 유지).
-    - **거부할 때만** → 아래 "수동 안내"로 폴백해 사용자에게 직접 진행을 요청하고 결과(토큰·초대 서버)만 받는다. **이 갈래에서만** "결함이 아니라 환경 한계"가 성립한다 — 사람 승인 관문(붙일까요? → 네/아니오)은 유지된다, 측정자가 대신 결정하지 않는다.
+    - **거부할 때만** → 아래 "수동 안내"로 폴백해 사용자에게 직접 진행을 요청하고 결과(초대한 서버 이름)만 받는다 — 토큰은 대화로 받지 않고 Step 4 의 방법으로 저장한다. **이 갈래에서만** "결함이 아니라 환경 한계"가 성립한다 — 사람 승인 관문(붙일까요? → 네/아니오)은 유지된다, 측정자가 대신 결정하지 않는다.
   - 🔴 **어느 갈래든 「도구가 없으니 수동」은 성립하지 않는다.** 도구 부재는 «설치를 시도할 이유»이지 «사람에게 넘길 이유»가 아니다. `auto` 에서는 시도가 실패해야, `manual` 에서는 사용자가 거부해야 비로소 수동이 성립한다.
 
 **기본 흐름 (도구 있음, 기본값) — 단계마다 1줄 내레이션. "~하세요" 명령문 ❌, "지금 ~합니다" 서술만 쓴다:**
 
 1. `https://discord.com/developers/applications` 로 이동 — "Discord 개발자 포털을 엽니다."
-   - 🛑 **로그인 화면이면 여기서 멈춘다** (하드 관문 1, ④): "여기만 로그인해 주세요(필요하면 다단계 인증까지) — 그 다음은 제가 이어갑니다." 포털 대시보드(Applications 목록)가 뜨는지 확인한 뒤 재개.
+   - 🛑 **로그인 화면이면 여기서 멈춘다** (하드 관문 1, ④): "여기만 로그인해 주세요(필요하면 다단계 인증까지) — 그 다음은 제가 이어갑니다." 포털 대시보드(«애플리케이션» 목록 — 영어 화면 Applications)가 뜨는지 확인한 뒤 재개.
    - 이미 로그인된 세션이라 로그인 화면이 아니면 이 분기는 건너뛰고 바로 2번.
-2. "New Application" 클릭 → 이름 = `<봇 이름 또는 별칭>` 입력 — "새 애플리케이션을 만듭니다."
-   - 🛑 **hCaptcha 가 뜨면 여기서 멈춘다** (하드 관문 2): "캡차만 풀어 주세요 — 그 다음은 제가 이어갑니다." 통과를 화면에서 확인한 뒤 재개.
+2. "New Application" 클릭(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창의 «이름» 칸에 `<봇 이름 또는 별칭>` 입력 — "새 애플리케이션을 만듭니다."
+   - **약관 동의 칸은 묻고, ‘예’ 를 받은 뒤에만 체크한다**: 창 아래 «만들기를 클릭하면 Discord 개발자 이용약관과 개발자 정책에 동의하는 거예요» 옆에 동의 칸이 있고, 체크 전에는 «만들기»(Create) 버튼이 꺼져 있다. 체크하기 **전에** 묻고 답을 기다린다: "Discord 개발자 이용약관·개발자 정책에 동의해야 앱이 만들어집니다. 제가 동의 칸을 체크하고 ‘만들기’ 를 눌러도 될까요? (예 / 아니오 — 아니오면 직접 체크해 주세요)"
+     - **‘예’** → 동의 칸을 체크하고 «만들기»를 누른다.
+     - **‘아니오’** → 동의 칸도 «만들기»도 누르지 않는다. "그럼 동의 칸 체크와 ‘만들기’ 는 직접 해 주세요 — 하시면 제가 이어갑니다." 라고 하고 사용자 차례에서 멈춘다. 사용자가 직접 체크하고 만들기 전에는 다음 단계로 가지 않는다. 막혀서 넘기는 것이 아니라 사용자가 고른 것이라 `--handoff` 를 부르지 않고 시도 횟수에도 넣지 않는다.
+     - **답이 없거나 다른 말** → 누르지 않고 기다린다(같은 물음을 한 번 더 해도 된다). 봇 이름 · 앞선 대화 · 지난번 답으로 ‘예’ 를 짐작하지 않는다 — ‘예’ 는 이 창 한 번에만 쓴다.
+   - **동의 칸 찾기**: 이 칸은 화면 글자 뽑기(페이지 글 읽기)에 안 잡힌다(2026-11-11 실측 — 글자로는 안내 줄만 보이고 칸은 안 보인다). «만들기»가 꺼져 있으면(disabled) 버튼을 다시 누르지 말고, 창 안의 입력 칸(input)을 직접 세어 체크 칸(checkbox)을 찾아 체크한 뒤 «만들기»가 켜졌는지 확인하고 누른다. 여기서 막히면 «막혔을 때» 규칙대로 자동 시도 3회(관문 이름 `discord_new_application`) 뒤에만 넘긴다.
+   - 🛑 **hCaptcha 가 뜨면 여기서 멈춘다** (하드 관문 2): "캡차만 풀어 주세요 — 그 다음은 제가 이어갑니다." 통과를 화면에서 확인한 뒤 재개. 한국어 화면의 창 제목은 «잠깐! 로봇 아니고 사람 맞죠?» 다.
 3. 좌측 "Bot" 탭 → "Reset Token" 클릭 — "봇 토큰 발급을 시작합니다."
    - 🛑 **비밀번호/다단계 인증 모달이 뜨면 여기서 멈춘다** (하드 관문 3): "비밀번호(필요하면 인증 코드)만 입력해 주세요 — 그 다음은 제가 이어갑니다." 통과를 확인한 뒤 재개.
+   - **Reset Token 은 이 단계에서 한 번만 누른다** — 다시 시도할 때 다시 누르지 않는다(누를 때마다 앞 토큰은 더 쓸 수 없게 되고 비밀번호 창이 다시 뜬다). 막히면 화면을 다시 읽어 창이나 토큰이 이미 떠 있는지부터 본다.
+   - **토큰 화면이 떠 있는 동안에는 브라우저를 바꾸지 않는다** — 토큰은 발급 직후 그 화면에서만 보인다. 저장이 세 번 안 되면 그때만 사람에게 넘기고, 다시 발급이 필요하다고 한 줄로 말한다.
    - 토큰이 뜨면 Step 4 의 클립보드 경유 방식으로 저장(화면에 뜬 뒤로는 스크린샷·`read_page` 금지, 좌표만 계산) — "토큰을 저장합니다(값은 보지 않습니다)."
    - ⚠️ **앱 이름과 봇 사용자명은 별개 필드다.** "일반 정보"의 이름을 바꿔도 Discord 에 보이는 표시명(= "봇" 탭의 **사용자명**)은 안 바뀐다. 둘 다 고칠 것.
 4. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save — "메시지 내용·서버 멤버 인텐트를 켭니다."
@@ -137,9 +169,15 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 5. OAuth2 → URL Generator — "초대 URL을 만듭니다":
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
+   - Bot Permissions (기본 11종): View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1)
+   - **더할 권한 3종은 묻는다 — 초대 주소를 만들기 «전에» 한 번**: "봇에 권한 세 가지를 더 줄 수 있습니다. ① Mention Everyone — 봇이 @everyone · @here 로 서버 전체를 부를 수 있습니다 ② Pin Messages — 봇이 메시지를 고정하거나 고정을 풀 수 있습니다 ③ Manage Webhooks — 봇이 웹후크를 만들고 고치고 지울 수 있습니다(웹후크는 다른 이름으로 글을 올릴 수 있습니다). 세 가지를 더할까요? (예 / 아니오 — 답이 없으면 더하지 않습니다 · 나중에 서버 설정의 봇 역할에서 더하거나 뺄 수 있습니다)"
+     - 더할 권한 3종(‘예’ 일 때만): Mention Everyone / Pin Messages / Manage Webhooks
+     - **‘예’** → 이번 초대 주소에만 3종을 더한다. 주소를 만들기 직전에 한 번 보여 준다: "선택된 권한 14개: View Channels · Send Messages · Read Message History · Add Reactions · Attach Files · Embed Links · Manage Messages · Create Public Threads · Create Private Threads · Send Messages in Threads · Manage Threads · Mention Everyone · Pin Messages · Manage Webhooks"
+     - ‘예’ 일 때 값: 14종 = `permissions=2252195487804480` (비트 14개가 기본 11종 + 더할 3종과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+     - **‘아니오’ · 답이 없음 · 다른 말** → 기본 11종 그대로 만든다(다른 말이면 같은 물음을 한 번 더 해도 된다 — 그래도 ‘예’ 가 아니면 11종).
+     - 봇 이름 · 수업용이라는 사정 · 지난번 답으로 ‘예’ 를 짐작하지 않는다 — ‘예’ 는 그 답을 받은 이번 초대 주소에만 쓴다.
 6. 생성된 URL 로 이동 → 서버 선택 → "승인" 클릭 — "봇을 서버에 초대합니다." (2026-08-05·09 실측: 이 클릭까지 자동화가 닿는다 — 이미 로그인된 세션의 동의 화면이라 재인증을 요구하지 않는다)
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 대신 처리한다 — 안 되면(브라우저만으로 강제할 방법은 실측에서 못 찾았다, 3회 시도) 그 창만 예외적으로 사용자에게 넘긴다: "데스크톱 앱 승인 창이 떴습니다 — 눌러 주세요."
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
@@ -159,24 +197,27 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
 > ```bash
 > bash <플러그인루트>/scripts/install-gate.sh discord_manual_full_flow
 > ```
-> `discord_manual_full_flow` 는 계약 명단에 **없다** — 그래서 `exit 1` 이 나온다. 그게 맞다. **전 구간을 사람에게 넘기는 것은 «시도 없이» 할 수 있는 일이 아니다.** 위 "전제 — 가용성 탐지"의 도구 설치를 실제로 한 번 시도하고, 그게 실패했을 때만 이 절로 온다.
+> `discord_manual_full_flow` 는 계약 명단에 **없다** — 그래서 `exit 1` 이 나온다. 그게 맞다. **전 구간을 사람에게 넘기는 것은 «시도 없이» 할 수 있는 일이 아니다.** 위 "전제 — 가용성 탐지"의 도구 설치를 «막혔을 때» 규칙대로 세 번 시도하고, 그게 다 실패했을 때만 이 절로 온다.
 >
-> 이 절에 도착했다면 사용자에게 **왜 여기 왔는지**를 먼저 한 줄로 말한다: "브라우저 도구를 붙이려 했는데 `<사유>`로 안 됐습니다. 그래서 직접 하시는 방법을 안내드립니다." 사유 없이 이 절을 여는 것은 계약 위반이다.
+> 이 절에 도착했다면 사용자에게 **왜 여기 왔는지**를 먼저 한 줄로 말한다: "브라우저 도구를 세 번 붙이려 했는데 `<사유>`로 안 됐습니다. 그래서 직접 하시는 방법을 안내드립니다." 사유 없이 이 절을 여는 것은 계약 위반이다.
 >
 > 반면 위 **하드 관문 3곳**(`discord_portal_login` · `discord_hcaptcha` · `discord_reset_token_modal`)은 계약 명단에 **등재돼 있어** `exit 0` 이다 — 그 3곳에서 멈추고 사람에게 부탁하는 것은 시도 없이 해도 된다. 대신 하면 안 되는 일이기 때문이다.
 
 브라우저로 https://discord.com/developers/applications:
-1. "New Application" → 이름 = `<봇 이름 또는 별칭>` → **캡차 1회(사람)**
-2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 복사
+1. "New Application"(한국어 화면 = «신규 애플리케이션») → «신규 앱 만들기» 창에서 이름 = `<봇 이름 또는 별칭>` → 약관 동의 칸 체크 → «만들기»(Create) → **캡차 1회(사람)**
+2. 좌측 "Bot" 탭 → "Reset Token" → **비밀번호 입력(사람)** → 토큰 옆 ‘복사’(Copy) 버튼 누르기 — 값은 대화 창에 붙여 넣지 않는다(저장 = Step 4)
    - ⚠️ **앱 이름과 봇 사용자명은 별개 필드다.** "일반 정보"의 이름을 바꿔도 Discord 에 보이는 표시명(= "봇" 탭의 **사용자명**)은 안 바뀐다. 둘 다 고칠 것.
 3. **같은 "Bot" 탭 하단 "Privileged Gateway Intents"** 에서 **"Message Content Intent" 와 "Server Members Intent" 둘 다 ON** → Save
    - ⚠️ 이걸 안 켜면 토큰·초대가 전부 정상이어도 **봇이 서버 채널 메시지 내용을 못 읽어** 무반응이 됩니다 (DM 은 예외적으로 읽힘). "토큰은 valid 한데 채널에서 답이 없다" 의 1순위 원인.
    - "Server Members Intent" 는 멤버·roster 조회용이며 봇 템플릿(bridge.py 등)이 `intents.members` 를 요청한다 — **끄면 기동 즉시 `PrivilegedIntentsRequired` 로 실패**(생략 불가 — 2026-08-12 «선택» 격하로 셋업에서 생략되던 회귀 수리). Presence Intent 는 계속 OFF.
 4. OAuth2 → URL Generator:
    - Scopes: `bot`, `applications.commands`
-   - Bot Permissions: View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
+   - Bot Permissions (기본 11종): View Channels / Send Messages / Read Message History / Add Reactions / Attach Files / Embed Links / **Manage Messages** / **Create Public Threads** / **Create Private Threads** / **Send Messages in Threads** / **Manage Threads**
    - 🔴 **스레드 4종을 빼지 말 것.** 회의·장기 작업은 스레드에서 돌아가는데, 스레드 권한 없는 봇은 **초대는 됐는데 회의에 낄 수 없다**. 2026-08-05 실측에서 스레드 없이 초대했다가 **사용자 승인을 두 번 받는** 낭비가 났다.
-   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
+   - 참고 값: 위 11종 = `permissions=395137117248` (URL 에 그대로 붙여도 된다 — 비트 11개가 위 목록과 1:1)
+   - 더할 권한 3종(‘예’ 일 때만): Mention Everyone / Pin Messages / Manage Webhooks
+     - 원하면 직접 더 고른다. Mention Everyone = 봇이 @everyone · @here 로 서버 전체를 부를 수 있다 · Pin Messages = 봇이 메시지를 고정하거나 고정을 풀 수 있다 · Manage Webhooks = 봇이 웹후크를 만들고 고치고 지울 수 있다(웹후크는 다른 이름으로 글을 올릴 수 있다). 고르지 않아도 봇은 돈다 — 나중에 서버 설정의 봇 역할에서 더하거나 뺄 수 있다.
+     - ‘예’ 일 때 값: 14종 = `permissions=2252195487804480` (비트 14개가 기본 11종 + 더할 3종과 1:1. 이전 기재 `563345093688384` 는 15비트로, 목록에 없는 TTS·음성 계열 4개를 추가 요청하는 값이었다)
 5. 생성된 URL 로 봇을 본인 Discord 서버 / DM 가능 채널에 초대 → **승인(사람)**
    - ⚠️ **데스크톱 Discord 앱이 설치돼 있으면 이 링크가 웹 승인 화면 대신 앱으로 넘어간다**("Discord 앱을 여는 중"에서 멈춤). 그때는 데스크톱 앱 쪽에 뜬 승인 창을 처리한다. 브라우저만으로 강제할 방법은 실측에서 못 찾았다(3회 시도).
    - 같은 봇을 **더 큰 권한으로 다시 초대하면 권한이 갱신**된다(봇이 중복 추가되지 않는다). 권한을 빠뜨렸을 때의 복구 경로.
@@ -186,37 +227,48 @@ node "<플러그인루트>/scripts/browser-detect.mjs"
    - ⚠️ **이걸 빠뜨리면 아무 에러도 안 난다.** 봇 프로세스는 정상, 토큰 정상, 초대 정상인데 그 채널 메시지만 **애초에 봇에게 배달되지 않는다** — 로그도 조용하다. 2026-08-05 실측에서 이 증상을 만나 `access.json` 설정 누락으로 오진했다(그것도 실제 결손이긴 했으나 **단독 원인이 아니었다**). **한 증상에 원인이 둘일 수 있다** — 첫 원인을 고쳤는데 증상이 남으면 오진이 아니라 다음 층이다.
    - 진단 순서: ①봇이 서버에 있나(`/users/@me/guilds`) ②그 채널이 비공개인가 → 멤버에 봇이 있나 ③`access.json` 의 `groups` 에 채널 ID 가 있나.
 
-### Step 4. 봇 토큰 입력 (AskUserQuestion + .env 저장)
+### Step 4. 봇 토큰 저장 (클립보드 → .env · 대화로 받지 않는다)
 
-agent 가 사용자에게 토큰 입력 요청. 다음 위치 저장:
+토큰은 **대화로 받지 않는다.** 사용자에게 토큰을 물어보는 질문(AskUserQuestion 포함)을 열지 않고, 토큰을 명령 글자에 넣지도 않는다. 토큰이 가는 길은 아래 둘뿐이고, 둘 다 `scripts/discord-token-capture.sh` 가 한다 — 값은 화면 · 대화 · 명령 인자 어디에도 나오지 않는다.
+
+**① 클립보드 길 (기본 — 에이전트가 실행)**
 
 ```bash
-cat > "$BOT_DIR/.env" <<EOF
-DISCORD_BOT_TOKEN=<입력 토큰>
-EOF
-chmod 600 "$BOT_DIR/.env" 2>/dev/null || true   # Windows는 무의미 — 검증 단계에서 실패 처리하지 말 것
+bash <플러그인루트>/scripts/discord-token-capture.sh arm <bot-name>       # 이 봇 이름으로 일회용 표식을 클립보드에 심는다
+# 포털의 «복사»(Copy) 버튼을 누른다 — 실제 마우스 클릭으로(JS .click() 은 클립보드 권한에서 거부될 수 있다)
+bash <플러그인루트>/scripts/discord-token-capture.sh capture <bot-name>   # 표식 대조 → 꼴 검사 → 0600 .env → 클립보드 비움
 ```
 
-⚠️ 토큰 Discord 본문 / git / screenshot 노출 X.
+- 화면에 토큰이 뜬 뒤로는 **스크린샷 · 페이지 글 읽기를 하지 않는다** — 버튼 좌표만 구한다.
+- `capture` 는 값을 찍지 않는다 — 저장됐는지 · 왜 안 됐는지 · 길이와 저장한 파일 경로만 말한다. 실패하면 마지막 줄 `사유 코드:` 뒤에 나온 코드를 그대로 `install-gate.sh --attempted discord_token_save fail <사유 코드>` 에 쓴다.
+- **`arm` 과 `capture` 는 한 묶음이다.** `arm <bot-name>` 이 매번 새 일회용 표식을 만들고, `capture <bot-name>` 은 **같은 봇으로 10분 안에** `arm` 한 기록이 있을 때만 클립보드를 읽는다. 그 기록은 복사된 값을 한 번 읽으면 지운다. `arm` 없이, 다른 봇 이름으로, 10분이 지나서, 또는 복사된 값을 한 번 읽은 뒤에 다시 `capture` 를 부르면 클립보드를 읽지도 않고 거부한다(`사유 코드: not-armed`) — 클립보드에 남아 있던 옛 토큰이 `arm` 없이 저장되는 것을 막는다. **`arm` 은 한 번에 한 봇만 걸어 둔다**: 두 봇을 함께 `arm` 해 둔 동안에는 한 봇의 토큰을 복사한 뒤 다른 봇 이름으로 `capture` 해도 저장된다. 봇을 여럿 만들 때는 한 봇의 `arm → 복사 → capture` 를 끝낸 뒤 다음 봇으로 간다. 이 보호는 디스코드 토큰을 저장하는 이 스크립트에 한한 것이다(슬랙 토큰 저장 절차에는 아직 없다). 거부되면 `arm <bot-name>` 부터 다시 한다(비밀번호 창에서 오래 걸렸을 때도 같다 — 토큰 화면이 아직 떠 있으면 Reset Token 은 다시 누르지 않는다).
+- `capture` 가 `exit 5` 로 끝나면 토큰은 저장됐지만 클립보드를 비우지 못한 것이다 — 사용자에게 "토큰은 저장됐습니다. 클립보드에 토큰이 남아 있으니 지금 다른 글자를 한 번 복사해 덮어 주세요." 라고 말하고, 그 답을 받기 전에는 이 단계를 끝난 것으로 보지 않는다.
+- `.env` 와 봇 폴더는 본인만 읽게 맞춘다(0600 · 0700). macOS 에서는 파일 ACL 도 지우고 다시 확인한다 — 못 지우면 `exit 3` 으로 끝나고, 이미 쓴 `.env` 는 지운다(그 안의 다른 키도 함께 지워지며, 지워졌는지는 확인하지 않는다).
+- `arm` 이 `exit 3` 으로 «arm 기록 폴더에 지울 수 없는 것이 있어 멈췄습니다» 라고 하면: `~/.thiscode` 나 그 안의 기록 폴더(`token-arm`)가 본인만 쓰는 폴더가 아니었고, 그 기록 폴더를 비우다가 지울 수 없는 것을 만난 것이다(비우는 것은 기록 폴더뿐이다). 스크립트는 `arm` 하지 않고 그 기록 폴더를 닫으려 하며, 닫았는지 못 닫았는지를 출력에 적는다(어느 쪽이든 그동안 `capture` 는 어느 봇으로도 거부된다). 사용자에게 이렇게 말하고 출력에 나온 `mv` 한 줄을 그대로 붙인다: "토큰을 저장할 준비 폴더에 지울 수 없는 파일이 있어 멈췄습니다. 터미널 새 창에서 아래 한 줄을 그대로 실행해 그 폴더를 옆으로 옮겨 주세요 — 하시면 제가 처음부터 다시 이어갑니다." 사용자가 실행했다고 하면 `arm <bot-name>` 부터 다시 한다.
+- 클립보드 도구는 스크립트가 고른다: macOS = `pbcopy`/`pbpaste` · WSL = `clip.exe` / `powershell.exe Get-Clipboard` · Linux = `wl-copy`/`wl-paste`(Wayland) → `xclip`.
 
-> 🛡️ **에이전트가 브라우저를 몰고 있을 때 — 토큰을 「보지 않고」 저장하는 경로** (2026-08-05 실측 확립)
->
-> 토큰 값이 모델 컨텍스트에 한 번도 안 들어가게 하려면 **클립보드를 경유해 셸에서 파일로 직행**시킨다. 화면에 토큰이 뜬 뒤로는 **스크린샷·`read_page` 를 금지**하고 좌표만 계산한다.
+**«복사» 버튼 누르기를 세 번 시도해도 안 될 때 — 사용자에게 버튼만 부탁한다**(`--handoff discord_token_save` 가 `exit 0` 일 때만):
+
+> "토큰을 자동으로 저장하려고 세 번 시도했는데 `<사유>`로 안 됐습니다. 포털의 토큰 옆 ‘복사’(Copy) 버튼만 눌러 주시고, 여기에는 ‘복사했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요. 토큰 화면이 이미 닫혔다면 알려 주세요(다시 발급이 필요합니다). 그 다음은 제가 이어갑니다."
+
+사용자가 ‘복사했어요’ 라고 하면 `capture <bot-name>` 을 실행한다. 버튼을 부탁하기 **직전에** `arm <bot-name>` 을 다시 실행해 둔다(앞선 `arm` 은 10분이 지났거나 이미 쓰였을 수 있다).
+
+**② 사람 길 (클립보드 도구가 없거나 ①이 끝내 안 될 때 — 사용자가 자기 터미널에서 직접)**
+
+`arm` · `capture` 가 `exit 4`(클립보드 도구 없음)로 멈추면 도구 설치를 안내하거나 이 길로 간다. **토큰을 대화로 받는 쪽으로는 가지 않는다.**
+
+> "터미널 새 창에서 아래 한 줄을 직접 실행하고, 물음이 나오면 토큰을 붙여 넣고 Enter 를 눌러 주세요(붙여 넣어도 화면에는 아무것도 안 보이는 게 정상입니다). 끝나면 ‘저장했어요’ 라고만 알려 주세요 — 토큰 값은 대화 창에 붙여 넣지 마세요."
 >
 > ```bash
-> printf 'SENTINEL_NOT_COPIED' | pbcopy        # ① 양성 대조 마커를 먼저 심는다 (macOS; Linux=xclip)
-> # ② 브라우저의 「복사」 버튼을 물리 클릭 (JS .click() 은 clipboard 권한에서 거부될 수 있다 —
-> #    좌표만 JS 의 getBoundingClientRect 로 구하고, 클릭은 실제 마우스 이벤트로)
-> T=$(pbpaste)
-> if [ "$T" = "SENTINEL_NOT_COPIED" ]; then echo "❌ 복사 실패"; exit 1; fi
-> printf '%s' "$T" | grep -qE '^[A-Za-z0-9_.-]{50,120}$' || { echo "❌ 토큰 형식 아님"; exit 1; }
-> printf 'DISCORD_BOT_TOKEN=%s\n' "$T" > "$BOT_DIR/.env"; chmod 600 "$BOT_DIR/.env"
-> echo "✅ 저장 — 길이 ${#T}자 (값 미출력)"; printf 'CLEARED' | pbcopy
+> bash <플러그인루트>/scripts/discord-token-capture.sh paste <bot-name>
 > ```
->
-> **마커(①)가 핵심이다.** 없으면 "복사 버튼이 안 눌렸는데 클립보드에 남아 있던 옛 내용을 토큰으로 착각"을 못 잡는다 — 그대로 `.env` 에 들어가면 나중에 "토큰이 invalid"로만 보이고 원인이 안 드러난다.
->
-> 저장 후 검증도 **값 대신 사실**로: `curl -H "Authorization: Bot $TOKEN" .../users/@me` → `username`·`bot:true` 확인(정상 Discord 봇 토큰 = 72자 내외·`.` 2개).
+
+- 안내할 때 `<플러그인루트>` 와 `<bot-name>` 은 실제 값으로 바꿔서 한 줄로 준다.
+- 이 명령은 표준입력이 터미널일 때만 돈다. 이것은 실수로 파이프로 부르는 것을 막는 검사이지 **에이전트를 막는 권한 경계가 아니다**(같은 사용자 권한으로 도는 프로그램은 가짜 터미널을 만들 수 있다). 에이전트는 이 명령을 대신 실행하지 않는다 — 토큰을 사용자의 터미널에만 넣게 하려는 절차다.
+
+**저장 뒤 확인도 값이 아니라 사실로 한다**: `.env` 가 있고 권한이 600 인지, 그리고 맨 아래 «검증» 절의 `users/@me` 확인 — `username` 이 **지금 만드는 이 봇의 이름**이고 `bot:true` 인지 본다(다른 봇의 이름이 나오면 토큰이 섞인 것이다 — `.env` 를 지우고 Step 3 의 토큰 발급부터 다시 한다). 정상 Discord 봇 토큰은 72자 안팎이고 `.` 이 2개다.
+
+⚠️ 토큰을 Discord 본문 · git · 스크린샷에 남기지 않는다.
 
 ### Step 4.7. access.json 직접 생성 — 페어링(/discord:access) 생략 경로 (권장)
 
@@ -236,7 +288,7 @@ DM 페어링 코드 왕복 없이 바로 연결하려면 `access.json` 의 `allo
 
    ```bash
    bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch ok
-   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail "<무엇이 막았는지>"
+   bash <플러그인루트>/scripts/install-gate.sh --attempted discord_user_id_autofetch fail <사유 코드>
    ```
 
    사유를 비우면 게이트가 기록을 거부한다(`exit 2`). 기록이 없으면 나중에 「시도했는가」를 확인할 방법이 없다.
@@ -279,7 +331,7 @@ node -e "const id = process.argv[2]; if (!/^\d{17,20}$/.test(id)) { console.erro
 > bash <플러그인루트>/scripts/install-gate.sh discord_user_id_autofetch
 > ```
 >
-> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail "<사유>"` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
+> 관문 이름 `discord_user_id_autofetch` 는 `configs/install.yaml` 의 `manual_allowed_without_attempt` 에 **일부러 등재하지 않았다** — 미등재가 곧 「먼저 자동으로 시도하라」이기 때문이다. 시도 결과를 `--attempted … fail <사유 코드>` 로 남긴 뒤에야 아래 안내가 계약상 허용되고, 마지막에 `--audit` 가 위반 0 이어야 한다.
 
 자동 취득이 모두 실패했을 때만 사용자에게 부탁한다: Discord 앱 → 설정 → 고급 → **개발자 모드 ON** → 본인 프로필 우클릭 → "사용자 ID 복사".
 
@@ -550,7 +602,7 @@ bash <플러그인루트>/scripts/install-gate.sh hooks_installed     # exit 1 =
 if bash <플러그인루트>/scripts/install-hooks.sh; then
   bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok
 else
-  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "<무엇이 막았는지>"
+  bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail <사유 코드>
 fi
 ```
 
@@ -570,7 +622,7 @@ done
 if [ -f "$BOT_DIR/rules/INDEX.md" ] && [ -f "$BOT_DIR/rules/discord-comms.md" ]; then
   bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded ok
 else
-  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail "규칙 파일을 복사하지 못함"
+  bash <플러그인루트>/scripts/install-gate.sh --attempted rules_seeded fail install-failed
 fi
 ```
 
@@ -598,10 +650,10 @@ if [ "$HOOKS_OK" -ne 0 ] || [ "$RULES_OK" -ne 1 ]; then
     [ -f "$BOT_DIR/rules/$f" ] || cp "<플러그인루트>/rules/$f" "$BOT_DIR/rules/$f"
   done
   if bash <플러그인루트>/scripts/install-hooks.sh --verify --home "$HOME"; then
-    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok "자동 재시도 성공"   # 원장이 마지막 상태를 말하게
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed ok   # 설치 기록이 마지막 상태를 말하게
   else
     echo "훅 등록이 아직 안 끝났습니다. claude 를 켠 뒤 /thiscode:install-hooks 스킬을 한 번 실행해 주세요."
-    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail "자동 재시도 후에도 검사 실패"
+    bash <플러그인루트>/scripts/install-gate.sh --attempted hooks_installed fail check-failed
   fi
 fi
 ```
@@ -648,7 +700,8 @@ fi
 echo ""
 echo "⚠️  새 WD 첫 기동 시 'Quick safety check: Is this a project you created or one you trust?'"
 echo "    프롬프트가 뜨고 Enter 전까지 멈춰 있습니다 (--dangerously-skip-permissions 를 줘도 뜹니다)."
-echo "    tmux 로 띄웠다면 attach 해서 1번 선택 후 Enter — 이걸 모르면 '봇이 안 뜬다'로 오진합니다."
+echo "    tmux 로 띄웠다면 attach 해서 화살표 키로 'Yes, I trust this folder' 를 골라 Enter — 첫 줄이 'No, exit' 일 수 있으니 줄 순서로 고르지 않습니다."
+echo "    이걸 모르면 '봇이 안 뜬다'로 오진합니다."
 echo ""
 echo "첫 대화 검증:"
 echo "  access.json 등록했으면(Step 4.7) → 봇에 DM → 바로 첫 응답"
