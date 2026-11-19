@@ -32,7 +32,7 @@ Features: `memory`, `tmux`, `discord-gate`, `graphrag`, `graphrag-bench`, `meeti
 
 ```bash
 # thiscode plugin 위치 detect — 낡은 사본 회피 (2026-08-10 핫픽스 B, test-bot 실측
-# 1536053876: 이전엔 cwd 상대 `node scripts/feature-test.mjs` 를 그대로 불러서, cwd 가
+# 이전엔 cwd 상대 `node scripts/feature-test.mjs` 를 그대로 불러서, cwd 가
 # 낡은 수동 clone(~/.claude/plugins/thiscode, discord-gate 항목 부재) 안이면 그 낡은
 # 사본을 집어 7/7 을 냄 — 설치판(1.2.5, scripts/feature-test.mjs 직접 실행)은 8/8.
 # install-hooks.md/create-bot.md 와 동일한 순서 probe 재사용(새 자동화 발명 ❌) — 단
