@@ -99,7 +99,7 @@ status: draft (v0.2.0)
 - 영상 길이: 11 min.
 
 ### C19. 봇 self-skill 영역 R&R
-- 학습: `/strange` · `/aktofu` · `/karpathy` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇 검토·commit.
+- 학습: `/scheduler` · `/writer` · `/orchestrator` 통합 허브 스킬 변경 시 봇 본인이 초안, 관리 봇 검토·commit.
 - 영상 길이: 7 min.
 
 ### C20. Discord 봇 mention 다축 channel reference fetch
@@ -163,7 +163,7 @@ status: draft (v0.2.0)
 - `contracts/search-fallback-4tier.md` — 현재 km `/km:search` fallback 계약 (Tier 1 GraphRAG → Tier 2 Obsidian CLI → Tier 3 Obsidian MCP → Tier 4 text search)
 - km 모드·설정 동작은 km 플러그인의 `/km:*` 문서를 따른다.
 - 어제 회의 03-outcome.md §5 — thiscode plugin spec 의 영상 mapping 초안
-- 본 사이클 outcome (`AI_Second_Brain/.claude-meetings/2026-05-12-thiscode-plugin/03-outcome.md` 2026-05-13 followup)
+- 본 사이클 outcome (`<notes-root>/.claude-meetings/2026-05-12-thiscode-plugin/03-outcome.md` 2026-05-13 followup)
 
 ## 잔존 작업 (chapter 본문 실제 작성)
 

@@ -45,7 +45,7 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
    - vault `.claude/skills/codex-exec-bridge/` 6-file anatomy 재활용
    - `/tofu-at-codex` v2.2 패턴 (Leader=Opus / Workers=Sonnet+gpt-5.5 / DA=Codex adversarial)
    - subprocess `codex exec --no-stream --model gpt-5.5` 패턴
-   - Hermes 환경에서도 동작 (코난 REPORT §4.3 subprocess plugin)
+   - Hermes 환경에서도 동작 (researcher REPORT §4.3 subprocess plugin)
 
 5. **`docs/03-shared-memory.md`** — 한국어 친절 톤 가이드 (4-tier + 사용 시나리오)
 
@@ -76,14 +76,14 @@ trigger: 사용자 회귀 지적 5건 (Codex 누락 / 공유 메모리 / 스레�
 
 | # | 자산 | 경로 |
 |---|---|---|
-| 1 | SHARED-INDEX.md (4-tier + 디버깅 24+) | `<vault>/AI_Second_Brain/.claude-memory/shared/SHARED-INDEX.md` |
+| 1 | SHARED-INDEX.md (4-tier + 디버깅 24+) | `<vault>/<notes-root>/.claude-memory/shared/SHARED-INDEX.md` |
 | 2 | tofu-at-codex slash | `<vault>/.claude/commands/tofu-at-codex.md` |
 | 3 | codex-exec-bridge skill (6-file) | `<vault>/.claude/skills/codex-exec-bridge/` |
 | 4 | pumasi-config-spec | `<vault>/.claude/skills/pumasi-config-spec.md` |
 | 5 | soul.md anatomy (6 봇) | `~/.claude/channels/discord-<bot>/soul.md` |
 | 6 | 디버깅 DB #1~#85 | `<vault>/agent-korea-daily/디버깅.md` |
-| 7 | headless claude pattern | `<vault>/AI_Second_Brain/.claude-memory/shared/reference_headless_claude_oneshot_pattern.md` |
-| 8 | meetings 4-file 표준 | `<vault>/AI_Second_Brain/.claude-meetings/` |
+| 7 | headless claude pattern | `<vault>/<notes-root>/.claude-memory/shared/reference_headless_claude_oneshot_pattern.md` |
+| 8 | meetings 4-file 표준 | `<vault>/<notes-root>/.claude-meetings/` |
 
 ## 검증 시나리오 (Codex 1차 권장)
 

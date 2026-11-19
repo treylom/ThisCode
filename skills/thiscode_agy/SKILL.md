@@ -22,7 +22,7 @@ triggers:
 - **Y-2 (asset mode)**: `agy --prompt-interactive` PTY session for `/agy-asset` commands (image/file generation).
 - **tmux 2-pane visual**: top = bridge daemon log (live `[RAW]`/`[INBOX]`/`[OUTBOX]` events), bottom = agy CLI TUI (Discord message visually injected via `tmux send-keys` — UX mirror of sshee codex pattern).
 
-**Components (genericized from agent-hassabis/)**:
+**Components (genericized from agent-<name>/)**:
 - `templates/launch.sh` — 2-step tmux launch (placeholder → split → env-correct bridge start), wrapper with suicide guard
 - `templates/bridge.py` — async bridge daemon (inbox polling fallback + Discord gateway live), per-channel `flock`, tmux send-keys visual inject
 - `templates/discord_client.py` — `AgyDiscordBot` + `DiscordReplyAdapter` + `DedupStore` + per-channel `asyncio.Lock`, heartbeat task, raw debug print
@@ -71,7 +71,7 @@ See `setup-guide.md` for full details including OAuth permissions (CRITICAL — 
 
 ## Reference: the production bot this skill was extracted from
 
-`agent-hassabis/` in the maintainer's vault — Demis Hassabis persona, alias `hs`, tmux session `hs`, channel `~/.claude/channels/discord-hs/`. The persona-specific content was stripped to make this skill generic.
+`agent-<name>/` in the maintainer's vault — custom persona, alias `<alias>`, tmux session `<alias>`, channel `~/.claude/channels/discord-<alias>/`. The persona-specific content was stripped to make this skill generic.
 
 ---
 

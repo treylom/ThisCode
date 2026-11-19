@@ -54,7 +54,7 @@ After install: `bash scripts/healthcheck.sh` (6-phase verification: superpowers 
 
 **Dependency provenance:** full attribution matrix (20 entries — Plugin 1 + Spec doc 2 + External tools 8 + optional GUI guide 1 + Optional Dense 3 + Vendored Python runtime 1 + Vendored prompt skill 1 + Vendored Slack bridge 1 + Vendored vault-search MCP 1 + thiscode 1) in [ATTRIBUTIONS.md](ATTRIBUTIONS.md). Cross-license compatibility verified by Phase 1 GPT-5.5 review (MIT + Apache 2.0 + BSD-3 + Unlicense — all permissive, copyleft zero); the Slack bridge entry is MIT by copyright-holder decision (2026-08-06), matching this repo.
 
-**Lessons learned (consolidated into the v1.0 first integrated release):** This cycle's learnings are persisted in the vault under `AI_Second_Brain/.claude-memory/shared/feedback_*`:
+**Lessons learned (consolidated into the v1.0 first integrated release):** This cycle's learnings are persisted in the vault under `<notes-root>/.claude-memory/shared/feedback_*`:
 - `feedback_no_student_term` — learner / user / participant terminology
 - `feedback_autonomy_mode_no_option_questions` — autonomous cycle asks zero option-confirmation questions
 - `feedback_no_turn_marker_continuous_execution` — zero turn-boundary utterances, continuous execution

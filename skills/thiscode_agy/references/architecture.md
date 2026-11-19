@@ -30,7 +30,7 @@ Empirically confirmed (2026-05 with agy 1.0):
 
 Workaround: `bridge._dispatch` builds `full_prompt = persona + "\n\n---\n\n" + user_content`. Persona stays small (35 lines max recommended) to keep token overhead reasonable.
 
-Reference incident: "Phase 3 Hassabis bridge" decision log — `agy --print --add-dir <vault>` hung for 5+ test runs trying to auto-load GEMINI.md. Stripping the auto-load assumption + manual prepend fixed it.
+Reference incident: "Phase 3 agy bridge" decision log — `agy --print --add-dir <vault>` hung for 5+ test runs trying to auto-load GEMINI.md. Stripping the auto-load assumption + manual prepend fixed it.
 
 ## Attachment sandbox
 

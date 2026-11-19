@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """dispatch-room-gate.py — Gate A: top-level 채널 봇 발주 차단 (ThisCode port).
 
-Spec: obsidian-ai-vault meetings/2026-08-12-dispatch-meeting-gate/
-      70-karpathy-track2-porting-spec.md v2.9 §1 D1(ThisCode Discord)·D2·D5.
-Vault 정본: obsidian-ai-vault/.claude/hooks/dispatch-room-gate.py (Gate A
+Spec: maintainer's vault meetings/2026-08-12-dispatch-meeting-gate/
+      70-orchestrator-track2-porting-spec.md v2.9 §1 D1(ThisCode Discord)·D2·D5.
+Vault 정본: <vault>/.claude/hooks/dispatch-room-gate.py (Gate A
 v1.1, 3/3 GREEN) — 제품 델타 = 하드코딩 채널/로스터 → install config.
 
 Wiring (install-hooks): PreToolUse matcher
@@ -122,7 +122,7 @@ def decide(data, cfg):
         # 발신문에 공개 표기된다. origin 과 달리 «의도 선언»이라 fail-closed
         # 승격 = §1.2 프로토콜 폐지와 등가 → 게이트 사정거리 밖).
         # 단 «태그 + 봇멘션 + 발주 마커» 조합은 오용 후보 — 관측 로그 1행
-        # (pass 유지). 판독 계약 = 70-doc §2 (카파시 · 주간/폐합/P4+7일).
+        # (pass 유지). 판독 계약 = 70-doc §2 (orchestrator · 주간/폐합/P4+7일).
         rec = {"why": "carve-out tag"}
         if bot_mentions and any(m in text for m in MARKERS):
             rec["observe"] = {
@@ -263,7 +263,7 @@ def probe_main():
     ok = sum(1 for _n, r in results if r)
     for name, r in results:
         print("  [%s] %s" % ("PASS" if r else "FAIL", name))
-    # 판독 보조(판정 칸 아님): 관측 로그 누적 — 판독 계약(70-doc §2, 카파시)
+    # 판독 보조(판정 칸 아님): 관측 로그 누적 — 판독 계약(70-doc §2, orchestrator)
     print("  [info] carve-out 관측 로그 누적 %d행" % observation_count())
     print("PROBE %s %d/%d" % ("PASS" if ok == len(results) else "FAIL",
                               ok, len(results)))

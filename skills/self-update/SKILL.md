@@ -61,7 +61,7 @@ for _cand in \
   # 무조건 break = 첫 매치 미끼(2026-08-09 WSL 실측: claude-dashboard 오탐 TARGET,
   # 마켓 9중 8이 .git 보유라 거의 확정 발생). origin 이 thiscode 일 때만 채택 —
   # Step 2 의 `git fetch origin` 이 origin 을 요구하므로 remote 없는 clone 제외도 정합.
-  # 앵커형(끝 고정)인 이유: 부분문자열 `thiscode` 는 ThisCodex 도 통과시킨다(글재경 A1).
+  # 앵커형(끝 고정)인 이유: 부분문자열 `thiscode` 는 ThisCodex 도 통과시킨다(reviewer A1).
   # ⚠️ ThisCodex 쪽으로 이 줄을 복사할 땐 앵커를 thiscodex 로 바꿔야 한다(비대칭).
   git -C "$_cand" remote get-url origin 2>/dev/null | grep -qiE '/thiscode(\.git)?/?$' || continue
   TARGET="$_cand"
@@ -132,7 +132,7 @@ if [ "$ARGUMENTS" = "pull" ]; then
   bash "$TARGET/scripts/patch-discord-bot-drop.sh" 2>&1 || true
 
   # ⚠ Step 0 재도출 — Claude Code 의 Bash 호출은 블록마다 별개 프로세스라
-  # 셸 변수가 계승되지 않는다(2026-08-09 글재경 R1: 미계승 시 조용히 else 로
+  # 셸 변수가 계승되지 않는다(2026-08-09 reviewer R1: 미계승 시 조용히 else 로
   # 떨어져 하필 "업데이트 완료"에 착지 — fail-open 방향 교정 포함).
   INSTALL_KIND="git-checkout"; UPDATE_CMD=""; VERS_BEFORE=""
   for _c in "$HOME"/.claude/plugins/cache/*/thiscode/*/; do

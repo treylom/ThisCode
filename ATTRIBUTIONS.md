@@ -61,7 +61,7 @@ thiscode v2.3 가 의존하는 모든 외부 패키지 / repo 의 출처 / licen
 
 ## Vendored Python runtime (thiscode/vendor/graphrag/)
 
-GraphRAG core 26 file (`.py` 23 + `.sh` 2 + `requirements.txt` 1) + method 문서 1 = 추적 27. obsidian-ai-vault `.team-os/graphrag/scripts/` 와 동등 vendor 박제.
+GraphRAG core 26 file (`.py` 23 + `.sh` 2 + `requirements.txt` 1) + method 문서 1 = 추적 27. the maintainer's vault `.team-os/graphrag/scripts/` 와 동등 vendor 박제.
 
 - **출처**: 동일 코드가 **공개 플러그인 레포 [treylom/tofugraph](https://github.com/treylom/tofugraph)** 로도 배포된다(`engine/scripts/` 13 file = 본 vendor 의 **부분집합** — 본 vendor 가 상위집합이며 benchmark·test 계열 11 file 을 더 갖는다). 원본 SoT = 비공개 vault `.team-os/graphrag/scripts/`.
 - **License: MIT** (treylom own — thiscode 본 repo 와 동일). `tofugraph` README 의 License 절도 MIT 로 동일 선언.
@@ -100,7 +100,7 @@ GraphRAG core 26 file (`.py` 23 + `.sh` 2 + `requirements.txt` 1) + method 문�
 - **License: MIT** (2026-08-06 저작권자 결정 — `LICENSE` 파일 + `package.json` `"license": "MIT"`, 구 `"private": true` 제거)
 - Update 정책: pin snapshot (manual sync)
 
-> 본 항목은 2026-08-06 이전 **매트릭스에서 누락**돼 있었다(vendor 에는 있는데 attribution 0건). 「전체 목록」 주장이 실제 커버리지보다 넓었던 자리 — 글재경 r3 ⓓ 발견.
+> 본 항목은 2026-08-06 이전 **매트릭스에서 누락**돼 있었다(vendor 에는 있는데 attribution 0건). 「전체 목록」 주장이 실제 커버리지보다 넓었던 자리 — reviewer r3 ⓓ 발견.
 
 ## Vendored prompt skill (skills/prompt/)
 

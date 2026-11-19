@@ -108,4 +108,4 @@ thiscode_agy/
 
 ## License & attribution
 
-MIT (same as ThisCode). Extracted from a production bot (`agent-hassabis/`) running Demis Hassabis persona on the maintainer's vault. Persona-specific content stripped — supply your own in `persona-essence.md`.
+MIT (same as ThisCode). Extracted from a production bot (`agent-<name>/`) running a custom persona on the maintainer's vault. Persona-specific content stripped — supply your own in `persona-essence.md`.

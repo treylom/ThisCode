@@ -1,6 +1,6 @@
-"""트랙① merge — 최종 의미 라벨을 relationships.type 에 반영 (코난 GO 2026-07-15)
+"""트랙① merge — 최종 의미 라벨을 relationships.type 에 반영 (researcher GO 2026-07-15)
 
-전제: com.strange.graphrag-incremental 정지 상태 (실행 전 사람이 확인).
+전제: com.example.graphrag-incremental 정지 상태 (실행 전 사람이 확인).
 공정: sqlite backup API 백업 → 최종 라벨셋(1차 + pass2 override, 3규칙+0.7컷) 계산
       → UPDATE ... WHERE id=? AND type='related_to' (이중 가드) → 전후 카운트 검증 → manifest.
 롤백: vault_graph.pre-track1-merge.db 복원.

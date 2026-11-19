@@ -54,7 +54,7 @@ north_star: ""                    # F
 ### Step 1. 봇 이름 입력 (AskUserQuestion)
 
 ```
-봇 이름 (영문 소문자 + 하이픈, 예: karpathy / research / writing): 
+봇 이름 (영문 소문자 + 하이픈, 예: orchestrator / research / writing): 
 ```
 
 검증: `^[a-z][a-z0-9-]*$` 패턴, 1-32자. (Discord 봇 이름 규칙 + 디렉토리 안전)

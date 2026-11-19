@@ -27,9 +27,9 @@ codex app-server --listen ws://127.0.0.1:4222
 - Long-running daemon, opens a WebSocket on the given address.
 - Speaks **JSON-RPC 2.0** (`jsonrpc2Message`, `jsonrpc2Request` symbols in the binary).
 - Bridge client sends `thread/start`, `turn/start`, `turn/cancel`; receives streamed `item/agentMessage/delta`, `turn/completed`, `mcpServer/startupStatus/updated`, `account/rateLimits/updated`, `hook/started`, `hook/completed`, etc.
-- Bridge can `codex resume <thread-id>` to attach a TUI to the **same** thread the bridge is driving — multi-client same-thread (empirically confirmed 2026-05-15 with codex `c-2` client). This is what makes the sshee 2-window pattern possible: `infra` window runs the app-server + bot.py daemon, `codex` window attaches a TUI to the same thread as a second client.
+- Bridge can `codex resume <thread-id>` to attach a TUI to the **same** thread the bridge is driving — multi-client same-thread (empirically confirmed 2026-05-15 with codex `c-2` client). This is what makes the bot-a 2-window pattern possible: `infra` window runs the app-server + bot.py daemon, `codex` window attaches a TUI to the same thread as a second client.
 
-### Bridge shape (sshee = `AI_Second_Brain/.discord-bots/sonseokhee/`)
+### Bridge shape (bot-a = `<vault>/.discord-bots/bot-a/`)
 
 ```
 Discord → bot.py (on_message) → ws://127.0.0.1:4222 → codex daemon
@@ -54,7 +54,7 @@ Discord → bot.py (on_message) → ws://127.0.0.1:4222 → codex daemon
 
 - Port collision: a lingering `codex app-server` on `:4222` blocks restart. Fix: `lsof -ti tcp:4222 | xargs kill`.
 - Suicide-guard / wrapper conflicts: if you wrap `launch.sh` in your shell to manage tmux sessions, do not also have `launch.sh` re-create the session (see §5).
-- WebSocket disconnect: bot.py needs reconnect logic. sshee uses a `while true; do ./launch.sh; sleep 5; done` watchdog in the `infra` tmux window.
+- WebSocket disconnect: bot.py needs reconnect logic. bot-a uses a `while true; do ./launch.sh; sleep 5; done` watchdog in the `infra` tmux window.
 
 ---
 
@@ -134,7 +134,7 @@ Discord on_message → bridge worker → agy --print --conversation <uuid> ... �
 - **Persona injection is manual** — `agy --print` does **not** auto-load `GEMINI.md` (only the interactive `--prompt-interactive` mode does). The bridge has to prepend persona text to every prompt.
 - **`--conversation <uuid>`** keeps a thread alive across spawns, but each spawn is still a fresh process: cold-start cost on every Discord message.
 
-This is the pattern in `agent-hassabis/scripts/bridge.py` `_dispatch` → `agy.run_y3`.
+This is the pattern in `agent-<name>/scripts/bridge.py` `_dispatch` → `agy.run_y3`.
 
 ### Why "two-way" via agy is currently impossible (B-original / C from the 2026-05-21 agy-ipc-b-decision-security meeting)
 
@@ -161,7 +161,7 @@ For codex bridges this is **not** redundant — the codex TUI window genuinely a
 ### Standard launch (cold start)
 
 ```bash
-cd ~/path/to/agent-hassabis
+cd ~/path/to/agent-<name>
 BOT_NAME=mybot bash scripts/launch.sh   # default BOT_NAME=hs
 # tmux session $BOT_NAME with 2 windows: agy (TUI, optional manual use) + daemon (bridge log)
 ```
@@ -170,12 +170,12 @@ The agy window runs `agy --sandbox` (or `--dangerously-skip-permissions` if you'
 
 ### Restart from inside the bot's own tmux session
 
-The `launch.sh` no longer has an internal wrapper block (removed 2026-05-21 to fix a sshee-style "kill-own-session" bug, see §6). To restart the bot from inside its own session:
+The `launch.sh` no longer has an internal wrapper block (removed 2026-05-21 to fix a bot-a-style "kill-own-session" bug, see §6). To restart the bot from inside its own session:
 
 1. Detach (`C-b d`) → run `BOT_NAME=$NAME bash ~/path/to/launch.sh` from your shell.
 2. Or wrap the launch in a shell function that detects "called from inside the bot session" and bootstraps via a side session.
 
-Example zsh function (the hs/sshee shape):
+Example zsh function (the bot-a shape):
 
 ```bash
 hs() {
@@ -184,11 +184,11 @@ hs() {
   if [ "$cur" = "hs" ]; then
     local boot="hs-restart-$$"
     tmux new-session -d -s "$boot" -n restart \
-      "sleep 0.3; zsh -lc 'cd ~/path/to/agent-hassabis && bash scripts/launch.sh; tmux switch-client -t hs; tmux kill-session -t $boot'"
+      "sleep 0.3; zsh -lc 'cd ~/path/to/agent-<name> && bash scripts/launch.sh; tmux switch-client -t <alias>; tmux kill-session -t $boot'"
     tmux switch-client -t "$boot"
     return
   fi
-  cd ~/path/to/agent-hassabis && bash scripts/launch.sh
+  cd ~/path/to/agent-<name> && bash scripts/launch.sh
 }
 ```
 
@@ -207,7 +207,7 @@ Record every overwrite in `state/permission-ledger.jsonl` per the schema in `ref
 
 ---
 
-## 6. The lesson from sshee's "exited immediately" bug (2026-05-21)
+## 6. The lesson from bot-a's "exited immediately" bug (2026-05-21)
 
 When the same project also has a shell-function bootstrap (zsh `_<bot>_rebuild_session`) that creates a 2-window tmux pattern (infra + secondary client window), do **not** also have `launch.sh` do its own `tmux kill-session -t <bot>` + `tmux new -s <bot> -d` wrapper. The two layers race:
 
@@ -217,13 +217,13 @@ When the same project also has a shell-function bootstrap (zsh `_<bot>_rebuild_s
 
 Fix: pick ONE layer to own session lifecycle. We chose the zshrc bootstrap (it has richer logic — port cleanup, bot-sync pull, .codex-thread-id reset). `launch.sh` is now pure runner.
 
-The codex bridge (sshee) hit this on 2026-05-21 because we removed its in-launch suicide guard the day before but left the wrapper block in place. The same trap is possible in any bridge that copies this pattern — don't ship `launch.sh` with a wrapper block if you're also wrapping it externally.
+The codex bridge (bot-a) hit this on 2026-05-21 because we removed its in-launch suicide guard the day before but left the wrapper block in place. The same trap is possible in any bridge that copies this pattern — don't ship `launch.sh` with a wrapper block if you're also wrapping it externally.
 
 ---
 
 ## 7. Mapping back to the agy IPC decision
 
-The 2026-05-21 agy-ipc-b-decision-security meeting (vault `AI_Second_Brain/meetings/2026-05-21-agy-ipc-b-decision-security/`) decided:
+The 2026-05-21 agy-ipc-b-decision-security meeting (vault `<vault>/meetings/2026-05-21-agy-ipc-b-decision-security/`) decided:
 
 - agy → single-shot subprocess via `agy --print`, persona prepended manually, `--conversation <uuid>` for thread continuity. This is the only currently supported shape.
 - Two-way / streaming / hosted-agy approaches are blocked on agy CLI getting a server mode upstream.

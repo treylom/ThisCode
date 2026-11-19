@@ -218,7 +218,7 @@ function main(): void {
       .map((s) => s.trim())
       .filter(Boolean),
   );
-  // No bot-chain counter here on purpose (2026-08-07 재경님 "빼자"): the
+  // No bot-chain counter here on purpose (2026-08-07 operator decision "drop it"): the
   // Discord device this ports is mention-pass + allowlist, nothing more —
   // months of Discord operation and an 11-round human-free meeting show
   // conversations end by bot discipline, not by a code cap. A cap of 6 was

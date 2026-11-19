@@ -1,9 +1,9 @@
 #!/bin/bash
 # hookkit.sh — soft→hard enforcement 훅 공용 라이브러리 (source 전용, 직접 실행 ❌)
 #
-# 출처: AI_Second_Brain/meetings/2026-05-25-soft-to-hard-rule-enforcement/05-implementation-plan.md
+# 출처: <vault>/meetings/2026-05-25-soft-to-hard-rule-enforcement/05-implementation-plan.md
 #       maintainer 1차 승인 2026-05-25. 패턴 미러:
-#       .claude/scripts/{meeting-stop-reread,regression-self-check,notify-strange-stop}.sh
+#       .claude/scripts/{meeting-stop-reread,regression-self-check,notify-<bot>-stop}.sh
 #
 # 🔒 불변 안전 (위반 = 전 봇 trap): 모든 훅 fail-open.
 #   - 감지 불확실 / 예외 / 의존성(jq 등) 부재 → 통과(allow / exit 0).

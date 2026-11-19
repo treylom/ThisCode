@@ -1,2 +1,2 @@
-DISCORD_STATE_DIR=/x/discord-karpathy
-ORCHESTRATOR_BOT=karpathy
+DISCORD_STATE_DIR=/x/discord-orchestrator
+ORCHESTRATOR_BOT=orchestrator

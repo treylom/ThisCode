@@ -2,7 +2,7 @@
 
 공정: DB(ro)에서 degree 상위 related_to 쌍 선별 → vault 노트 본문에서 링크 주변 문맥 조달
       → gpt-5.5(codex CLI 키리스·격리) 배치5 분류 → JSONL + 통계.
-설계 합의: meetings/2026-07-15-graphrag-3d-viz 스레드 (코난 ①~④ + 페이커 정찰 ①~③).
+설계 합의: meetings/2026-07-15-graphrag-3d-viz 스레드 (researcher ①~④ + developer recon ①~③).
 증분 race 가드는 merge 티어 별건 — 본 러너는 DB write 0.
 """
 import sqlite3, json, os, re, subprocess, tempfile, time, sys, threading

@@ -27,7 +27,7 @@ import yaml
 # rebuild so cached vectors are never mixed with embeddings from a different
 # model.
 # ---------------------------------------------------------------------------
-# 2026-06-16 (코난 autoresearch R-E1): env-configurable for isolated embedding bake-off.
+# 2026-06-16 (researcher autoresearch R-E1): env-configurable for isolated embedding bake-off.
 # Default unchanged = no live behavior change. Build a separate --output index with a
 # new model via GRAPHRAG_EMBED_MODEL, benchmark on a test port, swap only if it wins.
 MODEL_NAME = os.environ.get("GRAPHRAG_EMBED_MODEL", "paraphrase-multilingual-MiniLM-L12-v2")

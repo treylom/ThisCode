@@ -5,7 +5,7 @@
 임계(기본 180s)를 넘으면 그 봇을 @mention 으로 재구동 push (soft beat → hard push).
 
 ⚠️ 기본 = DRY-RUN (대상만 출력, 발신 안 함). 실제 발신 = --send.
-   launchd 자동 실행 활성화 + meeting_watchdog.py 통합 = 스트레인지 도메인(아침 승인).
+   launchd 자동 실행 활성화 + meeting_watchdog.py 통합 = scheduler 도메인(아침 승인).
    본 스크립트는 검증된 standalone 모듈만 제공하며 라이브 meeting_watchdog.py 를 수정하지 않는다.
    (무인 중 라이브 시스템 스크립트 수정·실발신 회피 — carve-out.)
 
