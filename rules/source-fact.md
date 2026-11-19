@@ -133,6 +133,8 @@ consuming its output:
    looked like an answer" suspicion of an empty-pattern OR matching every
    line. Positive controls are necessary, not sufficient).
 
+- **Reading a lookup script's exit code (2026-11-14).** When a lookup script reports per-axis results, exit code 0 means it judged from the places it looked ("exists", or "absence evidence secured"). A code that means *could not look* (a tool died or returned the wrong shape — for example 3) means "not seen": do not say the term doesn't exist. Read the "looked / not looked / out of scope" lines under the verdict; if anything is "not looked", re-run that axis or report "not seen". Known gaps: a listing tool that exits 0 with a truncated list, and a CLI that exits 0 with empty output.
+
 ## 9. Live counts run as positive–negative pairs — decoy inside the very command (2026-08-08)
 
 - §8 covers building a checker; this covers **every ad-hoc count or absence
