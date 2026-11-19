@@ -228,7 +228,7 @@ _QE_CACHE_MAX = 200
 
 _QE_DEFAULT = {"expanded_terms": [], "english_query": "", "intent": "lookup"}
 
-# 2026-06-16 (코난, 재경님 (나) 승인): env-gated precomputed expansion file. When
+# 2026-06-16 (researcher, operator (나) approval): env-gated precomputed expansion file. When
 # GRAPHRAG_QE_CACHE_FILE points to a JSON {query: {expanded_terms, english_query, intent}},
 # expand_query_llm serves from it (no HTTP) — lets us prove the expansion FEATURE in
 # isolation before standing up the shared CLIProxyAPI backend. Default unset = unchanged
@@ -1260,14 +1260,14 @@ def interview(
 # Hybrid search constants
 # ---------------------------------------------------------------------------
 
-# 2026-06-16 (코난 R-V1 deploy): default channel weights env-configurable so the live
+# 2026-06-16 (researcher R-V1 deploy): default channel weights env-configurable so the live
 # deploy can set the winner profile (dense0.5) without code change. Default values =
 # current/unchanged (live 8400 safe until launchd env is set). Per-query params still override.
 DEFAULT_DENSE_WEIGHT: float = float(os.environ.get("GRAPHRAG_DENSE_WEIGHT", "0.3"))   # semantic similarity weight
 DEFAULT_SPARSE_WEIGHT: float = float(os.environ.get("GRAPHRAG_SPARSE_WEIGHT", "0.4"))  # keyword (FTS5) weight — Korean domain terminology
 DEFAULT_DECOMPOSED_WEIGHT: float = float(os.environ.get("GRAPHRAG_DECOMPOSED_WEIGHT", "0.15"))  # query decomposition for multi-term matching
 DEFAULT_ENTITY_WEIGHT: float = float(os.environ.get("GRAPHRAG_ENTITY_WEIGHT", "0.15"))  # entity embedding for MOC/hub note surfacing
-# 2026-07-03 (코난 B-layer): concept-hop channel — query→concept(bge-m3)→concept_note_edges→note.
+# 2026-07-03 (researcher B-layer): concept-hop channel — query→concept(bge-m3)→concept_note_edges→note.
 # Additive RRF term (does not alter _rrf_score signature/cache). weight=0 disables (fail-safe rollback).
 DEFAULT_CONCEPT_WEIGHT: float = float(os.environ.get("GRAPHRAG_CONCEPT_WEIGHT", "0.10"))
 DEFAULT_INDEX_DIR: str = ".team-os/graphrag/index"
@@ -1309,10 +1309,10 @@ def _get_cross_encoder():
         if _cross_encoder is None:
             from sentence_transformers import CrossEncoder  # type: ignore
             # R9: Upgraded MiniLM→bge-reranker-base for multilingual (Korean) content
-            # 2026-06-16 (코난 autoresearch R-B1): reranker model env-configurable for
+            # 2026-06-16 (researcher autoresearch R-B1): reranker model env-configurable for
             # isolated bake-off (default unchanged = no live behavior change).
             _model_id = os.environ.get("GRAPHRAG_RERANKER_MODEL", "BAAI/bge-reranker-base")
-            # 2026-06-16 (코난 R-B2): empirically the current sentence-transformers
+            # 2026-06-16 (researcher R-B2): empirically the current sentence-transformers
             # defaults BOTH bge-reranker-base AND v2-m3 to Sigmoid (relevant pair ~0.001
             # for base) — so the L1248 "raw logits" comment is stale and the live pipeline
             # is structural-boost-dominated (ce_score ~0). v2-m3 with Identity gives a 10.7
@@ -1563,7 +1563,7 @@ _HYBRID_CACHE_MAX = 100
 _ALIAS_RERANK_BOOST = 1.0  # C-3b: frontmatter aliases are exact user-authored recall hints.
 _EXACT_PHRASE_BOOST = 0.03  # E-2: multi-token exact phrase hits are high-precision recall hints.
 _EXACT_PHRASE_RERANK_BOOST = 2.0
-RERANK_POOL_MULTIPLIER = int(os.environ.get("GRAPHRAG_RERANK_POOL_MULT", "3"))  # R12b: sparse-only 3x expansion. 2026-06-16 (코난 R-E1d): env-configurable for pool-depth sweep (default 3 = unchanged).
+RERANK_POOL_MULTIPLIER = int(os.environ.get("GRAPHRAG_RERANK_POOL_MULT", "3"))  # R12b: sparse-only 3x expansion. 2026-06-16 (researcher R-E1d): env-configurable for pool-depth sweep (default 3 = unchanged).
 
 
 def _is_exact_alias_query(query: str, matched_alias: str | None) -> bool:
@@ -2148,7 +2148,7 @@ def hybrid_search(
     # R14: slice to top_k * 2 (middle ground between R12 [:top_k]=20 top-1=11/top-10=13
     # and R13 [:rerank_pool_limit=60] top-1=8/top-10=15). Target: 40 candidates preserves
     # enough top-ranked RRF items for top-1 while giving rerank room to surface new candidates.
-    # 2026-06-16 (코난 R-B2): slice mult env-configurable (default 2 = unchanged). Pairs with
+    # 2026-06-16 (researcher R-B2): slice mult env-configurable (default 2 = unchanged). Pairs with
     # GRAPHRAG_RERANK_FUSION so a deeper slice can surface base-ranked golds (Q04/Q08) without
     # the reranker displacing well-base-ranked golds (Q09/Q12/Q13/Q24).
     rerank_slice_size = top_k * int(os.environ.get("GRAPHRAG_RERANK_SLICE_MULT", "2"))
@@ -2325,7 +2325,7 @@ def rerank(
             adj += phrase_boost
         adjusted.append((candidate, float(ce_score), adj, alias_boost, phrase_boost))
 
-    # 2026-06-16 (코난 R-B2): rank-fusion of base-RRF order + reranker order.
+    # 2026-06-16 (researcher R-B2): rank-fusion of base-RRF order + reranker order.
     # Diagnostic (pool sweep): the cross-encoder displaces well-base-ranked golds
     # (Q09/Q12/Q13/Q24) and buries golds the base retrieval ranks 1-2 (Q04/Q08).
     # Pure-adj sort throws away the base signal. Fusion hedges: a gold at base_rank 0

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """solo_ledger.py — solo work ledger core (Track 3 / S2 + lifecycle).
 
-Spec: obsidian-ai-vault meetings/2026-08-12-dispatch-meeting-gate/
-      70-karpathy-track2-porting-spec.md v2.9 §2 (S2 · 수명주기 · S1/S3 owner)
+Spec: maintainer's vault meetings/2026-08-12-dispatch-meeting-gate/
+      70-orchestrator-track2-porting-spec.md v2.9 §2 (S2 · 수명주기 · S1/S3 owner)
 
 Contract highlights (v2.9):
 - Ledger namespace `solo-<bot>-<slug>-<session_id>.yaml` — deliberately NOT
@@ -257,7 +257,7 @@ class _Lock:
         except BaseException:
             # msvcrt 는 ~10초 재시도 후 OSError 가 설계된 정상 경로 —
             # 잠금 실패 시 fd 를 반납해야 반복 경합이 fd 고갈로 번지지
-            # 않는다(코난 델타 재검 관측, 2026-08-12). fail-closed 불변:
+            # 않는다(researcher 델타 재검 관측, 2026-08-12). fail-closed 불변:
             # 예외 재전파로 with 블록(tx) 자체가 안 열린다.
             os.close(self._fd)
             raise

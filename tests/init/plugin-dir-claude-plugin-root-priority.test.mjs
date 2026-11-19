@@ -1,4 +1,4 @@
-// Fix F (2026-08-10, 루돌프 4차 실측): the shared PLUGIN_DIR ordered-probe (used by
+// Fix F (2026-08-10, test-bot 4차 실측): the shared PLUGIN_DIR ordered-probe (used by
 // commands/test.md, skills/install-hooks/SKILL.md, skills/create-bot/SKILL.md,
 // skills/slack-configure/SKILL.md) picks the FIRST candidate that has the marker
 // file/dir — "first match wins", not "freshest wins". When candidate #1 (the

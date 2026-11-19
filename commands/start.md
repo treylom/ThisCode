@@ -146,7 +146,7 @@ command -v tmux git curl node claude     # 의존 도구 확인
 ```
 
 `create-bot` 가 묻는 항목:
-- 봇 이름 (예: `karpathy`, `mybot`)
+- 봇 이름 (예: `orchestrator`, `mybot`)
 - Discord 토큰 (Step 2 에서 발급)
 - 페르소나 template 선택 (research-bot / writing-bot / schedule-bot / general-assistant / custom)
 

@@ -106,7 +106,7 @@ tmux session 상시 유지 → Claude Code 안에서 Discord MCP 가 메시지 �
 ### 시나리오 3 — Batch (catch-up)
 
 ```
-사용자가 tmux 안에서 claude 실행 → /aktofu catch-up 같은 slash → batch 작업
+사용자가 tmux 안에서 claude 실행 → /automation catch-up 같은 slash → batch 작업
 ```
 
 장점: 사용자 control + 결과 검증.
@@ -177,6 +177,6 @@ stderr 도 함께 캡처 (`2>&1`). 매일 별도 파일.
 ## 관련 자원
 
 - vault `<vault>/.claude-memory/shared/reference_headless_claude_oneshot_pattern.md`
-- vault aktofu-bot 3층 패턴 (`reference_aktofu_launchd_three_layer.md`)
+- vault automation-bot 3층 패턴 (`reference_automation_launchd_three_layer.md`)
 - skill: [../skills/bootstrap/SKILL.md](../skills/bootstrap/SKILL.md)
 - Discord MCP server 소스: `~/.claude/plugins/cache/claude-plugins-official/discord/0.0.4/server.ts`

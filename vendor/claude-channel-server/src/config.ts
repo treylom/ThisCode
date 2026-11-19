@@ -34,7 +34,7 @@ export interface ChannelEnv {
   // one. Unset/empty = every bot message drops, which is exactly the
   // pre-(B) behavior (fail closed, zero regression for existing installs).
   // Parsing lives in server.ts next to the gate that uses it. There is
-  // deliberately no chain-limit knob (2026-08-07 재경님 "빼자" — the ported
+  // deliberately no chain-limit knob (2026-08-07 operator decision "drop it" — the ported
   // Discord device is mention-pass + allowlist only; see server.ts).
   ALLOWED_SLACK_BOT_USER_IDS?: string;
 }

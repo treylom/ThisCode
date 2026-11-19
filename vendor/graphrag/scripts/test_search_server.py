@@ -154,7 +154,7 @@ class SearchServerQueryLoggingTest(unittest.TestCase):
             response = client.get(
                 '/api/search',
                 params={'q': 'structured log', 'mode': 'hybrid', 'top_k': 5},
-                headers={'User-Agent': 'sonseokhee-test', 'X-Caller': 'unit-test'},
+                headers={'User-Agent': 'caller-test', 'X-Caller': 'unit-test'},
             )
 
         self.assertEqual(response.status_code, 200)
@@ -172,7 +172,7 @@ class SearchServerQueryLoggingTest(unittest.TestCase):
             set(record['phase_timings_ms']),
             {'cache_hit', 'qe', 'dense', 'hybrid_total', 'rerank', 'rescore'},
         )
-        self.assertEqual(record['caller']['user_agent'], 'sonseokhee-test')
+        self.assertEqual(record['caller']['user_agent'], 'caller-test')
         self.assertEqual(record['caller']['x_caller'], 'unit-test')
 
     def test_search_endpoint_marks_zero_result_as_failed_query(self):

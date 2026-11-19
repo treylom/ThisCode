@@ -1,6 +1,6 @@
 # GraphRAG / 검색 품질 평가 방법론 (search-eval)
 
-> 배포 번들(ThisCode/ThisCodex) 동봉용 일반화 패턴. vault GraphRAG `/search`를 "잘 된다/안 된다" 감으로 단정하지 말고 **수치로 측정·개선**하는 재사용 방법론. (출처 사례: obsidian-ai-vault 2026-06-06 search-enhancement 회의.)
+> 배포 번들(ThisCode/ThisCodex) 동봉용 일반화 패턴. vault GraphRAG `/search`를 "잘 된다/안 된다" 감으로 단정하지 말고 **수치로 측정·개선**하는 재사용 방법론. (출처 사례: maintainer's vault 2026-06-06 search-enhancement 회의.)
 
 ## 0. 원칙
 - **측정 없는 보강 금지.** "검색 잘 됨"은 벤치로 증명. 개선 주장 = before/after 수치 동반(verification-before-completion).

@@ -46,9 +46,8 @@ TASK = [
 ]
 HIGH_RISK = ["회의", "재발", "매번", "이전 산출", "기존 구현"]
 
-# Vault root — set VAULT_ROOT to your Obsidian vault path (default kept for
-# backward compatibility with the reference deployment).
-VAULT_ROOT = Path(os.environ.get("VAULT_ROOT", str(Path.home() / "obsidian-ai-vault")))
+# Vault root — set VAULT_ROOT to your Obsidian vault path (default: ~/vault).
+VAULT_ROOT = Path(os.environ.get("VAULT_ROOT", str(Path.home() / "vault")))
 
 MEMORY_ROOT_HINTS = (
     "memory",
@@ -56,10 +55,8 @@ MEMORY_ROOT_HINTS = (
     "shared",
     "SHARED-INDEX",
     "Second_Brain",
-    "AI_Second_Brain",
-    "obsidian-ai-vault",
     "Library/",
-)
+) + tuple(filter(None, (os.environ.get("VAULT_ROOT", "").rstrip("/").rsplit("/", 1)[-1],)))
 
 
 def _read_stdin_json() -> dict[str, Any]:

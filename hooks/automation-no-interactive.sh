@@ -1,7 +1,7 @@
 #!/bin/bash
 # automation-no-interactive.sh — PreToolUse hook (A3, matcher: AskUserQuestion):
 #   무인 자동화(반복운영루프) 세션에서 AskUserQuestion 호출 시 deny.
-#   대화형 질문은 응답자가 없어 루프가 정지(死)한다. 근거: AK-Tofu phase-b "사용자 질문/권한요청
+#   대화형 질문은 응답자가 없어 루프가 정지(死)한다. 근거: automation-bot phase-b "사용자 질문/권한요청
 #   절대 금지" + autonomy §1. 04-synthesis A3. 대화형(비-자동화) 세션은 통과.
 # 현재 deny 계약 = JSON permissionDecision(hookkit hk_deny). fail-open.
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/hookkit.sh"

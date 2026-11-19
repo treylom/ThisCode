@@ -184,7 +184,7 @@ tmux capture-pane -t <bot>:1.1 -p -S -200 | tail -30
 
 **Fix**: Restart the session. If the crash repeats, capture the traceback and file an issue. Most common cause is an unhandled exception in `_dispatch` → `_worker` doesn't restart (a known limitation of the simple worker pattern).
 
-## §11. `Codex CLI 미설치` or wrong codex binary path (for `sshee`-style bridges)
+## §11. `Codex CLI 미설치` or wrong codex binary path (for `codex-bot`-style bridges)
 
 Not directly an agy issue — but if you're adapting this template for codex CLI bridges, ensure `which codex` returns the right binary and `codex --version` matches your expected release.
 

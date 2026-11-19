@@ -31,7 +31,7 @@ export function whichSync(bin, env = process.env) {
 export function autodiscoverVault(env = process.env) {
   const home = env.CLAUDE_DISCODE_VAULT || env.HOME || env.USERPROFILE || '';
   if (env.CLAUDE_DISCODE_VAULT && existsSync(env.CLAUDE_DISCODE_VAULT)) return env.CLAUDE_DISCODE_VAULT;
-  for (const c of ['Documents/Obsidian', 'Documents/Second_Brain', 'obsidian-ai-vault']) {
+  for (const c of ['Documents/Obsidian', 'Documents/Second_Brain', 'vault']) {
     const full = join(home, c);
     if (home && existsSync(full)) return full;
   }

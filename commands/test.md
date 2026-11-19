@@ -31,14 +31,14 @@ Features: `memory`, `tmux`, `discord-gate`, `graphrag`, `graphrag-bench`, `meeti
 ## Run
 
 ```bash
-# thiscode plugin 위치 detect — 낡은 사본 회피 (2026-08-10 핫픽스 B, 루돌프 실측
-# 1536053876: 이전엔 cwd 상대 `node scripts/feature-test.mjs` 를 그대로 불러서, cwd 가
+# thiscode plugin 위치 detect — 낡은 사본 회피 (2026-08-10 핫픽스 B, test-bot 실측
+# 이전엔 cwd 상대 `node scripts/feature-test.mjs` 를 그대로 불러서, cwd 가
 # 낡은 수동 clone(~/.claude/plugins/thiscode, discord-gate 항목 부재) 안이면 그 낡은
 # 사본을 집어 7/7 을 냄 — 설치판(1.2.5, scripts/feature-test.mjs 직접 실행)은 8/8.
 # install-hooks.md/create-bot.md 와 동일한 순서 probe 재사용(새 자동화 발명 ❌) — 단
 # 실제 소비 파일(scripts/feature-test.mjs)의 실재로 판정, hooks/ 실재가 아니다.
 #
-# Fix F (2026-08-10, 루돌프 4차 실측): 위 순서 probe 자체가 "첫 매치가 이긴다" 라
+# Fix F (2026-08-10, test-bot 4차 실측): 위 순서 probe 자체가 "첫 매치가 이긴다" 라
 # 후보 #1(마켓 클론)이 구판이면 후보 #5(버전 캐시, freshest)를 두고도 구판이 이겨
 # rules-seed.md 를 무징후로 누락시켰다(화면에 아무 신호도 안 남는다 — B3/Fix C 산출물의
 # 침묵 실패). CLAUDE_PLUGIN_ROOT 를 1순위로 — 이 줄은 마크다운 원문 리터럴이라 Claude

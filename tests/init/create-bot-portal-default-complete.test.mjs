@@ -1,10 +1,10 @@
-// B7 (재경님 2026-08-10 결정): "캡차·사람 관문 직전까지는 알아서 전부 다 하는 것까지가
+// B7 (operator decision 2026-08-10): "캡차·사람 관문 직전까지는 알아서 전부 다 하는 것까지가
 // 우리 설치기 역할." The create-bot wizard's Discord Developer Portal section used to print
 // instructions and stop; the fix promotes an already-working capability (drive the portal via
 // whatever browser-automation tool the session has, per the same detection pattern
 // skills/help/SKILL.md STEP 2.5 already uses) to the DEFAULT path — no upfront "should I do this
 // for you?" question (that's the slack-configure pattern this explicitly does NOT copy). Three
-// real human gates still pause the flow (revised from an initial 2-gate cut — 글재경's 2026-08-10
+// real human gates still pause the flow (revised from an initial 2-gate cut — reviewer's 2026-08-10
 // review ④ caught that a clean/re-shoot account's actual first screen is a login wall, which the
 // original table never declared a branch for): portal login (credentials+MFA), hCaptcha, and the
 // Reset Token password/MFA modal. skills/create-bot/SKILL.md is prose, not executable code, so
@@ -70,7 +70,7 @@ test('B7: tool-availability detection gates the default vs. manual-fallback bran
   assert.match(text, /\*\*수동 안내 \(도구 없음/, 'a manual fallback branch must still exist for sessions with no browser automation');
 });
 
-// Fix C (2026-08-10, 카파시 root-cause + 루돌프 실측): Step 3's header claimed
+// Fix C (2026-08-10, orchestrator root-cause + ci-bot measurement): Step 3's header claimed
 // "printing instructions and stopping is a defect in the default flow", but the
 // very next "가용성 탐지" branch said the opposite for the no-tool case — "not a
 // defect, an environment limit" — and a freshly-installed session has NO
@@ -119,7 +119,7 @@ test('B7 (Fix C): the "no tool" branch offers to attach playwright MCP (help:2.5
   );
 });
 
-// 🟡C-a (2026-08-10, 글재경 재검토 지시): Fix C reused help.md STEP 2.5's playwright-MCP
+// 🟡C-a (2026-08-10, reviewer re-review request): Fix C reused help.md STEP 2.5's playwright-MCP
 // offer verbatim in create-bot rather than pointing at a shared source (SKILL.md is prose,
 // not executable, so there's no import mechanism — see the copy-coherence note in Fix C's
 // commit). That makes it an intentional DUAL COPY, not a copy-asymmetry: whichever file

@@ -227,10 +227,10 @@ def _parse_progress(
 ) -> tuple[int, dict[str, float], bool]:
     """Parse 02-progress.md — robust to the bracket formats bots use in the
     wild (date/time in ANY order, optional year, optional ~):
-        [HH:MM KST]                  (hook canonical, 손석희)
-        [YYYY-MM-DD HH:MM KST]       (AK-Tofu)
-        [YYYY-MM-DD ~HH:MM KST]      (카파시)
-        [HH:MM KST MM-DD]            (스트레인지)
+        [HH:MM KST]                  (hook canonical, fact-checker bot)
+        [YYYY-MM-DD HH:MM KST]       (writer bot)
+        [YYYY-MM-DD ~HH:MM KST]      (orchestrator bot)
+        [HH:MM KST MM-DD]            (scheduler bot)
 
     Returns:
         tasks_done: count of unique bot names whose status contains 완료/PASS

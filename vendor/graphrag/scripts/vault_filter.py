@@ -15,19 +15,18 @@ Why centralized:
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Iterable
 
 # Exact directory names to exclude (any depth)
 EXCLUDE_DIRS = {
-    "obsidian-ai-vault",        # outer git source root, rsync target
     ".obsidian",                # Obsidian app config
     ".trash",
     ".tmp.drivedownload",
     ".tmp.driveupload",
-    "AI_Second_Brain",          # nested duplicate vault copy
     "Second_Brain",             # nested duplicate vault copy
-    # 2026-06-16 WSL≠Mac 색인 divergence dedup (재경님 옵션2 GO, meetings/2026-06-16-wsl-mac-index-divergence/).
+    # 2026-06-16 WSL≠Mac 색인 divergence dedup (operator option 2 GO, meetings/2026-06-16-wsl-mac-index-divergence/).
     # 무번호 parallel = symlink/rsync 분기 (vault-ops §1: 번호철자 020-/090-/010-가 정본).
     # 측정(dup_measure): Library∩020-Library=3434 dup / Resources⊂090-Resources(고유0) / Mine=venv정크20.
     "Library",                  # = 020-Library 중복본 (정본=020-Library; Library 고유 6 Reposts만 collateral)
@@ -37,6 +36,13 @@ EXCLUDE_DIRS = {
     ".venv",
     "node_modules",
     "site-packages",
+}
+
+# Extra exact directory names to exclude, comma-separated via env (e.g. the
+# directory name of an outer git source root or a nested duplicate vault copy
+# that is rsynced into the vault itself).
+EXCLUDE_DIRS |= {
+    d.strip() for d in os.environ.get("GRAPHRAG_EXCLUDE_DIRS", "").split(",") if d.strip()
 }
 
 # Directory name prefixes to exclude (e.g. "_archive-2026-04",

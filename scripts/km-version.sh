@@ -5,7 +5,7 @@ set -euo pipefail
 # repo root = this script's parent dir (works for ~/.claude/plugins/thiscode, ~/code/thiscode, anywhere)
 SCRIPT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLUGIN_DIR="${CLAUDE_DISCODE_HOME:-$SCRIPT_ROOT}/contracts"
-VAULT_DIR="${CLAUDE_DISCODE_VAULT:-$HOME/obsidian-ai-vault}/.claude/reference/contracts"
+VAULT_DIR="${CLAUDE_DISCODE_VAULT:-$HOME/vault}/.claude/reference/contracts"
 
 if [ ! -d "$PLUGIN_DIR" ]; then
   echo "plugin contracts dir missing: $PLUGIN_DIR" >&2

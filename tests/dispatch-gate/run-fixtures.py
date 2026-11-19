@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Gate A (dispatch-room-gate) fixture harness — P1 fixture ⑤ + D5 origin
-+ D2 cwd guard (85-doc 차단 1 수리) + carve-out 관측 계약 (코난 관측 ①).
++ D2 cwd guard (85-doc 차단 1 수리) + carve-out 관측 계약 (researcher 관측 ①).
 
-체크리스트 선두(코난 이월): origin_reclassified denial 로그.
+체크리스트 선두(researcher 이월): origin_reclassified denial 로그.
 carve-out 계약 명시: «모델 자칭 태그 + 봇멘션 + 발주 마커 = pass 가 계약»
 (감사 가능 경로 — fail-closed 승격은 §1.2 프로토콜 폐지와 등가) — 단 그
 조합은 관측 로그 1행(pass 유지). cwd 가드: in-cwd 양성 / out-cwd 음성 /
@@ -49,7 +49,7 @@ def setup(with_config=True, with_roster=True, with_roots=True):
     os.makedirs(workspace)
     roster = os.path.join(sdir, "bot-roster.yaml")
     if with_roster:
-        open(roster, "w", encoding="utf-8").write('bots:\n  konan:\n    user_id: "%s"\n' % BOT_ID)
+        open(roster, "w", encoding="utf-8").write('bots:\n  bot-a:\n    user_id: "%s"\n' % BOT_ID)
     if with_config:
         cfg = {"top_channels": [TOP], "roster_path": roster}
         if with_roots:
@@ -148,7 +148,7 @@ def main():
     NEG_CTRL[0] += 1
     check("8 prefix sibling(root-other) → pass(경계 정확 결박)", not denied)
 
-    print("⑤-3 carve-out 계약·관측 로그 (코난 관측 ①)")
+    print("⑤-3 carve-out 계약·관측 로그 (researcher 관측 ①)")
     sdir, ws = setup()
     denied, _ = run_gate(sdir, payload(
         text="[공지] <@%s> 작업 재개 안내" % BOT_ID, workspace=ws))

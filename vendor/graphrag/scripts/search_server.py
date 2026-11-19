@@ -48,7 +48,7 @@ ALLOWED_ORIGINS = [
     "http://localhost:5173",
 ]
 VALID_SEARCH_MODES = {"hybrid", "quick", "deep"}
-# akwiki 공개 인스턴스(8401) 전용 가드 — 기본 0 = 기존(내부 8400) 동작 완전 무변 (2026-07-07 손석희 serving 리뷰 finding 3·4)
+# akwiki 공개 인스턴스(8401) 전용 가드 — 기본 0 = 기존(내부 8400) 동작 완전 무변 (2026-07-07 fact-checker serving 리뷰 finding 3·4)
 PUBLIC_MODE = os.environ.get("GRAPHRAG_PUBLIC_MODE", "0") == "1"
 QUERY_LOG_DIR = Path(os.environ.get(
     "GRAPHRAG_QUERY_LOG_DIR",
@@ -694,7 +694,7 @@ async def search(
     finally:
         _enqueue_query_log({
             "timestamp_kst": _kst_timestamp(),
-            # PUBLIC_MODE: 방문자 발화 원문 저장 ❌ ("대화 내용 저장 안 함" 공지 정합 — 손석희 finding 3)
+            # PUBLIC_MODE: 방문자 발화 원문 저장 ❌ ("대화 내용 저장 안 함" 공지 정합 — fact-checker finding 3)
             "query": (f"sha256:{__import__('hashlib').sha256(q.encode()).hexdigest()[:16]} len={len(q)}" if PUBLIC_MODE else q),
             "mode": mode,
             "top_k": top_k,

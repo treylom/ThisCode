@@ -35,7 +35,7 @@ function fixture(channel = 'discord') {
 }
 
 test('skills make the launcher a REQUIRED bot-creation step, with explicit refusal (recorded in bot.yaml) as the only skip', () => {
-  // 2026-08-12: «기본 추천(default-yes)» → «🔴 필수» 승격 (재경님 alias 생략
+  // 2026-08-12: «기본 추천(default-yes)» → «🔴 필수» 승격 (operator alias 생략
   // 회귀 수리). 앵커도 승격 후 문구로 — 구 문구 앵커는 승격 커밋이 남긴
   // 미스윕 회귀였다.
   const discord = readFileSync('skills/create-bot/SKILL.md', 'utf8');

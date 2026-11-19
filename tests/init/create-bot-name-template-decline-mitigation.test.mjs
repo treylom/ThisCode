@@ -1,4 +1,4 @@
-// Fix D (2026-08-10, 루돌프 3/3 실측 — 막힘24): selecting "직접 입력" (free text /
+// Fix D (2026-08-10, test-bot 3/3 실측 — 막힘24): selecting "직접 입력" (free text /
 // AskUserQuestion's built-in "Other") on the create-bot bot-name question could cancel
 // the ENTIRE form ("User declined to answer questions"), losing both the name answer
 // AND whatever other question had been bundled into the same AskUserQuestion call

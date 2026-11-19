@@ -1,6 +1,6 @@
 # 옵시디언 에이전트 대시보드 — 5테마 디자인 시스템 + 플러그인 패턴
 
-> 2026-06-01 `obsidian-ai-vault` 대시보드 플러그인에서 추출. ThisCode/ThisCodex 사용자가 자기 vault 대시보드에 재사용할 수 있는 **디자인 시스템 + 플러그인 골격**. vault 특화 데이터(봇·회의·gws)는 제외하고 재사용 가능한 부분만 일반화.
+> 2026-06-01 maintainer's vault 대시보드 플러그인에서 추출. ThisCode/ThisCodex 사용자가 자기 vault 대시보드에 재사용할 수 있는 **디자인 시스템 + 플러그인 골격**. vault 특화 데이터(봇·회의·gws)는 제외하고 재사용 가능한 부분만 일반화.
 
 ## 1. 아키텍처 — 생성↔표시 분리
 
@@ -45,4 +45,4 @@
 2. 데이터 소스(JSON 생성 cron)는 자기 환경(캘린더·할일·원하는 위젯)에 맞춰 작성. 플러그인은 JSON 키만 맞으면 그대로 렌더.
 3. `manifest.json`(`isDesktopOnly:false`) + esbuild 빌드.
 
-> 원본: `obsidian-ai-vault/AI_Second_Brain/.obsidian/plugins/agent-dashboard/`. 본 문서는 재사용 골격이며, 봇 현황·회의 MOC·gws/TMAP 등 vault 특화 위젯은 원본 참고.
+> 원본: maintainer's vault 의 `.obsidian/plugins/agent-dashboard/`. 본 문서는 재사용 골격이며, 봇 현황·회의 MOC·gws/TMAP 등 vault 특화 위젯은 원본 참고.

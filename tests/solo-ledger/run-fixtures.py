@@ -85,7 +85,7 @@ def alerts(sdir, kind=None):
 def fixture_1_eio_restart():
     print("① parent-dir/post-replace EIO + restart")
     sdir, room = fresh_env()
-    path = SL.create_ledger(sdir, "karpathy", "fix1", "sess-A", sdir, room)
+    path = SL.create_ledger(sdir, "bot-a", "fix1", "sess-A", sdir, room)
 
     # (a) post-replace dir-fsync EIO → durability_unknown, fence stays
     calls = {"n": 0}
@@ -110,7 +110,7 @@ def fixture_1_eio_restart():
           not res2["ok"] and "quarantin" in res2["reason"], str(res2))
 
     # (b) restart = clean subprocess recovery → claim 0·injection 0·alert 1+
-    rec, _ = run_recover(sdir, "karpathy", sdir, "sess-B")
+    rec, _ = run_recover(sdir, "bot-a", sdir, "sess-B")
     NEG_CTRL[0] += 1
     check("①b 재시작 후 claim 0", rec["claimed"] == [], str(rec))
     check("①b 재시작 후 injection 0", rec["injections"] == [])
@@ -119,7 +119,7 @@ def fixture_1_eio_restart():
 
     # (c) ㉮ fence 부모-dir EIO (prepare stage 2) → pre-replace 처분
     sdir2, room2 = fresh_env()
-    path2 = SL.create_ledger(sdir2, "karpathy", "fix1b", "sess-A", sdir2, room2)
+    path2 = SL.create_ledger(sdir2, "bot-a", "fix1b", "sess-A", sdir2, room2)
     before = open(path2, encoding="utf-8").read()
     calls2 = {"n": 0}
 
@@ -134,7 +134,7 @@ def fixture_1_eio_restart():
     SL._fsync_dir = real_fsync_dir
     check("①c fence-prepare 실패 = fail-closed", not res3["ok"])
     check("①c 구 원장 보존(바이트 동일)", open(path2, encoding="utf-8").read() == before)
-    rec2, _ = run_recover(sdir2, "karpathy", sdir2, "sess-C")
+    rec2, _ = run_recover(sdir2, "bot-a", sdir2, "sess-C")
     NEG_CTRL[0] += 1
     check("①c 잔존 fence → 재시작 거부(safe quarantine)",
           rec2["claimed"] == [] and path2 in rec2["rejected"], str(rec2))
@@ -144,7 +144,7 @@ def fixture_1_eio_restart():
 def fixture_2_race():
     print("② check→writer→claim race (동일-락 시퀀스)")
     sdir, room = fresh_env()
-    path = SL.create_ledger(sdir, "karpathy", "fix2", "sess-A", sdir, room)
+    path = SL.create_ledger(sdir, "bot-a", "fix2", "sess-A", sdir, room)
 
     # writer: lock 보유 + fence PREPARE 후 crash(잠금은 프로세스 종료 때 OS 가 해제).
     # recovery 가 락 밖 사전검사로 claim 하면 fence_present_at_claim race 재현.
@@ -166,7 +166,7 @@ def fixture_2_race():
                             stdout=subprocess.PIPE, encoding="utf-8", errors="replace")
     assert proc.stdout.readline().strip() == "FENCED"
     t0 = time.monotonic()
-    rec, _ = run_recover(sdir, "karpathy", sdir, "sess-B")
+    rec, _ = run_recover(sdir, "bot-a", sdir, "sess-B")
     waited = time.monotonic() - t0
     proc.wait()
     NEG_CTRL[0] += 1
@@ -179,7 +179,7 @@ def fixture_2_race():
     # 위 거부가 «recovery 가 원래 아무것도 claim 안 함»이 아님을 증명.
     os.unlink(path + ".fence")
     SL._fsync_dir(sdir)
-    rec2, _ = run_recover(sdir, "karpathy", sdir, "sess-B")
+    rec2, _ = run_recover(sdir, "bot-a", sdir, "sess-B")
     POS_CTRL[0] += 1
     check("② [양성 미끼] fence 해소 후 claim 1", rec2["claimed"] == [path],
           str(rec2))
@@ -191,39 +191,39 @@ def fixture_3_clear_states():
     sdir, room = fresh_env()
 
     # normal: 정상 tx 후 fence 부재 → claim (양성)
-    p_norm = SL.create_ledger(sdir, "karpathy", "norm", "sess-A", sdir, room)
+    p_norm = SL.create_ledger(sdir, "bot-a", "norm", "sess-A", sdir, room)
     res = SL.update_ledger(p_norm, "sess-A", {"last_flush_iso": "t"}, "sess-A")
     check("③ 정상 tx ok + fence clear", res["ok"]
           and not os.path.exists(p_norm + ".fence"), str(res))
-    rec, _ = run_recover(sdir, "karpathy", sdir, "sess-B")
+    rec, _ = run_recover(sdir, "bot-a", sdir, "sess-B")
     POS_CTRL[0] += 1
     check("③ [양성 미끼] normal CLEAR → claim", p_norm in rec["claimed"])
 
     # foreign-target fence: 결박 위반 = 미해제 취급
     sdir2, room2 = fresh_env()
-    p_mis = SL.create_ledger(sdir2, "karpathy", "mis", "sess-A", sdir2, room2)
+    p_mis = SL.create_ledger(sdir2, "bot-a", "mis", "sess-A", sdir2, room2)
     open(p_mis + ".fence", "w", encoding="utf-8").write(json.dumps(
         {"target": "/tmp/other-ledger.yaml", "generation": 1,
          "txid": "x", "ts": "t"}))
-    rec2, _ = run_recover(sdir2, "karpathy", sdir2, "sess-B")
+    rec2, _ = run_recover(sdir2, "bot-a", sdir2, "sess-B")
     NEG_CTRL[0] += 1
     check("③ target 결박 위반 → 거부", p_mis in rec2["rejected"]
           and rec2["claimed"] == [], str(rec2))
 
     # torn fence: truncated json = fail-closed
     sdir3, room3 = fresh_env()
-    p_torn = SL.create_ledger(sdir3, "karpathy", "torn", "sess-A", sdir3, room3)
+    p_torn = SL.create_ledger(sdir3, "bot-a", "torn", "sess-A", sdir3, room3)
     open(p_torn + ".fence", "w", encoding="utf-8").write('{"target": "/tm')
-    rec3, _ = run_recover(sdir3, "karpathy", sdir3, "sess-B")
+    rec3, _ = run_recover(sdir3, "bot-a", sdir3, "sess-B")
     NEG_CTRL[0] += 1
     check("③ torn fence → 거부", p_torn in rec3["rejected"]
           and rec3["claimed"] == [])
 
     # malformed ledger 자체도 fail-closed
     sdir4, _room4 = fresh_env()
-    p_bad = os.path.join(sdir4, "solo-karpathy-bad-sess.yaml")
+    p_bad = os.path.join(sdir4, "solo-bot-a-bad-sess.yaml")
     open(p_bad, "w", encoding="utf-8").write("state: open\ngarbage line without colon key\n")
-    rec4, _ = run_recover(sdir4, "karpathy", sdir4, "sess-B")
+    rec4, _ = run_recover(sdir4, "bot-a", sdir4, "sess-B")
     NEG_CTRL[0] += 1
     check("③ malformed 원장 → 거부+alert", p_bad in rec4["rejected"]
           and len(alerts(sdir4, "recovery_ledger_malformed")) >= 1)
@@ -233,7 +233,7 @@ def fixture_3_clear_states():
 def fixture_4_lock_identity_orphan():
     print("④ lock identity · single-owner claim/takeover · 경로 검증 4종")
     sdir, room = fresh_env()
-    path = SL.create_ledger(sdir, "karpathy", "fix4", "sess-A", sdir, room)
+    path = SL.create_ledger(sdir, "bot-a", "fix4", "sess-A", sdir, room)
     res = SL.update_ledger(path, "sess-A", {"last_flush_iso": "t0"}, "sess-A")
     assert res["ok"], res
     lock_ino_before = os.stat(path + ".lock").st_ino
@@ -272,7 +272,7 @@ def fixture_4_lock_identity_orphan():
 
     # 공백 session recovery = fail-closed (87-doc §D — 빈 claim_session 은
     # «미claim» 표지라 "" 가 claim 하면 원장이 임의 세션에 재개방된다)
-    rec_b, _ = run_recover(sdir, "karpathy", sdir, "   ")
+    rec_b, _ = run_recover(sdir, "bot-a", sdir, "   ")
     NEG_CTRL[0] += 1
     check("④ 공백 session recovery → claim 0·주입 0 + alert(87-doc §D)",
           rec_b["claimed"] == [] and rec_b["injections"] == []
@@ -280,7 +280,7 @@ def fixture_4_lock_identity_orphan():
 
     # 미claim(claim_session 빈칸) open 원장 → 최초 recovery 가 claim
     # (위 공백-거부와 같은 원장 상태 = 거부가 상태를 안 바꿨다는 양성 대조)
-    rec, _ = run_recover(sdir, "karpathy", sdir, "sess-NEW")
+    rec, _ = run_recover(sdir, "bot-a", sdir, "sess-NEW")
     POS_CTRL[0] += 1
     check("④ [양성 미끼] 미claim open 원장 최초 claim", rec["claimed"] == [path],
           str(rec))
@@ -289,7 +289,7 @@ def fixture_4_lock_identity_orphan():
 
     # single-owner (85-doc §D): 기claim open 원장에 두 번째 세션 recovery
     # = foreign 보고·claim 0·injection 0 — «총 claim = 1» 계약
-    rec_f, _ = run_recover(sdir, "karpathy", sdir, "sess-X2")
+    rec_f, _ = run_recover(sdir, "bot-a", sdir, "sess-X2")
     NEG_CTRL[0] += 1
     check("④ 기claim open 원장 → foreign·claim 0·injection 0(총 claim=1)",
           rec_f["claimed"] == [] and rec_f["injections"] == []
@@ -301,7 +301,7 @@ def fixture_4_lock_identity_orphan():
     NEG_CTRL[0] += 1
     check("④ 타 bot → claim 0", rec3["claimed"] == [])
     other_wd = tempfile.mkdtemp(prefix="otherwd-")
-    rec4, _ = run_recover(sdir, "karpathy", other_wd, "sess-X")
+    rec4, _ = run_recover(sdir, "bot-a", other_wd, "sess-X")
     NEG_CTRL[0] += 1
     check("④ 타 wd → claim 0", rec4["claimed"] == [])
     shutil.rmtree(other_wd)
@@ -340,7 +340,7 @@ def fixture_4_lock_identity_orphan():
 
     # closed → claim 0
     SL.update_ledger(path, "sess-TK", {"state": "closed"}, "sess-TK")
-    rec2, _ = run_recover(sdir, "karpathy", sdir, "sess-X")
+    rec2, _ = run_recover(sdir, "bot-a", sdir, "sess-X")
     NEG_CTRL[0] += 1
     check("④ state=closed → claim 0", rec2["claimed"] == [])
 
@@ -349,8 +349,8 @@ def fixture_4_lock_identity_orphan():
     outside = tempfile.mkdtemp(prefix="outside-room-")
     for base in ("01-spec.md", "02-progress.md", "03-outcome.md"):
         open(os.path.join(outside, base), "w", encoding="utf-8").write("x\n")
-    p5 = SL.create_ledger(sdir5, "karpathy", "out", "sess-A", sdir5, outside)
-    rec5, _ = run_recover(sdir5, "karpathy", sdir5, "sess-B")
+    p5 = SL.create_ledger(sdir5, "bot-a", "out", "sess-A", sdir5, outside)
+    rec5, _ = run_recover(sdir5, "bot-a", sdir5, "sess-B")
     NEG_CTRL[0] += 1
     check("④ 허용 root 밖(arbitrary-vault 음성) → injection 0",
           rec5["claimed"] == [p5] and rec5["injections"] == [], str(rec5))
@@ -361,11 +361,11 @@ def fixture_4_lock_identity_orphan():
     room_b = os.path.join(os.path.dirname(room6), "room-b")
     os.makedirs(room_b)
     open(os.path.join(room_b, "01-spec.md"), "w", encoding="utf-8").write("x\n")
-    p6 = SL.create_ledger(sdir6, "karpathy", "mix", "sess-A", sdir6, room6)
+    p6 = SL.create_ledger(sdir6, "bot-a", "mix", "sess-A", sdir6, room6)
     fields6 = SL.parse_fields(open(p6, encoding="utf-8").read())
     fields6["spec_path"] = os.path.join(room_b, "01-spec.md")
     open(p6, "w", encoding="utf-8").write(SL.dump_fields(fields6))
-    rec6, _ = run_recover(sdir6, "karpathy", sdir6, "sess-B")
+    rec6, _ = run_recover(sdir6, "bot-a", sdir6, "sess-B")
     NEG_CTRL[0] += 1
     check("④ ⓓ room 혼합 → 원장 전체 injection 스킵 + alert",
           rec6["injections"] == []
@@ -374,15 +374,15 @@ def fixture_4_lock_identity_orphan():
 
     # 양성 대조: 정상 room = injection 4경로 (room+3파일)
     sdir7, room7 = fresh_env()
-    p7 = SL.create_ledger(sdir7, "karpathy", "ok", "sess-A", sdir7, room7)
-    rec7, _ = run_recover(sdir7, "karpathy", sdir7, "sess-B")
+    p7 = SL.create_ledger(sdir7, "bot-a", "ok", "sess-A", sdir7, room7)
+    rec7, _ = run_recover(sdir7, "bot-a", sdir7, "sess-B")
     POS_CTRL[0] += 1
     check("④ [양성 미끼] 정상 원장 injection 4경로",
           rec7["claimed"] == [p7] and len(rec7["injections"]) == 4, str(rec7))
 
     # O_EXCL: 같은 좌표 재생성 = 거부
     try:
-        SL.create_ledger(sdir7, "karpathy", "ok", "sess-A", sdir7, room7)
+        SL.create_ledger(sdir7, "bot-a", "ok", "sess-A", sdir7, room7)
         check("④ O_EXCL 중복 생성 거부", False, "no exception")
     except FileExistsError:
         NEG_CTRL[0] += 1

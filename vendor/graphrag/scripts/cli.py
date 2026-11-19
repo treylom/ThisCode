@@ -50,7 +50,7 @@ def _get_vault(config: dict, override: str | None = None) -> str:
         return (
             vault_config.get("mac_path")
             or vault_config.get("path")
-            or "<vault>/AI_Second_Brain"
+            or "<vault>"
         )
     elif sys.platform.startswith("linux"):
         # WSL 또는 native Linux
@@ -62,7 +62,7 @@ def _get_vault(config: dict, override: str | None = None) -> str:
     else:
         return (
             vault_config.get("path")
-            or "<vault>/AI_Second_Brain"
+            or "<vault>"
         )
 
 

@@ -1801,9 +1801,9 @@ operation = client.models.generate_videos(
 
 | 자료 | 위치 | 내용 |
 |------|------|------|
-| Threads 크롤링 결과 | `AI_Second_Brain/Threads/` | @choi.openai 게시물 기반 전략 |
-| GPT-5.2 프롬프트 전략 | `AI_Second_Brain/Threads/GPT-5.2-프롬프트-전략.md` | 상세 프롬프트 패턴 |
-| Claude 4.5 프롬프트 전략 | `AI_Second_Brain/Threads/Claude-4.5-프롬프트-전략.md` | Claude 전용 최적화 |
+| Threads 크롤링 결과 | `<vault>/Threads/` | @choi.openai 게시물 기반 전략 |
+| GPT-5.2 프롬프트 전략 | `<vault>/Threads/GPT-5.2-프롬프트-전략.md` | 상세 프롬프트 패턴 |
+| Claude 4.5 프롬프트 전략 | `<vault>/Threads/Claude-4.5-프롬프트-전략.md` | Claude 전용 최적화 |
 
 ---
 
@@ -2552,7 +2552,7 @@ client.messages.create(
 )
 ```
 
-> 출처: Anthropic Models overview + whats-new-sonnet-5 (2026-07-01 확인) · Claude Code 2.1.197 changelog · 우리 CLI 실측(코난·손석희 R0, `AI_Second_Brain/meetings/2026-07-01-sonnet5-adoption/`).
+> 출처: Anthropic Models overview + whats-new-sonnet-5 (2026-07-01 확인) · Claude Code 2.1.197 changelog · 우리 CLI 실측(researcher·fact-checker R0, `<vault>/meetings/2026-07-01-sonnet5-adoption/`).
 
 #### Part 0.5: 회귀 체크포인트 (Opus 4.6/Sonnet 4.5 → 4.7/4.6 마이그레이션 시)
 

@@ -30,7 +30,7 @@ Empirically confirmed (2026-05 with agy 1.0):
 
 Workaround: `bridge._dispatch` builds `full_prompt = persona + "\n\n---\n\n" + user_content`. Persona stays small (35 lines max recommended) to keep token overhead reasonable.
 
-Reference incident: "Phase 3 Hassabis bridge" decision log — `agy --print --add-dir <vault>` hung for 5+ test runs trying to auto-load GEMINI.md. Stripping the auto-load assumption + manual prepend fixed it.
+Reference incident: "Phase 3 agy bridge" decision log — `agy --print --add-dir <vault>` hung for 5+ test runs trying to auto-load GEMINI.md. Stripping the auto-load assumption + manual prepend fixed it.
 
 ## Attachment sandbox
 
@@ -47,7 +47,7 @@ In gateway mode, `AgyDiscordBot._worker` ALSO acquires a per-channel `asyncio.Lo
 
 ## Visual feedback (tmux send-keys → agy TUI window)
 
-Layout: single tmux session `$BOT_NAME` with 2 windows — `agy` (agy CLI TUI, default focus) and `daemon` (bridge.py log). User attaches once (`tmux attach -t $BOT_NAME`) and switches windows with `C-b 0/1`. Mirrors the sshee/codex bridge pattern (single session, codex TUI window + bot.py daemon window).
+Layout: single tmux session `$BOT_NAME` with 2 windows — `agy` (agy CLI TUI, default focus) and `daemon` (bridge.py log). User attaches once (`tmux attach -t $BOT_NAME`) and switches windows with `C-b 0/1`. Mirrors the codex-bot/codex bridge pattern (single session, codex TUI window + bot.py daemon window).
 
 The `agy` window runs `agy --sandbox` (or `--dangerously-skip-permissions` if `AGY_UNSAFE=1`) interactively, not driven by the bridge — purely decorative. `bridge._tmux_inject()` sends `C-u` (clear line) then `-l <text>` (literal, no Enter) to the agy window pane so the user sees the Discord message appear at the prompt without agy actually processing it (the real processing is the Y-3 subprocess running in the daemon window).
 

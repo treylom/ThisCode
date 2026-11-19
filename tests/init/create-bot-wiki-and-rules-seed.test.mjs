@@ -27,7 +27,7 @@ test('B4: the wiki path question is a first-class step, asked before WD/CLAUDE.m
   assert.match(text, /선택 사항/, 'the question must state it is optional');
 });
 
-// Fix E (2026-08-10, 루돌프 다봇 개발머신 실측): a "first-class question" that
+// Fix E (2026-08-10, test-bot 다봇 개발머신 실측): a "first-class question" that
 // silently inherits a value without ever presenting it as a real choice is not a
 // question at all — it is an assumption wearing the question's name. On a
 // multi-bot dev machine, the interviewing agent found an existing bot's
@@ -149,7 +149,7 @@ test('B4 (shell-safety parity): the printed launch export lines re-quote WIKI_PA
   );
 });
 
-// Follow-up order (255941b 보완, ③): 글재경's review found that the quoted-heredoc
+// Follow-up order (255941b 보완, ③): reviewer's review found that the quoted-heredoc
 // capture above has its own hole — if the free-text answer contains a line that
 // exactly equals the heredoc delimiter (THISCODE_WIKI_PATH_EOF), the heredoc
 // terminates early right there and the captured value is silently truncated
@@ -163,7 +163,7 @@ test('B4 (shell-safety parity): the printed launch export lines re-quote WIKI_PA
 // (grep -qxF: whole-line match, not substring) actually neutralizes it with
 // zero side effects, and (c) a benign answer is unaffected.
 test('B4-③: reproduces the heredoc delimiter-collision defect when no guard is applied (proves the capture boundary breaks)', () => {
-  // 2026-08-10 CI hotfix (카파시 root-cause, 루돌프 CI RED 실측): the original
+  // 2026-08-10 CI hotfix (orchestrator root-cause, ci-bot CI RED measurement): the original
   // repro asserted a `touch` side effect from the text left over after the
   // early heredoc close. That side effect is bash-VERSION-dependent —
   // confirmed empirically: local bash 3.2 (macOS default) runs it, CI bash
@@ -188,7 +188,7 @@ test('B4-③: reproduces the heredoc delimiter-collision defect when no guard is
   assert.equal(result.stdout, '/tmp/evil', 'the capture stops exactly at the embedded delimiter line, losing the rest of the answer');
 });
 
-// 🟡A (2026-08-10, 글재경 실증): the guard test below used to run a guard-check-ONLY
+// 🟡A (2026-08-10, reviewer demonstration): the guard test below used to run a guard-check-ONLY
 // script that never attempted to build the heredoc from the colliding answer at all —
 // "no side effect" (existsSync(marker) === false) was true even with the grep condition
 // completely broken, because nothing downstream would have used `collidingAnswer` either

@@ -47,7 +47,7 @@ else
 fi
 
 # vault path (env override > stdin cwd > default)
-VAULT="${CLAUDE_DISCODE_VAULT:-${VAULT:-${cwd:-${HOME}/obsidian-ai-vault}}}"
+VAULT="${CLAUDE_DISCODE_VAULT:-${VAULT:-${cwd:-${HOME}/vault}}}"
 PLAN_DIR="${VAULT}/docs/superpowers/plans"
 
 if [[ ! -d "$PLAN_DIR" ]]; then
