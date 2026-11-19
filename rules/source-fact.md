@@ -113,27 +113,30 @@ consuming its output:
    Count-based passes ("N or more = ok") are out — use a named expectation set
    plus canonical comparison.
 2. **Signal placement**: never mix warnings or incomplete-work signals into the
-   body of a success message — separate line, separate label, or promote to
-   exit status. **"Quantity 0" must not print as a pass** (`injected 0`,
-   `matched 0` = a failure wearing a success sentence), and a plausible-looking
-   substitute value is a warning too (a likely number ≠ a measured number).
-   Three shapes of "failure printed as success": warnings inline, zero/no
-   wearing a value's face, exit-code vs body divergence (a wrapper's exit code
-   must feed the failure tally).
+   body of a success message — put them on a separate line with a separate
+   label, or reflect them in a non-zero exit status. **"Quantity 0" must not
+   print as a pass** (`injected 0` or `matched 0` is a failure disguised as a
+   success message), and a plausible-looking substitute value is a warning too
+   (a likely number ≠ a measured number). Watch for three forms of "failure
+   printed as success": warnings inline inside a pass line, zero or empty
+   results formatted like valid counts, and exit-code vs. message-body
+   divergence (a wrapper script's non-zero exit code must count toward the
+   failure tally).
 3. **Transcription audit**: any number copied between tables gets a column-sum
    check against its origin — transcription is unchecked replication
    (double-count incidents occur on both the submitting and the aggregating
    side). When a transcript is the measuring stick, design out
    **self-reference contamination** (the act of measuring appearing inside the
    thing being measured).
-4. Checker survival = built-in positive *and* negative controls, and **the kind
-   of decoy determines the kind of defect you can detect** — decoys that only
-   vary identifiers will not catch phrasing-level blind spots (in one live day,
-   five checker deaths — four caught by positive controls, one by "the number
-   looked like an answer" suspicion of an empty-pattern OR matching every
-   line. Positive controls are necessary, not sufficient).
+4. **Checker survival requires built-in positive *and* negative controls**, and
+   **the kind of decoy determines the kind of defect you can detect** — decoys
+   that only vary identifiers will not catch phrasing-level blind spots. (In one
+   day of live use, five broken checkers were found: four were caught by
+   positive controls; the fifth, an empty-pattern `OR` that matched every line,
+   was caught by the suspicion that its count looked like an answer. Positive
+   controls are necessary, but not sufficient.)
 
-- **Reading a lookup script's exit code (2026-11-14).** When a lookup script reports per-axis results, exit code 0 means it judged from the places it looked ("exists", or "absence evidence secured"). A code that means *could not look* (a tool died or returned the wrong shape — for example 3) means "not seen": do not say the term doesn't exist. Read the "looked / not looked / out of scope" lines under the verdict; if anything is "not looked", re-run that axis or report "not seen". Known gaps: a listing tool that exits 0 with a truncated list, and a CLI that exits 0 with empty output.
+- **Reading a lookup script's exit code (2026-11-14).** When a lookup script reports per-axis results, exit code 0 means it judged from the places it looked ("exists", or "absent, with evidence"). A code that means *could not look* (a tool died or returned the wrong shape — for example 3) means "not seen": do not say the term doesn't exist. Read the "looked / not looked / out of scope" lines under the verdict; if anything is "not looked", re-run that axis or report "not seen". Known gaps: a listing tool that exits 0 with a truncated list, and a CLI that exits 0 with empty output.
 
 ## 9. Live counts run as positive–negative pairs — decoy inside the very command (2026-08-08)
 

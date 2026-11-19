@@ -379,15 +379,15 @@ idle" while the meeting was active in thread replies.
 
 - **Answering a liveness check (operator decision, 2026-11-02)**: a participant answers with one `alive` line in the progress file — no bot mention needed. The watchdog and the bot-level ruler read exactly that row.
 
-The ledger's (02-progress) **mtime answers "is this meeting alive"**
-(file-level — cheap and sufficient for that question). **"Has this bot acted"
+The progress ledger file's (`02-progress`) **mtime answers "is this meeting
+alive?"** (a file-level check — cheap and sufficient for that question). **"Has this bot acted"
 (bot-level) = the timestamp of that bot's own last row**
 (`grep "] <bot> |" <ledger> | tail -1`). Using shared-file mtime for
 bot-level liveness produces false positives — any other bot's append
 refreshes it (live incident: two idle bots judged "just active"). Print "the
-question this check answers" next to the check (see source-fact checker
-discipline): the ruler was not wrong, it stood in the wrong spot with no
-question attached. Case-based (2026-08-05); re-judge per situation; the
+question this check answers" next to the check output (see `source-fact.md` §8,
+checker discipline): in that incident the ruler itself was not broken — it was
+applied to the wrong question because no question was attached to it. Case-based (2026-08-05); re-judge per situation; the
 maintainer's call wins.
 
 ## Meeting end conditions — every agenda item ends in one of three shapes (operator directive, 2026-11-07)
@@ -397,6 +397,6 @@ Background: agenda items kept rolling over to the next meeting without a disposi
 1. **Each agenda item ends in one of three shapes**: "decision + owner + deadline" / "dropped + reason" / "a one-line question for the maintainer". Anything else ("let's revisit", "keep watching") is not an end.
 2. **An item carried over twice is not carried over again**: drop it on the spot or ask the maintainer once — no third carry-over.
 3. **No new agenda items during a meeting**: send them to the agenda backlog for the next meeting.
-4. **When the meeting ends**: when every item has one of the three shapes, or when the time limit written in the meeting call is reached — then the remaining items go through rule 2 and the meeting ends.
+4. **When the meeting ends**: as soon as every item has one of the three shapes. If the time limit written in the meeting call comes first, the remaining items go through rule 2 and then the meeting ends.
 
 - The chair closes with one line at the end of the agenda thread — "N items → a decided · b dropped · c questions" — and reports the same numbers to the maintainer.
