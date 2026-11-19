@@ -96,4 +96,17 @@ Before reporting a UI/feature implementation "done" (or cutting over), three axe
 
 ## Detectors ≠ gates — ask the action question separately
 
-A detector asks "is this value wrong?"; a gate asks "may this action happen?". They fail on different layers: an instruction can pass every value check and still be wrong at the action layer (stale premise, missing authority, non-exportable secret). Before risky actions (credentials, exports, destructive ops, outbound orders) ask the gate question once, **independently of value truth**. When a defense works as a **by-product** (built for another purpose), record that it was not designed for this — by-product defenses fail together at the next variant. Case-based (2026-07-25, fixed-sample observation: value detectors did not catch the errors that an action-layer refusal gate later stopped; the ratio is not established — one mechanical detection success exists on a separate axis); re-judge per situation; the maintainer's call wins.
+A detector asks "is this value wrong?"; a gate asks "may this action happen?". They fail on different layers: an instruction can pass every value check and still be wrong at the action layer (stale premise, missing authority, non-exportable secret). Before risky actions (credentials, exports, destructive ops, outbound orders) ask the gate question once, **independently of value truth**. When a defense works as a **by-product** (built for another purpose), record that it was not designed for this — by-product defenses fail together at the next variant. Case-based (2026-07-25, fixed-sample observation): value detectors missed the errors that an action-layer refusal gate later stopped (the exact ratio is not established, and one mechanical detector did succeed on a separate axis). Re-judge per situation; the maintainer's call wins.
+
+## Documentation vs. existing code (operator directive, 2026-10-25)
+
+"When a repository's documentation and its existing code disagree, follow the conventions used in the existing code, and in your final reply point out each inconsistency you found between the documentation and the code."
+
+## Anything published gets one whole-text polish before it goes out (operator directive, 2026-11-19)
+
+- Scope: everything shown outside — HTML, decks, card images, documents, PDFs, video subtitles, text inside images. Internal material that only the maintainer reads is out of scope.
+- When and who: once before every hand-off or publication, by two reviewers — a writing reviewer and a design-side reviewer.
+- What: the *whole* text, not only the changed sentences. A copy review that looks at changed lines is a different job; however many of those passed, zero whole-text polish passes means it does not go out. A deck's multi-axis review does not replace it either.
+- Ask the design-side reviewer for the polish separately from their screen review (one request each). The polish request lists every piece of visible text; answers come back as "No. | Original | Revised". Where the two reviewers' versions overlap, the writing reviewer's version wins.
+- Order: polish first, then the screen review and the rendered line-break check. If the polish comes later, redo the line-break check and the screen review for what changed.
+- Incident: the public version of a web page reached the maintainer after three copy reviews and a screen review, but no whole-text polish; the maintainer caught it.

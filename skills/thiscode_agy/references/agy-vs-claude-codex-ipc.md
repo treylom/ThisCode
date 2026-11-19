@@ -52,7 +52,7 @@ Discord → bot.py (on_message) → ws://127.0.0.1:4222 → codex daemon
 
 ### Failure modes seen
 
-- Port collision: a lingering `codex app-server` on `:4222` blocks restart. Fix: `lsof -ti tcp:4222 | xargs kill`.
+- Port collision: a lingering `codex app-server` on `:4222` blocks restart. Fix: list the listener first with `lsof -nP -iTCP:4222 -sTCP:LISTEN`, check that its PID and command line are the stale `codex app-server`, then stop that one PID by number (one confirmed PID at a time — see `rules/orchestration.md`; never pipe the search result straight into a kill).
 - Suicide-guard / wrapper conflicts: if you wrap `launch.sh` in your shell to manage tmux sessions, do not also have `launch.sh` re-create the session (see §5).
 - WebSocket disconnect: bot.py needs reconnect logic. bot-a uses a `while true; do ./launch.sh; sleep 5; done` watchdog in the `infra` tmux window.
 

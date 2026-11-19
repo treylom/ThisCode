@@ -8,10 +8,10 @@ reached partial / blocked / awaiting-permission state.
   the result**.
 - Pre-response self-check: (1) framing clear (2) enough info (3) reversible
   (4) needs agreement?
-- Confirm is justified only for: **destructive·irreversible** + **the user's
-  authority domain** (live-service restart timing / public-repo change / bot
-  capability expansion) + **insufficient info** — those three only. Otherwise
-  proceed, then report.
+- Asking for confirmation is justified in only three cases: (1) **destructive
+  or irreversible actions**, (2) **the user's authority domain** (live-service
+  restart timing, public-repo changes, or bot capability expansion), or (3)
+  **insufficient information**. Otherwise proceed, then report.
 - Third-party-facing actions need explicit approval (2026-09-05): a PR, issue,
   or comment on someone else's repository, a post on an external service, a
   mention of an outside person — anything that leaves the user's own assets,
@@ -23,6 +23,16 @@ reached partial / blocked / awaiting-permission state.
 - When a standing "proceed" instruction is active, explicit user "proceed"
   outranks skill approval-gates (instruction priority): design inline, then
   implement + report.
+
+### §1 addition (operator directive, 2026-11-19) — reversible internal work goes ahead without an approval request
+
+- Work that touches none of the approval exceptions (destructive or irreversible, public exposure, restarting a live agent, capability expansion) does not wait for an approval request: copy the original file to a backup first, write the one-line undo command next to it, then do the work and report the result in that task's thread. If you will undo through version control alone, first check that nobody else has uncommitted edits in that file.
+- Turning a watch or a scheduled job on your own machine on or off is reversible internal work too (backup + one-line undo; when you turn one off, move its file to a backup folder instead of deleting it). What the job does still counts: a job that types into a running agent's screen, restarts an agent, deletes, or publishes to a public repository — and a watch that clears a conversation on its own — needs the same approval as that action. Always-running services (bridges, relays, the agents themselves) are not watches or scheduled jobs.
+- **Checks: tightening is free, loosening needs approval.** Adding a block, making something always ask, turning a warning into a block, or registering an extra hook that only blocks or warns = go ahead. Adding an exemption, removing a block or a confirmation, widening an allow-list, or reverting a tightened check = capability expansion, so it needs approval. A change that mixes both needs approval. A hook that approves without asking or rewrites the input is not a tightening. Removing a hook line from the settings, or swapping it for a different hook, needs approval, unless the swap replaces a warning hook with a blocking hook in the same place. Removing a rule file from what gets read also needs approval. Changes to the approval machinery itself (the gate's decision path and the approval records) always need approval, even when they tighten. So do changing how messages and notifications reach the maintainer, and starting to send conversation or memory content to a model or service outside your machine (scheduled jobs, always-on services and hooks alike — passing it through a relay on your own machine does not make it internal). Why the asymmetry: a wrong tightening shows up at once as "blocked more" and the backup undoes it; a wrong loosening passes silently and becomes the route by which actions that need approval slip through.
+- Undoing your own approval-free change from its backup needs no approval, even when that reverts a tightened check — this line wins over "reverting a tightened check" above. Undoing work that was done under an approval is not covered by this line.
+- **A command gate letting something through ≠ no approval needed.** A gate cannot read inside the scripts a command runs; the agent about to run it reads the script and decides whether it touches an exception. When unsure, ask.
+- When you delegate such reversible internal work to a child session, scope the brief to "no live writes · prepare materials and tests only", then verify the result and apply the live change yourself — do not treat the child's output as material for an approval request.
+- Incident: one day of approval requests (38) was replayed through the command gate; the gate would block only 2 of them (a public push and a forced terminal-pane restart). Many of the other 36 had been raised out of habit and over-reading of the rules — yet the 36 that passed also included actions that did need approval (restarting a bot, creating a Slack app), which the gate could not see inside. Both halves of that result are why this section exists.
 
 ## 2. Completion gate
 - On finishing a directed deliverable (proposal / delivery / milestone /
@@ -135,7 +145,7 @@ reached partial / blocked / awaiting-permission state.
 
 ## 2.13 No self-invented time gates (operator directive, 2026-09-11)
 
-A bot never creates its own time condition — "within N minutes", "by HH:MM", "if no reply by …, fall back". Time conditions are only the ones the operator gave (quote the source next to it). Waiting is event-based: the reply, the file, the receipt. A warn-level send gate (where installed) flags these patterns in outbound messages; an operator-given time is exempt when the attribution sits in the same sentence. Scope = every bot, including bots on remote machines.
+A bot never creates its own time condition — "within N minutes", "by HH:MM", "if no reply by …, fall back". Time conditions are only the ones the operator gave (quote the source next to it). Waiting is event-based: the reply, the file, the receipt. A date or time that is itself the commitment (an announcement, a meeting start, or a deadline check) is not a self-invented gate — record it as a dated check in the task ledger's release condition (see 2.15). A warn-level send gate (where installed) flags these patterns in outbound messages; an operator-given time is exempt when the attribution sits in the same sentence. Scope = every bot, including bots on remote machines.
 
 ## 2.13-a Confirm ownership and record waits per directive (operator directive, 2026-09-15)
 
@@ -146,10 +156,19 @@ Treat an open directive as your responsibility when its owner matches one of you
 "Do A. B is true, right?" — B is the premise of A. Measure and answer B **first**; if B is false, stop A and reply with a one-line question. Irreversible A (delete, push, send) is not executed while B is unverified. Write the measured value of B as the first line of the reply. Incident: session logs were deleted before confirming that the memory-bank (codex) ingest had actually run; it had not.
 
 ## 2.15 Leave open work self-advancing before ending a turn (operator directive, 2026-10-08)
-- When a turn or conversation ends with work still open, do not end on "waiting". Before stopping, attach a mechanism that lets each open lane continue on its own: (1) an event watch (file/queue change), (2) a one-shot scheduled wake-up (persistent schedulers need approval), (3) a one-line order to the owning agent — "report to <coordinate> on completion", or (4) a ledger release condition with a named re-submitter. An open lane with none of these is an unjustified deferral (see 2.10 and 2.13).
+- When a turn or conversation ends with work still open, do not end on "waiting". Before stopping, attach a mechanism that lets each open lane continue on its own: (1) an event watch (file/queue change), (2) a one-shot scheduled wake-up (a persistent scheduler job on your own machine needs approval only when the job itself does something that needs approval — see §1), (3) a one-line order to the owning agent — "report to <coordinate> on completion", or (4) a ledger release condition with a named re-submitter. An in-session wake-up waits only inside the same session and is lost when the session restarts, so a commitment at a real date and time goes into (4), with the date and time written in the release condition — or into a one-shot persistent scheduler job if it must fire at an exact minute. An open lane with none of these is an unjustified deferral (see 2.10, 2.13 and 2.16).
 - Only items that need the operator's explicit approval are exempt (the approval exceptions: destructive/irreversible, public exposure, capability expansion, restarting a live agent). Even those are prepared first (design, isolated test, sealed artifact) and parked as one line: "awaiting approval — what — why".
 - In the end-of-turn verdict line, name the mechanism per lane: `device: <which of 1–4 · coordinate>`. "Waiting for an event" without a device is a deferral.
 - Scope: every agent. Spawned workers are excluded — the main agent attaches the device.
+
+## 2.16 Defer only for one of three reasons — a resource reason carries its numbers (operator directives, 2026-09-24 · 2026-11-13)
+
+- **Do what can be done now.** The moment you write "tomorrow", "later" or "next turn", ask what will *arrive* at that time. If nothing arrives, do it now. Do not hold items back to batch them (a one-item report is fine).
+- **Only three reasons allow a deferral, and the message names which one**: ① an event that only happens later — an outside reply, the operator's answer, a pre-registered measurement window, a job's liveness check; ② a resource threshold, with the measured value; ③ a pending approval (irreversible actions, capability expansion). Any other deferral is a violation.
+- **A resource-threshold reason puts the numbers and the clean-up attempt on the same line**: what is short and by how much (the measured value and when you measured it), and what you tried to free (what you closed or stopped, and how much came back). A "resource limit" with no number and no clean-up attempt is not a reason — free what you can first, and defer only if it is still short. Whatever you may not touch (frozen, or outside your approval scope) you leave alone and record as "not freed + why". Do not estimate, and do not copy someone else's number without measuring it yourself. A resource threshold here means a machine resource you can free (memory, load, disk).
+- **Notation**: where you defer, write one line `Deferred because: <① / ② / ③> + <release event>`; if the item lives in a ledger, put the same event in its release condition. A release condition that is only a time ("tomorrow morning") is not a reason — a time is not an event (same root as 2.13).
+- **When another agent sets an order ("after X")**, check once that X is a real dependency (a resource, a file, an input). If it is not, drop the ordering.
+- Enforcement option: a Stop hook that blocks the final reply when it contains deferral wording but neither a `Deferred because:` line nor an end-of-turn verdict.
 
 ## 3. No busywork
 - If all remaining work is blocked on a user decision, don't invent fake
