@@ -40,7 +40,7 @@ detect_env() {
   # vault autodiscover
   vault_path="${CLAUDE_DISCODE_VAULT:-}"
   if [ -z "$vault_path" ]; then
-    for candidate in "$HOME/Documents/Obsidian" "$HOME/Documents/Second_Brain" "$HOME/obsidian-ai-vault"; do
+    for candidate in "$HOME/Documents/Obsidian" "$HOME/Documents/Second_Brain" "$HOME/vault"; do
       [ -d "$candidate" ] && vault_path="$candidate" && break
     done
   fi

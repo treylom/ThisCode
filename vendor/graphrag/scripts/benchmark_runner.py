@@ -31,20 +31,20 @@ QUERIES: list[dict[str, Any]] = [
      "gold_notes": ["얼룩소-아카이브-MOC"]},
     {"id": "Q04", "level": "L0", "query": "Claude Code 스킬",
      "gold_notes": ["Claude-Code-Skills-2.0-MOC"]},
-    {"id": "Q05", "level": "L0", "query": "김재경",
-     "gold_notes": ["김재경-aboutme-MOC", "tofukyung-persona-MOC"]},
+    {"id": "Q05", "level": "L0", "query": "operator profile",
+     "gold_notes": ["operator-aboutme-MOC", "operator-persona-MOC"]},
 
     # L1 — Relationship Exploration (5)
     {"id": "Q06", "level": "L1", "query": "얼룩소에서 AI에 대해 쓴 글",
      "gold_notes": ["AI-기술-MOC", "얼룩소-아카이브-MOC"]},
     {"id": "Q07", "level": "L1", "query": "에이전트 팀 구성하는 방법",
-     # 2026-06-16 (코난, 재경님 (b) 승인): + 실전 사용사례 노트(agent-teams 태그). ⚠️ 가장 borderline — query는 '구성법', 노트는 'use-case'. 재경님/팀 재판단 여지. 원 gold 보존.
+     # 2026-06-16 (researcher, operator (b) approval): + 실전 사용사례 노트(agent-teams 태그). ⚠️ 가장 borderline — query는 '구성법', 노트는 'use-case'. operator/team re-judgement room. 원 gold 보존.
      "gold_notes": ["Agent-Teams-실전사례-시리즈", "Knowledge-Manager-Agent-Teams-Guide-2026-02", "AI-에이전트-팀-실전-사용사례-4선-2026-03-03"]},
     {"id": "Q08", "level": "L1", "query": "성우하이텍 마스터 강의 내용",
-     # 2026-06-16 (코난, 재경님 (b)): + 성우하이텍 마스터과정 MOC(질의와 토픽 정확 일치, 실 강의노트 hub). 원 gold(AI강의-MOC) 보존. 실독 검증 GREEN.
+     # 2026-06-16 (researcher, operator (b)): + 성우하이텍 마스터과정 MOC(질의와 토픽 정확 일치, 실 강의노트 hub). 원 gold(AI강의-MOC) 보존. 실독 검증 GREEN.
      "gold_notes": ["성우하이텍-AI강의-MOC", "성우하이텍-마스터과정-MOC"]},
     {"id": "Q09", "level": "L1", "query": "Anthropic AI Safety 관련 연구",
-     # 2026-06-16 (코난, 재경님 (b)): "AI-Safety" = vault 부재(stale) 제거 + Claude-Mythos-RSP-안전평가(Anthropic 안전연구 실물, tags AI-Safety/RSP/Anthropic, source anthropic.com) 추가. Pentagon(tangential) 보존.
+     # 2026-06-16 (researcher, operator (b)): "AI-Safety" = vault 부재(stale) 제거 + Claude-Mythos-RSP-안전평가(Anthropic 안전연구 실물, tags AI-Safety/RSP/Anthropic, source anthropic.com) 추가. Pentagon(tangential) 보존.
      "gold_notes": ["Anthropic-Pentagon-AI-군사화-대치-2026-02-MOC", "Claude-Mythos-RSP-안전평가"]},
     {"id": "Q10", "level": "L1", "query": "Obsidian 자동화 워크플로우",
      "gold_notes": ["Obsidian-GraphRAG-Journey-MOC"]},
@@ -75,7 +75,7 @@ QUERIES: list[dict[str, Any]] = [
     {"id": "Q20", "level": "L1", "query": "RAG와 GraphRAG의 차이",
      "gold_notes": ["GraphRAG-Theory-MOC", "Journey-05-GraphRAG-Theory-Foundation"]},
     {"id": "Q21", "level": "L1", "query": "reranker 재정렬 원리",
-     # 2026-06-16 (코난, 재경님 (b)): + Reranker-검색-재정렬-기법(질의의 캐노니컬 정답 — 제목 "Reranker, 검색결과 정밀 재평가", 본문 "1차 후보군 재점수·재배열"). 원 gold(Journey dev로그) 보존.
+     # 2026-06-16 (researcher, operator (b)): + Reranker-검색-재정렬-기법(질의의 캐노니컬 정답 — 제목 "Reranker, 검색결과 정밀 재평가", 본문 "1차 후보군 재점수·재배열"). 원 gold(Journey dev로그) 보존.
      "gold_notes": ["Journey-13-Search-v2-4Channel-Server", "Journey-16-Autoresearch-v4-CE-Mastery", "Reranker-검색-재정렬-기법"]},
     {"id": "Q22", "level": "L1", "query": "벡터 임베딩 의미 검색",
      "gold_notes": ["Journey-12-Hybrid-Search-Upgrade", "Journey-13-Search-v2-4Channel-Server"]},

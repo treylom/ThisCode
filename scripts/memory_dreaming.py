@@ -338,10 +338,10 @@ def classify(path, fm, body, tier, struck, listed, starred, all_titles):
 # ---------------------------------------------------------------------------
 def default_tiers() -> list[dict]:
     vault_root = os.environ.get(
-        "VAULT_ROOT", os.path.join(HOME, "obsidian-ai-vault"))
+        "VAULT_ROOT", os.path.join(HOME, "vault"))
     sb = os.environ.get(
         "MEMORY_SHARED_ROOT",
-        os.path.join(vault_root, "AI_Second_Brain", ".claude-memory"))
+        os.path.join(vault_root, ".claude-memory"))
     proj = os.path.join(HOME, ".claude", "projects")
     tiers = []
     shared = os.path.join(sb, "shared")

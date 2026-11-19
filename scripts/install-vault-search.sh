@@ -10,7 +10,7 @@ set -e
 # repo root = this script's parent dir (works for ~/.claude/plugins/thiscode, ~/code/thiscode, anywhere)
 SCRIPT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-VAULT_DEFAULT="${VAULT:-$HOME/obsidian-ai-vault}"
+VAULT_DEFAULT="${VAULT:-$HOME/vault}"
 
 usage() {
   cat <<EOF >&2
@@ -20,7 +20,7 @@ Usage: $0 [--dry-run | --apply | --recommend-only]
   --recommend-only  note_count_check 만 (preflight 단계)
 
 Env:
-  VAULT                  vault root (default: \$HOME/obsidian-ai-vault — any path works)
+  VAULT                  vault root (default: \$HOME/vault — any path works)
   CLAUDE_CONFIG_DIR      Claude Desktop config dir (fallback register; default: \$HOME/.config/claude)
   CLAUDE_DISCODE_HOME    thiscode repo root (default: auto-detected from this script's location)
   CLAUDE_DISCODE_SKIP_BUILD  1 = skip npm install/build (use existing build)
