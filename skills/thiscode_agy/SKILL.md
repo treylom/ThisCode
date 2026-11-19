@@ -20,7 +20,7 @@ triggers:
 **Architecture (Y-3 + Y-2 hybrid)**:
 - **Y-3 (default)**: `agy --print` subprocess per Discord message. Reliable, deterministic stdout for Discord reply.
 - **Y-2 (asset mode)**: `agy --prompt-interactive` PTY session for `/agy-asset` commands (image/file generation).
-- **tmux 2-pane visual**: top = bridge daemon log (live `[RAW]`/`[INBOX]`/`[OUTBOX]` events), bottom = agy CLI TUI (Discord message visually injected via `tmux send-keys` — UX mirror of sshee codex pattern).
+- **tmux 2-pane visual**: top = bridge daemon log (live `[RAW]`/`[INBOX]`/`[OUTBOX]` events), bottom = agy CLI TUI (Discord message visually injected via `tmux send-keys` — UX mirror of codex-bot codex pattern).
 
 **Components (genericized from agent-<name>/)**:
 - `templates/launch.sh` — 2-step tmux launch (placeholder → split → env-correct bridge start), wrapper with suicide guard
@@ -44,7 +44,7 @@ See `references/` for detailed procedures only when setup or troubleshooting req
 ## When to use this skill
 
 - Setting up a new Antigravity-based Discord bot
-- Mirroring the sshee/Codex or agy bridge pattern for a different AI CLI
+- Mirroring the codex-bot/Codex or agy bridge pattern for a different AI CLI
 - Diagnosing existing agy bridge issues (jump to `references/troubleshooting.md`)
 - Adding `/agy-asset` (Y-2 PTY) capability to an existing bot
 

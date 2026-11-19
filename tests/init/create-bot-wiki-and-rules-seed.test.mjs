@@ -27,7 +27,7 @@ test('B4: the wiki path question is a first-class step, asked before WD/CLAUDE.m
   assert.match(text, /선택 사항/, 'the question must state it is optional');
 });
 
-// Fix E (2026-08-10, 루돌프 다봇 개발머신 실측): a "first-class question" that
+// Fix E (2026-08-10, test-bot 다봇 개발머신 실측): a "first-class question" that
 // silently inherits a value without ever presenting it as a real choice is not a
 // question at all — it is an assumption wearing the question's name. On a
 // multi-bot dev machine, the interviewing agent found an existing bot's

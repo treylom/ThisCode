@@ -136,7 +136,7 @@ printf '%s\n' "$SOUL_TYPE" > "$HOME/.claude/channels/.slack-configure-soul-type"
 printf '%s\n' "$ROLE_DESC" > "$HOME/.claude/channels/.slack-configure-role-desc"
 ```
 
-### Step 1. 사전 점검 + Slack CLI 자동 설치 [자동] (F1 — 2026-08-06 루돌프 WSL round 1 실측 반영)
+### Step 1. 사전 점검 + Slack CLI 자동 설치 [자동] (F1 — 2026-08-06 test-bot WSL round 1 실측 반영)
 
 > 🔴 **실측**: 신규 WSL 환경에서 `slack --version` → `command not found`. 번들 어디에도(README·`install.sh`·트러블슈팅 표) 설치 방법이 없었다 — Step 0(브리지 빌드)은 실패 시 상세 안내가 있는데(위 참고) Step 1은 같은 대접이 없는 비대칭이었다. 아래가 그 비대칭을 없앤다.
 
@@ -152,7 +152,7 @@ fi
 
 **Slack CLI 자동 설치 [자동, sudo 0]** — `slack` 명령이 없을 때만 실행한다.
 
-🔴 **패키지 매니저(apt/dnf/`sudo` 동반 설치) 경유로 짜지 않는다** — 대상 환경이 무-sudo일 수 있다(2026-08-06 루돌프 WSL 실측: `sudo -n true` → `a password is required`, round 2에서 sudo 경로는 관문 앞에서 그대로 탈락한다). 공식 설치 스크립트는 sudo를 요구하지 않는다 — 문서 전문에 "sudo"라는 단어가 한 번도 등장하지 않고, 기본 설치 경로 자체가 홈 디렉토리다(`$HOME/.slack`에 다운로드 후 `$HOME/.local/bin`에 심볼릭 링크 — 2026-08-06 공식 문서 확인: [Installing the Slack CLI for Mac & Linux](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/)):
+🔴 **패키지 매니저(apt/dnf/`sudo` 동반 설치) 경유로 짜지 않는다** — 대상 환경이 무-sudo일 수 있다(2026-08-06 test-bot WSL 실측: `sudo -n true` → `a password is required`, round 2에서 sudo 경로는 관문 앞에서 그대로 탈락한다). 공식 설치 스크립트는 sudo를 요구하지 않는다 — 문서 전문에 "sudo"라는 단어가 한 번도 등장하지 않고, 기본 설치 경로 자체가 홈 디렉토리다(`$HOME/.slack`에 다운로드 후 `$HOME/.local/bin`에 심볼릭 링크 — 2026-08-06 공식 문서 확인: [Installing the Slack CLI for Mac & Linux](https://docs.slack.dev/tools/slack-cli/guides/installing-the-slack-cli-for-mac-and-linux/)):
 
 ```bash
 # 존재 판정은 두 자로: PATH + 실파일 — 비대화형 셸은 PATH 만으로 「미설치」 오판 → 불필요 재다운로드 (2026-08-08 WSL E2E 실측)
@@ -239,7 +239,7 @@ slack auth list   # 워크스페이스·User ID 나오면 성공 (~/.slack/crede
 
 ### Step 4. 매니페스트 파일 생성 [자동]
 
-> 🔴 **CLI 앱 생성 경로(`slack create` → `manifest sync` → `app install`)는 폐기한다** — 2026-08-06 루돌프 WSL round 3 실측 4건: ①`--template blank` 은 존재하지 않는다(`template_path_not_found` — `-t` 는 `slack-samples/...` 레포 경로를 받는다) ②`slack manifest sync` 는 `--experiment manifest-sync` 플래그를 요구한다(실험 플래그 의존 = 수강생 배포물 부적합) ③sync 는 설치를 요구하고 install 은 원격 앱 선택을 요구하는 **순환**(`installation_required`) ④`slack app install` 은 `--environment local` 을 줘도 두 번째 대화형 프롬프트("Select an app")가 떠서 **TTY 없는 실행 맥락(이 스킬의 주체 = Claude 세션 Bash)에서 비대화형 진입점이 없다**. 앱 생성은 Slack 표준인 **웹 매니페스트 경로**(아래 Step 5)로 가고, 앱 ID 확보 후에만 CLI 비대화형(`--app <ID>`)이 성립한다.
+> 🔴 **CLI 앱 생성 경로(`slack create` → `manifest sync` → `app install`)는 폐기한다** — 2026-08-06 test-bot WSL round 3 실측 4건: ①`--template blank` 은 존재하지 않는다(`template_path_not_found` — `-t` 는 `slack-samples/...` 레포 경로를 받는다) ②`slack manifest sync` 는 `--experiment manifest-sync` 플래그를 요구한다(실험 플래그 의존 = 수강생 배포물 부적합) ③sync 는 설치를 요구하고 install 은 원격 앱 선택을 요구하는 **순환**(`installation_required`) ④`slack app install` 은 `--environment local` 을 줘도 두 번째 대화형 프롬프트("Select an app")가 떠서 **TTY 없는 실행 맥락(이 스킬의 주체 = Claude 세션 Bash)에서 비대화형 진입점이 없다**. 앱 생성은 Slack 표준인 **웹 매니페스트 경로**(아래 Step 5)로 가고, 앱 ID 확보 후에만 CLI 비대화형(`--app <ID>`)이 성립한다.
 
 이 단계는 아래 매니페스트 JSON 을 `<앱 이름>`·`<봇 표시 이름>` 만 Step 0-A 값으로 치환해 **파일로 떨군다**(예: `$HOME/.claude/channels/.slack-configure-manifest.json` — 비밀값 없음, [slack-bridge/SKILL.md](../slack-bridge/SKILL.md) 예시와 동일한 형식):
 
@@ -378,7 +378,7 @@ echo "봇 루트 폴더: $BOT_DIR"
 ```bash
 # PLUGIN_DIR detect — create-bot Step 5와 동일 후보 순서(다른 곳 한 곳만 보지 않는다)
 #
-# Fix F (2026-08-10, 루돌프 4차 실측): 첫 매치 승리 방식이라 후보 #1(마켓 클론)이 구판이면
+# Fix F (2026-08-10, test-bot 4차 실측): 첫 매치 승리 방식이라 후보 #1(마켓 클론)이 구판이면
 # 후보 #5(버전 캐시, freshest)를 두고도 구판이 이겨 rules-seed.md 를 무징후로 누락시켰다.
 # CLAUDE_PLUGIN_ROOT 를 1순위로 — 마크다운 원문 리터럴, Claude Code 가 이 문서를 로드하며
 # 실제 설치 경로로 치환한다(셸 풀이 ❌ — code.claude.com/docs/en/plugins-reference.md
@@ -412,12 +412,12 @@ sed -e "s|<bot-name>|${BOT_NAME}|g" \
 
 **②-b 잔여 자리표시자 채움 + Slack 맥락화 [자동 — 에이전트 작성 단계]**
 
-🔴 위 sed 3종은 시작일 뿐이다 — 템플릿에는 자리표시자가 종류별로 12~19개 있고(2026-08-06 루돌프 WSL round 2 실측: general-assistant 15종 중 12종이 꺾쇠 stub 그대로 실려 **SOUL-CAPSULE 블록 통째가 속 빈 껍데기**가 됐다), 고정 sed 목록을 늘리는 방식은 템플릿이 바뀔 때마다 같은 병이 재발한다. 이 스킬의 실행 주체는 Claude 세션이므로 남은 자리는 **에이전트가 직접 채운다**:
+🔴 위 sed 3종은 시작일 뿐이다 — 템플릿에는 자리표시자가 종류별로 12~19개 있고(2026-08-06 test-bot WSL round 2 실측: general-assistant 15종 중 12종이 꺾쇠 stub 그대로 실려 **SOUL-CAPSULE 블록 통째가 속 빈 껍데기**가 됐다), 고정 sed 목록을 늘리는 방식은 템플릿이 바뀔 때마다 같은 병이 재발한다. 이 스킬의 실행 주체는 Claude 세션이므로 남은 자리는 **에이전트가 직접 채운다**:
 
 0. 🔴 **조사 먼저 — 즉석 창작 금지** (2026-08-06 운영 지시): 자리를 채우기 **전에** 실제 사용자 맥락을 수집한다 — ⓐ워크스페이스에 vault·노트가 있으면 `/km:search`·grep으로 어휘·업무 영역·반복 작업을 훑고 ⓑ기존 봇 `soul.md`가 있으면 어휘·경계 규약을 대조하며 ⓒ둘 다 없으면 사용자에게 주 업무·말투·금지사항을 짧게 인터뷰한다. `$BOT_NAME`·`$ROLE_DESC`만 보고 내용을 지어내면 일반 비서 톤으로 수렴하므로, 확인한 맥락만 사용한다.
 1. **잔여 전수 나열**: `command grep -n '<[^>]*>' "$BOT_DIR/soul.md"`
 2. **각 자리를 0번 조사 결과를 근거로 채운다**(Edit 도구) — `$BOT_NAME`·`$ROLE_DESC`·`$SOUL_TYPE`에 맞춰 페르소나 어휘·시그니처·경계·출력 규약을 채운다. 시그니처 이모지는 조사 결과에 맞게 정하고, 실측할 수 없는 ID는 `(Step 15-A에서 실측 기입)`으로 남긴다.
-3. **Slack 맥락화**: 템플릿은 Discord 판 공용이라 Discord 전용 문구가 남는다 — "Discord DM/mention 수신 시" → Slack 등가로, `mcp__plugin_discord_discord__reply` 도구 지시 → "Slack 응답은 `slack-channel` MCP reply 도구로만" 으로 치환. **Slack 봇에게 Discord 도구를 시키는 문장이 남으면 조용한 오작동을 유발한다**(루돌프 실측: 생성된 soul.md L83). 🔴 **같은 자리에 DM thread_ts 캐치 1줄을 덧붙인다**(2026-08-10, 루돌프 실측 — DM 1:1 답장이 댓글 스레드로 접히는 결함. 코드 레이어 방어는 `claude-channel-server/src/server.ts` handleReply에 별도로 있지만, 모델이 규칙을 모르면 애초에 `thread_ts`를 넘기는 시도 자체가 반복된다): "DM(1:1)에서는 `reply` 도구에 `thread_ts`를 넘기지 않는다 — 받은 메시지의 ts를 되돌려 넣으면 1:1 대화가 댓글 스레드로 접힌다. 인바운드 `<channel>` 태그에 `thread_ts`가 실제로 실려 있을 때만 echo한다(사용자가 스스로 DM 안에서 스레드를 연 경우). 채널 응답은 스레드가 기본이며 브리지가 채운다 — 이 규칙은 DM 한정."
+3. **Slack 맥락화**: 템플릿은 Discord 판 공용이라 Discord 전용 문구가 남는다 — "Discord DM/mention 수신 시" → Slack 등가로, `mcp__plugin_discord_discord__reply` 도구 지시 → "Slack 응답은 `slack-channel` MCP reply 도구로만" 으로 치환. **Slack 봇에게 Discord 도구를 시키는 문장이 남으면 조용한 오작동을 유발한다**(test-bot 실측: 생성된 soul.md L83). 🔴 **같은 자리에 DM thread_ts 캐치 1줄을 덧붙인다**(2026-08-10, test-bot 실측 — DM 1:1 답장이 댓글 스레드로 접히는 결함. 코드 레이어 방어는 `claude-channel-server/src/server.ts` handleReply에 별도로 있지만, 모델이 규칙을 모르면 애초에 `thread_ts`를 넘기는 시도 자체가 반복된다): "DM(1:1)에서는 `reply` 도구에 `thread_ts`를 넘기지 않는다 — 받은 메시지의 ts를 되돌려 넣으면 1:1 대화가 댓글 스레드로 접힌다. 인바운드 `<channel>` 태그에 `thread_ts`가 실제로 실려 있을 때만 echo한다(사용자가 스스로 DM 안에서 스레드를 연 경우). 채널 응답은 스레드가 기본이며 브리지가 채운다 — 이 규칙은 DM 한정."
 4. **기계 게이트**:
 
 ```bash
@@ -425,7 +425,7 @@ command grep -o '<[^>]*>' "$BOT_DIR/soul.md" | grep -v '^<@U' | grep -v '^<!--'
 # 출력이 비어야 PASS
 ```
 
-   허용 잔존 = 실 Slack ID(`<@U...>`)와 **HTML 주석**(`<!-- SOUL-CAPSULE-START -->` 같은 구조 마커 — 지우면 안 되는 정상 요소다). 그 외 꺾쇠가 하나라도 출력되면 이 단계 미완 — 채우고 다시 센다. ⚠️ 주석 예외 없이 `<[^>]*>` 만으로 재면 캡슐 마커 2줄이 항상 걸려 **게이트가 영원히 통과 불가**가 되고, 성실한 에이전트일수록 마커를 지우는 쪽(규율 위반)으로 유도된다 — 2026-08-06 루돌프 round 2.1 실측.
+   허용 잔존 = 실 Slack ID(`<@U...>`)와 **HTML 주석**(`<!-- SOUL-CAPSULE-START -->` 같은 구조 마커 — 지우면 안 되는 정상 요소다). 그 외 꺾쇠가 하나라도 출력되면 이 단계 미완 — 채우고 다시 센다. ⚠️ 주석 예외 없이 `<[^>]*>` 만으로 재면 캡슐 마커 2줄이 항상 걸려 **게이트가 영원히 통과 불가**가 되고, 성실한 에이전트일수록 마커를 지우는 쪽(규율 위반)으로 유도된다 — 2026-08-06 test-bot round 2.1 실측.
 
 **③ CLAUDE.md 작성 — 페르소나를 훅이 아니라 본문에 직접 박는다** (반드시 ②-b 완료 후 — `$SOUL_BODY`는 완성본 soul.md를 읽는다)
 
@@ -907,7 +907,7 @@ claude --dangerously-load-development-channels server:slack-channel
 - ①②③이 Step 7-A에서 만든 `$BOT_NAME`·`$ROLE_DESC`·`$BOT_DIR`와 일치하고, ④가 정직하게 "없다"고 답하면 **GREEN**. ④에서 지어내면 나머지 답도 "그럴듯하게 구성한 것"이지 주입 증거가 아니므로 시험 전체 무효(create-bot과 동일 원칙).
 - **①에서 다른 봇 이름(예: 워크스페이스 상위 CLAUDE.md의 봇 메타)이 나오면** = cwd가 봇 루트 폴더가 아니었다는 뜻이다 — Step 13-A/14를 다시 확인한다. `04-handoff.md` §3.4가 실측한 것과 동일한 증상(CLAUDE.md 없는 폴더에서 기동 → 정체성이 상위로 fallback)이다.
 
-⚠️ **타임아웃을 넉넉히**: 헤드리스 1문(`claude -p`)이 훅·플러그인이 무거운 환경에서 8분까지 걸린 실측이 있다(2026-08-06 루돌프 WSL: 180초 타임아웃 실패 → 480초 통과). 자동 게이트로 쓸 땐 타임아웃 ≥ 600초로 잡는다.
+⚠️ **타임아웃을 넉넉히**: 헤드리스 1문(`claude -p`)이 훅·플러그인이 무거운 환경에서 8분까지 걸린 실측이 있다(2026-08-06 test-bot WSL: 180초 타임아웃 실패 → 480초 통과). 자동 게이트로 쓸 땐 타임아웃 ≥ 600초로 잡는다.
 
 **④ 실 ID 되채움**: Step 7-A ②-b에서 `(Step 15-A에서 실측 기입)`으로 남긴 자리(봇 user ID 등)를 이 시점에 실측값으로 치환한다 — 브리지가 기동돼 있으므로 봇 토큰 `auth.test` 응답의 `user_id`가 정답이다(값을 지어내지 않는다). 치환 후 `command grep -n '실측 기입' "$BOT_DIR/soul.md" "$BOT_DIR/CLAUDE.md"` 재검 → 잔존 마커 0이어야 완료.
 
@@ -962,7 +962,7 @@ Codex 판은 이 스킬을 그대로 이식할 수 없다:
 
 ## 미결·리스크 (정직 표기 — 2026-08-06)
 
-1. **[해소 — 2026-08-06 루돌프 WSL round 3 실측] CLI 앱 생성 경로는 검증이 아니라 폐기로 닫혔다** — `slack create --template blank` 부재(`template_path_not_found`) · `manifest sync` 는 `--experiment manifest-sync` 요구 · sync↔install 순환(`installation_required`) · `app install` 은 TTY 프롬프트 2중(비대화형 진입점 없음). 그래서 Step 4~5 를 **웹 매니페스트 경로(관문 B)** 로 재설계했다. 잔여 미검증 = 웹 경로 관문 B 의 라이브 통과(앱 생성→설치→App ID→토큰 발급 연쇄).
+1. **[해소 — 2026-08-06 test-bot WSL round 3 실측] CLI 앱 생성 경로는 검증이 아니라 폐기로 닫혔다** — `slack create --template blank` 부재(`template_path_not_found`) · `manifest sync` 는 `--experiment manifest-sync` 요구 · sync↔install 순환(`installation_required`) · `app install` 은 TTY 프롬프트 2중(비대화형 진입점 없음). 그래서 Step 4~5 를 **웹 매니페스트 경로(관문 B)** 로 재설계했다. 잔여 미검증 = 웹 경로 관문 B 의 라이브 통과(앱 생성→설치→App ID→토큰 발급 연쇄).
 2. **[해소 — 같은 실측]** 구 "`manifest sync -f` 비대화형 보장 미검증" 항목: 실제 문제는 `-f` 가 아니라 experiment 플래그 의존이었고, 경로 폐기로 항목 자체가 소멸.
 3. **채널 자동 초대(Step 9)의 스코프 미확정** — `conversations.join`에 필요한 정확한 스코프명은 Slack 공식 문서 대조가 필요하다. 스코프를 추가하면 매니페스트가 다시 바뀌어 재설치(재승인) 관문이 한 번 더 발생할 수 있다. ~~이름→ID 변환의 `conversations.list` 대안 경로도 같은 이유로 스코프가 아직 없다~~ → **[부분 해소 — 2026-08-06 WSL 라이브 실측]** `conversations.list` 는 현 매니페스트로 `missing_scope`(needed: `channels:read,groups:read,mpim:read,im:read`) 확정 — 기본 경로(사용자에게 직접 확인)가 정답으로 확정(Step 9 항목 3). 자동 초대 스코프명만 미확정으로 남는다.
 4. **`ALLOWED_SLACK_USER_ID` 자동 제안의 전제** — `slack auth list`가 반환하는 로그인 계정을 "이 봇을 쓸 사람"으로 가정한다. 다른 사람이 이 머신에서 CLI 로그인을 해뒀다면 오탐 가능 — 입력 계약 #6에서 제안만 하고 사람 확인 1클릭을 반드시 거치게 설계했다.

@@ -94,7 +94,7 @@ status: draft (v0.2.0)
 - 학습: hard rule 메모리만으로는 attention decay → 회귀. UserPromptSubmit hook 으로 procedural pre-response gate.
 - 영상 길이: 10 min.
 
-### C18. aktofu-bot Phase A → Phase B Stop hook auto-trigger
+### C18. automation-bot Phase A → Phase B Stop hook auto-trigger
 - 학습: Lead 응답 분할 회귀를 Stop hook chain 으로 catch. heartbeat 7-step filter.
 - 영상 길이: 11 min.
 

@@ -141,7 +141,7 @@ function main(): void {
     }
   }
 
-  // Outbound DM-thread guard (겹1, 2026-08-10 — 루돌프 실측 2026-08-09):
+  // Outbound DM-thread guard (겹1, 2026-08-10 — test-bot 실측 2026-08-09):
   // defect 17 taught handleSlackEvent (below) to only put `thread_ts` in a
   // DM's meta when the *inbound* message actually carried one — a DM the
   // user never threaded gets none, so the model has nothing legitimate to
@@ -417,7 +417,7 @@ function main(): void {
     const text = (event.text ?? '').trim();
 
     // Sender gate, split by author kind ((B) bot-interop, 2026-08-07). Order
-    // trap, measured live by 루돌프 before this change shipped: the old
+    // trap, measured live by test-bot before this change shipped: the old
     // human-only check sat ABOVE the bot gate, and a bot post carries its own
     // U… in event.user — so it died at the human check and never reached the
     // bot line. "Relax the bot_id line" alone would have opened nothing while

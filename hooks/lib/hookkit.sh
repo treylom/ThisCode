@@ -34,7 +34,7 @@ hk_bot() {
 }
 
 # 반복운영루프(무인 자동화) 세션인가? → 0(자동화) / 1(아님)
-# autonomy.md §2 "반복 운영 루프(AK-Tofu 일상 파이프라인)만 제외" 구현.
+# autonomy.md §2 "반복 운영 루프(automation-bot 일상 파이프라인)만 제외" 구현.
 # 마커: 명시 env(HK_AUTOMATION) 또는 봇 이름이 HK_AUTOMATION_BOTS(콤마 구분 목록)에 포함.
 hk_is_automation() {
   [ -n "${HK_AUTOMATION:-}" ] && return 0

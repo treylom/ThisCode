@@ -1,5 +1,5 @@
 #!/bin/bash
-# agy bridge launcher — Y-3 단발 + Y-2 PTY. 2-window pattern (mirror sshee/codex bridge layout).
+# agy bridge launcher — Y-3 단발 + Y-2 PTY. 2-window pattern (mirror codex-bot/codex bridge layout).
 # 단일 tmux 세션 $BOT_NAME 안에 2 windows: `agy` (agy CLI TUI, default focus) + `daemon` (bridge.py log).
 # attach 하면 agy window 가 바로 보이고, C-b 0/1 로 window 전환.
 set -euo pipefail

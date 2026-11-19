@@ -81,7 +81,7 @@ $ARGUMENTS
 # (정식 marketplace / 수동 clone / 정식 install cache / dev clone / 버전 cache)
 # bare `[ -d hooks ]` 아닌 hooks/bot-session-init.sh 실재로 판정 (stale dir 회피).
 #
-# Fix F (2026-08-10, 루돌프 4차 실측): 첫 매치 승리 방식이라 후보 #1(마켓 클론)이 구판이면
+# Fix F (2026-08-10, test-bot 4차 실측): 첫 매치 승리 방식이라 후보 #1(마켓 클론)이 구판이면
 # 후보 #5(버전 캐시, freshest)를 두고도 구판이 이겨 rules-seed.md 를 무징후로 누락시켰다.
 # CLAUDE_PLUGIN_ROOT 를 1순위로 — 마크다운 원문 리터럴, Claude Code 가 이 문서를 로드하며
 # 실제 설치 경로로 치환한다(셸 풀이 ❌ — code.claude.com/docs/en/plugins-reference.md

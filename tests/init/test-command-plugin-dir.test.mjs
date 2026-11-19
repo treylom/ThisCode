@@ -1,4 +1,4 @@
-// Hotfix B (2026-08-10, 루돌프 실측 1536053876): /thiscode:test called
+// Hotfix B (2026-08-10, test-bot 실측 1536053876): /thiscode:test called
 // `node scripts/feature-test.mjs $ARGUMENTS` with a bare cwd-relative path and
 // no PLUGIN_DIR detection at all — the only invoker in the repo missing the
 // ordered-probe pattern every other cwd-dependent invocation already uses
